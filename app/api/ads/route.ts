@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/auth"
-import { getAds, hasRole, hasAnyRole } from "@/lib/database-new"
+import { getAds, hasRole, hasAnyRole, createAd } from "@/lib/database-new"
 
 export async function POST(request: NextRequest) {
   try {
