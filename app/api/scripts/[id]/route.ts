@@ -79,7 +79,6 @@ export async function PATCH(
       demo_url: body.demo_url,
       documentation_url: body.documentation_url,
       support_url: body.support_url,
-      version: body.version,
       last_updated: body.last_updated,
       status: body.status,
       featured: body.featured,

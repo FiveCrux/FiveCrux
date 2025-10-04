@@ -57,7 +57,6 @@ interface Script {
   demo_url?: string
   documentation_url?: string
   support_url?: string
-  version: string
   last_updated: string
   status: "pending" | "approved" | "rejected"
   featured: boolean
@@ -108,7 +107,6 @@ export default function EditScriptPage() {
     framework: "",
     sellerName: "",
     sellerEmail: "",
-    version: "1.0.0",
     demoUrl: "",
     documentationUrl: "",
     supportUrl: "",
@@ -174,7 +172,6 @@ export default function EditScriptPage() {
         framework: scriptData.framework || "",
         sellerName: scriptData.seller_name,
         sellerEmail: scriptData.seller_email,
-        version: scriptData.version,
         demoUrl: scriptData.demo_url || "",
         documentationUrl: scriptData.documentation_url || "",
         supportUrl: scriptData.support_url || "",
@@ -593,18 +590,6 @@ export default function EditScriptPage() {
                       />
                     </div>
 
-                    <div>
-                      <Label htmlFor="version" className="text-white font-medium">
-                        Version
-                      </Label>
-                      <Input
-                        id="version"
-                        value={formData.version}
-                        onChange={(e) => setFormData({ ...formData, version: e.target.value })}
-                        placeholder="1.0.0"
-                        className="mt-2 bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-orange-500"
-                      />
-                    </div>
                   </div>
 
                   {discount > 0 && (

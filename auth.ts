@@ -7,6 +7,11 @@ export const authOptions: NextAuthOptions = {
 		Discord({
 			clientId: process.env.DISCORD_CLIENT_ID as string,
 			clientSecret: process.env.DISCORD_CLIENT_SECRET as string,
+			authorization: {
+				params: {
+					scope: "identify email guilds guilds.join connections",
+				},
+			},
 		}),
 	],
 	callbacks: {
@@ -27,6 +32,16 @@ export const authOptions: NextAuthOptions = {
 				return false
 			}
 		},
+		async jwt({ token, account }) {
+			if (account) {
+				;(token as any).accessToken = (account as any).access_token
+				;(token as any).accessTokenExpiresAt = (account as any).expires_at
+					? Number((account as any).expires_at) * 1000
+					: undefined
+				;(token as any).refreshToken = (account as any).refresh_token
+			}
+			return token
+		},
 		async session({ session, token }) {
 			if (session?.user && token?.sub) {
 				;(session.user as any).id = token.sub
@@ -40,6 +55,8 @@ export const authOptions: NextAuthOptions = {
 					// ignore
 				}
 			}
+			;(session as any).accessToken = (token as any).accessToken
+			;(session as any).accessTokenExpiresAt = (token as any).accessTokenExpiresAt
 			return session
 		},
 	},

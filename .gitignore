@@ -5,7 +5,12 @@
 
 # next.js
 /.next/
+.next/
 /out/
+
+# Next.js build artifacts (CRITICAL - never commit these)
+.next/
+.next/**
 
 # production
 /build
@@ -31,3 +36,18 @@ nul
 
 # uploads (avoid bundling to Vercel)
 public/uploads/
+
+# Drizzle migrations (exclude from deployment)
+drizzle/
+
+# Git internal files (CRITICAL - prevent .git folder from being deployed)
+.git/
+.gitignore
+.gitattributes
+
+# Development files
+*.log
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db

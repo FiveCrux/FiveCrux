@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
       }, { status: 403 });
     }
 
-    const userId = session.user.id;
+    const userId = (session.user as any).id;
     const userEmail = session.user.email;
     console.log("User scripts API - User:", { id: userId, email: userEmail });
 
@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = session.user.id;
+    // const userId = session.user.id;
     const userEmail = session.user.email;
     const body = await request.json();
 
@@ -117,6 +117,7 @@ export async function POST(request: NextRequest) {
       framework: body.framework,
       seller_name: body.seller_name || session.user.name || 'Unknown Seller',
       seller_email: userEmail,
+      sellerId: userId,
       tags: body.tags || [],
       features: body.features || [],
       requirements: body.requirements || [],
@@ -127,9 +128,8 @@ export async function POST(request: NextRequest) {
       demo_url: body.demo_url,
       documentation_url: body.documentation_url,
       support_url: body.support_url,
-      version: body.version || '1.0.0',
       featured: body.featured || false
-    };
+    } as any;
 
     const scriptId = await createScript(scriptData);
 

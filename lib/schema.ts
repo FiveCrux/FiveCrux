@@ -30,6 +30,7 @@ const baseScriptFields = {
   originalPrice: numeric('original_price'),
   category: text('category').notNull(),
   framework: text('framework').array().default([]),
+  sellerId: text('seller_id').references(() => users.id, { onDelete: 'set null' }),
   seller_name: text('seller_name').notNull(),
   seller_email: text('seller_email').notNull(),
   tags: text('tags').array().default([]),
@@ -42,7 +43,6 @@ const baseScriptFields = {
   demoUrl: text('demo_url'),
   documentationUrl: text('documentation_url'),
   supportUrl: text('support_url'),
-  version: text('version').default('1.0.0'),
   featured: boolean('featured').default(false),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
@@ -72,11 +72,7 @@ export const rejectedScripts = pgTable('rejected_scripts', {
   adminNotes: text('admin_notes'),
 });
 
-// Legacy scripts table (for backward compatibility)
-export const scripts = pgTable('scripts', {
-  ...baseScriptFields,
-  status: text('status').default('pending'),
-});
+// Legacy scripts table removed - all scripts go to pending_scripts now
 
 // Base giveaway fields (common to all giveaway types)
 const baseGiveawayFields = {
@@ -211,7 +207,7 @@ export const giveawayReviews = pgTable('giveaway_reviews', {
 // Script reviews table
 export const scriptReviews = pgTable('script_reviews', {
   id: integer('id').primaryKey().notNull(),
-  scriptId: integer('script_id').notNull().references(() => scripts.id, { onDelete: 'cascade' }),
+  scriptId: integer('script_id').notNull().references(() => approvedScripts.id, { onDelete: 'cascade' }),
   reviewerName: text('reviewer_name').notNull(),
   reviewerEmail: text('reviewer_email').notNull(),
   rating: integer('rating').notNull(),
@@ -268,11 +264,10 @@ export const rejectedAds = pgTable('rejected_ads', {
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   giveawayEntries: many(giveawayEntries),
-  giveawayReviews: many(giveawayReviews),
-  scriptReviews: many(scriptReviews),
 }));
 
-export const scriptsRelations = relations(scripts, ({ many }) => ({
+// Scripts relations moved to approvedScripts
+export const approvedScriptsRelations = relations(approvedScripts, ({ many }) => ({
   reviews: many(scriptReviews),
 }));
 
@@ -302,17 +297,31 @@ export const giveawayReviewsRelations = relations(giveawayReviews, ({ one }) => 
 }));
 
 export const scriptReviewsRelations = relations(scriptReviews, ({ one }) => ({
-  script: one(scripts, {
+  script: one(approvedScripts, {
     fields: [scriptReviews.scriptId],
-    references: [scripts.id],
+    references: [approvedScripts.id],
+  }),
+}));
+
+export const giveawayRequirementsRelations = relations(giveawayRequirements, ({ one }) => ({
+  giveaway: one(giveaways, {
+    fields: [giveawayRequirements.giveawayId],
+    references: [giveaways.id],
+  }),
+}));
+
+export const giveawayPrizesRelations = relations(giveawayPrizes, ({ one }) => ({
+  giveaway: one(giveaways, {
+    fields: [giveawayPrizes.giveawayId],
+    references: [giveaways.id],
   }),
 }));
 
 // Type exports
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
-export type Script = typeof scripts.$inferSelect;
-export type NewScript = typeof scripts.$inferInsert;
+export type Script = typeof approvedScripts.$inferSelect;
+export type NewScript = typeof approvedScripts.$inferInsert;
 export type Giveaway = typeof giveaways.$inferSelect;
 export type NewGiveaway = typeof giveaways.$inferInsert;
 export type GiveawayRequirement = typeof giveawayRequirements.$inferSelect;

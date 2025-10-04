@@ -116,8 +116,9 @@ export default function ProfilePage() {
       // Fetch user's scripts from the new user-specific endpoint
       const scriptsResponse = await fetch("/api/user/scripts")
       console.log("Profile - Scripts response:", scriptsResponse.status)
+      let scriptsData = { scripts: [] }
       if (scriptsResponse.ok) {
-        const scriptsData = await scriptsResponse.json()
+        scriptsData = await scriptsResponse.json()
         console.log("Profile - Scripts data:", scriptsData)
         setScripts(scriptsData.scripts || [])
       } else {
@@ -127,8 +128,9 @@ export default function ProfilePage() {
       // Fetch user's giveaways from the new user-specific endpoint
       const giveawaysResponse = await fetch("/api/user/giveaways")
       console.log("Profile - Giveaways response:", giveawaysResponse.status)
+      let giveawaysData = { giveaways: [] }
       if (giveawaysResponse.ok) {
-        const giveawaysData = await giveawaysResponse.json()
+        giveawaysData = await giveawaysResponse.json()
         console.log("Profile - Giveaways data:", giveawaysData)
         setGiveaways(giveawaysData.giveaways || [])
       } else {
@@ -137,8 +139,9 @@ export default function ProfilePage() {
 
       // Fetch user's ads
       const adsResponse = await fetch("/api/user/ads")
+      let adsData = { ads: [] }
       if (adsResponse.ok) {
-        const adsData = await adsResponse.json()
+        adsData = await adsResponse.json()
         setAds(adsData.ads || [])
       } else {
         console.error("Profile - Ads API error:", await adsResponse.text())
@@ -146,16 +149,17 @@ export default function ProfilePage() {
 
       // Fetch user's giveaway entries
       const entriesResponse = await fetch("/api/user/giveaway-entries")
+      let entriesData = { entries: [] }
       if (entriesResponse.ok) {
-        const entriesData = await entriesResponse.json()
+        entriesData = await entriesResponse.json()
         setGiveawayEntries(entriesData.entries || [])
       }
 
-      // Calculate stats based on freshly fetched arrays to avoid stale state
-      const sArr = (await scriptsResponse.clone().json()).scripts || []
-      const gArr = (await giveawaysResponse.clone().json()).giveaways || []
-      const aArr = (await adsResponse.clone().json()).ads || []
-      const eArr = (await entriesResponse.clone().json()).entries || []
+      // Calculate stats based on the data we already fetched
+      const sArr = scriptsData.scripts || []
+      const gArr = giveawaysData.giveaways || []
+      const aArr = adsData.ads || []
+      const eArr = entriesData.entries || []
       const totalDownloads = sArr.reduce((sum: number, script: any) => sum + (script.downloads || 0), 0)
       const totalEarnings = sArr.reduce((sum: number, script: any) => sum + ((script.downloads || 0) * Number(script.price)), 0)
       

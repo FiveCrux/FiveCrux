@@ -21,12 +21,13 @@ export async function POST(request: NextRequest) {
     }
     
     // Test role checking functions
+    const userRoles = updatedUser.roles || []
     const roleTests = {
-      hasFounder: hasRole(updatedUser.roles, 'founder'),
-      hasAdmin: hasRole(updatedUser.roles, 'admin'),
-      hasModerator: hasRole(updatedUser.roles, 'moderator'),
-      hasAnyAdminRole: hasAnyRole(updatedUser.roles, ['founder', 'admin']),
-      hasAnyCreatorRole: hasAnyRole(updatedUser.roles, ['founder', 'verified_creator']),
+      hasFounder: hasRole(userRoles, 'founder'),
+      hasAdmin: hasRole(userRoles, 'admin'),
+      hasModerator: hasRole(userRoles, 'moderator'),
+      hasAnyAdminRole: hasAnyRole(userRoles, ['founder', 'admin']),
+      hasAnyCreatorRole: hasAnyRole(userRoles, ['founder', 'verified_creator']),
     }
     
     return NextResponse.json({ 
@@ -68,14 +69,15 @@ export async function GET(request: NextRequest) {
     }
     
     // Test role checking functions
+    const userRoles = user.roles || []
     const roleTests = {
-      hasFounder: hasRole(user.roles, 'founder'),
-      hasAdmin: hasRole(user.roles, 'admin'),
-      hasModerator: hasRole(user.roles, 'moderator'),
-      hasVerifiedCreator: hasRole(user.roles, 'verified_creator'),
-      hasCrew: hasRole(user.roles, 'crew'),
-      hasAnyAdminRole: hasAnyRole(user.roles, ['founder', 'admin']),
-      hasAnyCreatorRole: hasAnyRole(user.roles, ['founder', 'verified_creator']),
+      hasFounder: hasRole(userRoles, 'founder'),
+      hasAdmin: hasRole(userRoles, 'admin'),
+      hasModerator: hasRole(userRoles, 'moderator'),
+      hasVerifiedCreator: hasRole(userRoles, 'verified_creator'),
+      hasCrew: hasRole(userRoles, 'crew'),
+      hasAnyAdminRole: hasAnyRole(userRoles, ['founder', 'admin']),
+      hasAnyCreatorRole: hasAnyRole(userRoles, ['founder', 'verified_creator']),
     }
     
     return NextResponse.json({ 

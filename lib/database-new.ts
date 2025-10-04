@@ -1,7 +1,7 @@
 import { db } from './db';
 import { eq, and, or, like, gte, lte, sql, desc, getTableColumns } from 'drizzle-orm';
 import { 
-  users, scripts, pendingScripts, approvedScripts, rejectedScripts, 
+  users, pendingScripts, approvedScripts, rejectedScripts, 
   giveaways, pendingGiveaways, approvedGiveaways, rejectedGiveaways, 
   giveawayEntries, giveawayReviews, scriptReviews, 
   giveawayRequirements, giveawayPrizes, pendingAds, approvedAds, rejectedAds,
@@ -123,8 +123,9 @@ export async function updateUserRole(userId: string, roles: string[]) {
 
 // Script functions
 export async function createScript(scriptData: NewScript & { framework?: string | string[] }): Promise<number> {
-  const timestamp = Math.floor(Date.now() / 1000);
-  const randomSuffix = Math.floor(Math.random() * 10000);
+  // Generate a smaller ID that fits PostgreSQL integer limits (max: 2,147,483,647)
+  const timestamp = Math.floor(Date.now() / 10000); // Divide by 10000 to get smaller number
+  const randomSuffix = Math.floor(Math.random() * 1000);
   const id = timestamp + randomSuffix;
   
   const frameworkArray = Array.isArray((scriptData as any).framework)
@@ -245,18 +246,6 @@ export async function getScriptById(id: number) {
     if (rejectedScript.length > 0) {
       return { ...rejectedScript[0], status: 'rejected' as const };
     }
-    
-    // Fallback to legacy scripts table
-    const legacyScript = await db
-      .select()
-      .from(scripts)
-      .where(eq(scripts.id, id))
-      .limit(1);
-      
-    if (legacyScript.length > 0) {
-      return { ...legacyScript[0], status: legacyScript[0].status ?? 'unknown' as const };
-    }
-    
     return null;
   } catch (error) {
     console.error('Error in getScriptById:', error);
@@ -440,8 +429,15 @@ export async function updateScript(id: number, updateData: any) {
 
 export async function deleteScript(id: number) {
   try {
-    const result = await db.delete(scripts).where(eq(scripts.id, id)).returning({ id: scripts.id });
-    return result.length > 0;
+    // Try to delete from all script tables
+    const pendingResult = await db.delete(pendingScripts).where(eq(pendingScripts.id, id)).returning();
+    if (pendingResult.length > 0) return true;
+    
+    const approvedResult = await db.delete(approvedScripts).where(eq(approvedScripts.id, id)).returning();
+    if (approvedResult.length > 0) return true;
+    
+    const rejectedResult = await db.delete(rejectedScripts).where(eq(rejectedScripts.id, id)).returning();
+    return rejectedResult.length > 0;
   } catch (error) {
     console.error('Error deleting script:', error);
     return false;
@@ -452,10 +448,9 @@ export async function deleteScript(id: number) {
 export async function createGiveaway(giveawayData: NewGiveaway) {
   console.log('createGiveaway called with:', giveawayData);
   
-  // Generate a unique ID for Xata Lite compatibility
-  // Use a smaller number that fits PostgreSQL integer limits
-  const timestamp = Math.floor(Date.now() / 1000); // Convert to seconds
-  const randomSuffix = Math.floor(Math.random() * 10000);
+  // Generate a unique ID that fits PostgreSQL integer limits (max: 2,147,483,647)
+  const timestamp = Math.floor(Date.now() / 10000); // Divide by 10000 to get smaller number
+  const randomSuffix = Math.floor(Math.random() * 1000);
   const id = timestamp + randomSuffix;
   
   // Provide default values for required fields
@@ -484,10 +479,9 @@ export async function createGiveaway(giveawayData: NewGiveaway) {
 export async function createGiveawayRequirement(requirementData: NewGiveawayRequirement) {
   console.log('createGiveawayRequirement called with:', requirementData);
   
-  // Generate a unique ID for Xata Lite compatibility
-  // Use a smaller number that fits PostgreSQL integer limits
-  const timestamp = Math.floor(Date.now() / 1000); // Convert to seconds
-  const randomSuffix = Math.floor(Math.random() * 10000);
+  // Generate a unique ID that fits PostgreSQL integer limits (max: 2,147,483,647)
+  const timestamp = Math.floor(Date.now() / 10000); // Divide by 10000 to get smaller number
+  const randomSuffix = Math.floor(Math.random() * 1000);
   const id = timestamp + randomSuffix;
   
   // Map snake_case input to camelCase schema fields
@@ -506,10 +500,9 @@ export async function createGiveawayRequirement(requirementData: NewGiveawayRequ
 export async function createGiveawayPrize(prizeData: NewGiveawayPrize) {
   console.log('createGiveawayPrize called with:', prizeData);
   
-  // Generate a unique ID for Xata Lite compatibility
-  // Use a smaller number that fits PostgreSQL integer limits
-  const timestamp = Math.floor(Date.now() / 1000); // Convert to seconds
-  const randomSuffix = Math.floor(Math.random() * 10000);
+  // Generate a unique ID that fits PostgreSQL integer limits (max: 2,147,483,647)
+  const timestamp = Math.floor(Date.now() / 10000); // Divide by 10000 to get smaller number
+  const randomSuffix = Math.floor(Math.random() * 1000);
   const id = timestamp + randomSuffix;
   
   // Map snake_case input to camelCase schema fields
@@ -816,10 +809,9 @@ export async function getUserGiveawayEntries(userId: string) {
 
 // Review functions
 export async function createGiveawayReview(reviewData: NewGiveawayReview) {
-  // Generate a unique ID for Xata Lite compatibility
-  // Use a smaller number that fits PostgreSQL integer limits
-  const timestamp = Math.floor(Date.now() / 1000); // Convert to seconds
-  const randomSuffix = Math.floor(Math.random() * 10000);
+  // Generate a unique ID that fits PostgreSQL integer limits (max: 2,147,483,647)
+  const timestamp = Math.floor(Date.now() / 10000); // Divide by 10000 to get smaller number
+  const randomSuffix = Math.floor(Math.random() * 1000);
   const id = timestamp + randomSuffix;
   
   const result = await db.insert(giveawayReviews).values({
@@ -836,10 +828,9 @@ export async function getGiveawayReviews(giveawayId: number) {
 }
 
 export async function createScriptReview(reviewData: NewScriptReview) {
-  // Generate a unique ID for Xata Lite compatibility
-  // Use a smaller number that fits PostgreSQL integer limits
-  const timestamp = Math.floor(Date.now() / 1000); // Convert to seconds
-  const randomSuffix = Math.floor(Math.random() * 10000);
+  // Generate a unique ID that fits PostgreSQL integer limits (max: 2,147,483,647)
+  const timestamp = Math.floor(Date.now() / 10000); // Divide by 10000 to get smaller number
+  const randomSuffix = Math.floor(Math.random() * 1000);
   const id = timestamp + randomSuffix;
   
   const result = await db.insert(scriptReviews).values({
@@ -898,9 +889,9 @@ export async function createAd(adData: NewAd & { status?: string }) {
 
 // Create pending ad (for user submissions)
 export async function createPendingAd(adData: NewAd) {
-  // Generate a unique ID for Xata Lite compatibility
-  const timestamp = Math.floor(Date.now() / 1000);
-  const randomSuffix = Math.floor(Math.random() * 10000);
+  // Generate a unique ID that fits PostgreSQL integer limits (max: 2,147,483,647)
+  const timestamp = Math.floor(Date.now() / 10000); // Divide by 10000 to get smaller number
+  const randomSuffix = Math.floor(Math.random() * 1000);
   const id = timestamp + randomSuffix;
 
   // Map snake_case input to camelCase schema fields and provide defaults

@@ -93,7 +93,6 @@ export default function SubmitScriptPage() {
     framework: [] as string[],
     sellerName: "",
     sellerEmail: "",
-    version: "1.0.0",
     demoUrl: "",
     documentationUrl: "",
     supportUrl: "",
@@ -139,7 +138,6 @@ export default function SubmitScriptPage() {
               framework: Array.isArray(script.framework) ? script.framework : (script.framework ? [script.framework] : []),
               sellerName: script.seller_name || "",
               sellerEmail: script.seller_email || "",
-              version: script.version || "1.0.0",
               demoUrl: script.demo_url || "",
               documentationUrl: script.documentation_url || "",
               supportUrl: script.support_url || "",
@@ -702,18 +700,6 @@ export default function SubmitScriptPage() {
                         />
                       </div>
 
-                      <div>
-                        <Label htmlFor="version" className="text-white font-medium">
-                          Version
-                        </Label>
-                        <Input
-                          id="version"
-                          value={formData.version}
-                          onChange={(e) => setFormData({ ...formData, version: e.target.value })}
-                          placeholder="1.0.0"
-                          className="mt-2 bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-orange-500"
-                        />
-                      </div>
                     </div>
 
                     {discount > 0 && (
@@ -1203,10 +1189,6 @@ export default function SubmitScriptPage() {
 
                       <div className="pt-4 border-t border-gray-700">
                         <div className="text-sm text-gray-400">
-                          <div className="flex items-center gap-2 mb-1">
-                            <Package className="h-4 w-4" />
-                            <span>Version {formData.version}</span>
-                          </div>
                           <div className="flex items-center gap-2">
                             <Star className="h-4 w-4" />
                             <span>By {formData.sellerName || "Your Name"}</span>

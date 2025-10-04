@@ -43,6 +43,7 @@ export async function POST(request: NextRequest) {
       framework: body.framework,
       seller_name: session.user?.name || "Unknown Seller",
       seller_email: session.user?.email || "",
+      sellerId: (session.user as any).id,
       tags: body.tags || [],
       features: body.features || [],
       requirements: body.requirements || [],
@@ -53,7 +54,6 @@ export async function POST(request: NextRequest) {
       demoUrl: body.demo_url || null,
       documentationUrl: body.documentation_url || null,
       supportUrl: body.support_url || null,
-      version: body.version || "1.0.0",
       status: approvalStatus as any,
       featured: body.featured || false,
       id: 0
