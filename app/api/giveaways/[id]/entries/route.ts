@@ -36,7 +36,7 @@ export async function POST(
     }
 
     // Check if user has already entered this giveaway
-    const existingEntry = await getUserGiveawayEntry(giveawayId, session.user.id as string)
+    const existingEntry = await getUserGiveawayEntry(giveawayId, (session.user as any).id)
     if (existingEntry) {
       return NextResponse.json({ error: "You have already entered this giveaway" }, { status: 400 })
     }
@@ -48,13 +48,14 @@ export async function POST(
 
     // Create entry
     const entryData = {
-      giveaway_id: giveawayId,
-      user_id: session.user.id as string,
-      user_name: session.user.name || null,
-      user_email: session.user.email || null,
+      id: 0, // Will be overridden by createGiveawayEntry
+      giveawayId: giveawayId,
+      userId: (session.user as any).id,
+      userName: session.user.name || null,
+      userEmail: session.user.email || null,
       status: 'active' as const,
-      points_earned: 0,
-      requirements_completed: [] as string[]
+      pointsEarned: 0,
+      requirementsCompleted: [] as string[]
     }
 
     const entryId = await createGiveawayEntry(entryData)
@@ -93,7 +94,7 @@ export async function GET(
       }
       
       // Get user's specific entry for this giveaway
-      const userEntry = await getUserGiveawayEntry(giveawayId, session.user.id as string)
+      const userEntry = await getUserGiveawayEntry(giveawayId, (session.user as any).id)
       return NextResponse.json({ entry: userEntry })
     } else {
       // Get all entries for this giveaway (admin only)

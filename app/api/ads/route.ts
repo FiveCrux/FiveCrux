@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/auth"
-import { getAds, hasRole, hasAnyRole, createAd } from "@/lib/database-new"
+import { getAds, hasRole, hasAnyRole, createPendingAd } from "@/lib/database-new"
 
 export async function POST(request: NextRequest) {
   try {
@@ -41,17 +41,20 @@ export async function POST(request: NextRequest) {
     }
 
     // Create the ad in the database
-    const adId = await createAd({
-      title: body.title,
-      description: body.description,
-      image_url: body.image_url || null,
-      link_url: body.link_url || null,
-      category: body.category,
+    const adId = await createPendingAd({
+      id: 0, // Provide a dummy id; your DB layer should ignore or auto-generate this
+      title: String(body.title),
+      description: String(body.description),
+      category: String(body.category),
+      createdBy: String((session.user as any)?.id || ""),
       status: approvalStatus,
-      priority: body.priority || 1,
-      start_date: body.start_date || new Date().toISOString(),
-      end_date: body.end_date || null,
-      created_by: String((session.user as any)?.id || ""),
+      priority: body.priority ? Number(body.priority) : 1,
+      imageUrl: body.image_url || null,
+      linkUrl: body.link_url || null,
+      startDate: body.start_date ? new Date(body.start_date) : new Date(),
+      endDate: body.end_date ? new Date(body.end_date) : null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     })
 
     const message = isFounderOrAdmin 
