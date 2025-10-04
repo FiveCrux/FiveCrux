@@ -5,18 +5,11 @@
 
 # next.js
 /.next/
-<<<<<<< HEAD
 .next/
 /out/
 
 # Next.js build artifacts (CRITICAL - never commit these)
-.next/
 .next/**
-
-=======
-/out/
-
->>>>>>> e8ec324db098d7789e0bc33d12fd6a38e6c6c587
 # production
 /build
 
@@ -41,7 +34,6 @@ nul
 
 # uploads (avoid bundling to Vercel)
 public/uploads/
-<<<<<<< HEAD
 
 # Drizzle migrations (exclude from deployment)
 drizzle/
@@ -57,5 +49,3 @@ drizzle/
 *.temp
 .DS_Store
 Thumbs.db
-=======
->>>>>>> e8ec324db098d7789e0bc33d12fd6a38e6c6c587

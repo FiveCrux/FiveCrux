@@ -67,6 +67,44 @@ export default function CreateGiveawayPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
 
+  // ALL HOOKS MUST BE CALLED AT THE TOP LEVEL - BEFORE ANY CONDITIONAL RETURNS
+  const formRef = useRef(null)
+  const previewRef = useRef(null)
+  const formInView = useInView(formRef, { once: true })
+  const previewInView = useInView(previewRef, { once: true })
+
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    value: "",
+    category: "",
+    endDate: "",
+    maxEntries: "",
+    difficulty: "Easy",
+    featured: false,
+    autoAnnounce: true,
+  })
+
+  const [requirements, setRequirements] = useState([
+    { id: 1, type: "discord", description: "Join our Discord server", points: 1, required: true },
+  ])
+
+  const [prizes, setPrizes] = useState([{ id: 1, name: "", description: "", value: "", position: 1 }])
+
+  const [media, setMedia] = useState({
+    images: [],
+    videos: [],
+    coverImage: null,
+    thumbnail: null,
+  })
+  const [selectedFiles, setSelectedFiles] = useState({
+    coverImage: null as File | null,
+    images: [] as File[],
+    videos: [] as File[],
+  })
+
+  const [errors, setErrors] = useState({})
+
   // Check if user has verified_creator role
   const hasVerifiedCreatorRole = session?.user && 
     (session.user as any).roles && 
@@ -111,44 +149,6 @@ export default function CreateGiveawayPage() {
       </div>
     )
   }
-
-  const formRef = useRef(null)
-  const previewRef = useRef(null)
-
-  const formInView = useInView(formRef, { once: true })
-  const previewInView = useInView(previewRef, { once: true })
-
-  const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    value: "",
-    category: "",
-    endDate: "",
-    maxEntries: "",
-    difficulty: "Easy",
-    featured: false,
-    autoAnnounce: true,
-  })
-
-  const [requirements, setRequirements] = useState([
-    { id: 1, type: "discord", description: "Join our Discord server", points: 1, required: true },
-  ])
-
-  const [prizes, setPrizes] = useState([{ id: 1, name: "", description: "", value: "", position: 1 }])
-
-  const [media, setMedia] = useState({
-    images: [],
-    videos: [],
-    coverImage: null,
-    thumbnail: null,
-  })
-  const [selectedFiles, setSelectedFiles] = useState({
-    coverImage: null as File | null,
-    images: [] as File[],
-    videos: [] as File[],
-  })
-
-  const [errors, setErrors] = useState({})
 
   const requirementTypes = [
     { value: "discord", label: "Join Discord", icon: "💬" },
