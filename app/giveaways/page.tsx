@@ -962,7 +962,7 @@ export default function GiveawaysPage() {
                     </div>
                     <div>
                       <h4 className="text-white font-semibold mb-2">Step 2: Click &quot;Enter&quot;</h4>
-                      <p className="text-sm">Click the "Enter Giveaway" button to submit your entry.</p>
+                      <p className="text-sm">Click the &quot;Enter Giveaway&quot; button to submit your entry.</p>
                     </div>
                     <div>
                       <h4 className="text-white font-semibold mb-2">Step 3: Wait for Results</h4>
