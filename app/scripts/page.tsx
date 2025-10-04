@@ -845,7 +845,7 @@ export default function ScriptsPage() {
                   Showing {sortedScripts.length} of {allScripts.length} scripts
                   {searchQuery && (
                     <span className="text-orange-500">
-                      for "<span className="font-semibold">{searchQuery}</span>"
+                      for <span className="font-semibold">{searchQuery}</span>
                     </span>
                   )}
                 </p>
