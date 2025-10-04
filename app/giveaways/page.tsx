@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState, useRef, JSXElementConstructor, Key, ReactElement, ReactNode, ReactPortal } from "react"
+import Image from "next/image"
 import { motion, useInView, AnimatePresence } from "framer-motion"
 import {
   Gift,
@@ -878,9 +879,11 @@ export default function GiveawaysPage() {
                       >
                         <div className="flex items-center space-x-4">
                           <div className="relative">
-                            <img
+                            <Image
                                 src={winner.avatar || "/cat.jpg"}
                               alt={winner.winner}
+                              width={40}
+                              height={40}
                               className="w-12 h-12 rounded-full border-2 border-yellow-400/50"
                             />
                             {winner.verified && (
@@ -958,7 +961,7 @@ export default function GiveawaysPage() {
                       <p className="text-sm">Complete all listed requirements for the giveaway you want to enter.</p>
                     </div>
                     <div>
-                      <h4 className="text-white font-semibold mb-2">Step 2: Click Enter</h4>
+                      <h4 className="text-white font-semibold mb-2">Step 2: Click &quot;Enter&quot;</h4>
                       <p className="text-sm">Click the "Enter Giveaway" button to submit your entry.</p>
                     </div>
                     <div>
