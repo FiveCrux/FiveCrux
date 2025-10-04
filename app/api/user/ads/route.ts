@@ -11,13 +11,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = session.user.id;
+    const userId = (session.user as any).id;
     const userEmail = session.user.email;
     console.log("User ads API - User:", { id: userId, email: userEmail });
 
-    // Fetch approved ads created by this user (createdBy == session.user.id)
+    // Fetch approved ads created by this user (createdBy == (session.user as any).id)
     const all = await getAds({ limit: 1000 });
-    const mine = all.filter((a: any) => a.createdBy === session.user.id);
+    const mine = all.filter((a: any) => a.createdBy === (session.user as any).id);
     return NextResponse.json({ ads: mine });
   } catch (error) {
     console.error('Error fetching user ads:', error);
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
       priority: body.priority ?? 1,
       startDate: body.start_date,
       endDate: body.end_date,
-      createdBy: session.user.id,
+      createdBy: (session.user as any).id,
     } as any);
     return NextResponse.json({ success: true, adId });
   } catch (error) {
@@ -69,7 +69,7 @@ export async function PATCH(request: NextRequest) {
 
     const { updateAd, getAdById } = await import('@/lib/database-new');
     const ad = await getAdById(Number(adId));
-    if (!ad || ad.createdBy !== session.user.id) {
+    if (!ad || ad.createdBy !== (session.user as any).id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
     const updated = await updateAd(Number(adId), updateData);
@@ -95,7 +95,7 @@ export async function DELETE(request: NextRequest) {
 
     const { getAdById, deleteAd } = await import('@/lib/database-new');
     const ad = await getAdById(Number(adId));
-    if (!ad || ad.createdBy !== session.user.id) {
+    if (!ad || ad.createdBy !== (session.user as any).id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
     const ok = await deleteAd(Number(adId));

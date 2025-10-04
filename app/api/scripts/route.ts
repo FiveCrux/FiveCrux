@@ -54,7 +54,6 @@ export async function POST(request: NextRequest) {
       demoUrl: body.demo_url || null,
       documentationUrl: body.documentation_url || null,
       supportUrl: body.support_url || null,
-      status: approvalStatus as any,
       featured: body.featured || false,
       id: 0
     })
