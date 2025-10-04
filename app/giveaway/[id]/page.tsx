@@ -435,8 +435,8 @@ export default function GiveawayDetailPage() {
   }
 
   const handleEnterGiveaway = async () => {
-    const requiredTasks = transformedGiveaway.requirements.filter((req) => req.required)
-    const completedRequired = requiredTasks.every((task) => completedTasks.includes(task.id))
+    const requiredTasks = transformedGiveaway.requirements.filter((req: any) => req.required)
+    const completedRequired = requiredTasks.every((task: any) => completedTasks.includes(task.id))
 
     if (!completedRequired) {
       alert("Please complete all required tasks first!")
@@ -466,10 +466,10 @@ export default function GiveawayDetailPage() {
     }
   }
 
-  const totalPoints = transformedGiveaway.requirements.reduce((sum, req) => sum + req.points, 0)
+  const totalPoints = transformedGiveaway.requirements.reduce((sum: any, req: any) => sum + req.points, 0)
   const earnedPoints = transformedGiveaway.requirements
-    .filter((req) => completedTasks.includes(req.id))
-    .reduce((sum, req) => sum + req.points, 0)
+    .filter((req: any) => completedTasks.includes(req.id))
+    .reduce((sum: any, req: any) => sum + req.points, 0)
 
   const progressPercentage = (transformedGiveaway.entries / transformedGiveaway.maxEntries) * 100
 
