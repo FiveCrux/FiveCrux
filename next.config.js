@@ -4,11 +4,12 @@ const nextConfig = {
     domains: ['localhost'],
   },
   experimental: {
-    serverComponentsExternalPackages: ['drizzle-orm', 'pg', 'postgres', 'framer-motion', 'recharts']
+    serverComponentsExternalPackages: ['drizzle-orm', 'pg', 'postgres']
   },
   webpack: (config, { isServer }) => {
     if (isServer) {
-      config.externals.push('drizzle-orm', 'pg', 'postgres', 'framer-motion', 'recharts')
+      // Only externalize database-related packages
+      config.externals.push('drizzle-orm', 'pg', 'postgres')
     }
     return config
   }
