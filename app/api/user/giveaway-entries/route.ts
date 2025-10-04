@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Authentication required" }, { status: 401 })
     }
 
-    const entries = await getUserGiveawayEntries(session.user.id as string)
+    const entries = await getUserGiveawayEntries((session.user as any).id as string)
     
     return NextResponse.json({ entries })
   } catch (error) {
