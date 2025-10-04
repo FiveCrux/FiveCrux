@@ -3,13 +3,13 @@ import { eq, and, or, like, gte, lte, sql, desc, getTableColumns } from 'drizzle
 import { 
   users, pendingScripts, approvedScripts, rejectedScripts, 
   giveaways, pendingGiveaways, approvedGiveaways, rejectedGiveaways, 
-  giveawayEntries, giveawayReviews, scriptReviews, 
+  giveawayEntries, 
   giveawayRequirements, giveawayPrizes, pendingAds, approvedAds, rejectedAds,
   type Script, type Giveaway 
 } from './schema';
 import type { 
   NewUser, NewScript, NewGiveaway, NewGiveawayEntry, 
-  NewGiveawayReview, NewScriptReview, NewAd, 
+  NewAd, 
   NewGiveawayRequirement, NewGiveawayPrize 
 } from './schema';
 import { validateFrameworks, isValidFramework } from './constants';
@@ -807,44 +807,6 @@ export async function getUserGiveawayEntries(userId: string) {
   .orderBy(desc(giveawayEntries.entryDate));
 }
 
-// Review functions
-export async function createGiveawayReview(reviewData: NewGiveawayReview) {
-  // Generate a unique ID that fits PostgreSQL integer limits (max: 2,147,483,647)
-  const timestamp = Math.floor(Date.now() / 10000); // Divide by 10000 to get smaller number
-  const randomSuffix = Math.floor(Math.random() * 1000);
-  const id = timestamp + randomSuffix;
-  
-  const result = await db.insert(giveawayReviews).values({
-    ...reviewData,
-    id: id
-  }).returning({ id: giveawayReviews.id });
-  return result[0]?.id;
-}
-
-export async function getGiveawayReviews(giveawayId: number) {
-  return await db.select().from(giveawayReviews)
-    .where(eq(giveawayReviews.giveawayId, giveawayId))
-    .orderBy(desc(giveawayReviews.createdAt));
-}
-
-export async function createScriptReview(reviewData: NewScriptReview) {
-  // Generate a unique ID that fits PostgreSQL integer limits (max: 2,147,483,647)
-  const timestamp = Math.floor(Date.now() / 10000); // Divide by 10000 to get smaller number
-  const randomSuffix = Math.floor(Math.random() * 1000);
-  const id = timestamp + randomSuffix;
-  
-  const result = await db.insert(scriptReviews).values({
-    ...reviewData,
-    id: id
-  }).returning({ id: scriptReviews.id });
-  return result[0]?.id;
-}
-
-export async function getScriptReviews(scriptId: number) {
-  return await db.select().from(scriptReviews)
-    .where(eq(scriptReviews.scriptId, scriptId))
-    .orderBy(desc(scriptReviews.createdAt));
-}
 
 // Ad functions - using new approval system
 
@@ -1089,15 +1051,3 @@ export async function deleteAd(id: number) {
   }
 }
 
-// Review functions
-export async function getUserScriptReview(scriptId: number, userId: string) {
-  return await db.select().from(scriptReviews)
-    .where(and(eq(scriptReviews.scriptId, scriptId), eq(scriptReviews.reviewerEmail, userId)))
-    .limit(1);
-}
-
-export async function getUserGiveawayReview(giveawayId: number, userId: string) {
-  return await db.select().from(giveawayReviews)
-    .where(and(eq(giveawayReviews.giveawayId, giveawayId), eq(giveawayReviews.reviewerEmail, userId)))
-    .limit(1);
-}

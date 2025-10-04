@@ -189,34 +189,6 @@ export const giveawayEntries = pgTable('giveaway_entries', {
   updatedAt: timestamp('updated_at').defaultNow(),
 });
 
-// Giveaway reviews table
-export const giveawayReviews = pgTable('giveaway_reviews', {
-  id: integer('id').primaryKey().notNull(),
-  giveawayId: integer('giveaway_id').notNull().references(() => giveaways.id, { onDelete: 'cascade' }),
-  reviewerName: text('reviewer_name').notNull(),
-  reviewerEmail: text('reviewer_email').notNull(),
-  reviewerId: text('reviewer_id'),
-  rating: integer('rating').notNull(),
-  title: text('title'),
-  comment: text('comment'),
-  verifiedParticipant: boolean('verified_participant').default(false),
-  createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at').defaultNow(),
-});
-
-// Script reviews table
-export const scriptReviews = pgTable('script_reviews', {
-  id: integer('id').primaryKey().notNull(),
-  scriptId: integer('script_id').notNull().references(() => approvedScripts.id, { onDelete: 'cascade' }),
-  reviewerName: text('reviewer_name').notNull(),
-  reviewerEmail: text('reviewer_email').notNull(),
-  rating: integer('rating').notNull(),
-  title: text('title'),
-  comment: text('comment'),
-  verifiedPurchase: boolean('verified_purchase').default(false),
-  createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at').defaultNow(),
-});
 
 // Old ads table removed - using new approval system with pending_ads, approved_ads, rejected_ads
 
@@ -268,12 +240,10 @@ export const usersRelations = relations(users, ({ many }) => ({
 
 // Scripts relations moved to approvedScripts
 export const approvedScriptsRelations = relations(approvedScripts, ({ many }) => ({
-  reviews: many(scriptReviews),
 }));
 
 export const giveawaysRelations = relations(giveaways, ({ many }) => ({
   entries: many(giveawayEntries),
-  reviews: many(giveawayReviews),
   requirements: many(giveawayRequirements),
   prizes: many(giveawayPrizes),
 }));
@@ -289,19 +259,6 @@ export const giveawayEntriesRelations = relations(giveawayEntries, ({ one }) => 
   }),
 }));
 
-export const giveawayReviewsRelations = relations(giveawayReviews, ({ one }) => ({
-  giveaway: one(giveaways, {
-    fields: [giveawayReviews.giveawayId],
-    references: [giveaways.id],
-  }),
-}));
-
-export const scriptReviewsRelations = relations(scriptReviews, ({ one }) => ({
-  script: one(approvedScripts, {
-    fields: [scriptReviews.scriptId],
-    references: [approvedScripts.id],
-  }),
-}));
 
 export const giveawayRequirementsRelations = relations(giveawayRequirements, ({ one }) => ({
   giveaway: one(giveaways, {
@@ -330,10 +287,6 @@ export type GiveawayPrize = typeof giveawayPrizes.$inferSelect;
 export type NewGiveawayPrize = typeof giveawayPrizes.$inferInsert;
 export type GiveawayEntry = typeof giveawayEntries.$inferSelect;
 export type NewGiveawayEntry = typeof giveawayEntries.$inferInsert;
-export type GiveawayReview = typeof giveawayReviews.$inferSelect;
-export type NewGiveawayReview = typeof giveawayReviews.$inferInsert;
-export type ScriptReview = typeof scriptReviews.$inferSelect;
-export type NewScriptReview = typeof scriptReviews.$inferInsert;
 export type Ad = typeof approvedAds.$inferSelect;
 export type NewAd = typeof approvedAds.$inferInsert;
 export type PendingAd = typeof pendingAds.$inferSelect;
