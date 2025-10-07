@@ -3,9 +3,7 @@ const nextConfig = {
   images: {
     domains: ['localhost'],
   },
-  experimental: {
-    serverComponentsExternalPackages: ['drizzle-orm', 'pg', 'postgres']
-  },
+  serverExternalPackages: ['drizzle-orm', 'pg', 'postgres'],
   webpack: (config, { isServer }) => {
     if (isServer) {
       // Only externalize database-related packages

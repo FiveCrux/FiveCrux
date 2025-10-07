@@ -6,7 +6,9 @@ import {
   getApprovedGiveaways, 
   getRejectedGiveaways,
   approveGiveaway,
-  rejectGiveaway
+  rejectGiveaway,
+  getGiveawayRequirements,
+  getGiveawayPrizes
 } from '@/lib/database-new';
 
 export async function GET(request: NextRequest) {
@@ -34,55 +36,137 @@ export async function GET(request: NextRequest) {
         getApprovedGiveaways(1000),
         getRejectedGiveaways(1000)
       ]);
+      
+      // Fetch requirements and prizes for all giveaways
+      const allGiveaways = [...pending, ...approved, ...rejected];
+      const giveawayIds = allGiveaways.map(g => g.id);
+      
+      const [allRequirements, allPrizes] = await Promise.all([
+        Promise.all(giveawayIds.map(id => getGiveawayRequirements(id))),
+        Promise.all(giveawayIds.map(id => getGiveawayPrizes(id)))
+      ]);
+      
+      // Create maps for easy lookup
+      const requirementsMap = new Map();
+      const prizesMap = new Map();
+      
+      giveawayIds.forEach((id, index) => {
+        requirementsMap.set(id, allRequirements[index]);
+        prizesMap.set(id, allPrizes[index]);
+      });
+      
       giveaways = [
         ...pending.map(g => ({ 
           ...g, 
           status: 'pending',
           creator_name: g.creatorName,
           total_value: g.totalValue,
-          created_at: g.createdAt || g.submittedAt
+          created_at: g.createdAt || g.submittedAt,
+          requirements: requirementsMap.get(g.id) || [],
+          prizes: prizesMap.get(g.id) || []
         })),
         ...approved.map(g => ({ 
           ...g, 
           status: 'approved',
           creator_name: g.creatorName,
           total_value: g.totalValue,
-          created_at: g.createdAt || g.approvedAt
+          created_at: g.createdAt || g.approvedAt,
+          requirements: requirementsMap.get(g.id) || [],
+          prizes: prizesMap.get(g.id) || []
         })),
         ...rejected.map(g => ({ 
           ...g, 
           status: 'rejected',
           creator_name: g.creatorName,
           total_value: g.totalValue,
-          created_at: g.createdAt || g.rejectedAt
+          created_at: g.createdAt || g.rejectedAt,
+          requirements: requirementsMap.get(g.id) || [],
+          prizes: prizesMap.get(g.id) || []
         }))
       ];
     } else if (status === "pending") {
       giveaways = await getPendingGiveaways(1000);
+      
+      // Fetch requirements and prizes for pending giveaways
+      const giveawayIds = giveaways.map(g => g.id);
+      const [allRequirements, allPrizes] = await Promise.all([
+        Promise.all(giveawayIds.map(id => getGiveawayRequirements(id))),
+        Promise.all(giveawayIds.map(id => getGiveawayPrizes(id)))
+      ]);
+      
+      // Create maps for easy lookup
+      const requirementsMap = new Map();
+      const prizesMap = new Map();
+      
+      giveawayIds.forEach((id, index) => {
+        requirementsMap.set(id, allRequirements[index]);
+        prizesMap.set(id, allPrizes[index]);
+      });
+      
       giveaways = giveaways.map(g => ({ 
         ...g, 
         status: 'pending',
         creator_name: g.creatorName,
         total_value: g.totalValue,
-        created_at: g.createdAt || g.submittedAt
+        created_at: g.createdAt || g.submittedAt,
+        requirements: requirementsMap.get(g.id) || [],
+        prizes: prizesMap.get(g.id) || []
       }));
     } else if (status === "approved") {
       giveaways = await getApprovedGiveaways(1000);
+      
+      // Fetch requirements and prizes for approved giveaways
+      const giveawayIds = giveaways.map(g => g.id);
+      const [allRequirements, allPrizes] = await Promise.all([
+        Promise.all(giveawayIds.map(id => getGiveawayRequirements(id))),
+        Promise.all(giveawayIds.map(id => getGiveawayPrizes(id)))
+      ]);
+      
+      // Create maps for easy lookup
+      const requirementsMap = new Map();
+      const prizesMap = new Map();
+      
+      giveawayIds.forEach((id, index) => {
+        requirementsMap.set(id, allRequirements[index]);
+        prizesMap.set(id, allPrizes[index]);
+      });
+      
       giveaways = giveaways.map(g => ({ 
         ...g, 
         status: 'approved',
         creator_name: g.creatorName,
         total_value: g.totalValue,
-        created_at: g.createdAt || g.approvedAt
+        created_at: g.createdAt || g.approvedAt,
+        requirements: requirementsMap.get(g.id) || [],
+        prizes: prizesMap.get(g.id) || []
       }));
     } else if (status === "rejected") {
       giveaways = await getRejectedGiveaways(1000);
+      
+      // Fetch requirements and prizes for rejected giveaways
+      const giveawayIds = giveaways.map(g => g.id);
+      const [allRequirements, allPrizes] = await Promise.all([
+        Promise.all(giveawayIds.map(id => getGiveawayRequirements(id))),
+        Promise.all(giveawayIds.map(id => getGiveawayPrizes(id)))
+      ]);
+      
+      // Create maps for easy lookup
+      const requirementsMap = new Map();
+      const prizesMap = new Map();
+      
+      giveawayIds.forEach((id, index) => {
+        requirementsMap.set(id, allRequirements[index]);
+        prizesMap.set(id, allPrizes[index]);
+      });
+      
       giveaways = giveaways.map(g => ({ 
         ...g, 
         status: 'rejected',
         creator_name: g.creatorName,
         total_value: g.totalValue,
-        created_at: g.createdAt || g.rejectedAt
+        created_at: g.createdAt || g.rejectedAt,
+        requirements: requirementsMap.get(g.id) || [],
+        prizes: prizesMap.get(g.id) || []
       }));
     }
 

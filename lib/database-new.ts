@@ -1,4 +1,4 @@
-import { db } from './db';
+import { db } from './db/client';
 import { eq, and, or, like, gte, lte, sql, desc, getTableColumns } from 'drizzle-orm';
 import { 
   users, pendingScripts, approvedScripts, rejectedScripts, 
@@ -6,12 +6,12 @@ import {
   giveawayEntries, 
   giveawayRequirements, giveawayPrizes, pendingAds, approvedAds, rejectedAds,
   type Script, type Giveaway 
-} from './schema';
+} from './db/schema';
 import type { 
   NewUser, NewScript, NewGiveaway, NewGiveawayEntry, 
   NewAd, 
   NewGiveawayRequirement, NewGiveawayPrize 
-} from './schema';
+} from './db/schema';
 import { validateFrameworks, isValidFramework } from './constants';
 
 // Valid roles in the system
@@ -146,9 +146,10 @@ export async function createScript(scriptData: NewScript & { framework?: string 
     images: scriptData.images || [],
     videos: scriptData.videos || [],
     screenshots: scriptData.screenshots || [],
-    tags: scriptData.tags || [],
+    // tags: scriptData.tags || [],
     features: scriptData.features || [],
     requirements: scriptData.requirements || [],
+    links: scriptData.links || [],
     // Normalize framework as text[] for DB with validation
     framework: validatedFrameworks,
   };
@@ -366,6 +367,83 @@ export async function rejectScript(scriptId: number, adminId: string, rejectionR
   }
 }
 
+// Function to handle script edits that require re-approval
+export async function updateScriptForReapproval(id: number, updateData: any) {
+  try {
+    console.log('updateScriptForReapproval called with:', { id, updateData });
+
+    // First, get the current script from approved_scripts
+    const currentScript = await db.select().from(approvedScripts).where(eq(approvedScripts.id, id)).limit(1);
+    
+    if (!currentScript[0]) {
+      throw new Error('Script not found in approved_scripts');
+    }
+
+    // Map incoming payload keys (may be snake_case) to schema property names
+    const mappedUpdate: any = { 
+      updatedAt: new Date(),
+      submittedAt: new Date() // Reset submission time for re-approval
+    };
+
+    const assignIfDefined = (prop: string, value: any) => {
+      if (value !== undefined) mappedUpdate[prop] = value;
+    };
+
+    // Simple passthrough fields (same casing as schema)
+    assignIfDefined('title', updateData.title);
+    assignIfDefined('description', updateData.description);
+    if (updateData.price !== undefined) assignIfDefined('price', Number(updateData.price));
+    if (updateData.originalPrice !== undefined) assignIfDefined('originalPrice', updateData.originalPrice === null ? null : Number(updateData.originalPrice));
+    // Accept snake_case aliases
+    if (updateData.original_price !== undefined) assignIfDefined('originalPrice', updateData.original_price === null ? null : Number(updateData.original_price));
+    assignIfDefined('category', updateData.category);
+    // Frameworks: accept string or array and validate
+    if (updateData.framework !== undefined) {
+      const arrayValue = Array.isArray(updateData.framework) ? updateData.framework : (updateData.framework ? [updateData.framework] : []);
+      assignIfDefined('framework', validateFrameworks(arrayValue));
+    }
+    assignIfDefined('seller_name', updateData.seller_name);
+    assignIfDefined('seller_email', updateData.seller_email);
+    assignIfDefined('tags', updateData.tags);
+    assignIfDefined('features', updateData.features);
+    assignIfDefined('requirements', updateData.requirements);
+    assignIfDefined('links', updateData.links);
+    assignIfDefined('images', updateData.images);
+    assignIfDefined('videos', updateData.videos);
+    assignIfDefined('screenshots', updateData.screenshots);
+    // Media with snake_case aliases
+    if (updateData.coverImage !== undefined) assignIfDefined('coverImage', updateData.coverImage);
+    if (updateData.cover_image !== undefined) assignIfDefined('coverImage', updateData.cover_image);
+    assignIfDefined('version', updateData.version);
+    if (updateData.featured !== undefined) assignIfDefined('featured', Boolean(updateData.featured));
+
+    console.log('Mapped update object for re-approval:', mappedUpdate);
+
+    // Start a transaction to move script from approved to pending
+    const result = await db.transaction(async (tx) => {
+      // 1. Delete from approved_scripts
+      await tx.delete(approvedScripts).where(eq(approvedScripts.id, id));
+      
+      // 2. Insert into pending_scripts with updated data
+      const newPendingScript = await tx.insert(pendingScripts)
+        .values({
+          ...currentScript[0],
+          ...mappedUpdate,
+          id: id, // Keep the same ID
+        })
+        .returning();
+
+      return newPendingScript[0];
+    });
+
+    console.log('Script moved to pending for re-approval:', result);
+    return result;
+  } catch (error) {
+    console.error('Error updating script for re-approval:', error);
+    throw error;
+  }
+}
+
 // Legacy function for backward compatibility
 export async function updateScript(id: number, updateData: any) {
   try {
@@ -396,18 +474,13 @@ export async function updateScript(id: number, updateData: any) {
     assignIfDefined('tags', updateData.tags);
     assignIfDefined('features', updateData.features);
     assignIfDefined('requirements', updateData.requirements);
+    assignIfDefined('links', updateData.links);
     assignIfDefined('images', updateData.images);
     assignIfDefined('videos', updateData.videos);
     assignIfDefined('screenshots', updateData.screenshots);
-    // Media and links with snake_case aliases
+    // Media with snake_case aliases
     if (updateData.coverImage !== undefined) assignIfDefined('coverImage', updateData.coverImage);
     if (updateData.cover_image !== undefined) assignIfDefined('coverImage', updateData.cover_image);
-    if (updateData.demoUrl !== undefined) assignIfDefined('demoUrl', updateData.demoUrl);
-    if (updateData.demo_url !== undefined) assignIfDefined('demoUrl', updateData.demo_url);
-    if (updateData.documentationUrl !== undefined) assignIfDefined('documentationUrl', updateData.documentationUrl);
-    if (updateData.documentation_url !== undefined) assignIfDefined('documentationUrl', updateData.documentation_url);
-    if (updateData.supportUrl !== undefined) assignIfDefined('supportUrl', updateData.supportUrl);
-    if (updateData.support_url !== undefined) assignIfDefined('supportUrl', updateData.support_url);
     assignIfDefined('version', updateData.version);
     if (updateData.featured !== undefined) assignIfDefined('featured', Boolean(updateData.featured));
 
@@ -544,10 +617,20 @@ export async function getGiveawayById(id: number) {
       const requirements = await db.select().from(giveawayRequirements).where(eq(giveawayRequirements.giveawayId, id));
       const prizes = await db.select().from(giveawayPrizes).where(eq(giveawayPrizes.giveawayId, id));
       
+      // Fetch creator's Discord profile picture if creatorId exists
+      let creatorImage = null;
+      if (giveaway.creatorId) {
+        const creatorResult = await db.select().from(users).where(eq(users.id, giveaway.creatorId));
+        if (creatorResult.length > 0) {
+          creatorImage = creatorResult[0].image;
+        }
+      }
+      
       return {
         ...giveaway,
         requirements,
         prizes,
+        creator_image: creatorImage,
       };
     }
     
@@ -557,10 +640,20 @@ export async function getGiveawayById(id: number) {
       const requirements = await db.select().from(giveawayRequirements).where(eq(giveawayRequirements.giveawayId, id));
       const prizes = await db.select().from(giveawayPrizes).where(eq(giveawayPrizes.giveawayId, id));
       
+      // Fetch creator's Discord profile picture if creatorId exists
+      let creatorImage = null;
+      if (giveaway.creatorId) {
+        const creatorResult = await db.select().from(users).where(eq(users.id, giveaway.creatorId));
+        if (creatorResult.length > 0) {
+          creatorImage = creatorResult[0].image;
+        }
+      }
+      
       return {
         ...giveaway,
         requirements,
         prizes,
+        creator_image: creatorImage,
       };
     }
     
@@ -570,10 +663,20 @@ export async function getGiveawayById(id: number) {
       const requirements = await db.select().from(giveawayRequirements).where(eq(giveawayRequirements.giveawayId, id));
       const prizes = await db.select().from(giveawayPrizes).where(eq(giveawayPrizes.giveawayId, id));
       
+      // Fetch creator's Discord profile picture if creatorId exists
+      let creatorImage = null;
+      if (giveaway.creatorId) {
+        const creatorResult = await db.select().from(users).where(eq(users.id, giveaway.creatorId));
+        if (creatorResult.length > 0) {
+          creatorImage = creatorResult[0].image;
+        }
+      }
+      
       return {
         ...giveaway,
         requirements,
         prizes,
+        creator_image: creatorImage,
       };
     }
     
@@ -595,6 +698,71 @@ export async function getGiveawayById(id: number) {
   } catch (error) {
     console.error('Error in getGiveawayById:', error);
     return null;
+  }
+}
+
+export async function updateGiveawayForReapproval(id: number, updateData: any) {
+  try {
+    console.log('updateGiveawayForReapproval called with:', { id, updateData });
+
+    // First, get the current giveaway from approved_giveaways
+    const currentGiveaway = await db.select().from(approvedGiveaways).where(eq(approvedGiveaways.id, id)).limit(1);
+    
+    if (!currentGiveaway[0]) {
+      throw new Error('Giveaway not found in approved_giveaways');
+    }
+
+    // Map incoming payload keys (may be snake_case) to schema property names
+    const mappedUpdate: any = { 
+      updatedAt: new Date(),
+      submittedAt: new Date() // Reset submission time for re-approval
+    };
+
+    const assignIfDefined = (prop: string, value: any) => {
+      if (value !== undefined) mappedUpdate[prop] = value;
+    };
+
+    // Simple passthrough fields (same casing as schema)
+    assignIfDefined('title', updateData.title);
+    assignIfDefined('description', updateData.description);
+    if (updateData.total_value !== undefined) assignIfDefined('totalValue', updateData.total_value);
+    if (updateData.end_date !== undefined) assignIfDefined('endDate', updateData.end_date);
+    assignIfDefined('difficulty', updateData.difficulty);
+    assignIfDefined('creator_name', updateData.creator_name);
+    assignIfDefined('creator_email', updateData.creator_email);
+    assignIfDefined('creator_id', updateData.creator_id);
+    assignIfDefined('images', updateData.images);
+    assignIfDefined('videos', updateData.videos);
+    if (updateData.cover_image !== undefined) assignIfDefined('coverImage', updateData.cover_image);
+    assignIfDefined('tags', updateData.tags);
+    assignIfDefined('rules', updateData.rules);
+    if (updateData.featured !== undefined) assignIfDefined('featured', Boolean(updateData.featured));
+    if (updateData.auto_announce !== undefined) assignIfDefined('autoAnnounce', Boolean(updateData.auto_announce));
+
+    console.log('Mapped update object for re-approval:', mappedUpdate);
+
+    // Start a transaction to move giveaway from approved to pending
+    const result = await db.transaction(async (tx) => {
+      // 1. Delete from approved_giveaways
+      await tx.delete(approvedGiveaways).where(eq(approvedGiveaways.id, id));
+      
+      // 2. Insert into pending_giveaways with updated data
+      const newPendingGiveaway = await tx.insert(pendingGiveaways)
+        .values({
+          ...currentGiveaway[0],
+          ...mappedUpdate,
+          id: id, // Keep the same ID
+        })
+        .returning();
+
+      return newPendingGiveaway[0];
+    });
+
+    console.log('Giveaway moved to pending for re-approval:', result);
+    return result;
+  } catch (error) {
+    console.error('Error updating giveaway for re-approval:', error);
+    throw error;
   }
 }
 
@@ -1051,3 +1219,42 @@ export async function deleteAd(id: number) {
   }
 }
 
+// Giveaway requirements and prizes functions
+export async function getGiveawayRequirements(giveawayId: number): Promise<any[]> {
+  try {
+    return await db.select().from(giveawayRequirements).where(eq(giveawayRequirements.giveawayId, giveawayId));
+  } catch (error) {
+    console.error('Error fetching giveaway requirements:', error);
+    return [];
+  }
+}
+
+export async function getGiveawayPrizes(giveawayId: number): Promise<any[]> {
+  try {
+    return await db.select().from(giveawayPrizes).where(eq(giveawayPrizes.giveawayId, giveawayId));
+  } catch (error) {
+    console.error('Error fetching giveaway prizes:', error);
+    return [];
+  }
+}
+
+// Delete giveaway requirements and prizes functions
+export async function deleteGiveawayRequirement(giveawayId: number): Promise<boolean> {
+  try {
+    await db.delete(giveawayRequirements).where(eq(giveawayRequirements.giveawayId, giveawayId));
+    return true;
+  } catch (error) {
+    console.error('Error deleting giveaway requirements:', error);
+    return false;
+  }
+}
+
+export async function deleteGiveawayPrize(giveawayId: number): Promise<boolean> {
+  try {
+    await db.delete(giveawayPrizes).where(eq(giveawayPrizes.giveawayId, giveawayId));
+    return true;
+  } catch (error) {
+    console.error('Error deleting giveaway prizes:', error);
+    return false;
+  }
+}
