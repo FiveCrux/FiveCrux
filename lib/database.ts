@@ -1,9 +1,13 @@
 /**
- * @deprecated This file is deprecated. Use @/lib/database-new instead.
+ * @deprecated This file is deprecated. Use @/lib/db/client instead.
  * This file is kept for backward compatibility and type exports only.
- * All database operations have been migrated to Drizzle ORM in database-new.ts
+ * All database operations have been migrated to Drizzle ORM in lib/db/client.ts
  */
 
+// Re-export from canonical database client
+export * from './db/client';
+
+// Legacy type exports for backward compatibility
 export type UserRole = "founder" | "verified_creator" | "crew" | "admin" | "moderator" | "user"
 
 export interface User {
@@ -150,5 +154,5 @@ export interface Ad {
   updated_at: string
 }
 
-// All database functions have been migrated to @/lib/database-new
+// All database functions have been migrated to @/lib/db/client
 // This file is kept for type exports and backward compatibility only
