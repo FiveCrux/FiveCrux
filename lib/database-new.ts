@@ -539,7 +539,13 @@ export async function createGiveaway(giveawayData: NewGiveaway) {
     status: giveawayData.status || 'active',
     featured: giveawayData.featured ?? false,
     entriesCount: giveawayData.entriesCount || (giveawayData as any).entries_count || 0,
-    maxEntries: giveawayData.maxEntries || (giveawayData as any).max_entries || null
+    maxEntries: giveawayData.maxEntries || (giveawayData as any).max_entries || null,
+    // Map media fields
+    images: giveawayData.images || (giveawayData as any).images || [],
+    videos: giveawayData.videos || (giveawayData as any).videos || [],
+    coverImage: giveawayData.coverImage || (giveawayData as any).cover_image || null,
+    tags: giveawayData.tags || (giveawayData as any).tags || [],
+    rules: giveawayData.rules || (giveawayData as any).rules || []
   };
   
   console.log('giveawayWithDefaults:', giveawayWithDefaults);
@@ -631,6 +637,7 @@ export async function getGiveawayById(id: number) {
         requirements,
         prizes,
         creator_image: creatorImage,
+        table_source: 'approved',
       };
     }
     
@@ -654,6 +661,7 @@ export async function getGiveawayById(id: number) {
         requirements,
         prizes,
         creator_image: creatorImage,
+        table_source: 'pending',
       };
     }
     
@@ -677,6 +685,7 @@ export async function getGiveawayById(id: number) {
         requirements,
         prizes,
         creator_image: creatorImage,
+        table_source: 'rejected',
       };
     }
     
@@ -691,6 +700,7 @@ export async function getGiveawayById(id: number) {
         ...giveaway,
         requirements,
         prizes,
+        table_source: 'legacy',
       };
     }
     
@@ -770,8 +780,17 @@ export async function updateGiveaway(id: number, updateData: Partial<NewGiveaway
   try {
     const fields = Object.keys(updateData);
     if (fields.length === 0) return null;
+    
     const updateObject: any = { updatedAt: new Date(), ...updateData };
-    const result = await db.update(giveaways).set(updateObject).where(eq(giveaways.id, id)).returning();
+    
+    // Try to update in pending_giveaways first (most common case for edits)
+    let result = await db.update(pendingGiveaways).set(updateObject).where(eq(pendingGiveaways.id, id)).returning();
+    if (result.length > 0) {
+      return result[0];
+    }
+    
+    // Fallback to old giveaways table for backward compatibility
+    result = await db.update(giveaways).set(updateObject).where(eq(giveaways.id, id)).returning() as any;
     return result[0] ?? null;
   } catch (error) {
     console.error('Error updating giveaway:', error);
@@ -781,8 +800,66 @@ export async function updateGiveaway(id: number, updateData: Partial<NewGiveaway
 
 export async function deleteGiveaway(id: number) {
   try {
-    const result = await db.delete(giveaways).where(eq(giveaways.id, id)).returning({ id: giveaways.id });
-    return result.length > 0;
+    console.log(`Attempting to delete giveaway with ID: ${id}`);
+    
+    // Try to delete from pending_giveaways first
+    let result = await db.delete(pendingGiveaways).where(eq(pendingGiveaways.id, id)).returning({ id: pendingGiveaways.id });
+    if (result.length > 0) {
+      console.log(`Found giveaway in pending_giveaways, deleting related data...`);
+      // Also delete related entries, requirements and prizes
+      const [entriesDeleted, requirementsDeleted, prizesDeleted] = await Promise.all([
+        deleteGiveawayEntry(id),
+        deleteGiveawayRequirement(id),
+        deleteGiveawayPrize(id)
+      ]);
+      console.log(`Deletion results - Entries: ${entriesDeleted}, Requirements: ${requirementsDeleted}, Prizes: ${prizesDeleted}`);
+      return true;
+    }
+
+    // Try to delete from approved_giveaways
+    result = await db.delete(approvedGiveaways).where(eq(approvedGiveaways.id, id)).returning({ id: approvedGiveaways.id });
+    if (result.length > 0) {
+      console.log(`Found giveaway in approved_giveaways, deleting related data...`);
+      // Also delete related entries, requirements and prizes
+      const [entriesDeleted, requirementsDeleted, prizesDeleted] = await Promise.all([
+        deleteGiveawayEntry(id),
+        deleteGiveawayRequirement(id),
+        deleteGiveawayPrize(id)
+      ]);
+      console.log(`Deletion results - Entries: ${entriesDeleted}, Requirements: ${requirementsDeleted}, Prizes: ${prizesDeleted}`);
+      return true;
+    }
+
+    // Try to delete from rejected_giveaways
+    result = await db.delete(rejectedGiveaways).where(eq(rejectedGiveaways.id, id)).returning({ id: rejectedGiveaways.id });
+    if (result.length > 0) {
+      console.log(`Found giveaway in rejected_giveaways, deleting related data...`);
+      // Also delete related entries, requirements and prizes
+      const [entriesDeleted, requirementsDeleted, prizesDeleted] = await Promise.all([
+        deleteGiveawayEntry(id),
+        deleteGiveawayRequirement(id),
+        deleteGiveawayPrize(id)
+      ]);
+      console.log(`Deletion results - Entries: ${entriesDeleted}, Requirements: ${requirementsDeleted}, Prizes: ${prizesDeleted}`);
+      return true;
+    }
+
+    // Fallback to legacy giveaways table
+    result = await db.delete(giveaways).where(eq(giveaways.id, id)).returning({ id: giveaways.id });
+    if (result.length > 0) {
+      console.log(`Found giveaway in legacy giveaways table, deleting related data...`);
+      // Also delete related entries, requirements and prizes
+      const [entriesDeleted, requirementsDeleted, prizesDeleted] = await Promise.all([
+        deleteGiveawayEntry(id),
+        deleteGiveawayRequirement(id),
+        deleteGiveawayPrize(id)
+      ]);
+      console.log(`Deletion results - Entries: ${entriesDeleted}, Requirements: ${requirementsDeleted}, Prizes: ${prizesDeleted}`);
+      return true;
+    }
+
+    console.log(`No giveaway found with ID: ${id}`);
+    return false;
   } catch (error) {
     console.error('Error deleting giveaway:', error);
     return false;
@@ -1239,6 +1316,16 @@ export async function getGiveawayPrizes(giveawayId: number): Promise<any[]> {
 }
 
 // Delete giveaway requirements and prizes functions
+export async function deleteGiveawayEntry(giveawayId: number): Promise<boolean> {
+  try {
+    await db.delete(giveawayEntries).where(eq(giveawayEntries.giveawayId, giveawayId));
+    return true;
+  } catch (error) {
+    console.error('Error deleting giveaway entries:', error);
+    return false;
+  }
+}
+
 export async function deleteGiveawayRequirement(giveawayId: number): Promise<boolean> {
   try {
     await db.delete(giveawayRequirements).where(eq(giveawayRequirements.giveawayId, giveawayId));

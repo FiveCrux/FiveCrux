@@ -255,18 +255,15 @@ export const giveawayEntriesRelations = relations(giveawayEntries, ({ one }) => 
 }));
 
 
+// Note: Requirements and prizes can reference giveaways from any table (pending, approved, rejected, or legacy)
+// The foreign key relationship is handled at the application level rather than database level
+// to allow flexibility across multiple giveaway tables
 export const giveawayRequirementsRelations = relations(giveawayRequirements, ({ one }) => ({
-  giveaway: one(giveaways, {
-    fields: [giveawayRequirements.giveawayId],
-    references: [giveaways.id],
-  }),
+  // No direct foreign key relation - handled by application logic
 }));
 
 export const giveawayPrizesRelations = relations(giveawayPrizes, ({ one }) => ({
-  giveaway: one(giveaways, {
-    fields: [giveawayPrizes.giveawayId],
-    references: [giveaways.id],
-  }),
+  // No direct foreign key relation - handled by application logic
 }));
 
 // Type exports

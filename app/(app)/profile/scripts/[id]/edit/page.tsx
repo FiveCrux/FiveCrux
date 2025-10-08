@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { motion } from "framer-motion"
 import { useSession } from "next-auth/react"
 import { useRouter, useParams } from "next/navigation"
@@ -125,29 +125,7 @@ export default function EditScriptPage() {
 
   const [errors, setErrors] = useState({})
 
-  // Update form data when session loads
-  useEffect(() => {
-    if (session?.user) {
-      setFormData(prev => ({
-        ...prev,
-        sellerName: session.user?.name || "",
-        sellerEmail: session.user?.email || "",
-      }))
-    }
-  }, [session])
-
-  useEffect(() => {
-    if (status === "loading") return
-    
-    if (!session) {
-      router.push("/")
-      return
-    }
-
-    fetchScript()
-  }, [session, status, router, scriptId])
-
-  const fetchScript = async () => {
+  const fetchScript = useCallback(async () => {
     try {
       setLoading(true)
       const response = await fetch(`/api/scripts/${scriptId}`)
@@ -198,7 +176,30 @@ export default function EditScriptPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [scriptId, session?.user, router])
+
+  // Update form data when session loads
+  useEffect(() => {
+    if (session?.user) {
+      setFormData(prev => ({
+        ...prev,
+        sellerName: session.user?.name || "",
+        sellerEmail: session.user?.email || "",
+      }))
+    }
+  }, [session])
+
+  useEffect(() => {
+    if (status === "loading") return
+    
+    if (!session) {
+      router.push("/")
+      return
+    }
+
+    fetchScript()
+  }, [session, status, router, scriptId, fetchScript])
+
 
   const handleFileUpload = async (file: File, type: "image" | "video", purpose: string = "screenshot") => {
     try {
