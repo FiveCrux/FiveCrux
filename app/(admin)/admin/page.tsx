@@ -102,7 +102,7 @@ interface Giveaway {
   auto_announce: boolean
   images: string[]
   videos: string[]
-  cover_image?: string
+  coverImage?: string // Database field is cover_image but mapped to coverImage
   tags: string[]
   rules: string[]
   requirements: any[]
@@ -110,6 +110,13 @@ interface Giveaway {
   created_at: string
   updated_at: string
   rejection_reason?: string
+  entriesCount?: number // Current number of entries
+  submittedAt?: string // When it was submitted for review
+  approvedAt?: string // When it was approved
+  rejectedAt?: string // When it was rejected
+  approvedBy?: string // Who approved it
+  rejectedBy?: string // Who rejected it
+  adminNotes?: string // Admin notes
 }
 
 interface Ad {
@@ -1747,10 +1754,10 @@ export default function AdminPage() {
           {viewingGiveaway && (
             <div className="space-y-8">
               {/* Cover Image */}
-              {viewingGiveaway.cover_image && (
+              {(viewingGiveaway as any).coverImage && (
                 <div className="relative">
                   <img 
-                    src={viewingGiveaway.cover_image} 
+                    src={(viewingGiveaway as any).coverImage} 
                     alt={viewingGiveaway.title}
                     className="w-full h-64 object-cover rounded-lg border border-gray-700"
                   />
@@ -1807,6 +1814,16 @@ export default function AdminPage() {
                           <p className="text-white">{new Date(viewingGiveaway.end_date).toLocaleDateString()}</p>
                         </div>
                       </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <span className="text-gray-400 text-sm font-medium">Featured:</span>
+                          <p className="text-white">{viewingGiveaway.featured ? "Yes (+$10)" : "No"}</p>
+                        </div>
+                        <div>
+                          <span className="text-gray-400 text-sm font-medium">Auto Announce:</span>
+                          <p className="text-white">{viewingGiveaway.auto_announce ? "Yes" : "No"}</p>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
@@ -1824,16 +1841,18 @@ export default function AdminPage() {
                         <span className="text-gray-400 text-sm font-medium">Creator Email:</span>
                         <p className="text-white">{viewingGiveaway.creator_email}</p>
                       </div>
-                      <div className="grid grid-cols-2 gap-4">
+                      {(viewingGiveaway as any).creator_id && (
                         <div>
-                          <span className="text-gray-400 text-sm font-medium">Featured:</span>
-                          <p className="text-white">{viewingGiveaway.featured ? "Yes" : "No"}</p>
+                          <span className="text-gray-400 text-sm font-medium">Creator ID:</span>
+                          <p className="text-white font-mono text-sm">{viewingGiveaway.creator_id}</p>
                         </div>
+                      )}
+                      {(viewingGiveaway as any).entriesCount !== undefined && (
                         <div>
-                          <span className="text-gray-400 text-sm font-medium">Auto Announce:</span>
-                          <p className="text-white">{viewingGiveaway.auto_announce ? "Yes" : "No"}</p>
+                          <span className="text-gray-400 text-sm font-medium">Current Entries:</span>
+                          <p className="text-white font-semibold">{(viewingGiveaway as any).entriesCount}</p>
                         </div>
-                      </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1844,15 +1863,35 @@ export default function AdminPage() {
                     <div>
                       <h3 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
                         <Target className="h-5 w-5 text-purple-500" />
-                        Requirements
+                        Entry Requirements
+                        <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30 text-xs">
+                          {viewingGiveaway.requirements.reduce((sum: number, req: any) => sum + (req.points || 0), 0)} total points
+                        </Badge>
                       </h3>
-                      <div className="space-y-2">
+                      <div className="space-y-3">
                         {viewingGiveaway.requirements.map((requirement: any, index: number) => (
-                          <div key={index} className="flex items-start gap-2">
-                            <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                            <div className="text-white text-sm">
-                              <span className="font-medium">{requirement.type}:</span> {requirement.description}
-                              {requirement.points && <span className="text-gray-400 ml-2">({requirement.points} points)</span>}
+                          <div key={index} className="bg-gray-700/30 rounded-lg p-4 border border-gray-600/50">
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-2">
+                                <CheckCircle className="h-4 w-4 text-green-500" />
+                                <span className="text-white font-medium">Requirement {index + 1}</span>
+                                {requirement.required && (
+                                  <Badge className="bg-red-500/20 text-red-400 border-red-500/30 text-xs">Required</Badge>
+                                )}
+                              </div>
+                              <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30 text-xs">
+                                {requirement.points || 0} points
+                              </Badge>
+                            </div>
+                            <div className="space-y-2">
+                              <div>
+                                <span className="text-gray-400 text-sm font-medium">Type:</span>
+                                <p className="text-white capitalize">{requirement.type}</p>
+                              </div>
+                              <div>
+                                <span className="text-gray-400 text-sm font-medium">Description:</span>
+                                <p className="text-white text-sm">{requirement.description}</p>
+                              </div>
                             </div>
                           </div>
                         ))}
@@ -1865,15 +1904,36 @@ export default function AdminPage() {
                     <div>
                       <h3 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
                         <Trophy className="h-5 w-5 text-purple-500" />
-                        Prizes
+                        Prizes ({viewingGiveaway.prizes.length})
                       </h3>
-                      <div className="space-y-2">
+                      <div className="space-y-3">
                         {viewingGiveaway.prizes.map((prize: any, index: number) => (
-                          <div key={index} className="flex items-start gap-2">
-                            <Star className="h-4 w-4 text-yellow-500 mt-0.5 flex-shrink-0" />
-                            <div className="text-white text-sm">
-                              <span className="font-medium">{prize.name}:</span> {prize.description}
-                              {prize.value && <span className="text-gray-400 ml-2">(${prize.value})</span>}
+                          <div key={index} className="bg-gray-700/30 rounded-lg p-4 border border-gray-600/50">
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-2">
+                                <Star className="h-4 w-4 text-yellow-500" />
+                                <span className="text-white font-medium">
+                                  {index === 0 ? "🥇 1st Place" : 
+                                   index === 1 ? "🥈 2nd Place" : 
+                                   index === 2 ? "🥉 3rd Place" : 
+                                   `${index + 1}th Place`}
+                                </span>
+                              </div>
+                              {prize.value && (
+                                <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 text-xs">
+                                  ${prize.value}
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="space-y-2">
+                              <div>
+                                <span className="text-gray-400 text-sm font-medium">Prize Name:</span>
+                                <p className="text-white font-medium">{prize.name}</p>
+                              </div>
+                              <div>
+                                <span className="text-gray-400 text-sm font-medium">Description:</span>
+                                <p className="text-white text-sm">{prize.description}</p>
+                              </div>
                             </div>
                           </div>
                         ))}
@@ -1919,17 +1979,39 @@ export default function AdminPage() {
               )}
 
               {/* Media Section */}
-              {(viewingGiveaway.images?.length > 0 || viewingGiveaway.videos?.length > 0) && (
+              {(viewingGiveaway.images?.length > 0 || viewingGiveaway.videos?.length > 0 || (viewingGiveaway as any).coverImage) && (
                 <div>
                   <h3 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
                     <ImageIcon className="h-5 w-5 text-purple-500" />
                     Media & Content
                   </h3>
                   
-                  {/* Images */}
+                  {/* Cover Image */}
+                  {(viewingGiveaway as any).coverImage && (
+                    <div className="mb-6">
+                      <h4 className="text-lg font-medium text-white mb-3">Cover Image</h4>
+                      <div className="max-w-md">
+                        <div className="relative group">
+                          <img 
+                            src={(viewingGiveaway as any).coverImage} 
+                            alt="Cover Image"
+                            className="w-full h-48 object-cover rounded-lg border border-gray-700 cursor-pointer hover:border-purple-500 transition-colors"
+                            onClick={() => window.open((viewingGiveaway as any).coverImage, '_blank')}
+                          />
+                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                            <ExternalLink className="h-6 w-6 text-white" />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Additional Images */}
                   {viewingGiveaway.images && viewingGiveaway.images.length > 0 && (
                     <div className="mb-6">
-                      <h4 className="text-lg font-medium text-white mb-3">Images</h4>
+                      <h4 className="text-lg font-medium text-white mb-3">
+                        Additional Images ({viewingGiveaway.images.length})
+                      </h4>
                       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                         {viewingGiveaway.images.map((image: string, index: number) => (
                           <div key={index} className="relative group">
@@ -1951,7 +2033,9 @@ export default function AdminPage() {
                   {/* Videos */}
                   {viewingGiveaway.videos && viewingGiveaway.videos.length > 0 && (
                     <div className="mb-6">
-                      <h4 className="text-lg font-medium text-white mb-3">Videos</h4>
+                      <h4 className="text-lg font-medium text-white mb-3">
+                        Videos ({viewingGiveaway.videos.length})
+                      </h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {viewingGiveaway.videos.map((video: string, index: number) => (
                           <div key={index} className="relative group">
@@ -1972,23 +2056,66 @@ export default function AdminPage() {
               <div className="border-t border-gray-700/50 pt-6">
                 <h3 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
                   <Calendar className="h-5 w-5 text-purple-500" />
-                  Metadata
+                  Metadata & Statistics
                 </h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div>
                     <span className="text-gray-400 text-sm font-medium">Created:</span>
                     <p className="text-white">{new Date(viewingGiveaway.created_at).toLocaleDateString()}</p>
+                    <p className="text-gray-500 text-xs">{new Date(viewingGiveaway.created_at).toLocaleTimeString()}</p>
                   </div>
                   <div>
                     <span className="text-gray-400 text-sm font-medium">Updated:</span>
                     <p className="text-white">{new Date(viewingGiveaway.updated_at).toLocaleDateString()}</p>
+                    <p className="text-gray-500 text-xs">{new Date(viewingGiveaway.updated_at).toLocaleTimeString()}</p>
                   </div>
                   <div>
                     <span className="text-gray-400 text-sm font-medium">Status:</span>
                     <p className="text-white">{viewingGiveaway.status}</p>
                   </div>
+                  <div>
+                    <span className="text-gray-400 text-sm font-medium">Giveaway ID:</span>
+                    <p className="text-white font-mono text-sm">#{viewingGiveaway.id}</p>
+                  </div>
                 </div>
+                
+                {/* Additional metadata if available */}
+                {(viewingGiveaway as any).submittedAt && (
+                  <div className="mt-4 pt-4 border-t border-gray-700/30">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      <div>
+                        <span className="text-gray-400 text-sm font-medium">Submitted:</span>
+                        <p className="text-white">{new Date((viewingGiveaway as any).submittedAt).toLocaleDateString()}</p>
+                      </div>
+                      {(viewingGiveaway as any).approvedAt && (
+                        <div>
+                          <span className="text-gray-400 text-sm font-medium">Approved:</span>
+                          <p className="text-white">{new Date((viewingGiveaway as any).approvedAt).toLocaleDateString()}</p>
+                        </div>
+                      )}
+                      {(viewingGiveaway as any).rejectedAt && (
+                        <div>
+                          <span className="text-gray-400 text-sm font-medium">Rejected:</span>
+                          <p className="text-white">{new Date((viewingGiveaway as any).rejectedAt).toLocaleDateString()}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
+
+              {/* Admin Notes */}
+              {(viewingGiveaway as any).adminNotes && (
+                <div className="border-t border-gray-700/50 pt-6">
+                  <h3 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-purple-500" />
+                    Admin Notes
+                  </h3>
+                  <div className="bg-gray-900/50 border border-gray-600/50 rounded-lg p-4">
+                    <p className="text-white text-sm leading-relaxed">{(viewingGiveaway as any).adminNotes}</p>
+                  </div>
+                </div>
+              )}
 
               {/* Rejection Reason */}
               {viewingGiveaway.status === "rejected" && viewingGiveaway.rejection_reason && (

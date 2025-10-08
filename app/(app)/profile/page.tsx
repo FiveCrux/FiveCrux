@@ -204,7 +204,11 @@ export default function ProfilePage() {
 
       if (response.ok) {
         setScripts(scripts.filter(script => script.id !== scriptId))
-        fetchUserData() // Refresh stats
+        // Update stats without full page refresh
+        setStats(prevStats => ({
+          ...prevStats,
+          totalScripts: prevStats.totalScripts - 1
+        }))
       } else {
         alert("Failed to delete script")
       }
@@ -224,7 +228,11 @@ export default function ProfilePage() {
 
       if (response.ok) {
         setGiveaways(giveaways.filter(giveaway => giveaway.id !== giveawayId))
-        fetchUserData() // Refresh stats
+        // Update stats without full page refresh
+        setStats(prevStats => ({
+          ...prevStats,
+          totalGiveaways: prevStats.totalGiveaways - 1
+        }))
       } else {
         alert("Failed to delete giveaway")
       }
@@ -244,7 +252,11 @@ export default function ProfilePage() {
 
       if (response.ok) {
         setAds(ads.filter(ad => ad.id !== adId))
-        fetchUserData() // Refresh stats
+        // Update stats without full component refresh
+        setStats(prevStats => ({
+          ...prevStats,
+          totalAds: prevStats.totalAds - 1
+        }))
       } else {
         alert("Failed to delete ad")
       }
@@ -527,6 +539,7 @@ export default function ProfilePage() {
                             <Button
                               size="sm"
                               variant="outline"
+                              type="button"
                               onClick={() => router.push(`/script/${script.id}`)}
                             >
                               <Eye className="h-4 w-4 mr-1" />
@@ -535,6 +548,7 @@ export default function ProfilePage() {
                             <Button
                               size="sm"
                               variant="outline"
+                              type="button"
                               onClick={() => handleEditScript(script.id)}
                             >
                               <Edit className="h-4 w-4 mr-1" />
@@ -543,6 +557,7 @@ export default function ProfilePage() {
                             <Button
                               size="sm"
                               variant="outline"
+                              type="button"
                               onClick={() => handleDeleteScript(script.id)}
                               className="text-red-400 hover:text-red-300"
                             >
@@ -639,6 +654,7 @@ export default function ProfilePage() {
                             <Button
                               size="sm"
                               variant="outline"
+                              type="button"
                               onClick={() => router.push(`/giveaway/${giveaway.id}`)}
                             >
                               <Eye className="h-4 w-4 mr-1" />
@@ -647,6 +663,7 @@ export default function ProfilePage() {
                             <Button
                               size="sm"
                               variant="outline"
+                              type="button"
                               onClick={() => handleEditGiveaway(giveaway.id)}
                             >
                               <Edit className="h-4 w-4 mr-1" />
@@ -655,6 +672,7 @@ export default function ProfilePage() {
                             <Button
                               size="sm"
                               variant="outline"
+                              type="button"
                               onClick={() => handleDeleteGiveaway(giveaway.id)}
                               className="text-red-400 hover:text-red-300"
                             >
@@ -744,6 +762,7 @@ export default function ProfilePage() {
                               <Button
                                 size="sm"
                                 variant="outline"
+                                type="button"
                                 onClick={() => handleEditAd(ad.id)}
                                 className="text-blue-400 hover:text-blue-300"
                               >
@@ -753,6 +772,7 @@ export default function ProfilePage() {
                               <Button
                                 size="sm"
                                 variant="outline"
+                                type="button"
                                 onClick={() => handleDeleteAd(ad.id)}
                                 className="text-red-400 hover:text-red-300"
                               >
@@ -831,6 +851,7 @@ export default function ProfilePage() {
                             <Button
                               variant="outline"
                               size="sm"
+                              type="button"
                               onClick={() => router.push(`/giveaway/${entry.giveaway_id}`)}
                               className="border-gray-600 text-gray-300 hover:text-white hover:border-orange-500"
                             >

@@ -332,6 +332,47 @@ export default function GiveawayDetailPage() {
     cover_image: giveaway?.cover_image || "/cat.jpg",
   }
 
+  // Auto-verify Discord requirements on page load
+  useEffect(() => {
+    const autoVerifyDiscordRequirements = async () => {
+      if (!giveaway || !transformedGiveaway.requirements || autoVerificationDone) return;
+      
+      setAutoVerifying(true);
+      
+      const discordRequirements = transformedGiveaway.requirements.filter(
+        (req: any) => req.type === "discord" && req.description
+      );
+      
+      if (discordRequirements.length > 0) {
+        // Fetch Discord servers once for all requirements
+        await fetchUserDiscordServers();
+        
+        for (const requirement of discordRequirements) {
+          try {
+            // Always fetch and store server name for display
+            const serverName = await extractDiscordServerName(requirement.description);
+            if (serverName) {
+              setServerNames(prev => ({ ...prev, [requirement.id]: serverName }));
+            }
+            
+            // Check if user has already joined this server (using cached servers)
+            const hasJoined = await checkUserJoinedServer(requirement.description);
+            if (hasJoined) {
+              setCompletedTasks(prev => [...prev, requirement.id]);
+            }
+          } catch (error) {
+            console.error('Error auto-verifying Discord requirement:', error);
+          }
+        }
+      }
+      
+      setAutoVerificationDone(true);
+      setAutoVerifying(false);
+    };
+    
+    autoVerifyDiscordRequirements();
+  }, [giveaway, transformedGiveaway.requirements]);
+
   const relatedGiveaways = [
     {
       id: 2,
@@ -359,9 +400,191 @@ export default function GiveawayDetailPage() {
     },
   ]
 
-  const handleTaskComplete = (taskId: number) => {
+  const [openedDiscordTasks, setOpenedDiscordTasks] = useState<number[]>([])
+  const [serverNames, setServerNames] = useState<{[key: number]: string}>({})
+  const [loadingStates, setLoadingStates] = useState<{[key: number]: boolean}>({})
+  const [autoVerifying, setAutoVerifying] = useState(false)
+  const [userDiscordServers, setUserDiscordServers] = useState<any[]>([])
+  const [discordServersLoaded, setDiscordServersLoaded] = useState(false)
+  const [autoVerificationDone, setAutoVerificationDone] = useState(false)
+
+  // Fetch user's Discord servers once and cache them
+  const fetchUserDiscordServers = async (): Promise<any[]> => {
+    if (discordServersLoaded && userDiscordServers.length > 0) {
+      return userDiscordServers;
+    }
+
+    try {
+      const response = await fetch('/api/user/discord-servers');
+      if (!response.ok) return [];
+      
+      const data = await response.json();
+      const guilds = data.guilds || [];
+      
+      setUserDiscordServers(guilds);
+      setDiscordServersLoaded(true);
+      return guilds;
+    } catch (error) {
+      console.error('Error fetching Discord servers:', error);
+      return [];
+    }
+  }
+
+  const handleTaskComplete = async (taskId: number) => {
+    const task = transformedGiveaway.requirements.find((req: any) => req.id === taskId);
+    
+    if (!task) return;
+    
+    // Handle Discord server join - directly open the Discord invite link
+    if (task.type === "discord" && task.description) {
+      try {
+        // Set loading state
+        setLoadingStates(prev => ({ ...prev, [taskId]: true }));
+        
+        // Check if user has already joined this server
+        const hasJoined = await checkUserJoinedServer(task.description);
+        
+        if (hasJoined) {
+          // User has already joined, mark as completed
+          setCompletedTasks([...completedTasks, taskId]);
+          alert(`✅ You're already a member of this Discord server. Task completed!`);
+          return;
+        }
+        
+        // Open Discord invite in new tab
+        window.open(task.description, '_blank');
+        
+        // Mark this task as opened
+        if (!openedDiscordTasks.includes(taskId)) {
+          setOpenedDiscordTasks([...openedDiscordTasks, taskId]);
+        }
+        
+        // Show instructions to user
+        alert("Discord invite opened! Please join the server and then click 'Verify Join' to check your membership.");
+        
+      } catch (error) {
+        console.error('Error opening Discord link:', error);
+        alert("Error opening Discord invite. Please try again.");
+      } finally {
+        // Clear loading state
+        setLoadingStates(prev => ({ ...prev, [taskId]: false }));
+      }
+    } else {
+      // For non-Discord tasks, just mark as completed
+      if (!completedTasks.includes(taskId)) {
+        setCompletedTasks([...completedTasks, taskId]);
+      }
+    }
+  }
+
+  // Check if user has joined the Discord server
+  const checkUserJoinedServer = async (discordLink: string): Promise<boolean> => {
+    try {
+      // Extract invite code from Discord link - be more lenient with URL parsing
+      let inviteCode = null;
+      
+      try {
+        const url = new URL(discordLink);
+        inviteCode = url.pathname.split('/').pop();
+      } catch (urlError) {
+        // If URL parsing fails, try to extract invite code from the string directly
+        const match = discordLink.match(/(?:discord\.gg\/|discord\.com\/invite\/|discordapp\.com\/invite\/)([a-zA-Z0-9]+)/);
+        if (match) {
+          inviteCode = match[1];
+        }
+      }
+      
+      if (!inviteCode) return false;
+      
+      // Get server ID from invite code
+      const serverId = await getServerIdFromInvite(inviteCode);
+      if (!serverId) return false;
+      
+      // Use cached Discord servers (fetch only if not already loaded)
+      const userGuilds = await fetchUserDiscordServers();
+      
+      // Check if user is a member of this server
+      return userGuilds.some((guild: any) => guild.id === serverId);
+      
+    } catch (error) {
+      console.error('Error checking server membership:', error);
+      return false;
+    }
+  }
+
+  // Get server ID from Discord invite code
+  const getServerIdFromInvite = async (inviteCode: string): Promise<string | null> => {
+    try {
+      const response = await fetch(`https://discord.com/api/invites/${inviteCode}?with_counts=true`);
+      if (response.ok) {
+        const data = await response.json();
+        return data.guild?.id || null;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error fetching server ID from invite:', error);
+      return null;
+    }
+  }
+
+  // Helper function to extract Discord server name from invite link
+  const extractDiscordServerName = async (link: string): Promise<string | null> => {
+    try {
+      const url = new URL(link);
+      const inviteCode = url.pathname.split('/').pop();
+      
+      if (!inviteCode) return null;
+      
+      // Try to fetch server info from Discord API
+      try {
+        const response = await fetch(`https://discord.com/api/invites/${inviteCode}?with_counts=true`);
+        if (response.ok) {
+          const data = await response.json();
+          return data.guild?.name || null;
+        }
+      } catch (apiError) {
+        console.log('Could not fetch server name from Discord API:', apiError);
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error extracting Discord server name:', error);
+      return null;
+    }
+  }
+
+  const handleMarkDone = (taskId: number) => {
     if (!completedTasks.includes(taskId)) {
-      setCompletedTasks([...completedTasks, taskId])
+      setCompletedTasks([...completedTasks, taskId]);
+    }
+  }
+
+  // Helper function to extract Discord server name from invite link (for display)
+  const extractServerNameFromLink = (link: string): string => {
+    try {
+      const url = new URL(link);
+      const inviteCode = url.pathname.split('/').pop();
+      
+      if (!inviteCode) return "Discord Server";
+      
+      // Return a formatted version of the invite code for display
+      return `Server (${inviteCode})`;
+    } catch (error) {
+      return "Discord Server";
+    }
+  }
+
+  // Helper function to validate Discord invite links
+  const isValidDiscordLink = (link: string): boolean => {
+    try {
+      const url = new URL(link);
+      return (
+        url.hostname === 'discord.gg' ||
+        url.hostname === 'discord.com' ||
+        url.hostname === 'discordapp.com'
+      ) && url.pathname.includes('/invite/');
+    } catch (error) {
+      return false;
     }
   }
 
@@ -706,6 +929,12 @@ export default function GiveawayDetailPage() {
                     <CardTitle className="text-white flex items-center gap-2">
                       <Target className="h-5 w-5 text-yellow-400" />
                       Entry Tasks
+                      {autoVerifying && (
+                        <div className="flex items-center gap-2 text-sm text-gray-400">
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-yellow-400"></div>
+                          Checking Discord memberships...
+                        </div>
+                      )}
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
@@ -735,7 +964,18 @@ export default function GiveawayDetailPage() {
                             </motion.div>
                             <div>
                               <h4 className="text-white font-medium flex items-center gap-2">
-                                {task.description}
+                                {task.type === "discord" && task.description ? (
+                                  <>
+                                    Join Discord Server
+                                    {serverNames[task.id] && (
+                                      <span className="text-sm text-gray-400 font-normal ml-2">
+                                        ({serverNames[task.id]})
+                                      </span>
+                                    )}
+                                  </>
+                                ) : (
+                                  task.description
+                                )}
                                 {task.required && (
                                   <Badge className="bg-red-500/20 text-red-400 border-red-500/30 text-xs">
                                     Required
@@ -760,15 +1000,69 @@ export default function GiveawayDetailPage() {
                                 <Button
                                   size="sm"
                                   onClick={() => handleTaskComplete(task.id)}
-                                  className="bg-yellow-500 hover:bg-yellow-600 text-black font-semibold"
+                                  disabled={loadingStates[task.id] || autoVerifying}
+                                  className="bg-yellow-500 hover:bg-yellow-600 text-black font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                  {task.link ? (
+                                  {loadingStates[task.id] ? (
+                                    <>
+                                      <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-black mr-1"></div>
+                                      Checking...
+                                    </>
+                                  ) : task.type === "discord" && task.description ? (
+                                    openedDiscordTasks.includes(task.id) ? (
+                                      "Reopen Discord"
+                                    ) : (
+                                      <>
+                                        <ExternalLink className="mr-1 h-3 w-3" />
+                                        Join Discord
+                                      </>
+                                    )
+                                  ) : task.link ? (
                                     <>
                                       <ExternalLink className="mr-1 h-3 w-3" />
                                       Complete
                                     </>
                                   ) : (
                                     "Mark Done"
+                                  )}
+                                </Button>
+                              </motion.div>
+                            )}
+                            
+                            {/* Show "Verify Join" button for Discord tasks after they've been opened */}
+                            {task.type === "discord" && task.description && !completedTasks.includes(task.id) && openedDiscordTasks.includes(task.id) && (
+                              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                                <Button
+                                  size="sm"
+                                  disabled={loadingStates[task.id] || autoVerifying}
+                                  onClick={async () => {
+                                    setLoadingStates(prev => ({ ...prev, [task.id]: true }));
+                                    try {
+                                      // Refresh Discord servers to get latest membership status
+                                      setDiscordServersLoaded(false);
+                                      const hasJoined = await checkUserJoinedServer(task.description);
+                                      if (hasJoined) {
+                                        setCompletedTasks([...completedTasks, task.id]);
+                                        alert(`✅ Verified! You're a member of this Discord server. Task completed!`);
+                                      } else {
+                                        alert("❌ You haven't joined the Discord server yet. Please join first and try again.");
+                                      }
+                                    } catch (error) {
+                                      console.error('Error verifying Discord membership:', error);
+                                      alert("Error verifying Discord membership. Please try again.");
+                                    } finally {
+                                      setLoadingStates(prev => ({ ...prev, [task.id]: false }));
+                                    }
+                                  }}
+                                  className="bg-blue-500 hover:bg-blue-600 text-white font-semibold ml-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                  {loadingStates[task.id] ? (
+                                    <>
+                                      <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-1"></div>
+                                      Verifying...
+                                    </>
+                                  ) : (
+                                    "Verify Join"
                                   )}
                                 </Button>
                               </motion.div>

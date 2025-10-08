@@ -84,16 +84,15 @@ export default function CreateGiveawayPage() {
   })
 
   const [requirements, setRequirements] = useState([
-    { id: 1, type: "discord", description: "Join our Discord server", points: 1, required: true },
+    { id: 1, type: "discord", description: "", points: 1, required: true },
   ])
 
   const [prizes, setPrizes] = useState([{ id: 1, name: "", description: "", value: "", position: 1 }])
 
   const [media, setMedia] = useState({
-    images: [],
-    videos: [],
-    coverImage: null,
-    thumbnail: null,
+    images: [] as string[],
+    videos: [] as string[],
+    coverImage: null as string | null,
   })
   const [selectedFiles, setSelectedFiles] = useState({
     coverImage: null as File | null,
@@ -200,60 +199,6 @@ export default function CreateGiveawayPage() {
     e.preventDefault();
 
     try {
-      // Upload cover image if selected
-      let coverImageUrl = ""
-      if (selectedFiles.coverImage) {
-        const formData = new FormData()
-        formData.append("file", selectedFiles.coverImage)
-        
-        const uploadResponse = await fetch("/api/upload", {
-          method: "POST",
-          body: formData,
-        })
-        
-        if (uploadResponse.ok) {
-          const uploadResult = await uploadResponse.json()
-          coverImageUrl = uploadResult.url
-        } else {
-          alert("Failed to upload cover image")
-          return
-        }
-      }
-
-      // Upload images if selected
-      const imageUrls = []
-      for (const file of selectedFiles.images) {
-        const formData = new FormData()
-        formData.append("file", file)
-        
-        const uploadResponse = await fetch("/api/upload", {
-          method: "POST",
-          body: formData,
-        })
-        
-        if (uploadResponse.ok) {
-          const uploadResult = await uploadResponse.json()
-          imageUrls.push(uploadResult.url)
-        }
-      }
-
-      // Upload videos if selected
-      const videoUrls = []
-      for (const file of selectedFiles.videos) {
-        const formData = new FormData()
-        formData.append("file", file)
-        
-        const uploadResponse = await fetch("/api/upload", {
-          method: "POST",
-          body: formData,
-        })
-        
-        if (uploadResponse.ok) {
-          const uploadResult = await uploadResponse.json()
-          videoUrls.push(uploadResult.url)
-        }
-      }
-
       const payload = {
         giveaway: {
           title: formData.title,
@@ -265,9 +210,9 @@ export default function CreateGiveawayPage() {
           auto_announce: formData.autoAnnounce,
           creator_name: formData.creatorName,
           creator_email: formData.creatorEmail,
-          images: imageUrls,
-          videos: videoUrls,
-          cover_image: coverImageUrl,
+          images: media.images,
+          videos: media.videos,
+          cover_image: media.coverImage,
           tags: [],
           rules: [],
           status: "active",
@@ -296,12 +241,17 @@ export default function CreateGiveawayPage() {
           creatorName: session?.user?.name || "",
           creatorEmail: session?.user?.email || "",
         })
+        setMedia({
+          images: [],
+          videos: [],
+          coverImage: null,
+        })
         setSelectedFiles({
           coverImage: null,
           images: [],
           videos: [],
         })
-        setRequirements([{ id: 1, type: "discord", description: "Join our Discord server", points: 1, required: true }])
+        setRequirements([{ id: 1, type: "discord", description: "", points: 1, required: true }])
         setPrizes([{ id: 1, name: "", description: "", value: "", position: 1 }])
       } else {
         const error = await res.json();
@@ -350,6 +300,58 @@ export default function CreateGiveawayPage() {
       setMedia(prev => ({
         ...prev,
         coverImage: url
+      }))
+    }
+  }
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files
+    if (!files) return
+
+    const newImages: string[] = []
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i]
+      if (media.images.length + newImages.length >= 10) {
+        alert("Maximum 10 images allowed")
+        break
+      }
+
+      const url = await handleFileUpload(file, "image", "screenshot")
+      if (url) {
+        newImages.push(url)
+      }
+    }
+
+    if (newImages.length > 0) {
+      setMedia(prev => ({
+        ...prev,
+        images: [...prev.images, ...newImages]
+      }))
+    }
+  }
+
+  const handleVideoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files
+    if (!files) return
+
+    const newVideos: string[] = []
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i]
+      if (media.videos.length + newVideos.length >= 5) {
+        alert("Maximum 5 videos allowed")
+        break
+      }
+
+      const url = await handleFileUpload(file, "video", "demo")
+      if (url) {
+        newVideos.push(url)
+      }
+    }
+
+    if (newVideos.length > 0) {
+      setMedia(prev => ({
+        ...prev,
+        videos: [...prev.videos, ...newVideos]
       }))
     }
   }
@@ -659,13 +661,24 @@ export default function CreateGiveawayPage() {
                         </div>
 
                         <div className="mt-4">
-                          <Label className="text-white text-sm">Description</Label>
+                          <Label className="text-white text-sm">
+                            {requirement.type === "discord" ? "Discord Server Link" : "Description"}
+                          </Label>
                           <Input
                             value={requirement.description}
                             onChange={(e) => updateRequirement(requirement.id, "description", e.target.value)}
-                            placeholder="Describe what users need to do..."
+                            placeholder={
+                              requirement.type === "discord" 
+                                ? "https://discord.gg/your-server" 
+                                : "Describe what users need to do..."
+                            }
                             className="mt-1 bg-gray-900/50 border-gray-600 text-white placeholder-gray-400"
                           />
+                          {requirement.type === "discord" && (
+                            <p className="text-xs text-gray-400 mt-1">
+                              Enter your Discord server invite link (e.g., https://discord.gg/abc123)
+                            </p>
+                          )}
                         </div>
                       </motion.div>
                     ))}
@@ -779,53 +792,134 @@ export default function CreateGiveawayPage() {
                   </CardHeader>
                   <CardContent className="space-y-6">
                     <div>
-                      <Label className="text-white font-medium mb-2 block">Cover Image *</Label>
-                      <FileUpload
-                        onFileSelect={(file) => setSelectedFiles(prev => ({ ...prev, coverImage: file }))}
-                        onFileRemove={() => setSelectedFiles(prev => ({ ...prev, coverImage: null }))}
-                        selectedFile={selectedFiles.coverImage}
+                      <Label className="text-white font-medium">Cover Image *</Label>
+                      <input
+                        type="file"
                         accept="image/*"
-                        maxSize={5}
+                        onChange={handleCoverImageUpload}
+                        className="hidden"
+                        id="cover-upload"
                       />
-                    </div>
-
-                    <div>
-                      <Label className="text-white font-medium">Thumbnail Image *</Label>
-                      <div className="mt-2 border-2 border-dashed border-gray-600 rounded-lg p-8 text-center hover:border-yellow-500 transition-colors cursor-pointer">
+                      <label
+                        htmlFor="cover-upload"
+                        className="mt-2 border-2 border-dashed border-gray-600 rounded-lg p-8 text-center hover:border-yellow-500 transition-colors cursor-pointer block"
+                      >
                         <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                        <p className="text-gray-400">Click to upload thumbnail image</p>
+                        <p className="text-gray-400">Click to upload cover image</p>
                         <p className="text-sm text-gray-500 mt-2">PNG, JPG up to 5MB</p>
-                      </div>
-                    </div>
-
-                    <div>
-                      <Label className="text-white font-medium mb-2 block">Additional Images</Label>
-                      <FileUpload
-                        onFileSelect={(file) => setSelectedFiles(prev => ({ ...prev, images: [...prev.images, file] }))}
-                        onFileRemove={() => setSelectedFiles(prev => ({ ...prev, images: prev.images.slice(0, -1) }))}
-                        selectedFile={selectedFiles.images.length > 0 ? selectedFiles.images[selectedFiles.images.length - 1] : null}
-                        accept="image/*"
-                        maxSize={5}
-                      />
-                      {selectedFiles.images.length > 0 && (
-                        <div className="mt-2 text-sm text-gray-400">
-                          {selectedFiles.images.length} image(s) selected
+                      </label>
+                      
+                      {/* Display cover image */}
+                      {media.coverImage && (
+                        <div className="mt-4">
+                          <div className="relative group max-w-xs">
+                            <img
+                              src={media.coverImage}
+                              alt="Cover image"
+                              className="w-full h-32 object-cover rounded"
+                            />
+                            <button
+                              type="button"
+                              onClick={removeCoverImage}
+                              className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
                         </div>
                       )}
                     </div>
 
                     <div>
-                      <Label className="text-white font-medium mb-2 block">Videos (Optional)</Label>
-                      <FileUpload
-                        onFileSelect={(file) => setSelectedFiles(prev => ({ ...prev, videos: [...prev.videos, file] }))}
-                        onFileRemove={() => setSelectedFiles(prev => ({ ...prev, videos: prev.videos.slice(0, -1) }))}
-                        selectedFile={selectedFiles.videos.length > 0 ? selectedFiles.videos[selectedFiles.videos.length - 1] : null}
-                        accept="video/*"
-                        maxSize={50}
+                      <Label className="text-white font-medium">Additional Images</Label>
+                      <input
+                        type="file"
+                        multiple
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="hidden"
+                        id="image-upload"
                       />
-                      {selectedFiles.videos.length > 0 && (
-                        <div className="mt-2 text-sm text-gray-400">
-                          {selectedFiles.videos.length} video(s) selected
+                      <label
+                        htmlFor="image-upload"
+                        className="mt-2 border-2 border-dashed border-gray-600 rounded-lg p-8 text-center hover:border-yellow-500 transition-colors cursor-pointer block"
+                      >
+                        <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                        <p className="text-gray-400">Upload additional images</p>
+                        <p className="text-sm text-gray-500 mt-2">PNG, JPG up to 5MB each (max 10 images)</p>
+                      </label>
+                      
+                      {/* Display uploaded images */}
+                      {media.images.length > 0 && (
+                        <div className="mt-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                          {media.images.map((image, index) => (
+                            <div key={index} className="relative group">
+                              <img
+                                src={typeof image === 'string' ? image : URL.createObjectURL(image)}
+                                alt={`Image ${index + 1}`}
+                                className="w-full h-24 object-cover rounded"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setMedia(prev => ({
+                                    ...prev,
+                                    images: prev.images.filter((_, i) => i !== index)
+                                  }))
+                                }}
+                                className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <Label className="text-white font-medium">Videos (Optional)</Label>
+                      <input
+                        type="file"
+                        multiple
+                        accept="video/*"
+                        onChange={handleVideoUpload}
+                        className="hidden"
+                        id="video-upload"
+                      />
+                      <label
+                        htmlFor="video-upload"
+                        className="mt-2 border-2 border-dashed border-gray-600 rounded-lg p-8 text-center hover:border-yellow-500 transition-colors cursor-pointer block"
+                      >
+                        <Video className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                        <p className="text-gray-400">Upload videos</p>
+                        <p className="text-sm text-gray-500 mt-2">MP4, WebM up to 50MB each (max 5 videos)</p>
+                      </label>
+                      
+                      {/* Display uploaded videos */}
+                      {media.videos.length > 0 && (
+                        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {media.videos.map((video, index) => (
+                            <div key={index} className="relative group">
+                              <video
+                                src={typeof video === 'string' ? video : URL.createObjectURL(video)}
+                                className="w-full h-32 object-cover rounded"
+                                controls
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setMedia(prev => ({
+                                    ...prev,
+                                    videos: prev.videos.filter((_, i) => i !== index)
+                                  }))
+                                }}
+                                className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </div>
+                          ))}
                         </div>
                       )}
                     </div>

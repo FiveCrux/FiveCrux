@@ -71,7 +71,8 @@ export async function PATCH(
     }
 
     // Check if giveaway needs re-approval (if it's currently approved)
-    const needsReapproval = currentGiveaway.status === 'approved'
+    // Approved giveaways are in approvedGiveaways table, so they need re-approval
+    const needsReapproval = currentGiveaway.table_source === 'approved'
 
     let updatedGiveaway
     let status = "updated"
