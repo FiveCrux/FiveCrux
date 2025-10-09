@@ -162,32 +162,122 @@ export default function Navbar() {
               </SheetTrigger>
               <SheetContent side="right" className="bg-black/95 border-gray-800 backdrop-blur-xl">
                 <motion.div
-                  className="flex flex-col space-y-4 mt-8"
+                  className="flex flex-col space-y-6 mt-8"
                   initial={{ opacity: 0, x: 50 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ staggerChildren: 0.1 }}
                 >
-                  {[
-                    { name: "All Scripts", href: "/scripts" },
-                    { name: "Giveaways", href: "/giveaways" },
-                    { name: "Marketplace", href: "/marketplace" },
-                    { name: "Support", href: "/support" },
-                  ].map((item, index) => (
-                    <motion.div
-                      key={item.name}
-                      initial={{ opacity: 0, x: 50 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                    >
-                      <Link
-                        href={item.href}
-                        className="text-white hover:text-orange-500 px-3 py-2 text-lg font-medium transition-colors"
-                        onClick={() => setIsMenuOpen(false)}
+                  {/* Navigation Links */}
+                  <div className="space-y-4">
+                    {[
+                      { name: "Home", href: "/" },
+                      { name: "Marketplace", href: "/scripts" },
+                      { name: "Giveaways", href: "/giveaways" },
+                      { name: "Advertise", href: "/advertise" },
+                    ].map((item, index) => (
+                      <motion.div
+                        key={item.name}
+                        initial={{ opacity: 0, x: 50 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.1 }}
                       >
-                        {item.name}
-                      </Link>
-                    </motion.div>
-                  ))}
+                        <Link
+                          href={item.href}
+                          className="text-white hover:text-orange-500 px-3 py-2 text-lg font-medium transition-colors block"
+                          onClick={() => setIsMenuOpen(false)}
+                        >
+                          {item.name}
+                        </Link>
+                      </motion.div>
+                    ))}
+                  </div>
+
+                  {/* Authentication Section */}
+                  <div className="border-t border-gray-700 pt-6">
+                    {status === "authenticated" ? (
+                      <div className="space-y-4">
+                        <motion.div
+                          initial={{ opacity: 0, x: 50 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.4 }}
+                          className="flex items-center space-x-3"
+                        >
+                          <Avatar className="h-10 w-10 ring-1 ring-gray-700/60">
+                            <AvatarImage src={String((session?.user as any)?.image || "")} alt={String(session?.user?.name || "User")} />
+                            <AvatarFallback className="bg-gray-800 text-white text-sm">
+                              {String(session?.user?.name || "U").charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="text-white font-medium">{session?.user?.name}</p>
+                            <p className="text-gray-400 text-sm">{session?.user?.email}</p>
+                          </div>
+                        </motion.div>
+                        
+                        <motion.div
+                          initial={{ opacity: 0, x: 50 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.5 }}
+                        >
+                          <Link
+                            href="/profile"
+                            className="text-white hover:text-orange-500 px-3 py-2 text-lg font-medium transition-colors block"
+                            onClick={() => setIsMenuOpen(false)}
+                          >
+                            Profile
+                          </Link>
+                        </motion.div>
+
+                        <motion.div
+                          initial={{ opacity: 0, x: 50 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.6 }}
+                        >
+                          <Link
+                            href="/admin"
+                            className="text-white hover:text-orange-500 px-3 py-2 text-lg font-medium transition-colors block"
+                            onClick={() => setIsMenuOpen(false)}
+                          >
+                            Admin
+                          </Link>
+                        </motion.div>
+
+                        <motion.div
+                          initial={{ opacity: 0, x: 50 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.7 }}
+                        >
+                          <Button
+                            variant="outline"
+                            className="w-full bg-gray-900/50 border-gray-700/50 text-white hover:bg-red-500 hover:border-red-500 backdrop-blur-sm transition-all duration-300"
+                            onClick={() => {
+                              signOut()
+                              setIsMenuOpen(false)
+                            }}
+                          >
+                            Logout
+                          </Button>
+                        </motion.div>
+                      </div>
+                    ) : (
+                      <motion.div
+                        initial={{ opacity: 0, x: 50 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.4 }}
+                      >
+                        <Button
+                          variant="outline"
+                          className="w-full bg-gray-900/50 border-gray-700/50 text-white hover:bg-orange-500 hover:border-orange-500 backdrop-blur-sm transition-all duration-300"
+                          onClick={() => {
+                            signIn("discord")
+                            setIsMenuOpen(false)
+                          }}
+                        >
+                          Login with Discord
+                        </Button>
+                      </motion.div>
+                    )}
+                  </div>
                 </motion.div>
               </SheetContent>
             </Sheet>
