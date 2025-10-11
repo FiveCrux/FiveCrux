@@ -32,24 +32,12 @@ export async function GET(request: NextRequest) {
     const userEmail = session.user.email;
     console.log("User giveaways API - User:", { id: userId, email: userEmail });
 
-    // Fetch giveaways from all tables where the user is the creator
-    let pending: any[] = [];
-    let approved: any[] = [];
-    let rejected: any[] = [];
-    
-    try {
-      [pending, approved, rejected] = await Promise.all([
-        getPendingGiveaways(),
-        getApprovedGiveaways(),
-        getRejectedGiveaways()
-      ]);
-    } catch (error) {
-      console.log("Approval tables don't exist yet, falling back to main giveaways table");
-      // Fallback to main giveaways table if approval tables don't exist
-      const { getGiveaways } = await import('@/lib/database-new');
-      const allGiveaways = await getGiveaways({ limit: 100 });
-      approved = allGiveaways; // Treat all giveaways as approved for now
-    }
+    // Fetch giveaways from approval system tables
+    const [pending, approved, rejected] = await Promise.all([
+      getPendingGiveaways(),
+      getApprovedGiveaways(),
+      getRejectedGiveaways()
+    ]);
 
     // Filter giveaways by user email
     const userPending = pending.filter(g => g.creatorEmail === userEmail);
@@ -154,7 +142,7 @@ export async function PATCH(request: NextRequest) {
     const { giveawayId, ...updateData } = body;
     if (!giveawayId) return NextResponse.json({ error: "Giveaway ID is required" }, { status: 400 });
 
-    // For simplicity, update legacy giveaways table; real ownership check would query by creatorEmail
+    // Update giveaway using the approval system
     const updated = await updateGiveaway(Number(giveawayId), updateData);
     return NextResponse.json({ success: !!updated });
   } catch (error) {

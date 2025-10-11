@@ -5,8 +5,12 @@ import {
   createGiveawayEntry, 
   getGiveawayEntries, 
   getUserGiveawayEntry,
-  getGiveawayById 
+  getGiveawayById,
+  updateGiveawayEntryPoints
 } from "@/lib/database-new"
+import { db } from "@/lib/db/client"
+import { giveawayRequirements } from "@/lib/db/schema"
+import { eq } from "drizzle-orm"
 
 export async function POST(
   request: NextRequest,
@@ -26,7 +30,7 @@ export async function POST(
     }
 
     // Check if giveaway exists and is active
-    const giveaway = await getGiveawayById(giveawayId)
+    const giveaway = await getGiveawayById(giveawayId, session)
     if (!giveaway) {
       return NextResponse.json({ error: "Giveaway not found" }, { status: 404 })
     }
@@ -42,8 +46,35 @@ export async function POST(
     }
 
     // Check if giveaway has reached max entries
-    if (giveaway.max_entries && giveaway.entries_count >= giveaway.max_entries) {
+    if (giveaway.max_entries && giveaway.entriesCount >= giveaway.max_entries) {
       return NextResponse.json({ error: "Giveaway has reached maximum entries" }, { status: 400 })
+    }
+
+    // Get completed requirements from request body
+    const { completedRequirements = [] } = await request.json().catch(() => ({}))
+    
+    console.log('Entry creation - completedRequirements:', completedRequirements)
+    
+    // Calculate points for completed requirements
+    let initialPoints = 0
+    let initialCompletedRequirements: string[] = []
+    
+    if (Array.isArray(completedRequirements) && completedRequirements.length > 0) {
+      // Get requirements to calculate points
+      const requirements = await db.select().from(giveawayRequirements)
+        .where(eq(giveawayRequirements.giveawayId, giveawayId))
+      
+      console.log('Requirements for giveaway:', requirements)
+      
+      // Calculate total points for completed requirements
+      initialPoints = requirements
+        .filter(req => completedRequirements.includes(req.id))
+        .reduce((sum, req) => sum + req.points, 0)
+      
+      initialCompletedRequirements = completedRequirements.map(id => id.toString())
+      
+      console.log('Calculated initial points:', initialPoints)
+      console.log('Completed requirements:', initialCompletedRequirements)
     }
 
     // Create entry
@@ -54,8 +85,8 @@ export async function POST(
       userName: session.user.name || null,
       userEmail: session.user.email || null,
       status: 'active' as const,
-      pointsEarned: 0,
-      requirementsCompleted: [] as string[]
+      pointsEarned: initialPoints,
+      requirementsCompleted: initialCompletedRequirements
     }
 
     const entryId = await createGiveawayEntry(entryData)
@@ -112,3 +143,51 @@ export async function GET(
   }
 }
 
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id: idParam } = await params
+    const giveawayId = parseInt(idParam)
+    
+    if (isNaN(giveawayId)) {
+      return NextResponse.json({ error: "Invalid giveaway ID" }, { status: 400 })
+    }
+
+    const session = await getServerSession(authOptions)
+    if (!session?.user) {
+      return NextResponse.json({ error: "Authentication required" }, { status: 401 })
+    }
+
+    const body = await request.json()
+    const { completedRequirements } = body
+
+    if (!Array.isArray(completedRequirements)) {
+      return NextResponse.json({ error: "completedRequirements must be an array" }, { status: 400 })
+    }
+
+    // Check if user has entered this giveaway
+    const existingEntry = await getUserGiveawayEntry(giveawayId, (session.user as any).id)
+    if (!existingEntry) {
+      return NextResponse.json({ error: "You must enter the giveaway first" }, { status: 400 })
+    }
+
+    // Update the entry points
+    const entryId = await updateGiveawayEntryPoints(
+      giveawayId, 
+      (session.user as any).id, 
+      completedRequirements
+    )
+
+    return NextResponse.json({ 
+      success: true, 
+      entryId,
+      message: "Points updated successfully" 
+    })
+
+  } catch (error) {
+    console.error("Error updating giveaway entry points:", error)
+    return NextResponse.json({ error: "Failed to update points" }, { status: 500 })
+  }
+}
