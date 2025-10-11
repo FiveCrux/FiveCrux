@@ -43,6 +43,7 @@ interface Script {
   seller_name: string
   seller_email: string
   seller_id?: string
+  seller_image?: string
   features: string[]
   requirements: string[]
   links: string[]
@@ -339,6 +340,7 @@ export default function ScriptDetailPage() {
                 <div className="bg-gray-800/30 border border-gray-700/50 rounded-xl p-4 mb-6">
                   <div className="flex items-center gap-3">
                     <Avatar className="h-12 w-12">
+                      <AvatarImage src={script.seller_image || "/placeholder-user.jpg"} />
                       <AvatarFallback className="bg-gradient-to-r from-orange-500 to-yellow-400 text-black font-bold">
                         {script.seller_name ? script.seller_name[0] : '?'}
                       </AvatarFallback>
@@ -353,9 +355,6 @@ export default function ScriptDetailPage() {
                         <span>Joined {new Date(script.created_at).toLocaleDateString()}</span>
                       </div>
                     </div>
-                    <Button variant="outline" size="sm" className="border-gray-600 text-gray-300 hover:text-white">
-                      View Profile
-                    </Button>
                   </div>
                 </div>
               </div>

@@ -1,8 +1,8 @@
 import { db } from './db/client';
-import { eq, and, or, like, gte, lte, sql, desc, getTableColumns } from 'drizzle-orm';
+import { eq, and, or, like, gte, lte, sql, desc, getTableColumns, ne } from 'drizzle-orm';
 import { 
   users, pendingScripts, approvedScripts, rejectedScripts, 
-  giveaways, pendingGiveaways, approvedGiveaways, rejectedGiveaways, 
+  pendingGiveaways, approvedGiveaways, rejectedGiveaways, 
   giveawayEntries, 
   giveawayRequirements, giveawayPrizes, pendingAds, approvedAds, rejectedAds,
   type Script, type Giveaway 
@@ -223,7 +223,22 @@ export async function getScriptById(id: number) {
       .limit(1);
       
     if (approvedScript.length > 0) {
-      return { ...approvedScript[0], status: 'approved' as const };
+      const script = approvedScript[0];
+      
+      // Fetch seller's Discord profile picture if sellerId exists
+      let sellerImage = null;
+      if (script.sellerId) {
+        const sellerResult = await db.select().from(users).where(eq(users.id, script.sellerId));
+        if (sellerResult.length > 0) {
+          sellerImage = sellerResult[0].image;
+        }
+      }
+      
+      return { 
+        ...script, 
+        status: 'approved' as const,
+        seller_image: sellerImage
+      };
     }
     
     // Check pending_scripts
@@ -234,7 +249,22 @@ export async function getScriptById(id: number) {
       .limit(1);
       
     if (pendingScript.length > 0) {
-      return { ...pendingScript[0], status: 'pending' as const };
+      const script = pendingScript[0];
+      
+      // Fetch seller's Discord profile picture if sellerId exists
+      let sellerImage = null;
+      if (script.sellerId) {
+        const sellerResult = await db.select().from(users).where(eq(users.id, script.sellerId));
+        if (sellerResult.length > 0) {
+          sellerImage = sellerResult[0].image;
+        }
+      }
+      
+      return { 
+        ...script, 
+        status: 'pending' as const,
+        seller_image: sellerImage
+      };
     }
     
     // Check rejected_scripts
@@ -245,7 +275,22 @@ export async function getScriptById(id: number) {
       .limit(1);
       
     if (rejectedScript.length > 0) {
-      return { ...rejectedScript[0], status: 'rejected' as const };
+      const script = rejectedScript[0];
+      
+      // Fetch seller's Discord profile picture if sellerId exists
+      let sellerImage = null;
+      if (script.sellerId) {
+        const sellerResult = await db.select().from(users).where(eq(users.id, script.sellerId));
+        if (sellerResult.length > 0) {
+          sellerImage = sellerResult[0].image;
+        }
+      }
+      
+      return { 
+        ...script, 
+        status: 'rejected' as const,
+        seller_image: sellerImage
+      };
     }
     return null;
   } catch (error) {
@@ -614,7 +659,7 @@ export async function getGiveaways(filters?: {
   return await (offseted as any);
 }
 
-export async function getGiveawayById(id: number) {
+export async function getGiveawayById(id: number, session?: any) {
   // Search across all giveaway tables to find the giveaway
   try {
     let result: any = await db.select().from(approvedGiveaways).where(eq(approvedGiveaways.id, id));
@@ -622,6 +667,24 @@ export async function getGiveawayById(id: number) {
       const giveaway = result[0];
       const requirements = await db.select().from(giveawayRequirements).where(eq(giveawayRequirements.giveawayId, id));
       const prizes = await db.select().from(giveawayPrizes).where(eq(giveawayPrizes.giveawayId, id));
+      
+      // Count actual entries from giveaway_entries table
+      const actualEntries = await db.select({ count: sql<number>`count(*)` })
+        .from(giveawayEntries)
+        .where(eq(giveawayEntries.giveawayId, id));
+      const actualEntryCount = actualEntries[0]?.count || 0;
+      
+      // Get user's entry if they have one (for points display)
+      let userEntry = null;
+      if (session?.user?.id) {
+        const userEntryResult = await db.select().from(giveawayEntries)
+          .where(and(
+            eq(giveawayEntries.giveawayId, id),
+            eq(giveawayEntries.userId, (session.user as any).id)
+          ))
+          .limit(1);
+        userEntry = userEntryResult[0] || null;
+      }
       
       // Fetch creator's Discord profile picture if creatorId exists
       let creatorImage = null;
@@ -634,6 +697,8 @@ export async function getGiveawayById(id: number) {
       
       return {
         ...giveaway,
+        entriesCount: actualEntryCount, // Use actual count instead of stored count
+        userEntry, // Include user's entry for points display
         requirements,
         prizes,
         creator_image: creatorImage,
@@ -647,6 +712,12 @@ export async function getGiveawayById(id: number) {
       const requirements = await db.select().from(giveawayRequirements).where(eq(giveawayRequirements.giveawayId, id));
       const prizes = await db.select().from(giveawayPrizes).where(eq(giveawayPrizes.giveawayId, id));
       
+      // Count actual entries from giveaway_entries table
+      const actualEntries = await db.select({ count: sql<number>`count(*)` })
+        .from(giveawayEntries)
+        .where(eq(giveawayEntries.giveawayId, id));
+      const actualEntryCount = actualEntries[0]?.count || 0;
+      
       // Fetch creator's Discord profile picture if creatorId exists
       let creatorImage = null;
       if (giveaway.creatorId) {
@@ -658,6 +729,7 @@ export async function getGiveawayById(id: number) {
       
       return {
         ...giveaway,
+        entriesCount: actualEntryCount, // Use actual count instead of stored count
         requirements,
         prizes,
         creator_image: creatorImage,
@@ -671,6 +743,12 @@ export async function getGiveawayById(id: number) {
       const requirements = await db.select().from(giveawayRequirements).where(eq(giveawayRequirements.giveawayId, id));
       const prizes = await db.select().from(giveawayPrizes).where(eq(giveawayPrizes.giveawayId, id));
       
+      // Count actual entries from giveaway_entries table
+      const actualEntries = await db.select({ count: sql<number>`count(*)` })
+        .from(giveawayEntries)
+        .where(eq(giveawayEntries.giveawayId, id));
+      const actualEntryCount = actualEntries[0]?.count || 0;
+      
       // Fetch creator's Discord profile picture if creatorId exists
       let creatorImage = null;
       if (giveaway.creatorId) {
@@ -682,6 +760,7 @@ export async function getGiveawayById(id: number) {
       
       return {
         ...giveaway,
+        entriesCount: actualEntryCount, // Use actual count instead of stored count
         requirements,
         prizes,
         creator_image: creatorImage,
@@ -689,20 +768,7 @@ export async function getGiveawayById(id: number) {
       };
     }
     
-    // Fallback to old giveaways table for backward compatibility
-    result = await db.select().from(giveaways).where(eq(giveaways.id, id)) as any;
-    if (result.length > 0) {
-      const giveaway = result[0];
-      const requirements = await db.select().from(giveawayRequirements).where(eq(giveawayRequirements.giveawayId, id));
-      const prizes = await db.select().from(giveawayPrizes).where(eq(giveawayPrizes.giveawayId, id));
-      
-      return {
-        ...giveaway,
-        requirements,
-        prizes,
-        table_source: 'legacy',
-      };
-    }
+    // No fallback to legacy table - all giveaways should be in approval system tables
     
     return null;
   } catch (error) {
@@ -789,9 +855,7 @@ export async function updateGiveaway(id: number, updateData: Partial<NewGiveaway
       return result[0];
     }
     
-    // Fallback to old giveaways table for backward compatibility
-    result = await db.update(giveaways).set(updateObject).where(eq(giveaways.id, id)).returning() as any;
-    return result[0] ?? null;
+    // No fallback to legacy table - all giveaways should be in approval system tables
   } catch (error) {
     console.error('Error updating giveaway:', error);
     return null;
@@ -844,19 +908,7 @@ export async function deleteGiveaway(id: number) {
       return true;
     }
 
-    // Fallback to legacy giveaways table
-    result = await db.delete(giveaways).where(eq(giveaways.id, id)).returning({ id: giveaways.id });
-    if (result.length > 0) {
-      console.log(`Found giveaway in legacy giveaways table, deleting related data...`);
-      // Also delete related entries, requirements and prizes
-      const [entriesDeleted, requirementsDeleted, prizesDeleted] = await Promise.all([
-        deleteGiveawayEntry(id),
-        deleteGiveawayRequirement(id),
-        deleteGiveawayPrize(id)
-      ]);
-      console.log(`Deletion results - Entries: ${entriesDeleted}, Requirements: ${requirementsDeleted}, Prizes: ${prizesDeleted}`);
-      return true;
-    }
+    // No fallback to legacy table - all giveaways should be in approval system tables
 
     console.log(`No giveaway found with ID: ${id}`);
     return false;
@@ -1040,16 +1092,35 @@ export async function getUserGiveawayEntry(giveawayId: number, userId: string) {
   return result[0] ?? null;
 }
 
-export async function getUserGiveawayEntries(userId: string) {
-  return await db.select({
-    ...getTableColumns(giveawayEntries),
-    giveawayTitle: giveaways.title,
-    giveawayCover: giveaways.coverImage,
-  })
-  .from(giveawayEntries)
-  .leftJoin(giveaways, eq(giveawayEntries.giveawayId, giveaways.id))
-  .where(eq(giveawayEntries.userId, userId))
-  .orderBy(desc(giveawayEntries.entryDate));
+export async function updateGiveawayEntryPoints(giveawayId: number, userId: string, completedRequirements: number[]) {
+  try {
+    // Get the giveaway requirements to calculate points
+    const requirements = await db.select().from(giveawayRequirements)
+      .where(eq(giveawayRequirements.giveawayId, giveawayId));
+    
+    // Calculate total points for completed requirements
+    const totalPoints = requirements
+      .filter(req => completedRequirements.includes(req.id))
+      .reduce((sum, req) => sum + req.points, 0);
+    
+    // Update the entry with new points and completed requirements
+    const result = await db.update(giveawayEntries)
+      .set({
+        pointsEarned: totalPoints,
+        requirementsCompleted: completedRequirements.map(id => id.toString()),
+        updatedAt: new Date()
+      })
+      .where(and(
+        eq(giveawayEntries.giveawayId, giveawayId),
+        eq(giveawayEntries.userId, userId)
+      ))
+      .returning({ id: giveawayEntries.id });
+    
+    return result[0]?.id;
+  } catch (error) {
+    console.error('Error updating giveaway entry points:', error);
+    throw error;
+  }
 }
 
 
@@ -1343,5 +1414,36 @@ export async function deleteGiveawayPrize(giveawayId: number): Promise<boolean> 
   } catch (error) {
     console.error('Error deleting giveaway prizes:', error);
     return false;
+  }
+}
+
+// Get related giveaways (other active giveaways excluding the current one)
+export async function getRelatedGiveaways(currentGiveawayId: number, limit: number = 3) {
+  try {
+    const result = await db.select().from(approvedGiveaways)
+      .where(and(
+        eq(approvedGiveaways.status, 'active'),
+        ne(approvedGiveaways.id, currentGiveawayId)
+      ))
+      .limit(limit);
+
+    // Get entry counts for each giveaway
+    const giveawaysWithCounts = await Promise.all(
+      result.map(async (giveaway) => {
+        const entryCount = await db.select({ count: sql<number>`count(*)` })
+          .from(giveawayEntries)
+          .where(eq(giveawayEntries.giveawayId, giveaway.id));
+        
+        return {
+          ...giveaway,
+          entriesCount: entryCount[0]?.count || 0
+        };
+      })
+    );
+
+    return giveawaysWithCounts;
+  } catch (error) {
+    console.error('Error fetching related giveaways:', error);
+    return [];
   }
 }

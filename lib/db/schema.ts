@@ -120,30 +120,7 @@ export const rejectedGiveaways = pgTable('rejected_giveaways', {
   adminNotes: text('admin_notes'),
 });
 
-// Legacy giveaways table (for backward compatibility)
-export const giveaways = pgTable('giveaways', {
-  id: integer('id').primaryKey().notNull(),
-  title: text('title').notNull(),
-  description: text('description').notNull(),
-  totalValue: text('total_value').notNull(),
-  endDate: text('end_date').notNull(),
-  maxEntries: integer('max_entries'),
-  difficulty: text('difficulty').notNull(),
-  featured: boolean('featured').default(false),
-  autoAnnounce: boolean('auto_announce').default(false),
-  creatorName: text('creator_name').notNull(),
-  creatorEmail: text('creator_email').notNull(),
-  creatorId: text('creator_id'),
-  images: text('images').array().default([]),
-  videos: text('videos').array().default([]),
-  coverImage: text('cover_image'),
-  tags: text('tags').array().default([]),
-  rules: text('rules').array().default([]),
-  status: text('status').default('active'),
-  entriesCount: integer('entries_count').default(0),
-  createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at').defaultNow(),
-});
+// Legacy giveaways table removed - all giveaways use approval system tables
 
 // Giveaway requirements table
 export const giveawayRequirements = pgTable('giveaway_requirements', {
@@ -237,16 +214,17 @@ export const usersRelations = relations(users, ({ many }) => ({
 export const approvedScriptsRelations = relations(approvedScripts, ({ many }) => ({
 }));
 
-export const giveawaysRelations = relations(giveaways, ({ many }) => ({
+// Relations for approved giveaways (primary giveaway table)
+export const approvedGiveawaysRelations = relations(approvedGiveaways, ({ many }) => ({
   entries: many(giveawayEntries),
   requirements: many(giveawayRequirements),
   prizes: many(giveawayPrizes),
 }));
 
 export const giveawayEntriesRelations = relations(giveawayEntries, ({ one }) => ({
-  giveaway: one(giveaways, {
+  giveaway: one(approvedGiveaways, {
     fields: [giveawayEntries.giveawayId],
-    references: [giveaways.id],
+    references: [approvedGiveaways.id],
   }),
   user: one(users, {
     fields: [giveawayEntries.userId],
@@ -255,7 +233,7 @@ export const giveawayEntriesRelations = relations(giveawayEntries, ({ one }) => 
 }));
 
 
-// Note: Requirements and prizes can reference giveaways from any table (pending, approved, rejected, or legacy)
+// Note: Requirements and prizes can reference giveaways from any approval table (pending, approved, rejected)
 // The foreign key relationship is handled at the application level rather than database level
 // to allow flexibility across multiple giveaway tables
 export const giveawayRequirementsRelations = relations(giveawayRequirements, ({ one }) => ({
@@ -271,8 +249,8 @@ export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Script = typeof approvedScripts.$inferSelect;
 export type NewScript = typeof approvedScripts.$inferInsert;
-export type Giveaway = typeof giveaways.$inferSelect;
-export type NewGiveaway = typeof giveaways.$inferInsert;
+export type Giveaway = typeof approvedGiveaways.$inferSelect;
+export type NewGiveaway = typeof approvedGiveaways.$inferInsert;
 export type GiveawayRequirement = typeof giveawayRequirements.$inferSelect;
 export type NewGiveawayRequirement = typeof giveawayRequirements.$inferInsert;
 export type GiveawayPrize = typeof giveawayPrizes.$inferSelect;

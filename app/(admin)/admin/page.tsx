@@ -661,8 +661,22 @@ export default function AdminPage() {
                     {users.map((user) => (
                       <div key={user.id} className="flex items-center justify-between p-4 rounded-lg bg-gray-700/30">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-r from-orange-500 to-yellow-400 flex items-center justify-center">
-                            <span className="text-black font-bold">{user.name?.[0] || "U"}</span>
+                          <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-r from-orange-500 to-yellow-400 flex items-center justify-center">
+                            {user.image ? (
+                              <img 
+                                src={user.image} 
+                                alt={user.name || "User"} 
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  target.style.display = 'none';
+                                  target.nextElementSibling?.classList.remove('hidden');
+                                }}
+                              />
+                            ) : null}
+                            <span className={`text-black font-bold ${user.image ? 'hidden' : ''}`}>
+                              {user.name?.[0] || "U"}
+                            </span>
                           </div>
                           <div>
                             <p className="text-white font-medium">{user.name || "Unknown"}</p>

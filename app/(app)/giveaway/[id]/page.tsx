@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useMemo } from "react"
 import { motion, useInView, AnimatePresence } from "framer-motion"
 import {
   Gift,
@@ -239,6 +239,34 @@ export default function GiveawayDetailPage() {
   const [giveaway, setGiveaway] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isEnteringGiveaway, setIsEnteringGiveaway] = useState(false)
+  const [relatedGiveaways, setRelatedGiveaways] = useState<any[]>([])
+  const [relatedLoading, setRelatedLoading] = useState(true)
+
+  // Function to update points in database when tasks are completed
+  const updatePointsInDatabase = async (completedTaskIds: number[]) => {
+    if (completedTaskIds.length === 0) return
+
+    try {
+      const response = await fetch(`/api/giveaways/${giveawayId}/entries`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          completedRequirements: completedTaskIds
+        })
+      })
+
+      if (response.ok) {
+        console.log('Points updated successfully in database')
+      } else {
+        console.error('Failed to update points in database:', await response.text())
+      }
+    } catch (error) {
+      console.error('Error updating points in database:', error)
+    }
+  }
 
   // Fetch giveaway data
   useEffect(() => {
@@ -272,6 +300,29 @@ export default function GiveawayDetailPage() {
     }
   }, [giveawayId])
 
+  // Fetch related giveaways
+  useEffect(() => {
+    const fetchRelatedGiveaways = async () => {
+      try {
+        setRelatedLoading(true)
+        const response = await fetch(`/api/giveaways/${giveawayId}/related`)
+        
+        if (response.ok) {
+          const data = await response.json()
+          setRelatedGiveaways(data.relatedGiveaways || [])
+        }
+      } catch (error) {
+        console.error('Error fetching related giveaways:', error)
+      } finally {
+        setRelatedLoading(false)
+      }
+    }
+
+    if (giveawayId) {
+      fetchRelatedGiveaways()
+    }
+  }, [giveawayId])
+
   // Check if user has already entered this giveaway
   useEffect(() => {
     const checkUserEntry = async () => {
@@ -299,8 +350,8 @@ export default function GiveawayDetailPage() {
     title: giveaway?.title || "Test Giveaway",
     description: giveaway?.description || "This is a test giveaway description",
     value: giveaway?.total_value || "$500",
-    entries: giveaway?.entries_count || 0,
-    maxEntries: giveaway?.max_entries || 1000,
+    entries: giveaway?.entriesCount || 0,
+    maxEntries: null, // Remove max entries limit
     timeLeft: calculateTimeLeft(giveaway?.end_date || "2024-12-31"),
     endDate: giveaway?.end_date || "2024-12-31",
     difficulty: giveaway?.difficulty || "Medium",
@@ -358,7 +409,12 @@ export default function GiveawayDetailPage() {
             // Check if user has already joined this server (using cached servers)
             const hasJoined = await checkUserJoinedServer(requirement.description);
             if (hasJoined) {
-              setCompletedTasks(prev => [...prev, requirement.id]);
+              setCompletedTasks(prev => {
+                const newCompleted = [...prev, requirement.id]
+                // Update points in database
+                updatePointsInDatabase(newCompleted)
+                return newCompleted
+              });
             }
           } catch (error) {
             console.error('Error auto-verifying Discord requirement:', error);
@@ -373,32 +429,6 @@ export default function GiveawayDetailPage() {
     autoVerifyDiscordRequirements();
   }, [giveaway, transformedGiveaway.requirements]);
 
-  const relatedGiveaways = [
-    {
-      id: 2,
-      title: "Custom Development Service",
-      value: "$300",
-      timeLeft: "5d 8h",
-      image: "/cat.jpg",
-      entries: 892,
-    },
-    {
-      id: 3,
-      title: "Server Setup Package",
-      value: "$200",
-      timeLeft: "1d 3h",
-      image: "/cat.jpg",
-      entries: 634,
-    },
-    {
-      id: 4,
-      title: "Premium Script Collection",
-      value: "$150",
-      timeLeft: "7d 12h",
-      image: "/cat.jpg",
-      entries: 1456,
-    },
-  ]
 
   const [openedDiscordTasks, setOpenedDiscordTasks] = useState<number[]>([])
   const [serverNames, setServerNames] = useState<{[key: number]: string}>({})
@@ -446,7 +476,10 @@ export default function GiveawayDetailPage() {
         
         if (hasJoined) {
           // User has already joined, mark as completed
-          setCompletedTasks([...completedTasks, taskId]);
+          const newCompleted = [...completedTasks, taskId]
+          setCompletedTasks(newCompleted);
+          // Update points in database
+          updatePointsInDatabase(newCompleted)
           alert(`✅ You're already a member of this Discord server. Task completed!`);
           return;
         }
@@ -472,7 +505,10 @@ export default function GiveawayDetailPage() {
     } else {
       // For non-Discord tasks, just mark as completed
       if (!completedTasks.includes(taskId)) {
-        setCompletedTasks([...completedTasks, taskId]);
+        const newCompleted = [...completedTasks, taskId]
+        setCompletedTasks(newCompleted);
+        // Update points in database
+        updatePointsInDatabase(newCompleted)
       }
     }
   }
@@ -555,7 +591,10 @@ export default function GiveawayDetailPage() {
 
   const handleMarkDone = (taskId: number) => {
     if (!completedTasks.includes(taskId)) {
-      setCompletedTasks([...completedTasks, taskId]);
+      const newCompleted = [...completedTasks, taskId]
+      setCompletedTasks(newCompleted);
+      // Update points in database
+      updatePointsInDatabase(newCompleted)
     }
   }
 
@@ -598,25 +637,33 @@ export default function GiveawayDetailPage() {
     }
 
     try {
+      setIsEnteringGiveaway(true)
+      console.log('Entering giveaway with completed tasks:', completedTasks)
       const response = await fetch(`/api/giveaways/${giveawayId}/entries`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          completedRequirements: completedTasks
+        })
       })
 
       const data = await response.json()
 
       if (response.ok) {
         setIsEntered(true)
-        // Refresh the giveaway data to update entry count
-        window.location.reload()
+        // Points are now calculated and stored during entry creation
+        // Entry count will be updated automatically when the page refreshes
+        // since getGiveawayById now counts actual entries from giveaway_entries table
       } else {
         alert(data.error || "Failed to enter giveaway")
       }
     } catch (error) {
       console.error('Error entering giveaway:', error)
       alert("Failed to enter giveaway. Please try again.")
+    } finally {
+      setIsEnteringGiveaway(false)
     }
   }
 
@@ -624,8 +671,6 @@ export default function GiveawayDetailPage() {
   const earnedPoints = transformedGiveaway.requirements
     .filter((req: any) => completedTasks.includes(req.id))
     .reduce((sum: any, req: any) => sum + req.points, 0)
-
-  const progressPercentage = (transformedGiveaway.entries / transformedGiveaway.maxEntries) * 100
 
   // Loading state
   if (loading) {
@@ -818,23 +863,26 @@ export default function GiveawayDetailPage() {
                 <div className="mb-4">
                   <div className="flex justify-between text-sm text-gray-400 mb-2">
                     <span>{transformedGiveaway.entries.toLocaleString()} entries</span>
-                    <span>{transformedGiveaway.maxEntries.toLocaleString()} max</span>
                   </div>
-                  <Progress value={progressPercentage} className="h-2 bg-gray-700" />
                 </div>
 
                 <div className="space-y-4">
                   <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                     <Button
                       onClick={handleEnterGiveaway}
-                      disabled={isEntered}
+                      disabled={isEntered || isEnteringGiveaway}
                       className={`w-full ${
                         isEntered
                           ? "bg-green-600 hover:bg-green-700"
                           : "bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600"
                       } text-black font-bold py-3 text-lg shadow-lg`}
                     >
-                      {isEntered ? (
+                      {isEnteringGiveaway ? (
+                        <>
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-black mr-2"></div>
+                          Entering...
+                        </>
+                      ) : isEntered ? (
                         <>
                           <Trophy className="mr-2 h-5 w-5" />
                           Entered!
@@ -1042,7 +1090,10 @@ export default function GiveawayDetailPage() {
                                       setDiscordServersLoaded(false);
                                       const hasJoined = await checkUserJoinedServer(task.description);
                                       if (hasJoined) {
-                                        setCompletedTasks([...completedTasks, task.id]);
+                                        const newCompleted = [...completedTasks, task.id]
+                                        setCompletedTasks(newCompleted);
+                                        // Update points in database
+                                        updatePointsInDatabase(newCompleted)
                                         alert(`✅ Verified! You're a member of this Discord server. Task completed!`);
                                       } else {
                                         alert("❌ You haven't joined the Discord server yet. Please join first and try again.");
@@ -1234,7 +1285,20 @@ export default function GiveawayDetailPage() {
               More Giveaways
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {relatedGiveaways.map((giveaway, index) => (
+              {relatedLoading ? (
+                // Loading skeleton
+                Array.from({ length: 3 }).map((_, index) => (
+                  <div key={index} className="bg-gray-800/30 border-gray-700/50 rounded-lg p-4 animate-pulse">
+                    <div className="w-full h-48 bg-gray-700 rounded-lg mb-4"></div>
+                    <div className="h-4 bg-gray-700 rounded mb-2"></div>
+                    <div className="flex justify-between">
+                      <div className="h-3 bg-gray-700 rounded w-16"></div>
+                      <div className="h-3 bg-gray-700 rounded w-12"></div>
+                    </div>
+                  </div>
+                ))
+              ) : relatedGiveaways.length > 0 ? (
+                relatedGiveaways.map((giveaway, index) => (
                 <motion.div
                   key={giveaway.id}
                   initial={{ opacity: 1, y: 0 }}
@@ -1248,12 +1312,12 @@ export default function GiveawayDetailPage() {
                       <CardHeader className="p-0">
                         <div className="relative overflow-hidden rounded-t-lg">
                           <img
-                            src={giveaway.image || "/cat.jpg"}
+                            src={giveaway.coverImage || giveaway.image || "/cat.jpg"}
                             alt={giveaway.title}
                             className="w-full h-48 object-cover transition-transform duration-300 hover:scale-110"
                           />
                           <div className="absolute top-3 right-3 bg-yellow-500 text-black px-2 py-1 rounded-full text-sm font-bold">
-                            {giveaway.value}
+                            ${giveaway.totalValue || '0'}
                           </div>
                         </div>
                       </CardHeader>
@@ -1264,18 +1328,23 @@ export default function GiveawayDetailPage() {
                         <div className="flex items-center justify-between text-sm">
                           <div className="flex items-center gap-1 text-orange-500">
                             <Clock className="h-4 w-4" />
-                            <span>{giveaway.timeLeft}</span>
+                            <span>{new Date(giveaway.endDate).toLocaleDateString()}</span>
                           </div>
                           <div className="flex items-center gap-1 text-gray-400">
                             <Users className="h-4 w-4" />
-                            <span>{giveaway.entries}</span>
+                            <span>{giveaway.entriesCount || 0}</span>
                           </div>
                         </div>
                       </CardContent>
                     </Card>
                   </Link>
                 </motion.div>
-              ))}
+                ))
+              ) : (
+                <div className="col-span-full text-center py-8">
+                  <p className="text-gray-400">No other giveaways available at the moment.</p>
+                </div>
+              )}
             </div>
           </motion.section>
         </div>

@@ -114,7 +114,28 @@ export default function AdminPanel() {
                 ) : (
                   filtered.map((u) => (
                     <TableRow key={u.id}>
-                      <TableCell className="text-white">{u.name || "-"}</TableCell>
+                      <TableCell className="text-white">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-r from-orange-500 to-yellow-400 flex items-center justify-center">
+                            {u.image ? (
+                              <img 
+                                src={u.image} 
+                                alt={u.name || "User"} 
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  target.style.display = 'none';
+                                  target.nextElementSibling?.classList.remove('hidden');
+                                }}
+                              />
+                            ) : null}
+                            <span className={`text-black font-bold text-sm ${u.image ? 'hidden' : ''}`}>
+                              {u.name?.[0] || "U"}
+                            </span>
+                          </div>
+                          {u.name || "-"}
+                        </div>
+                      </TableCell>
                       <TableCell className="text-white">{u.username || "-"}</TableCell>
                       <TableCell className="text-white">{u.email || "-"}</TableCell>
                       <TableCell className="text-gray-400 font-mono text-xs">{u.id}</TableCell>

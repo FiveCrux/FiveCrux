@@ -1,7 +1,9 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/auth"
-import { getUserGiveawayEntries } from "@/lib/database-new"
+import { db } from "@/lib/db/client"
+import { giveawayEntries } from "@/lib/db/schema"
+import { eq } from "drizzle-orm"
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,7 +12,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Authentication required" }, { status: 401 })
     }
 
-    const entries = await getUserGiveawayEntries((session.user as any).id as string)
+    const entries = await db.select().from(giveawayEntries)
+      .where(eq(giveawayEntries.userId, (session.user as any).id))
+      .orderBy(giveawayEntries.entryDate)
     
     return NextResponse.json({ entries })
   } catch (error) {
