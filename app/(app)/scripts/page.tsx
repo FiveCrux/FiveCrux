@@ -110,7 +110,7 @@ export default function ScriptsPage() {
         console.log("Loading scripts...")
         const [scriptsRes, adsRes] = await Promise.all([
           fetch(`/api/scripts`, { cache: "no-store" }),
-          fetch(`/api/ads/scripts`, { cache: "no-store" })
+          fetch(`/api/promotions/scripts`, { cache: "no-store" })
         ])
         
         if (scriptsRes.ok) {

@@ -224,6 +224,7 @@ export default function CreateGiveawayPage() {
       const res = await fetch('/api/giveaways', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(payload),
       });
 

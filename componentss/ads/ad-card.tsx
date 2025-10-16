@@ -14,7 +14,6 @@ interface Ad {
   link_url?: string
   category: string
   status: string
-  priority: number
   created_at: string
 }
 

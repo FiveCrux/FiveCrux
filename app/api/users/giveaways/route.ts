@@ -78,7 +78,8 @@ export async function GET(request: NextRequest) {
         creator_name: g.creatorName,
         total_value: g.totalValue,
         created_at: g.createdAt || g.rejectedAt,
-        updated_at: g.updatedAt
+        updated_at: g.updatedAt,
+        rejection_reason: g.rejectionReason
       }))
     ];
 

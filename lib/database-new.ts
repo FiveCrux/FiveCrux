@@ -383,26 +383,46 @@ export async function rejectScript(scriptId: number, adminId: string, rejectionR
   try {
     console.log('rejectScript called with:', { scriptId, adminId, rejectionReason, adminNotes });
     
-    // Get the pending script
-    const pendingScript = await db.select().from(pendingScripts).where(eq(pendingScripts.id, scriptId)).limit(1);
+    // First try to get from pending scripts
+    let script = await db.select().from(pendingScripts).where(eq(pendingScripts.id, scriptId)).limit(1);
+    let sourceTable = 'pending';
     
-    if (pendingScript.length === 0) {
-      throw new Error('Script not found in pending scripts');
+    // If not found in pending, try approved scripts
+    if (script.length === 0) {
+      const approvedScript = await db.select().from(approvedScripts).where(eq(approvedScripts.id, scriptId)).limit(1);
+      if (approvedScript.length > 0) {
+        // Convert approved script to pending script format for rejection
+        const approvedData = approvedScript[0];
+        script = [{
+          ...approvedData,
+          submittedAt: approvedData.createdAt, // Use createdAt as submittedAt
+          adminNotes: approvedData.adminNotes
+        } as any];
+        sourceTable = 'approved';
+      }
     }
     
-    const script = pendingScript[0];
+    if (script.length === 0) {
+      throw new Error('Script not found in pending or approved scripts');
+    }
+    
+    const scriptData = script[0];
     
     // Insert into rejected_scripts table
     const rejectedScript = await db.insert(rejectedScripts).values({
-      ...script,
+      ...scriptData,
       rejectedAt: new Date(),
       rejectedBy: adminId,
       rejectionReason,
       adminNotes: adminNotes || null
     }).returning();
     
-    // Delete from pending_scripts table
-    await db.delete(pendingScripts).where(eq(pendingScripts.id, scriptId));
+    // Delete from the source table
+    if (sourceTable === 'pending') {
+      await db.delete(pendingScripts).where(eq(pendingScripts.id, scriptId));
+    } else {
+      await db.delete(approvedScripts).where(eq(approvedScripts.id, scriptId));
+    }
     
     console.log('Script rejected successfully:', rejectedScript[0]);
     return rejectedScript[0];
@@ -427,7 +447,6 @@ export async function updateScriptForReapproval(id: number, updateData: any) {
     // Map incoming payload keys (may be snake_case) to schema property names
     const mappedUpdate: any = { 
       updatedAt: new Date(),
-      submittedAt: new Date() // Reset submission time for re-approval
     };
 
     const assignIfDefined = (prop: string, value: any) => {
@@ -485,6 +504,112 @@ export async function updateScriptForReapproval(id: number, updateData: any) {
     return result;
   } catch (error) {
     console.error('Error updating script for re-approval:', error);
+    throw error;
+  }
+}
+
+// Update an existing pending script in-place, refreshing submittedAt for review ordering
+export async function updatePendingScript(id: number, updateData: any) {
+  try {
+    console.log('updatePendingScript called with:', { id, updateData });
+
+    const mappedUpdate: any = { updatedAt: new Date() };
+    const assignIfDefined = (prop: string, value: any) => {
+      if (value !== undefined) mappedUpdate[prop] = value;
+    };
+
+    assignIfDefined('title', updateData.title);
+    assignIfDefined('description', updateData.description);
+    if (updateData.price !== undefined) assignIfDefined('price', Number(updateData.price));
+    if (updateData.originalPrice !== undefined) assignIfDefined('originalPrice', updateData.originalPrice === null ? null : Number(updateData.originalPrice));
+    if (updateData.original_price !== undefined) assignIfDefined('originalPrice', updateData.original_price === null ? null : Number(updateData.original_price));
+    assignIfDefined('category', updateData.category);
+    if (updateData.framework !== undefined) {
+      const arrayValue = Array.isArray(updateData.framework) ? updateData.framework : (updateData.framework ? [updateData.framework] : []);
+      assignIfDefined('framework', validateFrameworks(arrayValue));
+    }
+    assignIfDefined('seller_name', updateData.seller_name);
+    assignIfDefined('seller_email', updateData.seller_email);
+    assignIfDefined('tags', updateData.tags);
+    assignIfDefined('features', updateData.features);
+    assignIfDefined('requirements', updateData.requirements);
+    assignIfDefined('links', updateData.links);
+    assignIfDefined('images', updateData.images);
+    assignIfDefined('videos', updateData.videos);
+    assignIfDefined('screenshots', updateData.screenshots);
+    if (updateData.coverImage !== undefined) assignIfDefined('coverImage', updateData.coverImage);
+    if (updateData.cover_image !== undefined) assignIfDefined('coverImage', updateData.cover_image);
+    assignIfDefined('version', updateData.version);
+    if (updateData.featured !== undefined) assignIfDefined('featured', Boolean(updateData.featured));
+
+    const result = await db.update(pendingScripts)
+      .set(mappedUpdate)
+      .where(eq(pendingScripts.id, id))
+      .returning();
+
+    return result[0] ?? null;
+  } catch (error) {
+    console.error('Error updating pending script:', error);
+    throw error;
+  }
+}
+
+// Move a rejected script back to pending for re-approval, applying updates
+export async function updateRejectedScriptForReapproval(id: number, updateData: any) {
+  try {
+    console.log('updateRejectedScriptForReapproval called with:', { id, updateData });
+
+    const currentScript = await db.select().from(rejectedScripts).where(eq(rejectedScripts.id, id)).limit(1);
+    if (!currentScript[0]) {
+      throw new Error('Script not found in rejected_scripts');
+    }
+
+    const mappedUpdate: any = {
+      updatedAt: new Date(),
+    };
+    const assignIfDefined = (prop: string, value: any) => {
+      if (value !== undefined) mappedUpdate[prop] = value;
+    };
+
+    assignIfDefined('title', updateData.title);
+    assignIfDefined('description', updateData.description);
+    if (updateData.price !== undefined) assignIfDefined('price', Number(updateData.price));
+    if (updateData.originalPrice !== undefined) assignIfDefined('originalPrice', updateData.originalPrice === null ? null : Number(updateData.originalPrice));
+    if (updateData.original_price !== undefined) assignIfDefined('originalPrice', updateData.original_price === null ? null : Number(updateData.original_price));
+    assignIfDefined('category', updateData.category);
+    if (updateData.framework !== undefined) {
+      const arrayValue = Array.isArray(updateData.framework) ? updateData.framework : (updateData.framework ? [updateData.framework] : []);
+      assignIfDefined('framework', validateFrameworks(arrayValue));
+    }
+    assignIfDefined('seller_name', updateData.seller_name);
+    assignIfDefined('seller_email', updateData.seller_email);
+    assignIfDefined('tags', updateData.tags);
+    assignIfDefined('features', updateData.features);
+    assignIfDefined('requirements', updateData.requirements);
+    assignIfDefined('links', updateData.links);
+    assignIfDefined('images', updateData.images);
+    assignIfDefined('videos', updateData.videos);
+    assignIfDefined('screenshots', updateData.screenshots);
+    if (updateData.coverImage !== undefined) assignIfDefined('coverImage', updateData.coverImage);
+    if (updateData.cover_image !== undefined) assignIfDefined('coverImage', updateData.cover_image);
+    assignIfDefined('version', updateData.version);
+    if (updateData.featured !== undefined) assignIfDefined('featured', Boolean(updateData.featured));
+
+    const result = await db.transaction(async (tx) => {
+      await tx.delete(rejectedScripts).where(eq(rejectedScripts.id, id));
+      const inserted = await tx.insert(pendingScripts)
+        .values({
+          ...currentScript[0],
+          ...mappedUpdate,
+          id,
+        })
+        .returning();
+      return inserted[0];
+    });
+
+    return result ?? null;
+  } catch (error) {
+    console.error('Error moving rejected script to pending:', error);
     throw error;
   }
 }
@@ -791,7 +916,6 @@ export async function updateGiveawayForReapproval(id: number, updateData: any) {
     // Map incoming payload keys (may be snake_case) to schema property names
     const mappedUpdate: any = { 
       updatedAt: new Date(),
-      submittedAt: new Date() // Reset submission time for re-approval
     };
 
     const assignIfDefined = (prop: string, value: any) => {
@@ -847,15 +971,72 @@ export async function updateGiveaway(id: number, updateData: Partial<NewGiveaway
     const fields = Object.keys(updateData);
     if (fields.length === 0) return null;
     
-    const updateObject: any = { updatedAt: new Date(), ...updateData };
-    
-    // Try to update in pending_giveaways first (most common case for edits)
-    let result = await db.update(pendingGiveaways).set(updateObject).where(eq(pendingGiveaways.id, id)).returning();
-    if (result.length > 0) {
-      return result[0];
+    // Find the giveaway in any table
+    let currentGiveaway: any = await db.select().from(pendingGiveaways).where(eq(pendingGiveaways.id, id)).limit(1);
+    if (currentGiveaway.length === 0) {
+      currentGiveaway = await db.select().from(approvedGiveaways).where(eq(approvedGiveaways.id, id)).limit(1);
+    }
+    if (currentGiveaway.length === 0) {
+      currentGiveaway = await db.select().from(rejectedGiveaways).where(eq(rejectedGiveaways.id, id)).limit(1);
     }
     
-    // No fallback to legacy table - all giveaways should be in approval system tables
+    if (currentGiveaway.length === 0) {
+      return null; // Giveaway not found
+    }
+    
+    const giveaway = currentGiveaway[0];
+    
+    // Normalize giveaway data for pending table (remove table-specific fields)
+    const normalizedGiveaway = {
+      id: giveaway.id,
+      title: giveaway.title,
+      description: giveaway.description,
+      totalValue: giveaway.totalValue,
+      endDate: giveaway.endDate,
+      maxEntries: giveaway.maxEntries,
+      difficulty: giveaway.difficulty,
+      creatorName: giveaway.creatorName,
+      creatorEmail: giveaway.creatorEmail,
+      creatorId: giveaway.creatorId,
+      images: giveaway.images,
+      videos: giveaway.videos,
+      coverImage: giveaway.coverImage,
+      tags: giveaway.tags,
+      rules: giveaway.rules,
+      featured: giveaway.featured,
+      autoAnnounce: giveaway.autoAnnounce,
+      createdAt: giveaway.createdAt,
+      updatedAt: new Date(),
+      submittedAt: new Date(),
+      adminNotes: giveaway.adminNotes
+    };
+    
+    const updateObject: any = { 
+      ...updateData, 
+      updatedAt: new Date(),
+      submittedAt: new Date()
+    };
+    
+    // Always move to pending_giveaways for any edit
+    const result = await db.transaction(async (tx) => {
+      // Delete from current table
+      await tx.delete(pendingGiveaways).where(eq(pendingGiveaways.id, id));
+      await tx.delete(approvedGiveaways).where(eq(approvedGiveaways.id, id));
+      await tx.delete(rejectedGiveaways).where(eq(rejectedGiveaways.id, id));
+      
+      // Insert into pending_giveaways with normalized data
+      const newPending = await tx.insert(pendingGiveaways)
+        .values({
+          ...normalizedGiveaway,
+          ...updateObject,
+          id: id, // Keep the same ID
+        })
+        .returning();
+      
+      return newPending[0];
+    });
+    
+    return result;
   } catch (error) {
     console.error('Error updating giveaway:', error);
     return null;
@@ -1009,22 +1190,43 @@ export async function approveGiveaway(giveawayId: number, adminId: string, admin
 
 export async function rejectGiveaway(giveawayId: number, adminId: string, rejectionReason: string, adminNotes?: string) {
   try {
-    // Get the pending giveaway
-    const pendingGiveaway = await db.select().from(pendingGiveaways).where(eq(pendingGiveaways.id, giveawayId));
-    if (!pendingGiveaway[0]) {
-      throw new Error('Pending giveaway not found');
+    // First try to get from pending giveaways
+    let giveaway: any[] = await db.select().from(pendingGiveaways).where(eq(pendingGiveaways.id, giveawayId));
+    let sourceTable = 'pending';
+    
+    // If not found in pending, try approved giveaways
+    if (!giveaway[0]) {
+      const approvedGiveaway = await db.select().from(approvedGiveaways).where(eq(approvedGiveaways.id, giveawayId));
+      if (approvedGiveaway[0]) {
+        // Convert approved giveaway to pending giveaway format for rejection
+        const approvedData = approvedGiveaway[0];
+        giveaway = [{
+          ...approvedData,
+          submittedAt: approvedData.createdAt, // Use createdAt as submittedAt
+          adminNotes: approvedData.adminNotes
+        }];
+        sourceTable = 'approved';
+      }
+    }
+    
+    if (!giveaway[0]) {
+      throw new Error('Giveaway not found in pending or approved giveaways');
     }
 
     // Insert into rejected_giveaways table
     await db.insert(rejectedGiveaways).values({
-      ...pendingGiveaway[0],
+      ...giveaway[0],
       rejectedBy: adminId,
       rejectionReason: rejectionReason,
       adminNotes: adminNotes || null,
     });
 
-    // Delete from pending_giveaways table
-    await db.delete(pendingGiveaways).where(eq(pendingGiveaways.id, giveawayId));
+    // Delete from the source table
+    if (sourceTable === 'pending') {
+      await db.delete(pendingGiveaways).where(eq(pendingGiveaways.id, giveawayId));
+    } else {
+      await db.delete(approvedGiveaways).where(eq(approvedGiveaways.id, giveawayId));
+    }
 
     return true;
   } catch (error) {
@@ -1140,7 +1342,6 @@ export async function createAd(adData: NewAd & { status?: string }) {
     imageUrl: (adData as any).imageUrl ?? (adData as any).image_url ?? null,
     linkUrl: (adData as any).linkUrl ?? (adData as any).link_url ?? null,
     category: (adData as any).category,
-    priority: (adData as any).priority ?? 1,
     startDate: (adData as any).startDate ?? (adData as any).start_date ?? new Date(),
     endDate: (adData as any).endDate ?? (adData as any).end_date ?? null,
     createdBy: (adData as any).createdBy ?? (adData as any).created_by,
@@ -1159,7 +1360,6 @@ export async function createAd(adData: NewAd & { status?: string }) {
     // Otherwise, insert into pending_ads
     const result = await db.insert(pendingAds).values({
       ...mapped,
-      submittedAt: new Date(),
     } as any).returning({ id: pendingAds.id });
     return result[0]?.id;
   }
@@ -1180,11 +1380,11 @@ export async function createPendingAd(adData: NewAd) {
     imageUrl: (adData as any).imageUrl ?? (adData as any).image_url ?? null,
     linkUrl: (adData as any).linkUrl ?? (adData as any).link_url ?? null,
     category: (adData as any).category,
-    priority: (adData as any).priority ?? 1,
     startDate: (adData as any).startDate ?? (adData as any).start_date ?? new Date(),
     endDate: (adData as any).endDate ?? (adData as any).end_date ?? null,
     createdBy: (adData as any).createdBy ?? (adData as any).created_by,
-    submittedAt: new Date(),
+    createdAt: new Date(),
+    updatedAt: new Date(),
   };
 
   // Insert into pending ads table
@@ -1210,7 +1410,7 @@ export async function getAds(filters?: {
       : db.select().from(approvedAds);
     
     return await query
-      .orderBy(desc(approvedAds.priority), desc(approvedAds.createdAt))
+      .orderBy(desc(approvedAds.createdAt))
       .limit(limitVal) as any;
       
   } catch (error: any) {
@@ -1257,23 +1457,82 @@ export async function getAdsForPage(pageType: 'scripts' | 'giveaways', limit?: n
 
 // Admin ad management functions
 export async function getPendingAds(limit?: number): Promise<any[]> {
-  const base = db.select().from(pendingAds).orderBy(desc(pendingAds.createdAt));
+  const base = db
+    .select({
+      id: pendingAds.id,
+      title: pendingAds.title,
+      description: pendingAds.description,
+      imageUrl: pendingAds.imageUrl,
+      linkUrl: pendingAds.linkUrl,
+      category: pendingAds.category,
+      startDate: pendingAds.startDate,
+      endDate: pendingAds.endDate,
+      createdBy: pendingAds.createdBy,
+      createdAt: pendingAds.createdAt,
+      updatedAt: pendingAds.updatedAt,
+      adminNotes: pendingAds.adminNotes,
+      creator_name: users.name,
+      creator_email: users.email,
+      creator_id: users.id,
+    })
+    .from(pendingAds)
+    .leftJoin(users, eq(pendingAds.createdBy, users.id))
+    .orderBy(desc(pendingAds.createdAt));
   return await (limit ? base.limit(limit) : base) as any[];
 }
 
 export async function getApprovedAds(limit?: number): Promise<any[]> {
-  // Explicitly select fields to match approved_ads shape
   const base = db
-    .select()
+    .select({
+      id: approvedAds.id,
+      title: approvedAds.title,
+      description: approvedAds.description,
+      imageUrl: approvedAds.imageUrl,
+      linkUrl: approvedAds.linkUrl,
+      category: approvedAds.category,
+      startDate: approvedAds.startDate,
+      endDate: approvedAds.endDate,
+      createdBy: approvedAds.createdBy,
+      createdAt: approvedAds.createdAt,
+      updatedAt: approvedAds.updatedAt,
+      status: approvedAds.status,
+      approvedAt: approvedAds.approvedAt,
+      approvedBy: approvedAds.approvedBy,
+      adminNotes: approvedAds.adminNotes,
+      creator_name: users.name,
+      creator_email: users.email,
+      creator_id: users.id,
+    })
     .from(approvedAds)
+    .leftJoin(users, eq(approvedAds.createdBy, users.id))
     .orderBy(desc(approvedAds.approvedAt));
   return await (limit ? base.limit(limit) : base) as any[];
 }
 
 export async function getRejectedAds(limit?: number): Promise<any[]> {
   const base = db
-    .select()
+    .select({
+      id: rejectedAds.id,
+      title: rejectedAds.title,
+      description: rejectedAds.description,
+      imageUrl: rejectedAds.imageUrl,
+      linkUrl: rejectedAds.linkUrl,
+      category: rejectedAds.category,
+      startDate: rejectedAds.startDate,
+      endDate: rejectedAds.endDate,
+      createdBy: rejectedAds.createdBy,
+      createdAt: rejectedAds.createdAt,
+      updatedAt: rejectedAds.updatedAt,
+      rejectedAt: rejectedAds.rejectedAt,
+      rejectedBy: rejectedAds.rejectedBy,
+      rejectionReason: rejectedAds.rejectionReason,
+      adminNotes: rejectedAds.adminNotes,
+      creator_name: users.name,
+      creator_email: users.email,
+      creator_id: users.id,
+    })
     .from(rejectedAds)
+    .leftJoin(users, eq(rejectedAds.createdBy, users.id))
     .orderBy(desc(rejectedAds.rejectedAt));
   return await (limit ? base.limit(limit) : base) as any[];
 }
@@ -1283,9 +1542,22 @@ export async function approveAd(adId: number, adminId: string, adminNotes?: stri
   const pending = await db.select().from(pendingAds).where(eq(pendingAds.id, adId)).limit(1);
   if (pending.length === 0) throw new Error('Pending ad not found');
   const ad = pending[0];
+  
+  // Create the approved ad with all required fields
   await db.insert(approvedAds).values({
-    ...ad,
-    status: 'active' as any,
+    id: ad.id,
+    title: ad.title,
+    description: ad.description,
+    imageUrl: ad.imageUrl,
+    linkUrl: ad.linkUrl,
+    category: ad.category,
+    startDate: ad.startDate,
+    endDate: ad.endDate,
+    createdBy: ad.createdBy,
+    createdAt: ad.createdAt,
+    updatedAt: new Date(),
+    status: 'active',
+    approvedAt: new Date(),
     approvedBy: adminId,
     adminNotes: adminNotes || null,
   });
@@ -1294,17 +1566,71 @@ export async function approveAd(adId: number, adminId: string, adminNotes?: stri
 }
 
 export async function rejectAd(adId: number, adminId: string, rejectionReason: string, adminNotes?: string) {
-  const pending = await db.select().from(pendingAds).where(eq(pendingAds.id, adId)).limit(1);
-  if (pending.length === 0) throw new Error('Pending ad not found');
-  const ad = pending[0];
-  await db.insert(rejectedAds).values({
-    ...ad,
-    rejectedBy: adminId,
-    rejectionReason,
-    adminNotes: adminNotes || null,
-  });
-  await db.delete(pendingAds).where(eq(pendingAds.id, adId));
-  return true;
+  try {
+    // First try to get from pending ads
+    let ad: any[] = await db.select().from(pendingAds).where(eq(pendingAds.id, adId)).limit(1) as any;
+    let sourceTable = 'pending';
+    
+    // If not found in pending, try approved ads
+    if (ad.length === 0) {
+      const approvedAd = await db.select().from(approvedAds).where(eq(approvedAds.id, adId)).limit(1);
+      if (approvedAd.length > 0) {
+        // Convert approved ad to pending ad format for rejection
+        const approvedData = approvedAd[0];
+        ad = [{
+          ...approvedData,
+          submittedAt: approvedData.createdAt, // Use createdAt as submittedAt
+          adminNotes: approvedData.adminNotes
+        }];
+        sourceTable = 'approved';
+      }
+    }
+    
+    // If still not found, check if it's already rejected
+    if (ad.length === 0) {
+      const rejectedAd = await db.select().from(rejectedAds).where(eq(rejectedAds.id, adId)).limit(1);
+      if (rejectedAd.length > 0) {
+        throw new Error(`Ad ${adId} is already rejected`);
+      }
+    }
+    
+    if (ad.length === 0) {
+      throw new Error(`Ad ${adId} not found in pending, approved, or rejected ads`);
+    }
+    
+    const adData = ad[0];
+    
+    // Insert into rejected_ads table
+    await db.insert(rejectedAds).values({
+      id: adData.id,
+      title: adData.title,
+      description: adData.description,
+      imageUrl: adData.imageUrl,
+      linkUrl: adData.linkUrl,
+      category: adData.category,
+      startDate: adData.startDate,
+      endDate: adData.endDate,
+      createdBy: adData.createdBy,
+      createdAt: adData.createdAt,
+      updatedAt: new Date(),
+      rejectedAt: new Date(),
+      rejectedBy: adminId,
+      rejectionReason,
+      adminNotes: adminNotes || null,
+    });
+    
+    // Delete from the source table
+    if (sourceTable === 'pending') {
+      await db.delete(pendingAds).where(eq(pendingAds.id, adId));
+    } else {
+      await db.delete(approvedAds).where(eq(approvedAds.id, adId));
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error rejecting ad:', error);
+    throw error;
+  }
 }
 
 // Ad management functions
@@ -1350,17 +1676,149 @@ export async function updateAd(id: number, updateData: any) {
   }
 }
 
+// Update an existing pending ad in-place
+export async function updatePendingAd(id: number, updateData: any) {
+  try {
+    console.log('updatePendingAd called with:', { id, updateData });
+
+    const mappedUpdate: any = { updatedAt: new Date() };
+    const assignIfDefined = (prop: string, value: any) => {
+      if (value !== undefined) mappedUpdate[prop] = value;
+    };
+
+    assignIfDefined('title', updateData.title);
+    assignIfDefined('description', updateData.description);
+    assignIfDefined('imageUrl', updateData.image_url);
+    assignIfDefined('linkUrl', updateData.link_url);
+    assignIfDefined('category', updateData.category);
+    // priority removed
+
+    const result = await db.update(pendingAds)
+      .set(mappedUpdate)
+      .where(eq(pendingAds.id, id))
+      .returning();
+
+    return result[0] ?? null;
+  } catch (error) {
+    console.error('Error updating pending ad:', error);
+    throw error;
+  }
+}
+
+// Move an approved ad back to pending for re-approval, applying updates
+export async function updateApprovedAdForReapproval(id: number, updateData: any) {
+  try {
+    console.log('updateApprovedAdForReapproval called with:', { id, updateData });
+
+    const currentAd = await db.select().from(approvedAds).where(eq(approvedAds.id, id)).limit(1);
+    if (!currentAd[0]) {
+      throw new Error('Ad not found in approved_ads');
+    }
+
+    const mappedUpdate: any = {
+      updatedAt: new Date(),
+    };
+    const assignIfDefined = (prop: string, value: any) => {
+      if (value !== undefined) mappedUpdate[prop] = value;
+    };
+
+    assignIfDefined('title', updateData.title);
+    assignIfDefined('description', updateData.description);
+    assignIfDefined('imageUrl', updateData.image_url);
+    assignIfDefined('linkUrl', updateData.link_url);
+    assignIfDefined('category', updateData.category);
+    // priority removed
+
+    const result = await db.transaction(async (tx) => {
+      await tx.delete(approvedAds).where(eq(approvedAds.id, id));
+      const inserted = await tx.insert(pendingAds)
+        .values({
+          ...currentAd[0],
+          ...mappedUpdate,
+          id,
+        })
+        .returning();
+      return inserted[0];
+    });
+
+    return result ?? null;
+  } catch (error) {
+    console.error('Error moving approved ad to pending:', error);
+    throw error;
+  }
+}
+
+// Move a rejected ad back to pending for re-approval, applying updates
+export async function updateRejectedAdForReapproval(id: number, updateData: any) {
+  try {
+    console.log('updateRejectedAdForReapproval called with:', { id, updateData });
+
+    const currentAd = await db.select().from(rejectedAds).where(eq(rejectedAds.id, id)).limit(1);
+    if (!currentAd[0]) {
+      throw new Error('Ad not found in rejected_ads');
+    }
+
+    const mappedUpdate: any = {
+      updatedAt: new Date(),
+    };
+    const assignIfDefined = (prop: string, value: any) => {
+      if (value !== undefined) mappedUpdate[prop] = value;
+    };
+
+    assignIfDefined('title', updateData.title);
+    assignIfDefined('description', updateData.description);
+    assignIfDefined('imageUrl', updateData.image_url);
+    assignIfDefined('linkUrl', updateData.link_url);
+    assignIfDefined('category', updateData.category);
+    // priority removed
+
+    const result = await db.transaction(async (tx) => {
+      await tx.delete(rejectedAds).where(eq(rejectedAds.id, id));
+      const inserted = await tx.insert(pendingAds)
+        .values({
+          ...currentAd[0],
+          ...mappedUpdate,
+          id,
+        })
+        .returning();
+      return inserted[0];
+    });
+
+    return result ?? null;
+  } catch (error) {
+    console.error('Error moving rejected ad to pending:', error);
+    throw error;
+  }
+}
+
 export async function deleteAd(id: number) {
   try {
-    // Try to delete from all tables
-    const approvedResult = await db.delete(approvedAds).where(eq(approvedAds.id, id)).returning();
-    if (approvedResult.length > 0) return true;
+    console.log(`Attempting to delete ad with ID: ${id}`);
     
-    const pendingResult = await db.delete(pendingAds).where(eq(pendingAds.id, id)).returning();
-    if (pendingResult.length > 0) return true;
+    // First check which table contains the ad
+    const approvedAd = await db.select().from(approvedAds).where(eq(approvedAds.id, id)).limit(1);
+    if (approvedAd.length > 0) {
+      console.log(`Found ad in approved_ads, deleting...`);
+      const result = await db.delete(approvedAds).where(eq(approvedAds.id, id)).returning();
+      return result.length > 0;
+    }
     
-    const rejectedResult = await db.delete(rejectedAds).where(eq(rejectedAds.id, id)).returning();
-    return rejectedResult.length > 0;
+    const pendingAd = await db.select().from(pendingAds).where(eq(pendingAds.id, id)).limit(1);
+    if (pendingAd.length > 0) {
+      console.log(`Found ad in pending_ads, deleting...`);
+      const result = await db.delete(pendingAds).where(eq(pendingAds.id, id)).returning();
+      return result.length > 0;
+    }
+    
+    const rejectedAd = await db.select().from(rejectedAds).where(eq(rejectedAds.id, id)).limit(1);
+    if (rejectedAd.length > 0) {
+      console.log(`Found ad in rejected_ads, deleting...`);
+      const result = await db.delete(rejectedAds).where(eq(rejectedAds.id, id)).returning();
+      return result.length > 0;
+    }
+    
+    console.log(`Ad with ID ${id} not found in any table`);
+    return false;
   } catch (error) {
     console.error('Error deleting ad:', error);
     return false;

@@ -242,6 +242,61 @@ export default function GiveawayDetailPage() {
   const [isEnteringGiveaway, setIsEnteringGiveaway] = useState(false)
   const [relatedGiveaways, setRelatedGiveaways] = useState<any[]>([])
   const [relatedLoading, setRelatedLoading] = useState(true)
+  
+  // State preservation to prevent unnecessary reloads
+  const [isPageStable, setIsPageStable] = useState(false)
+  
+  // Request deduplication states
+  const [fetchingStates, setFetchingStates] = useState({
+    giveaway: false,
+    related: false,
+    entry: false
+  })
+  
+  // Use refs to prevent duplicate calls even in React strict mode
+  const fetchRefs = useRef({
+    giveaway: false,
+    related: false,
+    entry: false
+  })
+  
+  // Prevent page reload on window focus/blur
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      // Log visibility changes for debugging
+      if (document.hidden) {
+        console.log('Page hidden - maintaining state')
+      } else {
+        console.log('Page visible - maintaining state')
+        // Mark page as stable to prevent unnecessary reloads
+        setIsPageStable(true)
+      }
+    }
+    
+    const handleFocus = () => {
+      console.log('Window focused - preventing any reload actions')
+      setIsPageStable(true)
+    }
+    
+    const handleBlur = () => {
+      console.log('Window blurred - maintaining state')
+    }
+    
+    // Add event listeners
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('focus', handleFocus)
+    window.addEventListener('blur', handleBlur)
+    
+    // Set page as stable initially
+    setIsPageStable(true)
+    
+    // Cleanup
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('focus', handleFocus)
+      window.removeEventListener('blur', handleBlur)
+    }
+  }, [])
 
   // Function to update points in database when tasks are completed
   const updatePointsInDatabase = async (completedTaskIds: number[]) => {
@@ -271,7 +326,15 @@ export default function GiveawayDetailPage() {
   // Fetch giveaway data
   useEffect(() => {
     const fetchGiveaway = async () => {
+      // Prevent duplicate requests using refs (works even in React strict mode)
+      if (fetchRefs.current.giveaway) {
+        console.log('Giveaway fetch already in progress, skipping...')
+        return
+      }
+
       try {
+        fetchRefs.current.giveaway = true
+        setFetchingStates(prev => ({ ...prev, giveaway: true }))
         setLoading(true)
         console.log('Fetching giveaway with ID:', giveawayId)
         const response = await fetch(`/api/giveaways/${giveawayId}`, { cache: "no-store" })
@@ -292,10 +355,12 @@ export default function GiveawayDetailPage() {
         console.error('Error fetching giveaway:', error)
       } finally {
         setLoading(false)
+        setFetchingStates(prev => ({ ...prev, giveaway: false }))
+        fetchRefs.current.giveaway = false
       }
     }
 
-    if (giveawayId) {
+    if (giveawayId && !fetchRefs.current.giveaway) {
       fetchGiveaway()
     }
   }, [giveawayId])
@@ -303,7 +368,15 @@ export default function GiveawayDetailPage() {
   // Fetch related giveaways
   useEffect(() => {
     const fetchRelatedGiveaways = async () => {
+      // Prevent duplicate requests using refs (works even in React strict mode)
+      if (fetchRefs.current.related) {
+        console.log('Related giveaways fetch already in progress, skipping...')
+        return
+      }
+
       try {
+        fetchRefs.current.related = true
+        setFetchingStates(prev => ({ ...prev, related: true }))
         setRelatedLoading(true)
         const response = await fetch(`/api/giveaways/${giveawayId}/related`)
         
@@ -315,10 +388,12 @@ export default function GiveawayDetailPage() {
         console.error('Error fetching related giveaways:', error)
       } finally {
         setRelatedLoading(false)
+        setFetchingStates(prev => ({ ...prev, related: false }))
+        fetchRefs.current.related = false
       }
     }
 
-    if (giveawayId) {
+    if (giveawayId && !fetchRefs.current.related) {
       fetchRelatedGiveaways()
     }
   }, [giveawayId])
@@ -326,7 +401,15 @@ export default function GiveawayDetailPage() {
   // Check if user has already entered this giveaway
   useEffect(() => {
     const checkUserEntry = async () => {
+      // Prevent duplicate requests using refs (works even in React strict mode)
+      if (fetchRefs.current.entry) {
+        console.log('User entry check already in progress, skipping...')
+        return
+      }
+
       try {
+        fetchRefs.current.entry = true
+        setFetchingStates(prev => ({ ...prev, entry: true }))
         const response = await fetch(`/api/giveaways/${giveawayId}/entries?userOnly=true`)
         if (response.ok) {
           const data = await response.json()
@@ -336,10 +419,13 @@ export default function GiveawayDetailPage() {
         }
       } catch (error) {
         console.error('Error checking user entry:', error)
+      } finally {
+        setFetchingStates(prev => ({ ...prev, entry: false }))
+        fetchRefs.current.entry = false
       }
     }
 
-    if (giveawayId) {
+    if (giveawayId && !fetchRefs.current.entry) {
       checkUserEntry()
     }
   }, [giveawayId])

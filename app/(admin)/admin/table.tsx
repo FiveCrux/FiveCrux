@@ -27,7 +27,10 @@ export default function AdminPanel() {
     const load = async () => {
       try {
         console.log("Loading users...")
-        const res = await fetch("/api/admin/users", { cache: "no-store" })
+        const res = await fetch("/api/admin/users", { 
+          cache: "no-store",
+          credentials: 'include'
+        })
         console.log("Response status:", res.status)
         if (!res.ok) {
           const errorText = await res.text()
@@ -61,6 +64,7 @@ export default function AdminPanel() {
       const res = await fetch("/api/admin/users", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
+        credentials: 'include',
         body: JSON.stringify({ userId, role }),
       })
       if (!res.ok) throw new Error("Failed")
