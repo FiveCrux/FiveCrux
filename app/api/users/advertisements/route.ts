@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
 
     const userId = (session.user as any).id;
     const userEmail = session.user.email;
-    console.log("User ads API - User:", { id: userId, email: userEmail });
+    console.log("User advertisements API - User:", { id: userId, email: userEmail });
 
     // Fetch ads from all tables where the user is the creator
     let pending: any[] = [];
@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
     const userApproved = approved.filter(a => a.createdBy === userId);
     const userRejected = rejected.filter(a => a.createdBy === userId);
 
-    console.log("User ads API - Found ads:", { 
+    console.log("User advertisements API - Found ads:", { 
       total: pending.length + approved.length + rejected.length,
       userPending: userPending.length, 
       userApproved: userApproved.length, 
@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
       ...userPending.map(a => ({ 
         ...a, 
         status: 'pending',
-        created_at: a.createdAt || a.submittedAt,
+        created_at: a.createdAt,
         updated_at: a.updatedAt
       })),
       ...userApproved.map(a => ({ 
@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ ads: allAds });
   } catch (error) {
-    console.error('Error fetching user ads:', error);
+    console.error('Error fetching user advertisements:', error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -105,7 +105,7 @@ export async function POST(request: NextRequest) {
     } as any);
     return NextResponse.json({ success: true, adId });
   } catch (error) {
-    console.error('Error creating user ad:', error);
+    console.error('Error creating user advertisement:', error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -153,11 +153,11 @@ export async function PATCH(request: NextRequest) {
       success: !!updatedAd,
       needsReapproval: ad.status === "approved" || ad.status === "rejected",
       message: (ad.status === "approved" || ad.status === "rejected") 
-        ? "Ad updated successfully! It has been moved to pending status and will require admin approval before going live again."
-        : "Ad updated successfully!"
+        ? "Advertisement updated successfully! It has been moved to pending status and will require admin approval before going live again."
+        : "Advertisement updated successfully!"
     });
   } catch (error) {
-    console.error('Error updating user ad:', error);
+    console.error('Error updating user advertisement:', error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -165,41 +165,43 @@ export async function PATCH(request: NextRequest) {
 // Allow users to delete their ads
 export async function DELETE(request: NextRequest) {
   try {
-    console.log("DELETE /api/users/ads - Request received");
+    console.log("DELETE /api/users/advertisements - Request received");
     
     const session = await getServerSession(authOptions);
-    console.log("DELETE /api/users/ads - Session:", session?.user?.id);
+    console.log("DELETE /api/users/advertisements - Session:", session?.user?.id);
     
     if (!session?.user) {
-      console.log("DELETE /api/users/ads - No session, returning 401");
+      console.log("DELETE /api/users/advertisements - No session, returning 401");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { searchParams } = new URL(request.url);
     const adId = searchParams.get('id');
-    console.log("DELETE /api/users/ads - Ad ID:", adId);
+    console.log("DELETE /api/users/advertisements - Ad ID:", adId);
     
     if (!adId) {
-      console.log("DELETE /api/users/ads - No adId provided");
+      console.log("DELETE /api/users/advertisements - No adId provided");
       return NextResponse.json({ error: 'adId is required' }, { status: 400 });
     }
 
     const { getAdById, deleteAd } = await import('@/lib/database-new');
     const ad = await getAdById(Number(adId));
-    console.log("DELETE /api/users/ads - Found ad:", ad?.id, "Created by:", ad?.createdBy);
+    console.log("DELETE /api/users/advertisements - Found ad:", ad?.id, "Created by:", ad?.createdBy);
     
     if (!ad || ad.createdBy !== (session.user as any).id) {
-      console.log("DELETE /api/users/ads - Ad not found or forbidden");
+      console.log("DELETE /api/users/advertisements - Ad not found or forbidden");
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
     
-    console.log("DELETE /api/users/ads - Attempting to delete ad:", adId);
+    console.log("DELETE /api/users/advertisements - Attempting to delete ad:", adId);
     const ok = await deleteAd(Number(adId));
-    console.log("DELETE /api/users/ads - Delete result:", ok);
+    console.log("DELETE /api/users/advertisements - Delete result:", ok);
     
     return NextResponse.json({ success: ok });
   } catch (error) {
-    console.error('Error deleting user ad:', error);
+    console.error('Error deleting user advertisement:', error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
+
+

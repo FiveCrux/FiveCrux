@@ -79,6 +79,7 @@ export async function GET(request: NextRequest) {
       ...userRejected.map(s => ({ 
         ...s, 
         status: 'rejected',
+        rejection_reason: s.rejectionReason,
         seller_id: userId,
         created_at: s.createdAt || s.rejectedAt,
         updated_at: s.updatedAt

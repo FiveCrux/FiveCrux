@@ -1,14 +1,6 @@
 import { pgTable, text, timestamp, boolean, integer, numeric, pgEnum } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
-// Enums - temporarily disabled to avoid migration issues
-// export const userRoleEnum = pgEnum('user_role', ['founder', 'verified_creator', 'crew', 'admin', 'moderator', 'user']);
-// export const scriptStatusEnum = pgEnum('script_status', ['pending', 'approved', 'rejected']);
-// export const giveawayDifficultyEnum = pgEnum('giveaway_difficulty', ['Easy', 'Medium', 'Hard']);
-// export const giveawayStatusEnum = pgEnum('giveaway_status', ['active', 'ended', 'cancelled']);
-// export const entryStatusEnum = pgEnum('entry_status', ['active', 'disqualified', 'winner']);
-// export const adStatusEnum = pgEnum('ad_status', ['active', 'inactive', 'expired']);
-
 // Users table
 export const users = pgTable('users', {
   id: text('id').primaryKey(),
@@ -172,7 +164,6 @@ const baseAdFields = {
   imageUrl: text('image_url'),
   linkUrl: text('link_url'),
   category: text('category').notNull(),
-  priority: integer('priority').default(1),
   startDate: timestamp('start_date').defaultNow(),
   endDate: timestamp('end_date'),
   createdBy: text('created_by').notNull(),
@@ -183,7 +174,6 @@ const baseAdFields = {
 // Pending ads (submissions waiting for review)
 export const pendingAds = pgTable('pending_ads', {
   ...baseAdFields,
-  submittedAt: timestamp('submitted_at').defaultNow(),
   adminNotes: text('admin_notes'),
 });
 

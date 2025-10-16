@@ -18,3 +18,9 @@ console.log('Database connection initialized with connection pooling');
 
 // Export schema for use in other files
 export * from './schema';
+
+
+
+
+
+

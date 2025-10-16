@@ -48,7 +48,6 @@ export async function POST(request: NextRequest) {
       category: String(body.category),
       createdBy: String((session.user as any)?.id || ""),
       status: approvalStatus,
-      priority: body.priority ? Number(body.priority) : 1,
       imageUrl: body.image_url || null,
       linkUrl: body.link_url || null,
       startDate: body.start_date ? new Date(body.start_date) : new Date(),

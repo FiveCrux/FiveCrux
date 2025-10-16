@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
+import { useSession } from "next-auth/react"
 import {
   Users,
   Package,
@@ -97,12 +98,12 @@ interface Giveaway {
   creator_email: string
   creator_id?: string
   end_date: string
-  maxEntries?: number // Maximum number of entries allowed
+  maxEntries?: number
   featured: boolean
   auto_announce: boolean
   images: string[]
   videos: string[]
-  coverImage?: string // Database field is cover_image but mapped to coverImage
+  coverImage?: string
   tags: string[]
   rules: string[]
   requirements: any[]
@@ -110,24 +111,27 @@ interface Giveaway {
   created_at: string
   updated_at: string
   rejection_reason?: string
-  entriesCount?: number // Current number of entries
-  submittedAt?: string // When it was submitted for review
-  approvedAt?: string // When it was approved
-  rejectedAt?: string // When it was rejected
-  approvedBy?: string // Who approved it
-  rejectedBy?: string // Who rejected it
-  adminNotes?: string // Admin notes
+  entriesCount?: number
+  submittedAt?: string
+  approvedAt?: string
+  rejectedAt?: string
+  approvedBy?: string
+  rejectedBy?: string
+  adminNotes?: string
 }
 
 interface Ad {
   id: number
   title: string
   description: string
+  imageUrl?: string
+  linkUrl?: string
   category: string
   status: string
-  priority: number
-  created_at: string
-  rejection_reason?: string
+  createdAt?: string
+  updatedAt?: string
+  rejectionReason?: string
+  adminNotes?: string
 }
 
 // Updated role options to the requested set. Values should match DB enum (lowercase/underscored).
@@ -140,6 +144,7 @@ const roleOptions = [
 ]
 
 export default function AdminPage() {
+  const { data: session } = useSession()
   const [activeTab, setActiveTab] = useState("dashboard")
   const [users, setUsers] = useState<User[]>([])
   const [scripts, setScripts] = useState<Script[]>([])
@@ -152,43 +157,60 @@ export default function AdminPage() {
   const [newAd, setNewAd] = useState({
     title: "",
     description: "",
-    image_url: "",
-    link_url: "",
+    imageUrl: "",
+    linkUrl: "",
     category: "",
     status: "active",
-    priority: 1,
   })
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
   const [activeScriptFilter, setActiveScriptFilter] = useState("all")
   const [rejectingScript, setRejectingScript] = useState<number | null>(null)
+  const [rejectingScriptLoading, setRejectingScriptLoading] = useState(false)
   const [viewingScript, setViewingScript] = useState<Script | null>(null)
   const [viewingGiveaway, setViewingGiveaway] = useState<Giveaway | null>(null)
+  const [viewingAd, setViewingAd] = useState<any>(null)
   const [rejectionReason, setRejectionReason] = useState("")
   const [activeGiveawayFilter, setActiveGiveawayFilter] = useState("all")
   const [rejectingGiveaway, setRejectingGiveaway] = useState<number | null>(null)
+  const [rejectingGiveawayLoading, setRejectingGiveawayLoading] = useState(false)
   const [giveawayRejectionReason, setGiveawayRejectionReason] = useState("")
   const [activeAdFilter, setActiveAdFilter] = useState("all")
   const [rejectingAd, setRejectingAd] = useState<number | null>(null)
+  const [rejectingAdLoading, setRejectingAdLoading] = useState(false)
   const [adRejectionReason, setAdRejectionReason] = useState("")
-
-  useEffect(() => {
-    loadData()
-  }, [])
 
   const loadData = async (adsFilter?: string) => {
     try {
       setLoading(true)
       console.log("Loading admin data...")
       
+      // First check if user has admin roles
+      if (!session?.user) {
+        console.log("No session found")
+        setLoading(false)
+        return
+      }
+
+      const userRoles = (session.user as any).roles || []
+      console.log("User roles:", userRoles)
+      
+      if (!userRoles.includes('admin') && !userRoles.includes('founder')) {
+        console.log("User is not admin or founder, skipping API calls")
+        setLoading(false)
+        return
+      }
+
+      console.log("User has admin access, proceeding with API calls...")
+      
       const adsUrl = adsFilter && adsFilter !== "all" 
-        ? `/api/admin/ads?type=${adsFilter}`
-        : "/api/admin/ads"
+        ? `/api/admin/advertisements?type=${adsFilter}`
+        : "/api/admin/advertisements"
       
       const [usersRes, scriptsRes, giveawaysRes, adsRes] = await Promise.all([
-        fetch("/api/admin/users"),
-        fetch("/api/admin/scripts"),
-        fetch("/api/admin/giveaways"),
-        fetch(adsUrl),
+        fetch("/api/admin/users", { credentials: 'include' }),
+        fetch("/api/admin/scripts", { credentials: 'include' }),
+        fetch("/api/admin/giveaways", { credentials: 'include' }),
+        fetch(adsUrl, { credentials: 'include' }),
       ])
 
       console.log("API responses:", {
@@ -221,7 +243,10 @@ export default function AdminPage() {
 
       if (adsRes.ok) {
         const adsData = await adsRes.json()
+        console.log("Admin - Ads API response:", adsData)
         setAds(adsData.data || [])
+      } else {
+        console.error("Admin - Ads API error:", adsRes.status, await adsRes.text())
       }
     } catch (error) {
       console.error("Error loading data:", error)
@@ -229,6 +254,12 @@ export default function AdminPage() {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    if (session?.user) {
+      loadData()
+    }
+  }, [session])
 
   const handleRoleChange = (role: string, checked: boolean) => {
     if (checked) {
@@ -245,6 +276,7 @@ export default function AdminPage() {
       const response = await fetch(`/api/admin/users/${selectedUser.id}/roles`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
+        credentials: 'include',
         body: JSON.stringify({ roles: editingRoles }),
       })
 
@@ -287,7 +319,7 @@ export default function AdminPage() {
 
       const adData = {
         ...newAd,
-        image_url: imageUrl,
+        imageUrl: imageUrl,
       }
 
       const response = await fetch("/api/ads", {
@@ -298,15 +330,14 @@ export default function AdminPage() {
 
       if (response.ok) {
         const result = await response.json()
-        setAds([...ads, { ...adData, id: result.adId, created_at: new Date().toISOString() }])
+        setAds([...ads, { ...adData, id: result.adId, createdAt: new Date().toISOString() }])
         setNewAd({
           title: "",
           description: "",
-          image_url: "",
-          link_url: "",
+          imageUrl: "",
+          linkUrl: "",
           category: "",
           status: "active",
-          priority: 1,
         })
         setSelectedImage(null)
         setShowAdDialog(false)
@@ -354,6 +385,10 @@ export default function AdminPage() {
   // Handle script approval/rejection
   const handleScriptAction = async (scriptId: number, status: "approved" | "rejected") => {
     try {
+      if (status === "rejected") {
+        setRejectingScriptLoading(true)
+      }
+      
       const updateData: any = { status }
       
       if (status === "rejected" && rejectionReason) {
@@ -363,6 +398,7 @@ export default function AdminPage() {
       const response = await fetch("/api/admin/scripts", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
+        credentials: 'include',
         body: JSON.stringify({ scriptId, ...updateData }),
       })
 
@@ -379,23 +415,30 @@ export default function AdminPage() {
           setRejectionReason("")
         }
         
-        // Reload data to get updated information
-        loadData()
-        
-        // If script was approved, show success message and redirect to scripts page
+        // Avoid full reload on rejection; local state is already updated.
+        // Reload only when approving (before redirect) if needed.
         if (status === "approved") {
+          await loadData()
           alert("Script approved successfully! Redirecting to scripts page...")
           window.location.href = "/scripts"
         }
       }
     } catch (error) {
       console.error("Error updating script:", error)
+    } finally {
+      if (status === "rejected") {
+        setRejectingScriptLoading(false)
+      }
     }
   }
 
   // Handle giveaway approval/rejection
   const handleGiveawayAction = async (giveawayId: number, status: "approved" | "rejected") => {
     try {
+      if (status === "rejected") {
+        setRejectingGiveawayLoading(true)
+      }
+      
       const updateData: any = { status }
       
       if (status === "rejected" && giveawayRejectionReason) {
@@ -405,6 +448,7 @@ export default function AdminPage() {
       const response = await fetch("/api/admin/giveaways", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
+        credentials: 'include',
         body: JSON.stringify({ giveawayId, ...updateData }),
       })
 
@@ -432,12 +476,20 @@ export default function AdminPage() {
       }
     } catch (error) {
       console.error("Error updating giveaway:", error)
+    } finally {
+      if (status === "rejected") {
+        setRejectingGiveawayLoading(false)
+      }
     }
   }
 
   // Handle ad approval/rejection
   const handleAdAction = async (adId: number, status: "approved" | "rejected") => {
     try {
+      if (status === "rejected") {
+        setRejectingAdLoading(true)
+      }
+      
       const updateData: any = { 
         action: status === "approved" ? "approve" : "reject",
         adId 
@@ -447,9 +499,10 @@ export default function AdminPage() {
         updateData.rejectionReason = adRejectionReason
       }
       
-      const response = await fetch("/api/admin/ads", {
+      const response = await fetch("/api/admin/advertisements", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
+        credentials: 'include',
         body: JSON.stringify(updateData),
       })
 
@@ -457,7 +510,7 @@ export default function AdminPage() {
         // Update local state
         setAds(ads.map(ad => 
           ad.id === adId 
-            ? { ...ad, status, rejection_reason: status === "rejected" ? adRejectionReason : undefined }
+            ? { ...ad, status, rejectionReason: status === "rejected" ? adRejectionReason : undefined }
             : ad
         ))
         
@@ -466,16 +519,19 @@ export default function AdminPage() {
           setAdRejectionReason("")
         }
         
-        // Reload data to get updated information
-        loadData()
-        
-        // If ad was approved, show success message
+        // Avoid full reload on rejection; local state is already updated.
+        // Reload only when approving if needed.
         if (status === "approved") {
+          await loadData()
           alert("Ad approved successfully!")
         }
       }
     } catch (error) {
       console.error("Error updating ad:", error)
+    } finally {
+      if (status === "rejected") {
+        setRejectingAdLoading(false)
+      }
     }
   }
 
@@ -486,8 +542,9 @@ export default function AdminPage() {
         <div className="min-h-screen bg-black text-white flex items-center justify-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-orange-500"></div>
         </div>
+        {/* <Footer /> */}
       </>
-    )
+    );
   }
 
   return (
@@ -803,35 +860,51 @@ export default function AdminPage() {
                           </div>
                         </div>
                         
-                        {script.status === "pending" && (
-                          <div className="flex gap-2 pt-4 border-t border-gray-700/50">
-                            <Button
-                              onClick={() => handleScriptAction(script.id, "approved")}
-                              className="bg-green-500 hover:bg-green-600"
-                              size="sm"
-                            >
-                              <CheckCircle className="h-4 w-4 mr-2" />
-                              Approve
-                            </Button>
-                            <Button
-                              onClick={() => setRejectingScript(script.id)}
-                              variant="outline"
-                              className="border-red-500/50 text-red-400 hover:text-red-300"
-                              size="sm"
-                            >
-                              <XCircle className="h-4 w-4 mr-2" />
-                              Reject
-                            </Button>
-                            <Button
-                              onClick={() => setViewingScript(script)}
-                              variant="outline"
-                              size="sm"
-                              className="border-gray-600 text-gray-300 hover:text-white"
-                            >
-                              View Details
-                            </Button>
-                          </div>
-                        )}
+                        <div className="flex gap-2 pt-4 border-t border-gray-700/50">
+                          <Button
+                            onClick={() => setViewingScript(script)}
+                            variant="outline"
+                            size="sm"
+                            className="border-blue-500/50 text-blue-400 hover:text-blue-300"
+                          >
+                            <FileText className="h-4 w-4 mr-1" />
+                            View Details
+                          </Button>
+                          
+                          {(script.status === "pending" || script.status === "approved") && (
+                            <>
+                              {script.status === "pending" && (
+                                <Button
+                                  onClick={() => handleScriptAction(script.id, "approved")}
+                                  className="bg-green-500 hover:bg-green-600"
+                                  size="sm"
+                                >
+                                  <CheckCircle className="h-4 w-4 mr-2" />
+                                  Approve
+                                </Button>
+                              )}
+                              <Button
+                                onClick={() => setRejectingScript(script.id)}
+                                variant="outline"
+                                className="border-red-500/50 text-red-400 hover:text-red-300"
+                                size="sm"
+                                disabled={rejectingScript === script.id}
+                              >
+                                {rejectingScript === script.id ? (
+                                  <>
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-400 mr-2" />
+                                    Rejecting...
+                                  </>
+                                ) : (
+                                  <>
+                                    <XCircle className="h-4 w-4 mr-2" />
+                                    Reject
+                                  </>
+                                )}
+                              </Button>
+                            </>
+                          )}
+                        </div>
                         
                         {script.status === "rejected" && script.rejection_reason && (
                           <div className="mt-3 p-3 bg-red-500/10 border border-red-500/20 rounded">
@@ -958,26 +1031,38 @@ export default function AdminPage() {
                           >
                             View Details
                           </Button>
-                          {giveaway.status === "pending" && (
+                          {(giveaway.status === "pending" || giveaway.status === "approved") && (
                             <>
-                            <Button
-                              onClick={() => handleGiveawayAction(giveaway.id, "approved")}
-                              className="bg-green-500 hover:bg-green-600"
-                              size="sm"
-                            >
-                              <CheckCircle className="mr-2 h-4 w-4" />
-                              Approve
-                            </Button>
-                            <Button
-                              onClick={() => setRejectingGiveaway(giveaway.id)}
-                              variant="destructive"
-                              size="sm"
-                            >
-                              <XCircle className="mr-2 h-4 w-4" />
-                              Reject
-                            </Button>
+                              {giveaway.status === "pending" && (
+                                <Button
+                                  onClick={() => handleGiveawayAction(giveaway.id, "approved")}
+                                  className="bg-green-500 hover:bg-green-600"
+                                  size="sm"
+                                >
+                                  <CheckCircle className="mr-2 h-4 w-4" />
+                                  Approve
+                                </Button>
+                              )}
+                              <Button
+                                onClick={() => setRejectingGiveaway(giveaway.id)}
+                                variant="destructive"
+                                size="sm"
+                                disabled={rejectingGiveaway === giveaway.id}
+                              >
+                                {rejectingGiveaway === giveaway.id ? (
+                                  <>
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                                    Rejecting...
+                                  </>
+                                ) : (
+                                  <>
+                                    <XCircle className="mr-2 h-4 w-4" />
+                                    Reject
+                                  </>
+                                )}
+                              </Button>
                             </>
-                        )}
+                          )}
                         </div>
                       </div>
                     ))}
@@ -1149,8 +1234,8 @@ export default function AdminPage() {
                           <div>
                             <label className="text-sm text-gray-300">Link URL</label>
                             <Input
-                              value={newAd.link_url}
-                              onChange={(e) => setNewAd({ ...newAd, link_url: e.target.value })}
+                              value={newAd.linkUrl}
+                              onChange={(e) => setNewAd({ ...newAd, linkUrl: e.target.value })}
                               className="bg-gray-700 border-gray-600 text-white"
                             />
                           </div>
@@ -1167,15 +1252,7 @@ export default function AdminPage() {
                               </SelectContent>
                             </Select>
                           </div>
-                          <div>
-                            <label className="text-sm text-gray-300">Priority</label>
-                            <Input
-                              type="number"
-                              value={newAd.priority}
-                              onChange={(e) => setNewAd({ ...newAd, priority: parseInt(e.target.value) })}
-                              className="bg-gray-700 border-gray-600 text-white"
-                            />
-                          </div>
+                          
                           <div className="flex gap-2">
                             <Button onClick={createAd} className="bg-orange-500 hover:bg-orange-600">
                               Create Ad
@@ -1200,7 +1277,9 @@ export default function AdminPage() {
                         if (activeAdFilter === "rejected") return ad.status === "rejected"
                         return true
                       })
-                      .map((ad) => (
+                      .map((ad) => {
+                        console.log("Admin - Ad:", ad.id, "Status:", ad.status, "Has buttons:", (ad.status === "pending" || ad.status === "approved"))
+                        return (
                       <div key={ad.id} className="flex items-center justify-between p-4 rounded-lg bg-gray-700/30">
                         <div className="flex items-center gap-3">
                           <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-orange-500/20 to-yellow-400/20 flex items-center justify-center">
@@ -1213,18 +1292,25 @@ export default function AdminPage() {
                               <Badge variant="secondary" className="bg-gray-600 text-gray-300">
                                 {ad.category}
                               </Badge>
-                              <Badge variant="secondary" className="bg-gray-600 text-gray-300">
-                                Priority: {ad.priority}
-                              </Badge>
+                              
                             </div>
-                            {ad.rejection_reason && (
+                            {ad.rejectionReason && (
                               <div className="mt-2 p-2 bg-red-900/20 border border-red-500/30 rounded text-red-300 text-sm">
-                                <strong>Rejection Reason:</strong> {ad.rejection_reason}
+                                <strong>Rejection Reason:</strong> {ad.rejectionReason}
                               </div>
                             )}
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setViewingAd(ad)}
+                            className="border-blue-500/50 text-blue-400 hover:text-blue-300"
+                          >
+                            <FileText className="h-4 w-4 mr-1" />
+                            View
+                          </Button>
                           <Badge className={
                             ad.status === "approved" || ad.status === "active" ? "bg-green-500 text-white" :
                             ad.status === "rejected" ? "bg-red-500 text-white" :
@@ -1232,30 +1318,43 @@ export default function AdminPage() {
                           }>
                             {ad.status || "pending"}
                           </Badge>
-                          {(!ad.status || ad.status === "pending") && (
+                          {(ad.status === "pending" || ad.status === "approved") && (
                             <>
-                              <Button
-                                size="sm"
-                                onClick={() => handleAdAction(ad.id, "approved")}
-                                className="bg-green-500 hover:bg-green-600 text-white"
-                              >
-                                <CheckCircle className="h-4 w-4 mr-1" />
-                                Approve
-                              </Button>
+                              {ad.status === "pending" && (
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleAdAction(ad.id, "approved")}
+                                  className="bg-green-500 hover:bg-green-600 text-white"
+                                >
+                                  <CheckCircle className="h-4 w-4 mr-1" />
+                                  Approve
+                                </Button>
+                              )}
                               <Button
                                 size="sm"
                                 variant="outline"
                                 onClick={() => setRejectingAd(ad.id)}
                                 className="border-red-500/50 text-red-400 hover:text-red-300"
+                                disabled={rejectingAd === ad.id}
                               >
-                                <XCircle className="h-4 w-4 mr-1" />
-                                Reject
+                                {rejectingAd === ad.id ? (
+                                  <>
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-400 mr-1" />
+                                    Rejecting...
+                                  </>
+                                ) : (
+                                  <>
+                                    <XCircle className="h-4 w-4 mr-1" />
+                                    Reject
+                                  </>
+                                )}
                               </Button>
                             </>
                           )}
                         </div>
                       </div>
-                    ))}
+                        )
+                      })}
                   </div>
                 </CardContent>
               </Card>
@@ -1281,9 +1380,16 @@ export default function AdminPage() {
                       <Button
                         onClick={() => handleAdAction(rejectingAd!, "rejected")}
                         className="bg-red-500 hover:bg-red-600 text-white"
-                        disabled={!adRejectionReason.trim()}
+                        disabled={!adRejectionReason.trim() || rejectingAdLoading}
                       >
-                        Reject Advertisement
+                        {rejectingAdLoading ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                            Rejecting...
+                          </>
+                        ) : (
+                          "Reject Advertisement"
+                        )}
                       </Button>
                       <Button
                         variant="outline"
@@ -1300,9 +1406,8 @@ export default function AdminPage() {
                 </DialogContent>
               </Dialog>
             </div>
-            </TabsContent>
-          </Tabs>
-        </div>
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Role Management Dialog */}
@@ -1365,9 +1470,16 @@ export default function AdminPage() {
               <Button 
                 onClick={() => handleScriptAction(rejectingScript!, "rejected")}
                 className="bg-red-500 hover:bg-red-600"
-                disabled={!rejectionReason.trim()}
+                disabled={!rejectionReason.trim() || rejectingScriptLoading}
               >
-                Reject Script
+                {rejectingScriptLoading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                    Rejecting...
+                  </>
+                ) : (
+                  "Reject Script"
+                )}
               </Button>
               <Button 
                 variant="outline" 
@@ -1405,9 +1517,16 @@ export default function AdminPage() {
               <Button 
                 onClick={() => handleGiveawayAction(rejectingGiveaway!, "rejected")}
                 className="bg-red-500 hover:bg-red-600"
-                disabled={!giveawayRejectionReason.trim()}
+                disabled={!giveawayRejectionReason.trim() || rejectingGiveawayLoading}
               >
-                Reject Giveaway
+                {rejectingGiveawayLoading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                    Rejecting...
+                  </>
+                ) : (
+                  "Reject Giveaway"
+                )}
               </Button>
               <Button 
                 variant="outline" 
@@ -1723,18 +1842,20 @@ export default function AdminPage() {
               )}
               
               {/* Action Buttons */}
-              {viewingScript.status === "pending" && (
+              {(viewingScript.status === "pending" || viewingScript.status === "approved") && (
                 <div className="flex gap-4 pt-6 border-t border-gray-700/50">
-                  <Button
-                    onClick={() => {
-                      handleScriptAction(viewingScript.id, "approved")
-                      setViewingScript(null)
-                    }}
-                    className="bg-green-500 hover:bg-green-600 flex-1"
-                  >
-                    <CheckCircle className="h-4 w-4 mr-2" />
-                    Approve Script
-                  </Button>
+                  {viewingScript.status === "pending" && (
+                    <Button
+                      onClick={() => {
+                        handleScriptAction(viewingScript.id, "approved")
+                        setViewingScript(null)
+                      }}
+                      className="bg-green-500 hover:bg-green-600 flex-1"
+                    >
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      Approve Script
+                    </Button>
+                  )}
                   <Button
                     onClick={() => {
                       setViewingScript(null)
@@ -1742,9 +1863,19 @@ export default function AdminPage() {
                     }}
                     variant="outline"
                     className="border-red-500/50 text-red-400 hover:text-red-300 flex-1"
+                    disabled={rejectingScript === viewingScript.id}
                   >
-                    <XCircle className="h-4 w-4 mr-2" />
-                    Reject Script
+                    {rejectingScript === viewingScript.id ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-400 mr-2" />
+                        Rejecting...
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="h-4 w-4 mr-2" />
+                        Reject Script
+                      </>
+                    )}
                   </Button>
                 </div>
               )}
@@ -2145,18 +2276,20 @@ export default function AdminPage() {
               )}
               
               {/* Action Buttons */}
-              {viewingGiveaway.status === "pending" && (
+              {(viewingGiveaway.status === "pending" || viewingGiveaway.status === "approved") && (
                 <div className="flex gap-4 pt-6 border-t border-gray-700/50">
-                  <Button
-                    onClick={() => {
-                      handleGiveawayAction(viewingGiveaway.id, "approved")
-                      setViewingGiveaway(null)
-                    }}
-                    className="bg-green-500 hover:bg-green-600 flex-1"
-                  >
-                    <CheckCircle className="h-4 w-4 mr-2" />
-                    Approve Giveaway
-                  </Button>
+                  {viewingGiveaway.status === "pending" && (
+                    <Button
+                      onClick={() => {
+                        handleGiveawayAction(viewingGiveaway.id, "approved")
+                        setViewingGiveaway(null)
+                      }}
+                      className="bg-green-500 hover:bg-green-600 flex-1"
+                    >
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      Approve Giveaway
+                    </Button>
+                  )}
                   <Button
                     onClick={() => {
                       setViewingGiveaway(null)
@@ -2164,9 +2297,19 @@ export default function AdminPage() {
                     }}
                     variant="outline"
                     className="border-red-500/50 text-red-400 hover:text-red-300 flex-1"
+                    disabled={rejectingGiveaway === viewingGiveaway.id}
                   >
-                    <XCircle className="h-4 w-4 mr-2" />
-                    Reject Giveaway
+                    {rejectingGiveaway === viewingGiveaway.id ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-400 mr-2" />
+                        Rejecting...
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="h-4 w-4 mr-2" />
+                        Reject Giveaway
+                      </>
+                    )}
                   </Button>
                 </div>
               )}
@@ -2175,9 +2318,255 @@ export default function AdminPage() {
         </DialogContent>
       </Dialog>
 
-      <Footer />
+      {/* Ad Details Dialog */}
+      <Dialog open={!!viewingAd} onOpenChange={() => setViewingAd(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-gray-900 border-gray-700">
+          <DialogHeader>
+            <DialogTitle className="text-white text-xl">Ad Details</DialogTitle>
+          </DialogHeader>
+          {viewingAd && (
+            <div className="space-y-6">
+              {/* Cover Image */}
+              {(viewingAd.imageUrl) && (
+                <div className="relative">
+                  <img 
+                    src={viewingAd.imageUrl} 
+                    alt={viewingAd.title}
+                    className="w-full h-64 object-cover rounded-lg"
+                  />
+                </div>
+              )}
+
+              {/* Media Gallery */}
+              {viewingAd.images?.length > 0 && (
+                <div className="bg-gray-800/50 p-4 rounded-lg">
+                  <h3 className="text-white font-semibold mb-3">Media Gallery</h3>
+                  
+                  <div className="mb-4">
+                    <h4 className="text-gray-300 text-sm mb-2">Images ({viewingAd.images.length})</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      {viewingAd.images.map((image: string, index: number) => (
+                        <div key={index} className="relative group">
+                          <img 
+                            src={image} 
+                            alt={`Ad image ${index + 1}`}
+                            className="w-full h-32 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
+                            onClick={() => window.open(image, '_blank')}
+                          />
+                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                            <ExternalLink className="h-6 w-6 text-white" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Status Badge */}
+              <div className="flex items-center gap-3">
+                <Badge className={
+                  viewingAd.status === "approved" || viewingAd.status === "active" ? "bg-green-500 text-white" :
+                  viewingAd.status === "rejected" ? "bg-red-500 text-white" :
+                  "bg-yellow-500 text-white"
+                }>
+                  {viewingAd.status || "pending"}
+                </Badge>
+                <span className="text-gray-400 text-sm">ID: #{viewingAd.id}</span>
+              </div>
+
+              {/* Basic Info */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div className="bg-gray-800/50 p-4 rounded-lg">
+                    <h3 className="text-white font-semibold mb-3">Basic Information</h3>
+                    <div className="space-y-2">
+                      <div>
+                        <p className="text-white text-lg font-semibold">{viewingAd.title}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-300 text-sm mb-1">Description:</p>
+                        <p className="text-white text-sm leading-relaxed">
+                          {viewingAd.description}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-gray-300 text-sm mb-1">Category:</p>
+                        <p className="text-white">{viewingAd.category}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-300 text-sm mb-1">Priority:</p>
+                        
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-gray-800/50 p-4 rounded-lg">
+                    <h3 className="text-white font-semibold mb-3">Creator Information</h3>
+                    <div className="space-y-2">
+                      <div>
+                        <p className="text-gray-300 text-sm mb-1">Creator Name:</p>
+                        <p className="text-white">{viewingAd.creator_name || "N/A"}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-300 text-sm mb-1">Creator Email:</p>
+                        <p className="text-white">{viewingAd.creator_email || "N/A"}</p>
+                      </div>
+                      {viewingAd.creator_id && (
+                        <div>
+                          <p className="text-gray-300 text-sm mb-1">Creator ID:</p>
+                          <p className="text-white font-mono text-sm">{viewingAd.creator_id}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="bg-gray-800/50 p-4 rounded-lg">
+                    <h3 className="text-white font-semibold mb-3">Ad Details</h3>
+                    <div className="space-y-2">
+                      <div>
+                        <p className="text-gray-300 text-sm mb-1">Link URL:</p>
+                        <a 
+                          href={viewingAd.linkUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-blue-400 hover:text-blue-300 break-all"
+                        >
+                          {viewingAd.linkUrl}
+                        </a>
+                      </div>
+                      <div>
+                        <p className="text-gray-300 text-sm mb-1">Image URL:</p>
+                        <a 
+                          href={viewingAd.imageUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-blue-400 hover:text-blue-300 break-all"
+                        >
+                          {viewingAd.imageUrl}
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-gray-800/50 p-4 rounded-lg">
+                    <h3 className="text-white font-semibold mb-3">Timestamps</h3>
+                    <div className="space-y-2">
+                      <div>
+                        <p className="text-gray-300 text-sm mb-1">Created:</p>
+                        <p className="text-white">{new Date(viewingAd.createdAt).toLocaleDateString()}</p>
+                        <p className="text-gray-500 text-xs">{new Date(viewingAd.createdAt).toLocaleTimeString()}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-300 text-sm mb-1">Updated:</p>
+                        <p className="text-white">{new Date(viewingAd.updatedAt).toLocaleDateString()}</p>
+                        <p className="text-gray-500 text-xs">{new Date(viewingAd.updatedAt).toLocaleTimeString()}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-300 text-sm mb-1">Status:</p>
+                        <p className="text-white">{viewingAd.status || "pending"}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-300 text-sm mb-1">Ad ID:</p>
+                        <p className="text-white font-mono text-sm">#{viewingAd.id}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Submission Timeline */}
+              {viewingAd.submittedAt && (
+                <div className="bg-gray-800/50 p-4 rounded-lg">
+                  <h3 className="text-white font-semibold mb-3">Submission Timeline</h3>
+                  <div className="space-y-2">
+                    <div>
+                      <p className="text-gray-300 text-sm mb-1">Submitted:</p>
+                      <p className="text-white">{new Date(viewingAd.submittedAt).toLocaleDateString()}</p>
+                    </div>
+                    {viewingAd.approvedAt && (
+                      <div>
+                        <p className="text-gray-300 text-sm mb-1">Approved:</p>
+                        <p className="text-white">{new Date(viewingAd.approvedAt).toLocaleDateString()}</p>
+                      </div>
+                    )}
+                    {viewingAd.rejectedAt && (
+                      <div>
+                        <p className="text-gray-300 text-sm mb-1">Rejected:</p>
+                        <p className="text-white">{new Date(viewingAd.rejectedAt).toLocaleDateString()}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Admin Notes */}
+              {viewingAd.adminNotes && (
+                <div className="bg-gray-800/50 p-4 rounded-lg">
+                  <h3 className="text-white font-semibold mb-3">Admin Notes</h3>
+                  <div className="bg-gray-700/50 p-3 rounded border border-gray-600">
+                    <p className="text-white text-sm leading-relaxed">{viewingAd.adminNotes}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Rejection Reason */}
+              {viewingAd.status === "rejected" && viewingAd.rejectionReason && (
+                <div className="bg-red-900/20 border border-red-500/30 p-4 rounded-lg">
+                  <h3 className="text-red-400 font-semibold mb-3">Rejection Reason</h3>
+                  <div className="bg-red-800/20 p-3 rounded border border-red-500/20">
+                    <p className="text-red-300">{viewingAd.rejectionReason}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              {(!viewingAd.status || viewingAd.status === "pending" || viewingAd.status === "approved") && (
+                <div className="flex gap-3 pt-4 border-t border-gray-700">
+                  {(!viewingAd.status || viewingAd.status === "pending") && (
+                    <Button
+                      onClick={() => {
+                        handleAdAction(viewingAd.id, "approved")
+                        setViewingAd(null)
+                      }}
+                      className="bg-green-500 hover:bg-green-600 text-white flex-1"
+                    >
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      Approve Ad
+                    </Button>
+                  )}
+                  <Button
+                    onClick={() => {
+                      setViewingAd(null)
+                      setRejectingAd(viewingAd.id)
+                    }}
+                    variant="outline"
+                    className="border-red-500/50 text-red-400 hover:text-red-300 flex-1"
+                    disabled={rejectingAd === viewingAd.id}
+                  >
+                    {rejectingAd === viewingAd.id ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-400 mr-2" />
+                        Rejecting...
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="h-4 w-4 mr-2" />
+                        Reject Ad
+                      </>
+                    )}
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* <Footer /> */}
+    </div>
     </>
-  )
+  );
 }
-
-

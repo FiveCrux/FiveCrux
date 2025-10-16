@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
+import { signIn, signOut } from "next-auth/react"
 import {
   User,
   Package,
@@ -20,6 +21,7 @@ import {
   Tag,
   Code,
   Sparkles,
+  AlertCircle,
 } from "lucide-react"
 import { Button } from "@/componentss/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/componentss/ui/card"
@@ -53,6 +55,7 @@ interface Script {
   version: string
   last_updated: string
   status: "pending" | "approved" | "rejected"
+  rejection_reason?: string
   featured: boolean
   downloads: number
   rating: number
@@ -79,8 +82,23 @@ interface Giveaway {
   videos: string[]
   tags: string[]
   rules: string[]
-  status: "active" | "ended" | "cancelled"
+  status: "active" | "ended" | "cancelled" | "pending" | "approved" | "rejected"
   entries_count: number
+  created_at: string
+  updated_at: string
+  rejection_reason?: string
+}
+
+interface Ad {
+  id: number
+  title: string
+  description: string
+  image_url?: string
+  link_url?: string
+  category: string
+  status: "pending" | "approved" | "rejected"
+  rejection_reason?: string
+  priority: number
   created_at: string
   updated_at: string
 }
@@ -91,7 +109,7 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState("overview")
   const [scripts, setScripts] = useState<Script[]>([])
   const [giveaways, setGiveaways] = useState<Giveaway[]>([])
-  const [ads, setAds] = useState<any[]>([])
+  const [ads, setAds] = useState<Ad[]>([])
   const [giveawayEntries, setGiveawayEntries] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState({
@@ -103,6 +121,7 @@ export default function ProfilePage() {
     totalEntries: 0,
   })
   const [showAdsForm, setShowAdsForm] = useState(false)
+  const [editingAd, setEditingAd] = useState<any>(null)
 
   useEffect(() => {
     if (status !== "authenticated") return
@@ -113,8 +132,13 @@ export default function ProfilePage() {
     try {
       setLoading(true)
       
+      // Debug: Log user roles
+      console.log("Profile - User roles:", (session?.user as any)?.roles)
+      
       // Fetch user's scripts from the new user-specific endpoint
-      const scriptsResponse = await fetch("/api/users/scripts")
+      const scriptsResponse = await fetch("/api/users/scripts", {
+        credentials: 'include'
+      })
       console.log("Profile - Scripts response:", scriptsResponse.status)
       let scriptsData = { scripts: [] }
       if (scriptsResponse.ok) {
@@ -126,7 +150,9 @@ export default function ProfilePage() {
       }
 
       // Fetch user's giveaways from the new user-specific endpoint
-      const giveawaysResponse = await fetch("/api/users/giveaways")
+      const giveawaysResponse = await fetch("/api/users/giveaways", {
+        credentials: 'include'
+      })
       console.log("Profile - Giveaways response:", giveawaysResponse.status)
       let giveawaysData = { giveaways: [] }
       if (giveawaysResponse.ok) {
@@ -138,7 +164,9 @@ export default function ProfilePage() {
       }
 
       // Fetch user's ads
-      const adsResponse = await fetch("/api/users/ads")
+      const adsResponse = await fetch("/api/users/advertisements", {
+        credentials: 'include'
+      })
       let adsData = { ads: [] }
       if (adsResponse.ok) {
         adsData = await adsResponse.json()
@@ -148,7 +176,9 @@ export default function ProfilePage() {
       }
 
       // Fetch user's giveaway entries
-      const entriesResponse = await fetch("/api/users/giveaway-entries")
+      const entriesResponse = await fetch("/api/users/giveaway-entries", {
+        credentials: 'include'
+      })
       let entriesData = { entries: [] }
       if (entriesResponse.ok) {
         entriesData = await entriesResponse.json()
@@ -191,7 +221,11 @@ export default function ProfilePage() {
   }
 
   const handleEditAd = (adId: number) => {
-    router.push(`/profile/ads/${adId}/edit`)
+    const ad = ads.find(a => a.id === adId)
+    if (ad) {
+      setEditingAd(ad)
+      setShowAdsForm(true)
+    }
   }
 
   const handleDeleteScript = async (scriptId: number) => {
@@ -200,6 +234,7 @@ export default function ProfilePage() {
     try {
       const response = await fetch(`/api/users/scripts?id=${scriptId}`, {
         method: "DELETE",
+        credentials: 'include'
       })
 
       if (response.ok) {
@@ -224,6 +259,7 @@ export default function ProfilePage() {
     try {
       const response = await fetch(`/api/users/giveaways?id=${giveawayId}`, {
         method: "DELETE",
+        credentials: 'include'
       })
 
       if (response.ok) {
@@ -246,23 +282,42 @@ export default function ProfilePage() {
     if (!confirm("Are you sure you want to delete this ad?")) return
 
     try {
-      const response = await fetch(`/api/users/ads?id=${adId}`, {
+      console.log("Attempting to delete ad with ID:", adId)
+      console.log("Session:", session)
+      
+      const url = `/api/users/advertisements?id=${adId}`
+      console.log("DELETE URL:", url)
+      
+      const response = await fetch(url, {
         method: "DELETE",
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        }
       })
 
+      console.log("Response status:", response.status)
+      console.log("Response ok:", response.ok)
+
       if (response.ok) {
+        const result = await response.json()
+        console.log("Delete result:", result)
         setAds(ads.filter(ad => ad.id !== adId))
         // Update stats without full component refresh
         setStats(prevStats => ({
           ...prevStats,
           totalAds: prevStats.totalAds - 1
         }))
+        alert("Ad deleted successfully!")
       } else {
-        alert("Failed to delete ad")
+        const errorText = await response.text()
+        console.error("Delete failed:", response.status, errorText)
+        alert(`Failed to delete ad: ${response.status} - ${errorText}`)
       }
     } catch (error) {
       console.error("Error deleting ad:", error)
-      alert("Error deleting ad")
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      alert(`Network error: ${errorMessage}`)
     }
   }
 
@@ -284,8 +339,9 @@ export default function ProfilePage() {
   }
 
   const handleAdCreated = () => {
-    // Refresh ads data after creating a new ad
+    // Refresh ads data after creating/updating an ad
     fetchUserData()
+    setEditingAd(null)
   }
 
   if (status === "loading" || loading) {
@@ -326,10 +382,33 @@ export default function ProfilePage() {
                 <h1 className="text-3xl font-bold">{session.user?.name}</h1>
                 <p className="text-gray-400">{session.user?.email}</p>
                 <div className="flex items-center gap-4 mt-2">
-                  <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30">
-                    Admin
-                  </Badge>
+                  <div className="flex flex-wrap gap-2">
+                    {(session.user as any)?.roles?.length > 0 ? (
+                      (session.user as any).roles.map((role: string) => (
+                        <Badge 
+                          key={role}
+                          className={`${
+                            role === 'founder' ? 'bg-purple-500/20 text-purple-400 border-purple-500/30' :
+                            role === 'admin' ? 'bg-red-500/20 text-red-400 border-red-500/30' :
+                            role === 'verified_creator' ? 'bg-green-500/20 text-green-400 border-green-500/30' :
+                            role === 'moderator' ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' :
+                            role === 'crew' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' :
+                            'bg-gray-500/20 text-gray-400 border-gray-500/30'
+                          }`}
+                        >
+                          {role === 'verified_creator' ? 'Verified Creator' : 
+                           role === 'moderator' ? 'Moderator' :
+                           role.charAt(0).toUpperCase() + role.slice(1)}
+                        </Badge>
+                      ))
+                    ) : (
+                      <Badge className="bg-gray-500/20 text-gray-400 border-gray-500/30">
+                        Loading roles...
+                      </Badge>
+                    )}
+                  </div>
                   <span className="text-gray-500">Member since {new Date().toLocaleDateString()}</span>
+                  {/* Debug session button removed */}
                 </div>
               </div>
             </motion.div>
@@ -528,6 +607,18 @@ export default function ProfilePage() {
                             </Badge>
                           </div>
 
+                          {script.status === "rejected" && script.rejection_reason && (
+                            <div className="mt-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                              <div className="flex items-start gap-2">
+                                <AlertCircle className="h-4 w-4 text-red-400 mt-0.5 flex-shrink-0" />
+                                <div>
+                                  <p className="text-red-400 text-sm font-medium">Rejection Reason:</p>
+                                  <p className="text-red-300 text-sm mt-1">{script.rejection_reason}</p>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
                           <div className="flex items-center gap-2 text-sm text-gray-400">
                             <Download className="h-4 w-4" />
                             <span>{script.downloads} downloads</span>
@@ -643,6 +734,18 @@ export default function ProfilePage() {
                             </Badge>
                           </div>
 
+                          {giveaway.status === "rejected" && giveaway.rejection_reason && (
+                            <div className="mt-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                              <div className="flex items-start gap-2">
+                                <AlertCircle className="h-4 w-4 text-red-400 mt-0.5 flex-shrink-0" />
+                                <div>
+                                  <p className="text-red-400 text-sm font-medium">Rejection Reason:</p>
+                                  <p className="text-red-300 text-sm mt-1">{giveaway.rejection_reason}</p>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
                           <div className="flex items-center gap-2 text-sm text-gray-400">
                             <Calendar className="h-4 w-4" />
                             <span>Ends {new Date(giveaway.end_date).toLocaleDateString()}</span>
@@ -754,6 +857,18 @@ export default function ProfilePage() {
                               />
                             </div>
                           )}
+                          {ad.status === "rejected" && ad.rejection_reason && (
+                            <div className="mt-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                              <div className="flex items-start gap-2">
+                                <AlertCircle className="h-4 w-4 text-red-400 mt-0.5 flex-shrink-0" />
+                                <div>
+                                  <p className="text-red-400 text-sm font-medium">Rejection Reason:</p>
+                                  <p className="text-red-300 text-sm mt-1">{ad.rejection_reason}</p>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
                           <div className="flex items-center justify-between">
                             <div className="text-xs text-gray-500">
                               Created: {new Date(ad.created_at).toLocaleDateString()}
@@ -960,8 +1075,12 @@ export default function ProfilePage() {
       {/* Ads Form Dialog */}
       <AdsForm 
         isOpen={showAdsForm}
-        onClose={() => setShowAdsForm(false)}
+        onClose={() => {
+          setShowAdsForm(false)
+          setEditingAd(null)
+        }}
         onSuccess={handleAdCreated}
+        editData={editingAd}
       />
     </>
   )

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { X, Upload, Link, DollarSign, Tag, Calendar, Plus } from "lucide-react"
 import { Button } from "@/componentss/ui/button"
@@ -9,26 +9,62 @@ import { Textarea } from "@/componentss/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/componentss/ui/select"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/componentss/ui/dialog"
 import { Badge } from "@/componentss/ui/badge"
+import { useToast } from "@/hooks/use-toast"
 import FileUpload from "@/componentss/shared/file-upload"
 
 interface AdsFormProps {
   isOpen: boolean
   onClose: () => void
   onSuccess: () => void
+  editData?: {
+    id: number
+    title: string
+    description: string
+    category: string
+    link_url: string
+    image_url: string
+    priority: number
+    status: string
+  }
 }
 
-export default function AdsForm({ isOpen, onClose, onSuccess }: AdsFormProps) {
+export default function AdsForm({ isOpen, onClose, onSuccess, editData }: AdsFormProps) {
+  const { toast } = useToast()
   const [formData, setFormData] = useState({
     title: "",
     description: "",
     category: "",
     link_url: "",
     image_url: "",
-    priority: 1,
     status: "pending"
   })
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const isEditMode = !!editData
+
+  // Update form data when editData changes
+  useEffect(() => {
+    if (editData) {
+      setFormData({
+        title: editData.title || "",
+        description: editData.description || "",
+        category: editData.category || "",
+        link_url: editData.link_url || "",
+        image_url: editData.image_url || "",
+        status: editData.status || "pending"
+      })
+    } else {
+      // Reset form when not in edit mode
+      setFormData({
+        title: "",
+        description: "",
+        category: "",
+        link_url: "",
+        image_url: "",
+        status: "pending"
+      })
+    }
+  }, [editData])
 
   const handleInputChange = (field: string, value: string | number) => {
     setFormData(prev => ({
@@ -43,7 +79,7 @@ export default function AdsForm({ isOpen, onClose, onSuccess }: AdsFormProps) {
     // For now, we'll just store the file
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent | React.MouseEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
 
@@ -67,19 +103,37 @@ export default function AdsForm({ isOpen, onClose, onSuccess }: AdsFormProps) {
       }
 
       // Submit ad data
-      const response = await fetch('/api/users/ads', {
-        method: 'POST',
+      const url = isEditMode ? '/api/users/advertisements' : '/api/users/advertisements'
+      const method = isEditMode ? 'PATCH' : 'POST'
+      const body = isEditMode 
+        ? JSON.stringify({
+            adId: editData!.id,
+            ...formData,
+            image_url: imageUrl
+          })
+        : JSON.stringify({
+            ...formData,
+            image_url: imageUrl
+          })
+
+      const response = await fetch(url, {
+        method,
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          ...formData,
-          image_url: imageUrl
-        })
+        credentials: 'include',
+        body
       })
 
       if (response.ok) {
         onSuccess()
+        // Show success toast without refreshing the page
+        toast({
+          title: isEditMode ? "Ad updated" : "Ad created",
+          description: isEditMode
+            ? "Your advertisement has been updated successfully."
+            : "Your advertisement has been created successfully.",
+        })
         onClose()
         // Reset form
         setFormData({
@@ -88,18 +142,25 @@ export default function AdsForm({ isOpen, onClose, onSuccess }: AdsFormProps) {
           category: "",
           link_url: "",
           image_url: "",
-          priority: 1,
           status: "pending"
         })
         setSelectedImage(null)
       } else {
-        const error = await response.json()
+        const error = await response.json().catch(() => ({ error: "Unknown error" }))
         console.error('Error creating ad:', error)
-        alert('Failed to create ad. Please try again.')
+        toast({
+          title: 'Failed to create ad',
+          description: typeof error?.error === 'string' ? error.error : 'Please try again.',
+          variant: 'destructive' as any,
+        })
       }
     } catch (error) {
       console.error('Error creating ad:', error)
-      alert('Failed to create ad. Please try again.')
+      toast({
+        title: 'Failed to create ad',
+        description: 'An unexpected error occurred. Please try again.',
+        variant: 'destructive' as any,
+      })
     } finally {
       setIsSubmitting(false)
     }
@@ -109,13 +170,18 @@ export default function AdsForm({ isOpen, onClose, onSuccess }: AdsFormProps) {
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="bg-gray-800 border-gray-700 max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-white text-xl">Create New Ad</DialogTitle>
+          <DialogTitle className="text-white text-xl">
+            {isEditMode ? "Edit Ad" : "Create New Ad"}
+          </DialogTitle>
           <DialogDescription className="text-gray-400">
-            Create a new advertisement to promote your content
+            {isEditMode 
+              ? "Update your advertisement details" 
+              : "Create a new advertisement to promote your content"
+            }
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="space-y-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -218,25 +284,7 @@ export default function AdsForm({ isOpen, onClose, onSuccess }: AdsFormProps) {
               )}
             </div>
 
-            {/* Priority */}
-            <div>
-              <label className="text-sm font-medium text-gray-300 mb-2 block">
-                Priority
-              </label>
-              <Select 
-                value={formData.priority.toString()} 
-                onValueChange={(value) => handleInputChange('priority', parseInt(value))}
-              >
-                <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-gray-700 border-gray-600">
-                  <SelectItem value="1" className="text-white hover:bg-gray-600">Low (1)</SelectItem>
-                  <SelectItem value="2" className="text-white hover:bg-gray-600">Medium (2)</SelectItem>
-                  <SelectItem value="3" className="text-white hover:bg-gray-600">High (3)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            
           </motion.div>
 
           {/* Submit Buttons */}
@@ -247,19 +295,20 @@ export default function AdsForm({ isOpen, onClose, onSuccess }: AdsFormProps) {
             className="flex gap-3 pt-4 border-t border-gray-700"
           >
             <Button
-              type="submit"
+              type="button"
+              onClick={handleSubmit}
               disabled={isSubmitting}
               className="bg-orange-600 hover:bg-orange-700 text-white flex-1"
             >
               {isSubmitting ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                  Creating Ad...
+                  {isEditMode ? "Updating Ad..." : "Creating Ad..."}
                 </>
               ) : (
                 <>
                   <Plus className="h-4 w-4 mr-2" />
-                  Create Ad
+                  {isEditMode ? "Update Ad" : "Create Ad"}
                 </>
               )}
             </Button>
@@ -272,7 +321,7 @@ export default function AdsForm({ isOpen, onClose, onSuccess }: AdsFormProps) {
               Cancel
             </Button>
           </motion.div>
-        </form>
+        </div>
       </DialogContent>
     </Dialog>
   )

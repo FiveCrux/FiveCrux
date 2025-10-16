@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/auth"
-import { getScriptById, updateScript, updateScriptForReapproval, deleteScript } from "@/lib/database-new"
+import { getScriptById, updateScript, updateScriptForReapproval, updatePendingScript, updateRejectedScriptForReapproval, deleteScript } from "@/lib/database-new"
 
 export async function GET(
   request: NextRequest,
@@ -66,12 +66,10 @@ export async function PATCH(
       return NextResponse.json({ error: "Script not found" }, { status: 404 })
     }
 
-    // Determine if this script needs re-approval
-    const needsReapproval = currentScript.status === "approved"
-    
+    // Determine which flow to use based on current status
     let updatedScript
-    if (needsReapproval) {
-      // Move from approved_scripts to pending_scripts for re-approval
+    if (currentScript.status === "approved") {
+      // Approved -> move to pending with updates
       updatedScript = await updateScriptForReapproval(scriptId, {
         title: body.title,
         description: body.description,
@@ -88,12 +86,12 @@ export async function PATCH(
         videos: body.videos,
         screenshots: body.screenshots,
         last_updated: body.last_updated,
-        status: "pending", // Set to pending for re-approval
+        status: "pending",
         featured: body.featured,
       })
-    } else {
-      // Regular update for pending/rejected scripts
-      updatedScript = await updateScript(scriptId, {
+    } else if (currentScript.status === "rejected") {
+      // Rejected -> move to pending with updates
+      updatedScript = await updateRejectedScriptForReapproval(scriptId, {
         title: body.title,
         description: body.description,
         price: body.price,
@@ -109,7 +107,27 @@ export async function PATCH(
         videos: body.videos,
         screenshots: body.screenshots,
         last_updated: body.last_updated,
-        status: body.status,
+        status: "pending",
+        featured: body.featured,
+      })
+    } else {
+      // Pending -> in-place update (refresh submittedAt for ordering)
+      updatedScript = await updatePendingScript(scriptId, {
+        title: body.title,
+        description: body.description,
+        price: body.price,
+        original_price: body.original_price,
+        category: body.category,
+        framework: body.framework,
+        seller_name: body.seller_name,
+        seller_email: body.seller_email,
+        features: body.features,
+        requirements: body.requirements,
+        links: body.links,
+        images: body.images,
+        videos: body.videos,
+        screenshots: body.screenshots,
+        last_updated: body.last_updated,
         featured: body.featured,
       })
     }
@@ -121,7 +139,8 @@ export async function PATCH(
 
     console.log('PATCH success:', { id: updatedScript.id })
     
-    const message = needsReapproval 
+    const movedToPending = currentScript.status === "approved" || currentScript.status === "rejected"
+    const message = movedToPending
       ? "Script updated successfully! It has been moved to pending status and will require admin approval before going live again."
       : "Script updated successfully!"
       
@@ -129,7 +148,7 @@ export async function PATCH(
       success: true, 
       message,
       script: updatedScript,
-      needsReapproval 
+      needsReapproval: movedToPending 
     })
   } catch (error) {
     console.error("Error updating script:", error)

@@ -100,8 +100,11 @@ export interface Ad extends BaseEntity {
   linkUrl?: string;
   category: string;
   status: "active" | "inactive" | "expired";
-  priority: number;
   startDate: string;
   endDate?: string;
   createdBy: string;
 }
+
+
+
+

@@ -48,11 +48,12 @@ export const authOptions: NextAuthOptions = {
 				try {
 					const dbUser = await getUserById(token.sub)
 					if (dbUser) {
+						console.log("Auth callback - User roles from DB:", dbUser.roles)
 						;(session.user as any).roles = dbUser.roles
 						;(session.user as any).username = dbUser.username
 					}
 				} catch (e) {
-					// ignore
+					console.error("Auth callback - Error fetching user:", e)
 				}
 			}
 			;(session as any).accessToken = (token as any).accessToken
