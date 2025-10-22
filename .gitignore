@@ -49,3 +49,9 @@ drizzle/
 *.temp
 .DS_Store
 Thumbs.db
+
+# Setup and documentation files (environment-specific)
+*.md
+AWS_S3_SETUP.md
+S3_SETUP_CHECKLIST.md
+GIVEAWAY_WINNER_SETUP.md

@@ -43,6 +43,7 @@ import { Textarea } from "@/componentss/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/componentss/ui/select"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/componentss/ui/dialog"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/componentss/ui/alert-dialog"
+import { toast } from "sonner"
 import Navbar from "@/componentss/shared/navbar"
 import Footer from "@/componentss/shared/footer"
 import FileUpload from "@/componentss/shared/file-upload"
@@ -166,6 +167,7 @@ export default function AdminPage() {
   const [activeScriptFilter, setActiveScriptFilter] = useState("all")
   const [rejectingScript, setRejectingScript] = useState<number | null>(null)
   const [rejectingScriptLoading, setRejectingScriptLoading] = useState(false)
+  const [approvingScript, setApprovingScript] = useState<number | null>(null)
   const [viewingScript, setViewingScript] = useState<Script | null>(null)
   const [viewingGiveaway, setViewingGiveaway] = useState<Giveaway | null>(null)
   const [viewingAd, setViewingAd] = useState<any>(null)
@@ -387,6 +389,8 @@ export default function AdminPage() {
     try {
       if (status === "rejected") {
         setRejectingScriptLoading(true)
+      } else if (status === "approved") {
+        setApprovingScript(scriptId)
       }
       
       const updateData: any = { status }
@@ -410,24 +414,39 @@ export default function AdminPage() {
             : script
         ))
         
+        // Show success toast
+        if (status === "approved") {
+          toast.success("Script approved successfully!", {
+            description: "The script is now live and visible to users.",
+          })
+        } else {
+          toast.success("Script rejected", {
+            description: "The seller has been notified.",
+          })
+        }
+        
         if (status === "rejected") {
           setRejectingScript(null)
           setRejectionReason("")
         }
         
-        // Avoid full reload on rejection; local state is already updated.
-        // Reload only when approving (before redirect) if needed.
-        if (status === "approved") {
-          await loadData()
-          alert("Script approved successfully! Redirecting to scripts page...")
-          window.location.href = "/scripts"
-        }
+        // Reload data in background without redirect
+        await loadData()
+      } else {
+        toast.error(status === "approved" ? "Failed to approve script" : "Failed to reject script", {
+          description: "Please try again.",
+        })
       }
     } catch (error) {
       console.error("Error updating script:", error)
+      toast.error("An error occurred", {
+        description: "Please try again later.",
+      })
     } finally {
       if (status === "rejected") {
         setRejectingScriptLoading(false)
+      } else if (status === "approved") {
+        setApprovingScript(null)
       }
     }
   }
@@ -878,9 +897,19 @@ export default function AdminPage() {
                                   onClick={() => handleScriptAction(script.id, "approved")}
                                   className="bg-green-500 hover:bg-green-600"
                                   size="sm"
+                                  disabled={approvingScript === script.id}
                                 >
-                                  <CheckCircle className="h-4 w-4 mr-2" />
-                                  Approve
+                                  {approvingScript === script.id ? (
+                                    <>
+                                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                                      Approving...
+                                    </>
+                                  ) : (
+                                    <>
+                                      <CheckCircle className="h-4 w-4 mr-2" />
+                                      Approve
+                                    </>
+                                  )}
                                 </Button>
                               )}
                               <Button
@@ -1560,7 +1589,7 @@ export default function AdminPage() {
                   <img 
                     src={viewingScript.cover_image} 
                     alt={viewingScript.title}
-                    className="w-full h-64 object-cover rounded-lg border border-gray-700"
+                    className="w-full h-64 object-contain rounded-lg border border-gray-700"
                   />
                   <div className="absolute top-4 right-4">
                     <Badge 
@@ -2332,7 +2361,7 @@ export default function AdminPage() {
                   <img 
                     src={viewingAd.imageUrl} 
                     alt={viewingAd.title}
-                    className="w-full h-64 object-cover rounded-lg"
+                    className="w-full h-64 object-contain rounded-lg bg-gray-800"
                   />
                 </div>
               )}
@@ -2350,7 +2379,7 @@ export default function AdminPage() {
                           <img 
                             src={image} 
                             alt={`Ad image ${index + 1}`}
-                            className="w-full h-32 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
+                            className="w-full h-32 object-contain rounded-lg cursor-pointer hover:opacity-80 transition-opacity bg-gray-800"
                             onClick={() => window.open(image, '_blank')}
                           />
                           <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">

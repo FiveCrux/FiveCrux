@@ -1,7 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ['localhost'],
+    domains: ['localhost',
+      'crux-marketplace-s3.s3.ap-south-1.amazonaws.com',
+    ],
   },
   serverExternalPackages: ['drizzle-orm', 'pg', 'postgres'],
   webpack: (config, { isServer }) => {

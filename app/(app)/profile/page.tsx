@@ -49,6 +49,7 @@ interface Script {
   images: string[]
   videos: string[]
   screenshots: string[]
+  cover_image?: string
   demo_url?: string
   documentation_url?: string
   support_url?: string
@@ -80,6 +81,7 @@ interface Giveaway {
   creator_id?: string
   images: string[]
   videos: string[]
+  cover_image?: string
   tags: string[]
   rules: string[]
   status: "active" | "ended" | "cancelled" | "pending" | "approved" | "rejected"
@@ -577,9 +579,9 @@ export default function ProfilePage() {
                     <Card key={script.id} className="bg-gray-800/30 border-gray-700/50 hover:border-orange-500/50 transition-colors">
                       <CardContent className="p-6">
                         <div className="aspect-video bg-gray-700 rounded-lg mb-4 overflow-hidden">
-                          {script.screenshots && script.screenshots.length > 0 ? (
+                          {script.cover_image || (script.screenshots && script.screenshots.length > 0) ? (
                             <img
-                              src={script.screenshots[0]}
+                              src={script.cover_image || script.screenshots[0]}
                               alt={script.title}
                               className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
                               loading="lazy"
@@ -704,9 +706,9 @@ export default function ProfilePage() {
                     <Card key={giveaway.id} className="bg-gray-800/30 border-gray-700/50 hover:border-green-500/50 transition-colors">
                       <CardContent className="p-6">
                         <div className="aspect-video bg-gray-700 rounded-lg mb-4 overflow-hidden">
-                          {giveaway.images && giveaway.images.length > 0 ? (
+                          {giveaway.cover_image || (giveaway.images && giveaway.images.length > 0) ? (
                             <img
-                              src={giveaway.images[0]}
+                              src={giveaway.cover_image || giveaway.images[0]}
                               alt={giveaway.title}
                               className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
                               loading="lazy"

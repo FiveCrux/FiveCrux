@@ -237,7 +237,13 @@ export async function getScriptById(id: number) {
       return { 
         ...script, 
         status: 'approved' as const,
-        seller_image: sellerImage
+        seller_image: sellerImage,
+        cover_image: script.coverImage,
+        original_price: script.originalPrice,
+        seller_name: script.seller_name,
+        seller_email: script.seller_email,
+        created_at: script.createdAt,
+        updated_at: script.updatedAt,
       };
     }
     
@@ -263,7 +269,13 @@ export async function getScriptById(id: number) {
       return { 
         ...script, 
         status: 'pending' as const,
-        seller_image: sellerImage
+        seller_image: sellerImage,
+        cover_image: script.coverImage,
+        original_price: script.originalPrice,
+        seller_name: script.seller_name,
+        seller_email: script.seller_email,
+        created_at: script.createdAt,
+        updated_at: script.updatedAt,
       };
     }
     
@@ -289,7 +301,13 @@ export async function getScriptById(id: number) {
       return { 
         ...script, 
         status: 'rejected' as const,
-        seller_image: sellerImage
+        seller_image: sellerImage,
+        cover_image: script.coverImage,
+        original_price: script.originalPrice,
+        seller_name: script.seller_name,
+        seller_email: script.seller_email,
+        created_at: script.createdAt,
+        updated_at: script.updatedAt,
       };
     }
     return null;
@@ -708,6 +726,7 @@ export async function createGiveaway(giveawayData: NewGiveaway) {
     creatorId: giveawayData.creatorId || (giveawayData as any).creator_id || 'unknown',
     status: giveawayData.status || 'active',
     featured: giveawayData.featured ?? false,
+    autoAnnounce: giveawayData.autoAnnounce ?? (giveawayData as any).auto_announce ?? true, // ✅ ADD THIS LINE
     entriesCount: giveawayData.entriesCount || (giveawayData as any).entries_count || 0,
     maxEntries: giveawayData.maxEntries || (giveawayData as any).max_entries || null,
     // Map media fields
@@ -781,7 +800,26 @@ export async function getGiveaways(filters?: {
   const ordered = filtered.orderBy(desc(approvedGiveaways.createdAt));
   const limited = filters?.limit ? ordered.limit(filters.limit) : ordered;
   const offseted = filters?.offset ? limited.offset(filters.offset) : limited;
-  return await (offseted as any);
+  const giveaways = await (offseted as any);
+  
+  // Fetch creator images for each giveaway
+  const giveawaysWithImages = await Promise.all(
+    giveaways.map(async (giveaway: any) => {
+      let creatorImage = null;
+      if (giveaway.creatorId) {
+        const creatorResult = await db.select().from(users).where(eq(users.id, giveaway.creatorId));
+        if (creatorResult.length > 0) {
+          creatorImage = creatorResult[0].image;
+        }
+      }
+      return {
+        ...giveaway,
+        creatorImage,
+      };
+    })
+  );
+  
+  return giveawaysWithImages;
 }
 
 export async function getGiveawayById(id: number, session?: any) {
@@ -811,12 +849,14 @@ export async function getGiveawayById(id: number, session?: any) {
         userEntry = userEntryResult[0] || null;
       }
       
-      // Fetch creator's Discord profile picture if creatorId exists
+      // Fetch creator's Discord profile picture and roles if creatorId exists
       let creatorImage = null;
+      let creatorRoles = null;
       if (giveaway.creatorId) {
         const creatorResult = await db.select().from(users).where(eq(users.id, giveaway.creatorId));
         if (creatorResult.length > 0) {
           creatorImage = creatorResult[0].image;
+          creatorRoles = creatorResult[0].roles;
         }
       }
       
@@ -827,6 +867,7 @@ export async function getGiveawayById(id: number, session?: any) {
         requirements,
         prizes,
         creator_image: creatorImage,
+        creator_roles: creatorRoles,
         table_source: 'approved',
       };
     }
@@ -843,12 +884,14 @@ export async function getGiveawayById(id: number, session?: any) {
         .where(eq(giveawayEntries.giveawayId, id));
       const actualEntryCount = actualEntries[0]?.count || 0;
       
-      // Fetch creator's Discord profile picture if creatorId exists
+      // Fetch creator's Discord profile picture and roles if creatorId exists
       let creatorImage = null;
+      let creatorRoles = null;
       if (giveaway.creatorId) {
         const creatorResult = await db.select().from(users).where(eq(users.id, giveaway.creatorId));
         if (creatorResult.length > 0) {
           creatorImage = creatorResult[0].image;
+          creatorRoles = creatorResult[0].roles;
         }
       }
       
@@ -858,6 +901,7 @@ export async function getGiveawayById(id: number, session?: any) {
         requirements,
         prizes,
         creator_image: creatorImage,
+        creator_roles: creatorRoles,
         table_source: 'pending',
       };
     }
@@ -874,12 +918,14 @@ export async function getGiveawayById(id: number, session?: any) {
         .where(eq(giveawayEntries.giveawayId, id));
       const actualEntryCount = actualEntries[0]?.count || 0;
       
-      // Fetch creator's Discord profile picture if creatorId exists
+      // Fetch creator's Discord profile picture and roles if creatorId exists
       let creatorImage = null;
+      let creatorRoles = null;
       if (giveaway.creatorId) {
         const creatorResult = await db.select().from(users).where(eq(users.id, giveaway.creatorId));
         if (creatorResult.length > 0) {
           creatorImage = creatorResult[0].image;
+          creatorRoles = creatorResult[0].roles;
         }
       }
       
@@ -889,6 +935,7 @@ export async function getGiveawayById(id: number, session?: any) {
         requirements,
         prizes,
         creator_image: creatorImage,
+        creator_roles: creatorRoles,
         table_source: 'rejected',
       };
     }
@@ -943,8 +990,17 @@ export async function updateGiveawayForReapproval(id: number, updateData: any) {
 
     // Start a transaction to move giveaway from approved to pending
     const result = await db.transaction(async (tx) => {
+      console.log('Transaction started - deleting from approved_giveaways, id:', id);
+      
       // 1. Delete from approved_giveaways
-      await tx.delete(approvedGiveaways).where(eq(approvedGiveaways.id, id));
+      const deleteResult = await tx.delete(approvedGiveaways).where(eq(approvedGiveaways.id, id));
+      console.log('Delete result:', deleteResult);
+      
+      console.log('Inserting into pending_giveaways with data:', {
+        ...currentGiveaway[0],
+        ...mappedUpdate,
+        id: id,
+      });
       
       // 2. Insert into pending_giveaways with updated data
       const newPendingGiveaway = await tx.insert(pendingGiveaways)
@@ -955,6 +1011,7 @@ export async function updateGiveawayForReapproval(id: number, updateData: any) {
         })
         .returning();
 
+      console.log('Insert result:', newPendingGiveaway[0]);
       return newPendingGiveaway[0];
     });
 

@@ -58,7 +58,7 @@ export default function AdCard({ ad, className = "", variant = 'default' }: AdCa
                 <motion.img
                   src={ad.image_url}
                   alt={ad.title}
-                  className="object-cover transition-transform duration-500 group-hover:scale-110 w-full h-48 rounded-t-lg"
+                  className="object-contain transition-transform duration-500 group-hover:scale-110 w-full h-48 rounded-t-lg bg-gray-800"
                   loading="lazy"
                   onError={() => setImageError(true)}
                 />
@@ -142,7 +142,7 @@ export default function AdCard({ ad, className = "", variant = 'default' }: AdCa
                 <motion.img
                   src={ad.image_url}
                   alt={ad.title}
-                  className="object-cover transition-transform duration-500 group-hover:scale-110 w-full h-48 rounded-t-lg"
+                  className="object-contain transition-transform duration-500 group-hover:scale-110 w-full h-48 rounded-t-lg bg-gray-800"
                   loading="lazy"
                   onError={() => setImageError(true)}
                 />
@@ -233,7 +233,7 @@ export default function AdCard({ ad, className = "", variant = 'default' }: AdCa
                 <img
                   src={ad.image_url}
                   alt={ad.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300 bg-gray-800"
                   loading="lazy"
                   onError={() => setImageError(true)}
                 />

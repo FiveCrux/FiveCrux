@@ -33,6 +33,7 @@ export async function POST(request: NextRequest) {
     // Create giveaway
     const giveawayId = await createGiveaway({
       ...giveaway,
+      auto_announce: true,
       creator_id: session ? String((session.user as any)?.id || "") : null,
       status: approvalStatus as any,
     })
@@ -90,7 +91,27 @@ export async function GET(request: NextRequest) {
 
     const giveaways = await getGiveaways(filters)
 
-    return NextResponse.json(giveaways)
+    // Transform camelCase to snake_case for frontend compatibility
+    const transformedGiveaways = giveaways.map((giveaway: any) => ({
+      ...giveaway,
+      creator_name: giveaway.creatorName,
+      creator_email: giveaway.creatorEmail,
+      creator_id: giveaway.creatorId,
+      creator_image: giveaway.creatorImage,
+      total_value: giveaway.totalValue,
+      end_date: giveaway.endDate,
+      max_entries: giveaway.maxEntries,
+      auto_announce: giveaway.autoAnnounce,
+      cover_image: giveaway.coverImage,
+      entries_count: giveaway.entriesCount,
+      created_at: giveaway.createdAt,
+      updated_at: giveaway.updatedAt,
+      approved_at: giveaway.approvedAt,
+      approved_by: giveaway.approvedBy,
+      admin_notes: giveaway.adminNotes,
+    }))
+
+    return NextResponse.json(transformedGiveaways)
   } catch (error) {
     console.error("Error fetching giveaways:", error)
     return NextResponse.json({ error: "Failed to fetch giveaways" }, { status: 500 })

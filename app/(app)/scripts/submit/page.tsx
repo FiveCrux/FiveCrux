@@ -1055,12 +1055,12 @@ export default function SubmitScriptPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {/* Screenshots Preview */}
-                      {media.screenshots.length > 0 ? (
+                      {/* Cover Image / Screenshots Preview */}
+                      {media.coverImage || media.screenshots.length > 0 ? (
                         <div className="aspect-video bg-gray-700 rounded-lg overflow-hidden">
                           <img
-                            src={media.screenshots[0]}
-                            alt="Main screenshot"
+                            src={media.coverImage || media.screenshots[0]}
+                            alt={media.coverImage ? "Cover image" : "Main screenshot"}
                             className="w-full h-full object-cover"
                           />
                         </div>
