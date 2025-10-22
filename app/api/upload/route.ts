@@ -1,25 +1,23 @@
 import { NextRequest, NextResponse } from "next/server"
-import { writeFile, mkdir } from "fs/promises"
-import { join } from "path"
-import { existsSync } from "fs"
+import { uploadToS3, generateS3Key } from "@/lib/s3"
 
 // Size limits in bytes
 const SIZE_LIMITS = {
-  // Image limits - Increased for better quality
-  coverImage: 500 * 1024, // 500KB (was 200KB)
-  screenshot: 400 * 1024, // 400KB (was 150KB)
-  thumbnail: 100 * 1024,  // 100KB (was 50KB)
+  // Image limits
+  coverImage: 500 * 1024, // 500KB
+  screenshot: 400 * 1024, // 400KB
+  thumbnail: 100 * 1024,  // 100KB
   
   // Video limits
   demoVideo: 10 * 1024 * 1024,  // 10MB
   trailerVideo: 25 * 1024 * 1024, // 25MB
 }
 
-// Dimension limits - Increased for better quality
+// Dimension limits
 const DIMENSION_LIMITS = {
-  coverImage: { width: 1600, height: 1200 }, // Increased from 1200x800
-  screenshot: { width: 1200, height: 900 },  // Increased from 800x600
-  thumbnail: { width: 400, height: 300 },    // Increased from 300x200
+  coverImage: { width: 1600, height: 1200 },
+  screenshot: { width: 1200, height: 900 },
+  thumbnail: { width: 400, height: 300 },
   demoVideo: { width: 1280, height: 720 },
   trailerVideo: { width: 1920, height: 1080 },
 }
@@ -70,7 +68,7 @@ export async function POST(request: NextRequest) {
           maxDimensions = DIMENSION_LIMITS.thumbnail
           break
         default:
-          maxSize = SIZE_LIMITS.screenshot // Default to screenshot limits
+          maxSize = SIZE_LIMITS.screenshot
           maxDimensions = DIMENSION_LIMITS.screenshot
       }
     } else {
@@ -84,7 +82,7 @@ export async function POST(request: NextRequest) {
           maxDimensions = DIMENSION_LIMITS.trailerVideo
           break
         default:
-          maxSize = SIZE_LIMITS.demoVideo // Default to demo limits
+          maxSize = SIZE_LIMITS.demoVideo
           maxDimensions = DIMENSION_LIMITS.demoVideo
       }
     }
@@ -97,44 +95,31 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    // Create uploads directory if it doesn't exist
-    const uploadsDir = join(process.cwd(), "public", "uploads")
-    if (!existsSync(uploadsDir)) {
-      await mkdir(uploadsDir, { recursive: true })
-    }
-
-    // Create subdirectories for images and videos
-    const typeDir = join(uploadsDir, type === "image" ? "images" : "videos")
-    if (!existsSync(typeDir)) {
-      await mkdir(typeDir, { recursive: true })
-    }
-
-    // Generate unique filename with WebP extension for images
-    const timestamp = Date.now()
-    const randomString = Math.random().toString(36).substring(2, 15)
-    const extension = type === "image" ? "webp" : file.name.split('.').pop()
-    const filename = `${timestamp}-${randomString}.${extension}`
-    const filepath = join(typeDir, filename)
-
-    // Convert file to buffer and save
+    // Convert file to buffer
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
-    await writeFile(filepath, buffer)
 
-    // Return the public URL
-    const publicUrl = `/uploads/${type === "image" ? "images" : "videos"}/${filename}`
+    // Generate S3 key
+    const s3Key = generateS3Key(type as 'image' | 'video', purpose, file.name)
+
+    // Upload to S3
+    const publicUrl = await uploadToS3(buffer, s3Key, file.type)
+
+    console.log(`File uploaded to S3: ${publicUrl}`)
 
     return NextResponse.json({ 
       success: true, 
       url: publicUrl,
-      filename: filename,
+      key: s3Key,
       size: file.size,
       dimensions: maxDimensions
     })
 
   } catch (error) {
     console.error("Upload error:", error)
-    return NextResponse.json({ error: "Failed to upload file" }, { status: 500 })
+    return NextResponse.json({ 
+      error: "Failed to upload file",
+      details: error instanceof Error ? error.message : "Unknown error"
+    }, { status: 500 })
   }
 }
-

@@ -73,7 +73,7 @@ const baseGiveawayFields = {
   maxEntries: integer('max_entries'),
   difficulty: text('difficulty').notNull(),
   featured: boolean('featured').default(false),
-  autoAnnounce: boolean('auto_announce').default(false),
+  autoAnnounce: boolean('auto_announce').default(true),
   creatorName: text('creator_name').notNull(),
   creatorEmail: text('creator_email').notNull(),
   creatorId: text('creator_id'),

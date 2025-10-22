@@ -8,7 +8,17 @@ export async function GET(request: NextRequest) {
     const limit = searchParams.get("limit")
 
     const ads = await getAdsForPage(pageType as 'scripts' | 'giveaways', limit ? Number.parseInt(limit) : undefined)
-    return NextResponse.json({ ads })
+    
+    // Transform camelCase to snake_case for frontend compatibility
+    const transformedAds = ads.map((ad: any) => ({
+      ...ad,
+      image_url: ad.imageUrl,
+      link_url: ad.linkUrl,
+      created_at: ad.createdAt,
+      updated_at: ad.updatedAt,
+    }))
+    
+    return NextResponse.json({ ads: transformedAds })
   } catch (error: any) {
     console.error("Error fetching promotions:", error)
     
@@ -22,6 +32,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Failed to fetch promotions" }, { status: 500 })
   }
 }
+
+
 
 
 

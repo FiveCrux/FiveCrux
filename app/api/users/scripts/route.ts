@@ -62,30 +62,61 @@ export async function GET(request: NextRequest) {
 
     // Combine and format the scripts
     const allScripts = [
-      ...userPending.map(s => ({ 
-        ...s, 
-        status: 'pending',
-        seller_id: userId,
-        created_at: s.createdAt || s.submittedAt,
-        updated_at: s.updatedAt
-      })),
-      ...userApproved.map(s => ({ 
-        ...s, 
-        status: 'approved',
-        seller_id: userId,
-        created_at: s.createdAt || s.approvedAt,
-        updated_at: s.updatedAt
-      })),
-      ...userRejected.map(s => ({ 
-        ...s, 
-        status: 'rejected',
-        rejection_reason: s.rejectionReason,
-        seller_id: userId,
-        created_at: s.createdAt || s.rejectedAt,
-        updated_at: s.updatedAt
-      }))
+      ...userPending.map(s => {
+        console.log('Pending script coverImage:', s.coverImage);
+        return {
+          ...s, 
+          status: 'pending',
+          seller_id: userId,
+          cover_image: s.coverImage,
+          original_price: s.originalPrice,
+          demo_url: s.demoUrl,
+          documentation_url: s.documentationUrl,
+          support_url: s.supportUrl,
+          last_updated: s.lastUpdated,
+          review_count: s.reviewCount,
+          created_at: s.createdAt || s.submittedAt,
+          updated_at: s.updatedAt
+        };
+      }),
+      ...userApproved.map(s => {
+        console.log('Approved script coverImage:', s.coverImage);
+        return {
+          ...s, 
+          status: 'approved',
+          seller_id: userId,
+          cover_image: s.coverImage,
+          original_price: s.originalPrice,
+          demo_url: s.demoUrl,
+          documentation_url: s.documentationUrl,
+          support_url: s.supportUrl,
+          last_updated: s.lastUpdated,
+          review_count: s.reviewCount,
+          created_at: s.createdAt || s.approvedAt,
+          updated_at: s.updatedAt
+        };
+      }),
+      ...userRejected.map(s => {
+        console.log('Rejected script coverImage:', s.coverImage);
+        return {
+          ...s, 
+          status: 'rejected',
+          rejection_reason: s.rejectionReason,
+          seller_id: userId,
+          cover_image: s.coverImage,
+          original_price: s.originalPrice,
+          demo_url: s.demoUrl,
+          documentation_url: s.documentationUrl,
+          support_url: s.supportUrl,
+          last_updated: s.lastUpdated,
+          review_count: s.reviewCount,
+          created_at: s.createdAt || s.rejectedAt,
+          updated_at: s.updatedAt
+        };
+      })
     ];
 
+    console.log('User scripts API - Sample script with cover_image:', allScripts[0]);
     return NextResponse.json({ scripts: allScripts });
   } catch (error) {
     console.error('Error fetching user scripts:', error);

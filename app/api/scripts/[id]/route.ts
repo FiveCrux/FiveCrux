@@ -85,6 +85,7 @@ export async function PATCH(
         images: body.images,
         videos: body.videos,
         screenshots: body.screenshots,
+        cover_image: body.cover_image,
         last_updated: body.last_updated,
         status: "pending",
         featured: body.featured,
@@ -106,6 +107,7 @@ export async function PATCH(
         images: body.images,
         videos: body.videos,
         screenshots: body.screenshots,
+        cover_image: body.cover_image,
         last_updated: body.last_updated,
         status: "pending",
         featured: body.featured,
@@ -127,6 +129,7 @@ export async function PATCH(
         images: body.images,
         videos: body.videos,
         screenshots: body.screenshots,
+        cover_image: body.cover_image,
         last_updated: body.last_updated,
         featured: body.featured,
       })

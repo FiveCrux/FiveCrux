@@ -207,7 +207,7 @@ export default function CreateGiveawayPage() {
           end_date: formData.endDate,
           difficulty: formData.difficulty,
           featured: formData.featured,
-          auto_announce: formData.autoAnnounce,
+          auto_announce: true,
           creator_name: formData.creatorName,
           creator_email: formData.creatorEmail,
           images: media.images,
@@ -560,16 +560,7 @@ export default function CreateGiveawayPage() {
                         </Label>
                       </div>
 
-                      <div className="flex items-center space-x-2">
-                        <Switch
-                          id="autoAnnounce"
-                          checked={formData.autoAnnounce}
-                          onCheckedChange={(checked) => setFormData({ ...formData, autoAnnounce: checked })}
-                        />
-                        <Label htmlFor="autoAnnounce" className="text-white">
-                          Auto-announce winner
-                        </Label>
-                      </div>
+                      {/* Auto-announce is always enabled; toggle removed */}
                     </div>
                   </CardContent>
                 </Card>

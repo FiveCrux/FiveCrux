@@ -63,17 +63,28 @@ interface Script {
 }
 
 // Media Slider Component
-const MediaSlider = ({ images, screenshots, videos, title }: { 
+const MediaSlider = ({ images, screenshots, videos, title, coverImage }: { 
   images: string[], 
   screenshots: string[], 
   videos: string[], 
-  title: string 
+  title: string,
+  coverImage?: string 
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0)
-  const allMedia = [...images, ...screenshots, ...videos]
+  
+  // Combine all media, but prioritize cover image first
+  let allMedia = [...images, ...screenshots, ...videos]
+  
+  // If there's a cover image and it's in the media arrays, move it to the front
+  if (coverImage) {
+    // Remove cover image from all media if it exists
+    allMedia = allMedia.filter(media => media !== coverImage)
+    // Add cover image at the beginning
+    allMedia = [coverImage, ...allMedia]
+  }
   
   // Debug logging
-  console.log('MediaSlider props:', { images, screenshots, videos, title });
+  console.log('MediaSlider props:', { images, screenshots, videos, title, coverImage });
   console.log('All media:', allMedia);
   
   if (allMedia.length === 0) return null
@@ -446,6 +457,7 @@ export default function ScriptDetailPage() {
                   screenshots={script.screenshots || []}
                   videos={script.videos || []}
                   title={script.title}
+                  coverImage={script.cover_image}
                 />
               </motion.div>
             </section>
