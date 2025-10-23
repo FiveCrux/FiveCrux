@@ -27,7 +27,7 @@ const baseScriptFields = {
   seller_email: text('seller_email').notNull(),
   features: text('features').array().default([]),
   requirements: text('requirements').array().default([]),
-  links: text('links').array().default([]),
+  link: text('link'),
   images: text('images').array().default([]),
   videos: text('videos').array().default([]),
   screenshots: text('screenshots').array().default([]),

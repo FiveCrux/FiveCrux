@@ -28,11 +28,34 @@ export async function PATCH(
     }
 
     // Validate roles
-    const validRoles = validateRoles(roles)
+    let validRoles = validateRoles(roles)
     if (validRoles.length === 0) {
       return NextResponse.json({ 
         error: `No valid roles provided. Valid roles are: ${VALID_ROLES.join(', ')}` 
       }, { status: 400 })
+    }
+
+    // Server-side security: Prevent moderators from assigning restricted roles
+    const isModerator = user.roles.includes('moderator')
+    const isFounder = user.roles.includes('founder')
+    
+    if (isModerator && !isFounder) {
+      // Filter out moderator and founder roles if user is only a moderator
+      const restrictedRoles = ['moderator', 'founder']
+      const attemptedRestrictedRoles = validRoles.filter(role => restrictedRoles.includes(role))
+      
+      if (attemptedRestrictedRoles.length > 0) {
+        console.log(`Moderator ${user.email} attempted to assign restricted roles:`, attemptedRestrictedRoles)
+      }
+      
+      // Remove restricted roles from the list
+      validRoles = validRoles.filter(role => !restrictedRoles.includes(role))
+      
+      if (validRoles.length === 0) {
+        return NextResponse.json({ 
+          error: "Moderators cannot assign moderator or founder roles" 
+        }, { status: 403 })
+      }
     }
     
     const result = await updateUserRole(id, validRoles)

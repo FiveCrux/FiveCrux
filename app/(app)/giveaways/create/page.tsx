@@ -956,9 +956,63 @@ export default function CreateGiveawayPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      <div className="aspect-video bg-gray-700 rounded-lg flex items-center justify-center">
-                        <ImageIcon className="h-12 w-12 text-gray-500" />
-                      </div>
+                      {/* Cover Image / Images Preview */}
+                      {media.coverImage || media.images.length > 0 ? (
+                        <div className="aspect-video bg-gray-700 rounded-lg overflow-hidden">
+                          <img
+                            src={media.coverImage || media.images[0]}
+                            alt={media.coverImage ? "Cover image" : "Main image"}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className="aspect-video bg-gray-700 rounded-lg flex items-center justify-center">
+                          <ImageIcon className="h-12 w-12 text-gray-500" />
+                        </div>
+                      )}
+                      
+                      {/* Additional Images */}
+                      {media.images.length > 1 && (
+                        <div className="grid grid-cols-3 gap-2">
+                          {media.images.slice(1, 4).map((image, index) => (
+                            <div key={index} className="aspect-square bg-gray-700 rounded-lg overflow-hidden">
+                              <img
+                                src={image}
+                                alt={`Image ${index + 2}`}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          ))}
+                          {media.images.length > 4 && (
+                            <div className="aspect-square bg-gray-700 rounded-lg flex items-center justify-center">
+                              <span className="text-gray-400 text-sm">+{media.images.length - 4}</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Videos Preview */}
+                      {media.videos.length > 0 && (
+                        <div className="space-y-2">
+                          <h4 className="text-white font-semibold text-sm">Videos ({media.videos.length})</h4>
+                          <div className="space-y-2">
+                            {media.videos.slice(0, 1).map((video, index) => (
+                              <div key={index} className="aspect-video bg-gray-700 rounded-lg overflow-hidden">
+                                <video
+                                  src={video}
+                                  controls
+                                  className="w-full h-full object-cover"
+                                >
+                                  Your browser does not support the video tag.
+                                </video>
+                              </div>
+                            ))}
+                          </div>
+                          {media.videos.length > 1 && (
+                            <span className="text-gray-400 text-xs">+{media.videos.length - 1} more video{media.videos.length > 2 ? 's' : ''}</span>
+                          )}
+                        </div>
+                      )}
 
                       <div>
                         <h3 className="text-white font-bold text-lg">{formData.title || "Your Giveaway Title"}</h3>

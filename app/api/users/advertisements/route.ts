@@ -17,9 +17,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Get pagination params from query string
+    const { searchParams } = new URL(request.url);
+    const limit = parseInt(searchParams.get('limit') || '10');
+    const offset = parseInt(searchParams.get('offset') || '0');
+
     const userId = (session.user as any).id;
     const userEmail = session.user.email;
-    console.log("User advertisements API - User:", { id: userId, email: userEmail });
+    console.log("User advertisements API - User:", { id: userId, email: userEmail, limit, offset });
 
     // Fetch ads from all tables where the user is the creator
     let pending: any[] = [];
@@ -57,12 +62,16 @@ export async function GET(request: NextRequest) {
       ...userPending.map(a => ({ 
         ...a, 
         status: 'pending',
+        image_url: a.imageUrl,
+        link_url: a.linkUrl,
         created_at: a.createdAt,
         updated_at: a.updatedAt
       })),
       ...userApproved.map(a => ({ 
         ...a, 
         status: 'approved',
+        image_url: a.imageUrl,
+        link_url: a.linkUrl,
         created_at: a.createdAt || a.approvedAt,
         updated_at: a.updatedAt
       })),
@@ -70,12 +79,31 @@ export async function GET(request: NextRequest) {
         ...a, 
         status: 'rejected',
         rejection_reason: a.rejectionReason,
+        image_url: a.imageUrl,
+        link_url: a.linkUrl,
         created_at: a.createdAt || a.rejectedAt,
         updated_at: a.updatedAt
       }))
     ];
 
-    return NextResponse.json({ ads: allAds });
+    // Sort by created date (newest first)
+    allAds.sort((a, b) => {
+      const dateA = new Date(a.created_at).getTime();
+      const dateB = new Date(b.created_at).getTime();
+      return dateB - dateA;
+    });
+
+    // Apply pagination
+    const total = allAds.length;
+    const paginatedAds = allAds.slice(offset, offset + limit);
+    const hasMore = offset + limit < total;
+
+    console.log('User advertisements API - Returning:', { total, returned: paginatedAds.length, hasMore });
+    return NextResponse.json({ 
+      ads: paginatedAds,
+      total,
+      hasMore
+    });
   } catch (error) {
     console.error('Error fetching user advertisements:', error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

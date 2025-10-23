@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef } from "react"
 import { motion, useInView, AnimatePresence } from "framer-motion"
-import { Search, Filter, Star, ShoppingCart, Grid, List, ChevronDown, X, Sparkles, Zap } from "lucide-react"
+import { Search, Filter, Star, Eye, Grid, List, ChevronDown, X, Sparkles, Zap } from "lucide-react"
 import { Button } from "@/componentss/ui/button"
 import { Input } from "@/componentss/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/componentss/ui/card"
@@ -119,21 +119,21 @@ export default function ScriptsPage() {
           console.log("Scripts count:", data.scripts?.length || 0)
           
           const mappedScripts = (data.scripts || []).map((s: any) => {
-            const image = s.cover_image || (s.images && s.images[0]) || (s.screenshots && s.screenshots[0]) || "/placeholder.jpg";
-            console.log(`Script ${s.id} (${s.title}): cover_image=${s.cover_image}, images=${JSON.stringify(s.images)}, screenshots=${JSON.stringify(s.screenshots)}, final image=${image}`);
+            const image = s.coverImage || (s.images && s.images[0]) || (s.screenshots && s.screenshots[0]) || "/placeholder.jpg";
+            console.log(`Script ${s.id} (${s.title}): coverImage=${s.coverImage}, images=${JSON.stringify(s.images)}, screenshots=${JSON.stringify(s.screenshots)}, final image=${image}`);
             return {
               id: s.id,
               title: s.title,
               description: s.description,
               price: Number(s.price) || 0,
-              originalPrice: s.original_price ? Number(s.original_price) : undefined,
+              originalPrice: s.originalPrice ? Number(s.originalPrice) : undefined,
               rating: s.rating || 0,
               reviews: s.review_count || 0,
               image: image,
               category: s.category,
               categoryName: s.category,
               seller: s.seller_name,
-              discount: s.original_price ? Math.max(0, Math.round(((Number(s.original_price) - Number(s.price)) / Number(s.original_price)) * 100)) : 0,
+              discount: s.originalPrice ? Math.max(0, Math.round(((Number(s.originalPrice) - Number(s.price)) / Number(s.originalPrice)) * 100)) : 0,
               framework: Array.isArray(s.framework) ? s.framework : (s.framework ? [s.framework] : []),
               priceCategory: Number(s.price) <= 15 ? "Budget" : Number(s.price) <= 30 ? "Standard" : "Premium",
               tags: (s.tags || []) as string[],
@@ -1073,13 +1073,15 @@ export default function ScriptsPage() {
                                   )}
                                 </div>
                                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                                  <Button
-                                    size="sm"
-                                    className="bg-gradient-to-r from-orange-500 to-yellow-400 hover:from-orange-600 hover:to-yellow-500 text-black font-semibold shadow-lg"
-                                  >
-                                    <ShoppingCart className="mr-2 h-4 w-4" />
-                                    Add to Cart
-                                  </Button>
+                                  <Link href={`/script/${script.id}`}>
+                                    <Button
+                                      size="sm"
+                                      className="bg-gradient-to-r from-orange-500 to-yellow-400 hover:from-orange-600 hover:to-yellow-500 text-black font-semibold shadow-lg"
+                                    >
+                                      <Eye className="mr-2 h-4 w-4" />
+                                      View Details
+                                    </Button>
+                                  </Link>
                                 </motion.div>
                               </div>
                             </div>

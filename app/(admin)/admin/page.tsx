@@ -47,6 +47,7 @@ import { toast } from "sonner"
 import Navbar from "@/componentss/shared/navbar"
 import Footer from "@/componentss/shared/footer"
 import FileUpload from "@/componentss/shared/file-upload"
+import { useRoleValidation } from "@/hooks/use-role-validation"
 
 interface User {
   id: string
@@ -72,7 +73,7 @@ interface Script {
   seller_id?: string
   features: string[]
   requirements: string[]
-  links: string[]
+  link?: string
   images: string[]
   videos: string[]
   screenshots: string[]
@@ -146,12 +147,21 @@ const roleOptions = [
 
 export default function AdminPage() {
   const { data: session } = useSession()
+  
+  // Auto-validate roles and refresh if changed
+  useRoleValidation()
+  
   const [activeTab, setActiveTab] = useState("dashboard")
   const [users, setUsers] = useState<User[]>([])
   const [scripts, setScripts] = useState<Script[]>([])
   const [giveaways, setGiveaways] = useState<Giveaway[]>([])
   const [ads, setAds] = useState<Ad[]>([])
   const [loading, setLoading] = useState(true)
+  
+  // Check if user has moderator role
+  const userRoles = (session?.user as any)?.roles || []
+  const isModerator = userRoles.includes('moderator')
+  const isFounder = userRoles.includes('founder')
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [editingRoles, setEditingRoles] = useState<string[]>([])
   const [showAdDialog, setShowAdDialog] = useState(false)
@@ -181,7 +191,7 @@ export default function AdminPage() {
   const [rejectingAdLoading, setRejectingAdLoading] = useState(false)
   const [adRejectionReason, setAdRejectionReason] = useState("")
 
-  const loadData = async (adsFilter?: string) => {
+  const loadData = async () => {
     try {
       setLoading(true)
       console.log("Loading admin data...")
@@ -204,15 +214,11 @@ export default function AdminPage() {
 
       console.log("User has admin access, proceeding with API calls...")
       
-      const adsUrl = adsFilter && adsFilter !== "all" 
-        ? `/api/admin/advertisements?type=${adsFilter}`
-        : "/api/admin/advertisements"
-      
       const [usersRes, scriptsRes, giveawaysRes, adsRes] = await Promise.all([
         fetch("/api/admin/users", { credentials: 'include' }),
         fetch("/api/admin/scripts", { credentials: 'include' }),
         fetch("/api/admin/giveaways", { credentials: 'include' }),
-        fetch(adsUrl, { credentials: 'include' }),
+        fetch("/api/admin/advertisements", { credentials: 'include' }),
       ])
 
       console.log("API responses:", {
@@ -264,6 +270,11 @@ export default function AdminPage() {
   }, [session])
 
   const handleRoleChange = (role: string, checked: boolean) => {
+    // Prevent moderators from assigning moderator or founder roles
+    if (isModerator && !isFounder && (role === 'moderator' || role === 'founder') && checked) {
+      return
+    }
+    
     if (checked) {
       setEditingRoles([...editingRoles, role])
     } else {
@@ -274,25 +285,35 @@ export default function AdminPage() {
   const saveUserRoles = async () => {
     if (!selectedUser) return
 
+    // Filter out restricted roles if user is moderator (but not founder)
+    let rolesToSave = editingRoles
+    if (isModerator && !isFounder) {
+      rolesToSave = editingRoles.filter(role => role !== 'moderator' && role !== 'founder')
+    }
+
     try {
       const response = await fetch(`/api/admin/users/${selectedUser.id}/roles`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: 'include',
-        body: JSON.stringify({ roles: editingRoles }),
+        body: JSON.stringify({ roles: rolesToSave }),
       })
 
       if (response.ok) {
         setUsers(users.map(user => 
           user.id === selectedUser.id 
-            ? { ...user, roles: editingRoles }
+            ? { ...user, roles: rolesToSave }
             : user
         ))
         setSelectedUser(null)
         setEditingRoles([])
+        toast.success("User roles updated successfully")
+      } else {
+        toast.error("Failed to update user roles")
       }
     } catch (error) {
       console.error("Error updating user roles:", error)
+      toast.error("An error occurred while updating user roles")
     }
   }
 
@@ -633,8 +654,8 @@ export default function AdminPage() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-orange-400">Active Ads</p>
-                    <p className="text-2xl font-bold text-white">{stats.activeAds}</p>
+                    <p className="text-sm text-orange-400">Total Ads</p>
+                    <p className="text-2xl font-bold text-white">{stats.totalAds}</p>
                   </div>
                   <Megaphone className="h-8 w-8 text-orange-400" />
                 </div>
@@ -644,25 +665,26 @@ export default function AdminPage() {
 
           {/* Main Content */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-6 bg-gray-800/30 border border-gray-700/50">
+            <TabsList className={`grid w-full ${isModerator || isFounder ? 'grid-cols-5' : 'grid-cols-3'} bg-gray-800/30 border border-gray-700/50`}>
               <TabsTrigger value="dashboard" className="data-[state=active]:bg-orange-500 data-[state=active]:text-white">
                 Dashboard
               </TabsTrigger>
-              <TabsTrigger value="users" className="data-[state=active]:bg-orange-500 data-[state=active]:text-white">
-                Users
-              </TabsTrigger>
+              {(isModerator || isFounder) && (
+                <TabsTrigger value="users" className="data-[state=active]:bg-orange-500 data-[state=active]:text-white">
+                  Users
+                </TabsTrigger>
+              )}
               <TabsTrigger value="scripts" className="data-[state=active]:bg-orange-500 data-[state=active]:text-white">
                 Scripts
               </TabsTrigger>
               <TabsTrigger value="giveaways" className="data-[state=active]:bg-orange-500 data-[state=active]:text-white">
                 Giveaways
               </TabsTrigger>
-              <TabsTrigger value="content" className="data-[state=active]:bg-orange-500 data-[state=active]:text-white">
-                Content
-              </TabsTrigger>
-              <TabsTrigger value="ads" className="data-[state=active]:bg-orange-500 data-[state=active]:text-white">
-                Ads
-              </TabsTrigger>
+              {(isModerator || isFounder) && (
+                <TabsTrigger value="ads" className="data-[state=active]:bg-orange-500 data-[state=active]:text-white">
+                  Ads
+                </TabsTrigger>
+              )}
             </TabsList>
 
             <TabsContent value="dashboard" className="mt-6">
@@ -708,8 +730,8 @@ export default function AdminPage() {
                         <Badge className="bg-yellow-500 text-white">{stats.pendingScripts}</Badge>
                       </div>
                       <div className="flex items-center justify-between p-3 rounded-lg bg-gray-700/30">
-                        <span className="text-gray-300">Active Ads</span>
-                        <Badge className="bg-green-500 text-white">{stats.activeAds}</Badge>
+                        <span className="text-gray-300">Total Ads</span>
+                        <Badge className="bg-orange-500 text-white">{stats.totalAds}</Badge>
                       </div>
                       <div className="flex items-center justify-between p-3 rounded-lg bg-gray-700/30">
                         <span className="text-gray-300">Total Giveaways</span>
@@ -721,6 +743,7 @@ export default function AdminPage() {
               </div>
             </TabsContent>
 
+            {(isModerator || isFounder) && (
             <TabsContent value="users" className="mt-6">
               <Card className="bg-gray-800/30 border-gray-700/50">
                 <CardHeader>
@@ -777,7 +800,8 @@ export default function AdminPage() {
                               setSelectedUser(user)
                               setEditingRoles([...user.roles])
                             }}
-                            className="border-gray-600 text-gray-300 hover:text-white"
+                            disabled={isModerator && !isFounder && (user.roles.includes('moderator') || user.roles.includes('founder'))}
+                            className="border-gray-600 text-gray-300 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
@@ -788,6 +812,7 @@ export default function AdminPage() {
                 </CardContent>
               </Card>
             </TabsContent>
+            )}
 
             <TabsContent value="scripts" className="mt-6">
               <Card className="bg-gray-800/30 border-gray-700/50">
@@ -1107,100 +1132,35 @@ export default function AdminPage() {
               </Card>
             </TabsContent>
 
-            <TabsContent value="content" className="mt-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Scripts */}
-                <Card className="bg-gray-800/30 border-gray-700/50">
-                  <CardHeader>
-                    <CardTitle className="text-white flex items-center gap-2">
-                      <Package className="h-5 w-5 text-green-500" />
-                      Scripts
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {scripts.slice(0, 5).map((script) => (
-                        <div key={script.id} className="flex items-center justify-between p-3 rounded-lg bg-gray-700/30">
-                          <div>
-                            <p className="text-white font-medium">{script.title}</p>
-                            <p className="text-sm text-gray-400">by {script.seller_name}</p>
-                          </div>
-                          <Badge variant="secondary" className="bg-gray-600 text-gray-300">
-                            {script.status}
-                          </Badge>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Giveaways */}
-                <Card className="bg-gray-800/30 border-gray-700/50">
-                  <CardHeader>
-                    <CardTitle className="text-white flex items-center gap-2">
-                      <Gift className="h-5 w-5 text-purple-500" />
-                      Giveaways
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {giveaways.slice(0, 5).map((giveaway) => (
-                        <div key={giveaway.id} className="flex items-center justify-between p-3 rounded-lg bg-gray-700/30">
-                          <div>
-                            <p className="text-white font-medium">{giveaway.title}</p>
-                            <p className="text-sm text-gray-400">by {giveaway.creator_name}</p>
-                          </div>
-                          <Badge variant="secondary" className="bg-gray-600 text-gray-300">
-                            {giveaway.status}
-                          </Badge>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-
+            {(isModerator || isFounder) && (
             <TabsContent value="ads" className="mt-6">
               <div className="space-y-6">
                 {/* Filter Tabs */}
                 <div className="flex gap-2">
                   <Button
                     variant={activeAdFilter === "all" ? "default" : "outline"}
-                    onClick={() => {
-                      setActiveAdFilter("all")
-                      loadData("all")
-                    }}
+                    onClick={() => setActiveAdFilter("all")}
                     className={activeAdFilter === "all" ? "bg-orange-500 hover:bg-orange-600" : "border-gray-600 text-gray-300"}
                   >
                     All Ads
                   </Button>
                   <Button
                     variant={activeAdFilter === "pending" ? "default" : "outline"}
-                    onClick={() => {
-                      setActiveAdFilter("pending")
-                      loadData("pending")
-                    }}
+                    onClick={() => setActiveAdFilter("pending")}
                     className={activeAdFilter === "pending" ? "bg-orange-500 hover:bg-orange-600" : "border-gray-600 text-gray-300"}
                   >
                     Pending
                   </Button>
                   <Button
                     variant={activeAdFilter === "approved" ? "default" : "outline"}
-                    onClick={() => {
-                      setActiveAdFilter("approved")
-                      loadData("approved")
-                    }}
+                    onClick={() => setActiveAdFilter("approved")}
                     className={activeAdFilter === "approved" ? "bg-orange-500 hover:bg-orange-600" : "border-gray-600 text-gray-300"}
                   >
                     Approved
                   </Button>
                   <Button
                     variant={activeAdFilter === "rejected" ? "default" : "outline"}
-                    onClick={() => {
-                      setActiveAdFilter("rejected")
-                      loadData("rejected")
-                    }}
+                    onClick={() => setActiveAdFilter("rejected")}
                     className={activeAdFilter === "rejected" ? "bg-orange-500 hover:bg-orange-600" : "border-gray-600 text-gray-300"}
                   >
                     Rejected
@@ -1436,6 +1396,7 @@ export default function AdminPage() {
               </Dialog>
             </div>
           </TabsContent>
+          )}
         </Tabs>
       </div>
 
@@ -1449,20 +1410,30 @@ export default function AdminPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            {roleOptions.map((role) => (
-              <div key={role.value} className="flex items-center space-x-3">
-                <Checkbox
-                  id={role.value}
-                  checked={editingRoles.includes(role.value)}
-                  onCheckedChange={(checked) => handleRoleChange(role.value, checked as boolean)}
-                />
-                <label htmlFor={role.value} className="flex items-center gap-2 text-white cursor-pointer">
-                  <div className={`w-4 h-4 rounded ${role.color}`}></div>
-                  <role.icon className="h-4 w-4" />
-                  {role.label}
-                </label>
-              </div>
-            ))}
+            {roleOptions.map((role) => {
+              const isRestrictedRole = (role.value === 'moderator' || role.value === 'founder')
+              const isDisabled = isModerator && !isFounder && isRestrictedRole
+              
+              return (
+                <div key={role.value} className="flex items-center space-x-3">
+                  <Checkbox
+                    id={role.value}
+                    checked={editingRoles.includes(role.value)}
+                    onCheckedChange={(checked) => handleRoleChange(role.value, checked as boolean)}
+                    disabled={isDisabled}
+                  />
+                  <label 
+                    htmlFor={role.value} 
+                    className={`flex items-center gap-2 text-white ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                  >
+                    <div className={`w-4 h-4 rounded ${role.color}`}></div>
+                    <role.icon className="h-4 w-4" />
+                    {role.label}
+                    {isDisabled && <span className="text-xs text-gray-400">(Restricted)</span>}
+                  </label>
+                </div>
+              )
+            })}
             <div className="flex gap-2 pt-4">
               <Button onClick={saveUserRoles} className="bg-orange-500 hover:bg-orange-600">
                 Save Changes
@@ -1731,28 +1702,24 @@ export default function AdminPage() {
                   <div>
                     <h3 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
                       <ExternalLink className="h-5 w-5 text-orange-500" />
-                      Links & Resources
+                      Link
                     </h3>
-                    {viewingScript.links && viewingScript.links.length > 0 ? (
-                      <div className="space-y-2">
-                        {viewingScript.links.map((link, index) => (
-                          <div key={index} className="flex items-center gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="text-blue-400 hover:text-blue-300 border-blue-500/50"
-                              onClick={() => window.open(link, '_blank')}
-                            >
-                              <ExternalLink className="h-3 w-3 mr-1" />
-                              Link {index + 1}
-                            </Button>
-                            <span className="text-gray-400 text-sm truncate max-w-xs">{link}</span>
-                    </div>
-                        ))}
+                    {viewingScript.link ? (
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-blue-400 hover:text-blue-300 border-blue-500/50"
+                          onClick={() => window.open(viewingScript.link!, '_blank')}
+                        >
+                          <ExternalLink className="h-3 w-3 mr-1" />
+                          View Link
+                        </Button>
+                        <span className="text-gray-400 text-sm truncate max-w-xs">{viewingScript.link}</span>
                       </div>
                     ) : (
                       <div className="text-gray-400 text-sm bg-gray-900/50 p-3 rounded-lg">
-                        No links provided
+                        No link provided
                       </div>
                     )}
                   </div>
@@ -2552,43 +2519,41 @@ export default function AdminPage() {
               )}
 
               {/* Action Buttons */}
-              {(!viewingAd.status || viewingAd.status === "pending" || viewingAd.status === "approved") && (
-                <div className="flex gap-3 pt-4 border-t border-gray-700">
-                  {(!viewingAd.status || viewingAd.status === "pending") && (
-                    <Button
-                      onClick={() => {
-                        handleAdAction(viewingAd.id, "approved")
-                        setViewingAd(null)
-                      }}
-                      className="bg-green-500 hover:bg-green-600 text-white flex-1"
-                    >
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      Approve Ad
-                    </Button>
-                  )}
+              <div className="flex gap-3 pt-4 border-t border-gray-700">
+                {(!viewingAd.status || viewingAd.status === "pending") && (
                   <Button
                     onClick={() => {
+                      handleAdAction(viewingAd.id, "approved")
                       setViewingAd(null)
-                      setRejectingAd(viewingAd.id)
                     }}
-                    variant="outline"
-                    className="border-red-500/50 text-red-400 hover:text-red-300 flex-1"
-                    disabled={rejectingAd === viewingAd.id}
+                    className="bg-green-500 hover:bg-green-600 text-white flex-1"
                   >
-                    {rejectingAd === viewingAd.id ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-400 mr-2" />
-                        Rejecting...
-                      </>
-                    ) : (
-                      <>
-                        <XCircle className="h-4 w-4 mr-2" />
-                        Reject Ad
-                      </>
-                    )}
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Approve Ad
                   </Button>
-                </div>
-              )}
+                )}
+                <Button
+                  onClick={() => {
+                    setViewingAd(null)
+                    setRejectingAd(viewingAd.id)
+                  }}
+                  variant="outline"
+                  className="border-red-500/50 text-red-400 hover:text-red-300 flex-1"
+                  disabled={rejectingAd === viewingAd.id}
+                >
+                  {rejectingAd === viewingAd.id ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-400 mr-2" />
+                      Rejecting...
+                    </>
+                  ) : (
+                    <>
+                      <XCircle className="h-4 w-4 mr-2" />
+                      Reject Ad
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
           )}
         </DialogContent>

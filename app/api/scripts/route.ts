@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
       sellerId: (session.user as any).id,
       features: body.features || [],
       requirements: body.requirements || [],
-      links: body.links || [],
+      link: body.link || null,
       images: body.images || [],
       videos: body.videos || [],
       screenshots: body.screenshots || [],

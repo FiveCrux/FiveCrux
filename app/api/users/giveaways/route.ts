@@ -28,9 +28,14 @@ export async function GET(request: NextRequest) {
       }, { status: 403 });
     }
 
+    // Get pagination params from query string
+    const { searchParams } = new URL(request.url);
+    const limit = parseInt(searchParams.get('limit') || '10');
+    const offset = parseInt(searchParams.get('offset') || '0');
+
     const userId = (session.user as any).id;
     const userEmail = session.user.email;
-    console.log("User giveaways API - User:", { id: userId, email: userEmail });
+    console.log("User giveaways API - User:", { id: userId, email: userEmail, limit, offset });
 
     // Fetch giveaways from approval system tables
     const [pending, approved, rejected] = await Promise.all([
@@ -101,7 +106,24 @@ export async function GET(request: NextRequest) {
       }))
     ];
 
-    return NextResponse.json({ giveaways: allGiveaways });
+    // Sort by created date (newest first)
+    allGiveaways.sort((a, b) => {
+      const dateA = new Date(a.created_at).getTime();
+      const dateB = new Date(b.created_at).getTime();
+      return dateB - dateA;
+    });
+
+    // Apply pagination
+    const total = allGiveaways.length;
+    const paginatedGiveaways = allGiveaways.slice(offset, offset + limit);
+    const hasMore = offset + limit < total;
+
+    console.log('User giveaways API - Returning:', { total, returned: paginatedGiveaways.length, hasMore });
+    return NextResponse.json({ 
+      giveaways: paginatedGiveaways,
+      total,
+      hasMore
+    });
   } catch (error) {
     console.error('Error fetching user giveaways:', error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
