@@ -14,7 +14,6 @@ import {
   Plus,
   Eye,
   Settings,
-  Download,
   Star,
   Calendar,
   DollarSign,
@@ -58,9 +57,6 @@ interface Script {
   status: "pending" | "approved" | "rejected"
   rejection_reason?: string
   featured: boolean
-  downloads: number
-  rating: number
-  review_count: number
   created_at: string
   updated_at: string
 }
@@ -114,105 +110,227 @@ export default function ProfilePage() {
   const [ads, setAds] = useState<Ad[]>([])
   const [giveawayEntries, setGiveawayEntries] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  
+  // Pagination state for each resource
+  const [scriptsPage, setScriptsPage] = useState(0)
+  const [scriptsHasMore, setScriptsHasMore] = useState(true)
+  const [scriptsTotal, setScriptsTotal] = useState(0)
+  const [scriptsLoaded, setScriptsLoaded] = useState(false)
+  
+  const [giveawaysPage, setGiveawaysPage] = useState(0)
+  const [giveawaysHasMore, setGiveawaysHasMore] = useState(true)
+  const [giveawaysTotal, setGiveawaysTotal] = useState(0)
+  const [giveawaysLoaded, setGiveawaysLoaded] = useState(false)
+  
+  const [adsPage, setAdsPage] = useState(0)
+  const [adsHasMore, setAdsHasMore] = useState(true)
+  const [adsTotal, setAdsTotal] = useState(0)
+  const [adsLoaded, setAdsLoaded] = useState(false)
+  
+  const [entriesPage, setEntriesPage] = useState(0)
+  const [entriesHasMore, setEntriesHasMore] = useState(true)
+  const [entriesTotal, setEntriesTotal] = useState(0)
+  const [entriesLoaded, setEntriesLoaded] = useState(false)
+  
+  const [overviewLoaded, setOverviewLoaded] = useState(false)
+  
   const [stats, setStats] = useState({
     totalScripts: 0,
     totalGiveaways: 0,
     totalAds: 0,
-    totalDownloads: 0,
-    totalEarnings: 0,
     totalEntries: 0,
   })
   const [showAdsForm, setShowAdsForm] = useState(false)
   const [editingAd, setEditingAd] = useState<any>(null)
+  
+  const ITEMS_PER_PAGE = 10
 
+  // Lazy load data based on active tab
   useEffect(() => {
     if (status !== "authenticated") return
-    fetchUserData()
-  }, [status])
+    
+    switch(activeTab) {
+      case "scripts":
+        if (!scriptsLoaded) fetchScripts(0)
+        break
+      case "giveaways":
+        if (!giveawaysLoaded) fetchGiveaways(0)
+        break
+      case "ads":
+        if (!adsLoaded) fetchAds(0)
+        break
+      case "entries":
+        if (!entriesLoaded) fetchEntries(0)
+        break
+      case "overview":
+        if (!overviewLoaded) fetchOverviewData()
+        break
+    }
+  }, [activeTab, status, scriptsLoaded, giveawaysLoaded, adsLoaded, entriesLoaded, overviewLoaded])
 
-  const fetchUserData = async () => {
+  // Fetch minimal data for overview (just counts + recent 3 items)
+  const fetchOverviewData = async () => {
     try {
       setLoading(true)
+      console.log("Profile - Fetching overview data")
       
-      // Debug: Log user roles
-      console.log("Profile - User roles:", (session?.user as any)?.roles)
+      const [scriptsRes, giveawaysRes, adsRes, entriesRes] = await Promise.all([
+        fetch(`/api/users/scripts?limit=3&offset=0`, { credentials: 'include' }),
+        fetch(`/api/users/giveaways?limit=3&offset=0`, { credentials: 'include' }),
+        fetch(`/api/users/advertisements?limit=3&offset=0`, { credentials: 'include' }),
+        fetch(`/api/users/creator-giveaway-entries?limit=0&offset=0`, { credentials: 'include' })
+      ])
       
-      // Fetch user's scripts from the new user-specific endpoint
-      const scriptsResponse = await fetch("/api/users/scripts", {
-        credentials: 'include'
-      })
-      console.log("Profile - Scripts response:", scriptsResponse.status)
-      let scriptsData = { scripts: [] }
-      if (scriptsResponse.ok) {
-        scriptsData = await scriptsResponse.json()
-        console.log("Profile - Scripts data:", scriptsData)
-        setScripts(scriptsData.scripts || [])
-      } else {
-        console.error("Profile - Scripts API error:", await scriptsResponse.text())
-      }
-
-      // Fetch user's giveaways from the new user-specific endpoint
-      const giveawaysResponse = await fetch("/api/users/giveaways", {
-        credentials: 'include'
-      })
-      console.log("Profile - Giveaways response:", giveawaysResponse.status)
-      let giveawaysData = { giveaways: [] }
-      if (giveawaysResponse.ok) {
-        giveawaysData = await giveawaysResponse.json()
-        console.log("Profile - Giveaways data:", giveawaysData)
-        setGiveaways(giveawaysData.giveaways || [])
-      } else {
-        console.error("Profile - Giveaways API error:", await giveawaysResponse.text())
-      }
-
-      // Fetch user's ads
-      const adsResponse = await fetch("/api/users/advertisements", {
-        credentials: 'include'
-      })
-      let adsData = { ads: [] }
-      if (adsResponse.ok) {
-        adsData = await adsResponse.json()
-        setAds(adsData.ads || [])
-      } else {
-        console.error("Profile - Ads API error:", await adsResponse.text())
-      }
-
-      // Fetch user's giveaway entries
-      const entriesResponse = await fetch("/api/users/giveaway-entries", {
-        credentials: 'include'
-      })
-      let entriesData = { entries: [] }
-      if (entriesResponse.ok) {
-        entriesData = await entriesResponse.json()
-        setGiveawayEntries(entriesData.entries || [])
-      }
-
-      // Calculate stats based on the data we already fetched
-      const sArr = scriptsData.scripts || []
-      const gArr = giveawaysData.giveaways || []
-      const aArr = adsData.ads || []
-      const eArr = entriesData.entries || []
-      const totalDownloads = sArr.reduce((sum: number, script: any) => sum + (script.downloads || 0), 0)
-      const totalEarnings = sArr.reduce((sum: number, script: any) => sum + ((script.downloads || 0) * Number(script.price)), 0)
-      
-      const finalStats = {
-        totalScripts: sArr.length,
-        totalGiveaways: gArr.length,
-        totalAds: aArr.length,
-        totalDownloads: totalDownloads,
-        totalEarnings: totalEarnings,
-        totalEntries: eArr.length,
+      if (scriptsRes.ok) {
+        const data = await scriptsRes.json()
+        setScriptsTotal(data.total || 0)
+        setStats(prev => ({ ...prev, totalScripts: data.total || 0 }))
       }
       
-      console.log("Profile - Final stats:", finalStats);
-      setStats(finalStats);
+      if (giveawaysRes.ok) {
+        const data = await giveawaysRes.json()
+        setGiveawaysTotal(data.total || 0)
+        setStats(prev => ({ ...prev, totalGiveaways: data.total || 0 }))
+      }
 
+      if (adsRes.ok) {
+        const data = await adsRes.json()
+        setAdsTotal(data.total || 0)
+        setStats(prev => ({ ...prev, totalAds: data.total || 0 }))
+      }
+
+      if (entriesRes.ok) {
+        const data = await entriesRes.json()
+        setEntriesTotal(data.total || 0)
+        setStats(prev => ({ ...prev, totalEntries: data.total || 0 }))
+      }
+
+      setOverviewLoaded(true)
     } catch (error) {
-      console.error("Error fetching user data:", error)
+      console.error("Error fetching overview:", error)
     } finally {
       setLoading(false)
     }
   }
+
+  const fetchScripts = async (page: number, append = false) => {
+    try {
+      setLoadingMore(append)
+      if (!append) setLoading(true)
+      
+      const offset = page * ITEMS_PER_PAGE
+      const response = await fetch(
+        `/api/users/scripts?limit=${ITEMS_PER_PAGE}&offset=${offset}`,
+        { credentials: 'include' }
+      )
+      
+      if (response.ok) {
+        const data = await response.json()
+        setScripts(prev => append ? [...prev, ...data.scripts] : data.scripts)
+        setScriptsTotal(data.total || 0)
+        setScriptsHasMore(data.hasMore || false)
+        setScriptsPage(page)
+        setScriptsLoaded(true)
+        setStats(prev => ({ ...prev, totalScripts: data.total || 0 }))
+      }
+    } catch (error) {
+      console.error("Error fetching scripts:", error)
+    } finally {
+      setLoading(false)
+      setLoadingMore(false)
+    }
+  }
+
+  const fetchGiveaways = async (page: number, append = false) => {
+    try {
+      setLoadingMore(append)
+      if (!append) setLoading(true)
+      
+      const offset = page * ITEMS_PER_PAGE
+      const response = await fetch(
+        `/api/users/giveaways?limit=${ITEMS_PER_PAGE}&offset=${offset}`,
+        { credentials: 'include' }
+      )
+      
+      if (response.ok) {
+        const data = await response.json()
+        setGiveaways(prev => append ? [...prev, ...data.giveaways] : data.giveaways)
+        setGiveawaysTotal(data.total || 0)
+        setGiveawaysHasMore(data.hasMore || false)
+        setGiveawaysPage(page)
+        setGiveawaysLoaded(true)
+        setStats(prev => ({ ...prev, totalGiveaways: data.total || 0 }))
+      }
+    } catch (error) {
+      console.error("Error fetching giveaways:", error)
+    } finally {
+      setLoading(false)
+      setLoadingMore(false)
+    }
+  }
+
+  const fetchAds = async (page: number, append = false) => {
+    try {
+      setLoadingMore(append)
+      if (!append) setLoading(true)
+      
+      const offset = page * ITEMS_PER_PAGE
+      const response = await fetch(
+        `/api/users/advertisements?limit=${ITEMS_PER_PAGE}&offset=${offset}`,
+        { credentials: 'include' }
+      )
+      
+      if (response.ok) {
+        const data = await response.json()
+        setAds(prev => append ? [...prev, ...data.ads] : data.ads)
+        setAdsTotal(data.total || 0)
+        setAdsHasMore(data.hasMore || false)
+        setAdsPage(page)
+        setAdsLoaded(true)
+        setStats(prev => ({ ...prev, totalAds: data.total || 0 }))
+      }
+    } catch (error) {
+      console.error("Error fetching ads:", error)
+    } finally {
+      setLoading(false)
+      setLoadingMore(false)
+    }
+  }
+
+  const fetchEntries = async (page: number, append = false) => {
+    try {
+      setLoadingMore(append)
+      if (!append) setLoading(true)
+      
+      const offset = page * ITEMS_PER_PAGE
+      const response = await fetch(
+        `/api/users/creator-giveaway-entries?limit=${ITEMS_PER_PAGE}&offset=${offset}`,
+        { credentials: 'include' }
+      )
+      
+      if (response.ok) {
+        const data = await response.json()
+        setGiveawayEntries(prev => append ? [...prev, ...data.entries] : data.entries)
+        setEntriesTotal(data.total || 0)
+        setEntriesHasMore(data.hasMore || false)
+        setEntriesPage(page)
+        setEntriesLoaded(true)
+        setStats(prev => ({ ...prev, totalEntries: data.total || 0 }))
+      }
+    } catch (error) {
+      console.error("Error fetching entries:", error)
+    } finally {
+      setLoading(false)
+      setLoadingMore(false)
+    }
+  }
+
+  // Load more button handlers
+  const loadMoreScripts = () => fetchScripts(scriptsPage + 1, true)
+  const loadMoreGiveaways = () => fetchGiveaways(giveawaysPage + 1, true)
+  const loadMoreAds = () => fetchAds(adsPage + 1, true)
+  const loadMoreEntries = () => fetchEntries(entriesPage + 1, true)
 
   const handleEditScript = (scriptId: number) => {
     router.push(`/scripts/submit?edit=${scriptId}`)
@@ -342,11 +460,11 @@ export default function ProfilePage() {
 
   const handleAdCreated = () => {
     // Refresh ads data after creating/updating an ad
-    fetchUserData()
+    fetchAds(0)
     setEditingAd(null)
   }
 
-  if (status === "loading" || loading) {
+  if (status === "loading") {
     return (
       <>
         <Navbar />
@@ -427,19 +545,19 @@ export default function ProfilePage() {
               </TabsTrigger>
               <TabsTrigger value="scripts" className="data-[state=active]:bg-orange-500">
                 <Package className="h-4 w-4 mr-2" />
-                Scripts ({stats.totalScripts})
+                Scripts ({scriptsTotal})
               </TabsTrigger>
               <TabsTrigger value="giveaways" className="data-[state=active]:bg-orange-500">
                 <Gift className="h-4 w-4 mr-2" />
-                Giveaways ({stats.totalGiveaways})
+                Giveaways ({giveawaysTotal})
               </TabsTrigger>
               <TabsTrigger value="ads" className="data-[state=active]:bg-orange-500">
                 <Tag className="h-4 w-4 mr-2" />
-                Ads ({stats.totalAds})
+                Ads ({adsTotal})
               </TabsTrigger>
               <TabsTrigger value="entries" className="data-[state=active]:bg-orange-500">
                 <Sparkles className="h-4 w-4 mr-2" />
-                Entries ({stats.totalEntries})
+                Entries ({entriesTotal})
               </TabsTrigger>
               <TabsTrigger value="settings" className="data-[state=active]:bg-orange-500">
                 <Settings className="h-4 w-4 mr-2" />
@@ -454,7 +572,7 @@ export default function ProfilePage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8 }}
               >
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-5">
                   <Card className="bg-gray-800/30 border-gray-700/50">
                     <CardContent className="p-6">
                       <div className="flex items-center gap-4">
@@ -478,34 +596,6 @@ export default function ProfilePage() {
                         <div>
                           <p className="text-gray-400 text-sm">Total Giveaways</p>
                           <p className="text-2xl font-bold">{stats.totalGiveaways}</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="bg-gray-800/30 border-gray-700/50">
-                    <CardContent className="p-6">
-                      <div className="flex items-center gap-4">
-                        <div className="p-3 bg-blue-500/20 rounded-lg">
-                          <Download className="h-6 w-6 text-blue-500" />
-                        </div>
-                        <div>
-                          <p className="text-gray-400 text-sm">Total Downloads</p>
-                          <p className="text-2xl font-bold">{stats.totalDownloads}</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="bg-gray-800/30 border-gray-700/50">
-                    <CardContent className="p-6">
-                      <div className="flex items-center gap-4">
-                        <div className="p-3 bg-yellow-500/20 rounded-lg">
-                          <DollarSign className="h-6 w-6 text-yellow-500" />
-                        </div>
-                        <div>
-                          <p className="text-gray-400 text-sm">Total Earnings</p>
-                          <p className="text-2xl font-bold">${stats.totalEarnings.toFixed(2)}</p>
                         </div>
                       </div>
                     </CardContent>
@@ -574,7 +664,12 @@ export default function ProfilePage() {
                   </Button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {loading && !scriptsLoaded ? (
+                  <div className="flex justify-center items-center py-20">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {scripts.map((script) => (
                     <Card key={script.id} className="bg-gray-800/30 border-gray-700/50 hover:border-orange-500/50 transition-colors">
                       <CardContent className="p-6">
@@ -621,13 +716,6 @@ export default function ProfilePage() {
                             </div>
                           )}
 
-                          <div className="flex items-center gap-2 text-sm text-gray-400">
-                            <Download className="h-4 w-4" />
-                            <span>{script.downloads} downloads</span>
-                            <Star className="h-4 w-4" />
-                            <span>{(Number(script.rating) || 0).toFixed(1)} ({script.review_count || 0} reviews)</span>
-                          </div>
-
                           <div className="flex items-center gap-2">
                             <Button
                               size="sm"
@@ -662,23 +750,44 @@ export default function ProfilePage() {
                       </CardContent>
                     </Card>
                   ))}
-                </div>
 
-                {scripts.length === 0 && (
-                  <Card className="bg-gray-800/30 border-gray-700/50">
-                    <CardContent className="p-12 text-center">
-                      <Package className="h-12 w-12 text-gray-500 mx-auto mb-4" />
-                      <h3 className="text-xl font-bold mb-2">No scripts yet</h3>
-                      <p className="text-gray-400 mb-4">Start creating your first script to showcase your work</p>
-                      <Button
-                        onClick={() => router.push("/scripts/submit")}
-                        className="bg-orange-500 hover:bg-orange-600"
+                  {scripts.length > 0 && scriptsHasMore && (
+                    <div className="flex justify-center mt-6">
+                      <Button 
+                        onClick={loadMoreScripts}
+                        disabled={loadingMore}
+                        variant="outline"
+                        className="border-orange-500 text-orange-500 hover:bg-orange-500/10"
                       >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Create Your First Script
+                        {loadingMore ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-500 mr-2"></div>
+                            Loading...
+                          </>
+                        ) : (
+                          `Load More (${scriptsTotal - scripts.length} remaining)`
+                        )}
                       </Button>
-                    </CardContent>
-                  </Card>
+                    </div>
+                  )}
+
+                  {scripts.length === 0 && !loading && (
+                    <Card className="bg-gray-800/30 border-gray-700/50">
+                      <CardContent className="p-12 text-center">
+                        <Package className="h-12 w-12 text-gray-500 mx-auto mb-4" />
+                        <h3 className="text-xl font-bold mb-2">No scripts yet</h3>
+                        <p className="text-gray-400 mb-4">Start creating your first script to showcase your work</p>
+                        <Button
+                          onClick={() => router.push("/scripts/submit")}
+                          className="bg-orange-500 hover:bg-orange-600"
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Create Your First Script
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
                 )}
               </motion.div>
             </TabsContent>
@@ -701,7 +810,12 @@ export default function ProfilePage() {
                   </Button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {loading && !giveawaysLoaded ? (
+                  <div className="flex justify-center items-center py-20">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {giveaways.map((giveaway) => (
                     <Card key={giveaway.id} className="bg-gray-800/30 border-gray-700/50 hover:border-green-500/50 transition-colors">
                       <CardContent className="p-6">
@@ -789,23 +903,44 @@ export default function ProfilePage() {
                       </CardContent>
                     </Card>
                   ))}
-                </div>
 
-                {giveaways.length === 0 && (
-                  <Card className="bg-gray-800/30 border-gray-700/50">
-                    <CardContent className="p-12 text-center">
-                      <Gift className="h-12 w-12 text-gray-500 mx-auto mb-4" />
-                      <h3 className="text-xl font-bold mb-2">No giveaways yet</h3>
-                      <p className="text-gray-400 mb-4">Start creating your first giveaway to engage with the community</p>
-                      <Button
-                        onClick={() => router.push("/giveaways/create")}
-                        className="bg-green-500 hover:bg-green-600"
+                  {giveaways.length > 0 && giveawaysHasMore && (
+                    <div className="flex justify-center mt-6">
+                      <Button 
+                        onClick={loadMoreGiveaways}
+                        disabled={loadingMore}
+                        variant="outline"
+                        className="border-green-500 text-green-500 hover:bg-green-500/10"
                       >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Create Your First Giveaway
+                        {loadingMore ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-500 mr-2"></div>
+                            Loading...
+                          </>
+                        ) : (
+                          `Load More (${giveawaysTotal - giveaways.length} remaining)`
+                        )}
                       </Button>
-                    </CardContent>
-                  </Card>
+                    </div>
+                  )}
+
+                  {giveaways.length === 0 && !loading && (
+                    <Card className="bg-gray-800/30 border-gray-700/50">
+                      <CardContent className="p-12 text-center">
+                        <Gift className="h-12 w-12 text-gray-500 mx-auto mb-4" />
+                        <h3 className="text-xl font-bold mb-2">No giveaways yet</h3>
+                        <p className="text-gray-400 mb-4">Start creating your first giveaway to engage with the community</p>
+                        <Button
+                          onClick={() => router.push("/giveaways/create")}
+                          className="bg-green-500 hover:bg-green-600"
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Create Your First Giveaway
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
                 )}
               </motion.div>
             </TabsContent>
@@ -828,80 +963,106 @@ export default function ProfilePage() {
                   </Button>
                 </div>
 
-                {ads.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {ads.map((ad) => (
-                      <Card key={ad.id} className="bg-gray-800/30 border-gray-700/50 hover:border-orange-500/50 transition-all duration-300">
-                        <CardHeader className="pb-3">
-                          <div className="flex items-center justify-between">
-                            <Badge variant="secondary" className="bg-orange-500/20 text-orange-400 border-orange-500/30">
-                              {ad.category}
-                            </Badge>
-                            <Badge className={`text-xs ${getStatusColor(ad.status)}`}>
-                              {ad.status}
-                            </Badge>
-                          </div>
-                          <CardTitle className="text-white text-lg line-clamp-2">
-                            {ad.title}
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <p className="text-gray-400 text-sm mb-4 line-clamp-3">
-                            {ad.description}
-                          </p>
-                          {ad.image_url && (
-                            <div className="w-full h-32 rounded-lg overflow-hidden mb-4">
-                              <img
-                                src={ad.image_url}
-                                alt={ad.title}
-                                className="w-full h-full object-cover"
-                                loading="lazy"
-                              />
+                {loading && !adsLoaded ? (
+                  <div className="flex justify-center items-center py-20">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+                  </div>
+                ) : ads.length > 0 ? (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {ads.map((ad) => (
+                        <Card key={ad.id} className="bg-gray-800/30 border-gray-700/50 hover:border-orange-500/50 transition-all duration-300">
+                          <CardHeader className="pb-3">
+                            <div className="flex items-center justify-between">
+                              <Badge variant="secondary" className="bg-orange-500/20 text-orange-400 border-orange-500/30">
+                                {ad.category}
+                              </Badge>
+                              <Badge className={`text-xs ${getStatusColor(ad.status)}`}>
+                                {ad.status}
+                              </Badge>
                             </div>
-                          )}
-                          {ad.status === "rejected" && ad.rejection_reason && (
-                            <div className="mt-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
-                              <div className="flex items-start gap-2">
-                                <AlertCircle className="h-4 w-4 text-red-400 mt-0.5 flex-shrink-0" />
-                                <div>
-                                  <p className="text-red-400 text-sm font-medium">Rejection Reason:</p>
-                                  <p className="text-red-300 text-sm mt-1">{ad.rejection_reason}</p>
+                            <CardTitle className="text-white text-lg line-clamp-2">
+                              {ad.title}
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <p className="text-gray-400 text-sm mb-4 line-clamp-3">
+                              {ad.description}
+                            </p>
+                            {ad.image_url && (
+                              <div className="w-full h-32 rounded-lg overflow-hidden mb-4">
+                                <img
+                                  src={ad.image_url}
+                                  alt={ad.title}
+                                  className="w-full h-full object-cover"
+                                  loading="lazy"
+                                />
+                              </div>
+                            )}
+                            {ad.status === "rejected" && ad.rejection_reason && (
+                              <div className="mt-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                                <div className="flex items-start gap-2">
+                                  <AlertCircle className="h-4 w-4 text-red-400 mt-0.5 flex-shrink-0" />
+                                  <div>
+                                    <p className="text-red-400 text-sm font-medium">Rejection Reason:</p>
+                                    <p className="text-red-300 text-sm mt-1">{ad.rejection_reason}</p>
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          )}
+                            )}
 
-                          <div className="flex items-center justify-between">
-                            <div className="text-xs text-gray-500">
-                              Created: {new Date(ad.created_at).toLocaleDateString()}
+                            <div className="flex items-center justify-between">
+                              <div className="text-xs text-gray-500">
+                                Created: {new Date(ad.created_at).toLocaleDateString()}
+                              </div>
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  type="button"
+                                  onClick={() => handleEditAd(ad.id)}
+                                  className="text-blue-400 hover:text-blue-300"
+                                >
+                                  <Edit className="h-4 w-4 mr-1" />
+                                  Edit
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  type="button"
+                                  onClick={() => handleDeleteAd(ad.id)}
+                                  className="text-red-400 hover:text-red-300"
+                                >
+                                  <Trash2 className="h-4 w-4 mr-1" />
+                                  Delete
+                                </Button>
+                              </div>
                             </div>
-                            <div className="flex gap-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                type="button"
-                                onClick={() => handleEditAd(ad.id)}
-                                className="text-blue-400 hover:text-blue-300"
-                              >
-                                <Edit className="h-4 w-4 mr-1" />
-                                Edit
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                type="button"
-                                onClick={() => handleDeleteAd(ad.id)}
-                                className="text-red-400 hover:text-red-300"
-                              >
-                                <Trash2 className="h-4 w-4 mr-1" />
-                                Delete
-                              </Button>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+
+                    {adsHasMore && (
+                      <div className="flex justify-center mt-6">
+                        <Button 
+                          onClick={loadMoreAds}
+                          disabled={loadingMore}
+                          variant="outline"
+                          className="border-orange-500 text-orange-500 hover:bg-orange-500/10"
+                        >
+                          {loadingMore ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-500 mr-2"></div>
+                              Loading...
+                            </>
+                          ) : (
+                            `Load More (${adsTotal - ads.length} remaining)`
+                          )}
+                        </Button>
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <Card className="bg-gray-800/30 border-gray-700/50">
                     <CardContent className="flex flex-col items-center justify-center py-12">
@@ -930,38 +1091,62 @@ export default function ProfilePage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8 }}
               >
-                <div className="grid gap-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-2xl font-bold">Giveaway Entries</h2>
+                  <p className="text-gray-400 text-sm">Entries from users who participated in your giveaways</p>
+                </div>
+                {loading && !entriesLoaded ? (
+                  <div className="flex justify-center items-center py-20">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+                  </div>
+                ) : (
+                  <div className="grid gap-6">
                   {giveawayEntries.map((entry, index) => (
-                    <Card key={entry.id} className="bg-gray-800/30 border-gray-700/50">
+                    <Card key={entry.id} className="bg-gray-800/30 border-gray-700/50 hover:border-orange-500/50 transition-colors">
                       <CardContent className="p-6">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-3">
+                            <div className="flex items-center gap-4 mb-4">
                               {entry.giveaway_cover && (
                                 <img
                                   src={entry.giveaway_cover}
                                   alt={entry.giveaway_title}
-                                  className="w-16 h-16 rounded-lg object-cover"
+                                  className="w-20 h-20 rounded-lg object-cover"
                                 />
                               )}
-                              <div>
-                                <h3 className="text-lg font-semibold text-white">{entry.giveaway_title}</h3>
-                                <p className="text-sm text-gray-400">
-                                  Entered on {new Date(entry.entry_date).toLocaleDateString()}
-                                </p>
+                              <div className="flex-1">
+                                <h3 className="text-lg font-semibold text-white mb-1">{entry.giveaway_title}</h3>
+                                <div className="flex items-center gap-3 text-sm text-gray-400">
+                                  <div className="flex items-center gap-1">
+                                    <User className="h-4 w-4" />
+                                    <span>{entry.user_name || 'Anonymous User'}</span>
+                                  </div>
+                                  <span>•</span>
+                                  <div className="flex items-center gap-1">
+                                    <Calendar className="h-4 w-4" />
+                                    <span>Entered {new Date(entry.entry_date).toLocaleDateString()}</span>
+                                  </div>
+                                </div>
                               </div>
                             </div>
-                            <div className="flex items-center gap-4 text-sm">
+                            <div className="flex items-center gap-4 flex-wrap">
                               <Badge className={`${
-                                entry.status === 'active' ? 'bg-green-500/20 text-green-400' :
-                                entry.status === 'winner' ? 'bg-yellow-500/20 text-yellow-400' :
-                                'bg-red-500/20 text-red-400'
+                                entry.status === 'active' ? 'bg-green-500/20 text-green-400 border-green-500/30' :
+                                entry.status === 'winner' ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' :
+                                'bg-red-500/20 text-red-400 border-red-500/30'
                               }`}>
                                 {entry.status.charAt(0).toUpperCase() + entry.status.slice(1)}
                               </Badge>
-                              <span className="text-gray-400">
-                                Points: {entry.points_earned}
-                              </span>
+                              <div className="flex items-center gap-2 text-sm text-gray-400">
+                                <Star className="h-4 w-4 text-orange-500" />
+                                <span className="font-medium">{entry.points_earned} points</span>
+                              </div>
+                              {entry.requirements_completed && entry.requirements_completed.length > 0 && (
+                                <div className="flex items-center gap-2 text-sm text-gray-400">
+                                  <Sparkles className="h-4 w-4 text-purple-500" />
+                                  <span>{entry.requirements_completed.length} requirements completed</span>
+                                </div>
+                              )}
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
@@ -973,7 +1158,7 @@ export default function ProfilePage() {
                               className="border-gray-600 text-gray-300 hover:text-white hover:border-orange-500"
                             >
                               <Eye className="h-4 w-4 mr-1" />
-                              View
+                              View Giveaway
                             </Button>
                           </div>
                         </div>
@@ -981,23 +1166,44 @@ export default function ProfilePage() {
                     </Card>
                   ))}
 
-                  {giveawayEntries.length === 0 && (
+                  {giveawayEntries.length > 0 && entriesHasMore && (
+                    <div className="flex justify-center mt-6">
+                      <Button 
+                        onClick={loadMoreEntries}
+                        disabled={loadingMore}
+                        variant="outline"
+                        className="border-purple-500 text-purple-500 hover:bg-purple-500/10"
+                      >
+                        {loadingMore ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-500 mr-2"></div>
+                            Loading...
+                          </>
+                        ) : (
+                          `Load More (${entriesTotal - giveawayEntries.length} remaining)`
+                        )}
+                      </Button>
+                    </div>
+                  )}
+
+                  {giveawayEntries.length === 0 && !loading && (
                     <Card className="bg-gray-800/30 border-gray-700/50">
                       <CardContent className="p-12 text-center">
                         <Sparkles className="h-12 w-12 text-gray-500 mx-auto mb-4" />
                         <h3 className="text-xl font-bold mb-2">No entries yet</h3>
-                        <p className="text-gray-400 mb-4">Start entering giveaways to win amazing prizes</p>
+                        <p className="text-gray-400 mb-4">No users have entered your giveaways yet. Create more giveaways to attract participants!</p>
                         <Button
-                          onClick={() => router.push("/giveaways")}
-                          className="bg-orange-500 hover:bg-orange-600"
+                          onClick={() => router.push("/giveaways/create")}
+                          className="bg-green-500 hover:bg-green-600"
                         >
                           <Gift className="h-4 w-4 mr-2" />
-                          Browse Giveaways
+                          Create Giveaway
                         </Button>
                       </CardContent>
                     </Card>
                   )}
                 </div>
+                )}
               </motion.div>
             </TabsContent>
 
@@ -1042,7 +1248,7 @@ export default function ProfilePage() {
 
                     <div>
                       <h3 className="text-lg font-semibold mb-4">Account Statistics</h3>
-                      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="text-center p-4 bg-gray-700/30 rounded-lg">
                           <p className="text-2xl font-bold text-orange-500">{stats.totalScripts}</p>
                           <p className="text-sm text-gray-400">Scripts</p>
@@ -1050,14 +1256,6 @@ export default function ProfilePage() {
                         <div className="text-center p-4 bg-gray-700/30 rounded-lg">
                           <p className="text-2xl font-bold text-green-500">{stats.totalGiveaways}</p>
                           <p className="text-sm text-gray-400">Giveaways</p>
-                        </div>
-                        <div className="text-center p-4 bg-gray-700/30 rounded-lg">
-                          <p className="text-2xl font-bold text-blue-500">{stats.totalDownloads}</p>
-                          <p className="text-sm text-gray-400">Downloads</p>
-                        </div>
-                        <div className="text-center p-4 bg-gray-700/30 rounded-lg">
-                          <p className="text-2xl font-bold text-yellow-500">${stats.totalEarnings.toFixed(2)}</p>
-                          <p className="text-sm text-gray-400">Earnings</p>
                         </div>
                         <div className="text-center p-4 bg-gray-700/30 rounded-lg">
                           <p className="text-2xl font-bold text-purple-500">{stats.totalEntries}</p>

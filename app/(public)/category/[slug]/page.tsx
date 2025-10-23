@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
-import { Search, Filter, Star, ShoppingCart, Grid, List, ChevronDown } from "lucide-react"
+import { Search, Filter, Star, Eye, Grid, List, ChevronDown } from "lucide-react"
 import { Button } from "@/componentss/ui/button"
 import { Input } from "@/componentss/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/componentss/ui/card"
@@ -20,31 +20,31 @@ interface Script {
   title: string
   description: string
   price: number
-  original_price?: number
+  originalPrice?: number
   category: string
   framework?: string[]
   seller_name: string
   seller_email: string
-  seller_id?: string
+  sellerId?: string
   tags: string[]
   features: string[]
   requirements: string[]
   images: string[]
   videos: string[]
   screenshots: string[]
-  cover_image?: string
-  demo_url?: string
-  documentation_url?: string
-  support_url?: string
+  coverImage?: string
+  demoUrl?: string
+  documentationUrl?: string
+  supportUrl?: string
   version: string
-  last_updated: string
+  lastUpdated: string
   status: "pending" | "approved" | "rejected"
   featured: boolean
   downloads: number
   rating: number
-  review_count: number
-  created_at: string
-  updated_at: string
+  reviewCount: number
+  createdAt: string
+  updatedAt: string
 }
 
 export default function CategoryPage() {
@@ -203,7 +203,7 @@ export default function CategoryPage() {
         filtered.sort((a, b) => b.price - a.price)
         break
       case "newest":
-        filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
         break
       default:
         break
@@ -371,8 +371,8 @@ export default function CategoryPage() {
           ) : (
             <div className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "space-y-4"}>
               {filteredAndSortedScripts.map((script) => {
-                const discount = script.original_price ? Math.round(((script.original_price - script.price) / script.original_price) * 100) : 0
-                const coverImage = script.cover_image || "/placeholder.jpg"
+                const discount = script.originalPrice ? Math.round(((script.originalPrice - script.price) / script.originalPrice) * 100) : 0
+                const coverImage = script.coverImage || "/placeholder.jpg"
 
                 return (
                   <Card key={script.id} className="bg-gray-800/30 border-gray-700/50 hover:border-orange-500/50 transition-all duration-300">
@@ -433,7 +433,7 @@ export default function CategoryPage() {
                             />
                           ))}
                         </div>
-                        <span className="text-sm text-gray-400">({script.review_count || 0})</span>
+                        <span className="text-sm text-gray-400">({script.reviewCount || 0})</span>
                         <span className="text-sm text-gray-400">•</span>
                         <span className="text-sm text-gray-400">{script.downloads || 0} downloads</span>
                       </div>
@@ -441,14 +441,16 @@ export default function CategoryPage() {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <span className="text-xl font-bold text-orange-500">${script.price}</span>
-                          {script.original_price && (
-                            <span className="text-sm text-gray-500 line-through">${script.original_price}</span>
+                          {script.originalPrice && (
+                            <span className="text-sm text-gray-500 line-through">${script.originalPrice}</span>
                           )}
                         </div>
-                        <Button size="sm" className="bg-orange-500 hover:bg-orange-600">
-                          <ShoppingCart className="h-4 w-4 mr-1" />
-                          Add to Cart
-                        </Button>
+                        <Link href={`/script/${script.id}`}>
+                          <Button size="sm" className="bg-orange-500 hover:bg-orange-600">
+                            <Eye className="h-4 w-4 mr-1" />
+                            View Details
+                          </Button>
+                        </Link>
                       </div>
                     </CardContent>
                   </Card>

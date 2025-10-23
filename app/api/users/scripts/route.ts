@@ -25,9 +25,14 @@ export async function GET(request: NextRequest) {
       }, { status: 403 });
     }
 
+    // Get pagination params from query string
+    const { searchParams } = new URL(request.url);
+    const limit = parseInt(searchParams.get('limit') || '10');
+    const offset = parseInt(searchParams.get('offset') || '0');
+
     const userId = (session.user as any).id;
     const userEmail = session.user.email;
-    console.log("User scripts API - User:", { id: userId, email: userEmail });
+    console.log("User scripts API - User:", { id: userId, email: userEmail, limit, offset });
 
     // Fetch scripts from all tables where the user is the seller
     let pending: any[] = [];
@@ -116,8 +121,24 @@ export async function GET(request: NextRequest) {
       })
     ];
 
-    console.log('User scripts API - Sample script with cover_image:', allScripts[0]);
-    return NextResponse.json({ scripts: allScripts });
+    // Sort by created date (newest first)
+    allScripts.sort((a, b) => {
+      const dateA = new Date(a.created_at).getTime();
+      const dateB = new Date(b.created_at).getTime();
+      return dateB - dateA;
+    });
+
+    // Apply pagination
+    const total = allScripts.length;
+    const paginatedScripts = allScripts.slice(offset, offset + limit);
+    const hasMore = offset + limit < total;
+
+    console.log('User scripts API - Returning:', { total, returned: paginatedScripts.length, hasMore });
+    return NextResponse.json({ 
+      scripts: paginatedScripts,
+      total,
+      hasMore
+    });
   } catch (error) {
     console.error('Error fetching user scripts:', error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

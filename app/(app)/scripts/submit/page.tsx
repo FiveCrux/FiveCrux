@@ -97,7 +97,7 @@ export default function SubmitScriptPage() {
 
   const [features, setFeatures] = useState([{ id: 1, text: "" }])
   const [requirements, setRequirements] = useState([{ id: 1, text: "" }])
-  const [links, setLinks] = useState([{ id: 1, text: "" }])
+  const [link, setLink] = useState("")
   const [media, setMedia] = useState<{
     images: string[]
     videos: string[]
@@ -158,9 +158,9 @@ export default function SubmitScriptPage() {
               setRequirements(script.requirements.map((req: string, index: number) => ({ id: index + 1, text: req })))
             }
             
-            // Set links
-            if (script.links && script.links.length > 0) {
-              setLinks(script.links.map((link: string, index: number) => ({ id: index + 1, text: link })))
+            // Set link
+            if (script.link) {
+              setLink(script.link)
             }
             
             // Set media
@@ -279,18 +279,6 @@ export default function SubmitScriptPage() {
     setRequirements(requirements.map((r) => (r.id === id ? { ...r, text } : r)))
   }
 
-  const addLink = () => {
-    const newId = Math.max(...links.map((l) => l.id)) + 1
-    setLinks([...links, { id: newId, text: "" }])
-  }
-
-  const removeLink = (id: number) => {
-    setLinks(links.filter((l) => l.id !== id))
-  }
-
-  const updateLink = (id: number, text: string) => {
-    setLinks(links.map((l) => (l.id === id ? { ...l, text } : l)))
-  }
 
   const handleFileUpload = async (file: File, type: "image" | "video", purpose: string = "screenshot") => {
     try {
@@ -413,7 +401,7 @@ export default function SubmitScriptPage() {
         seller_email: formData.sellerEmail,
         features: features.filter((f) => f.text.trim()).map((f) => f.text.trim()),
         requirements: requirements.filter((r) => r.text.trim()).map((r) => r.text.trim()),
-        links: links.filter((l) => l.text.trim()).map((l) => l.text.trim()),
+        link: link.trim() || null,
         images: media.images,
         videos: media.videos,
         screenshots: media.screenshots,
@@ -725,6 +713,27 @@ export default function SubmitScriptPage() {
                     </div>
                   </CardContent>
                 </Card>
+                {/* Link */}
+                <Card className="bg-gray-800/30 border-gray-700/50 backdrop-blur-sm">
+                  <CardHeader>
+                    <CardTitle className="text-white flex items-center gap-2">
+                      <ExternalLink className="h-7 w-5 text-orange-500" />
+                      Link For Purchase
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <Input
+                      value={link}
+                      onChange={(e) => setLink(e.target.value)}
+                      placeholder="https://demo.example.com"
+                      className="bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-orange-500"
+                      type="url"
+                    />
+                    <p className="text-sm text-gray-400 mt-2">
+                      Add the link you want your customers to visit when they click <b className="text-orange-500">Buy Now</b>.
+                    </p>
+                  </CardContent>
+                </Card>
 
                 {/* Features */}
                 <Card className="bg-gray-800/30 border-gray-700/50 backdrop-blur-sm">
@@ -824,54 +833,6 @@ export default function SubmitScriptPage() {
                   </CardContent>
                 </Card>
 
-                {/* Links */}
-                <Card className="bg-gray-800/30 border-gray-700/50 backdrop-blur-sm">
-                  <CardHeader>
-                    <CardTitle className="text-white flex items-center gap-2">
-                      <ExternalLink className="h-5 w-5 text-orange-500" />
-                      Links & Resources
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {links.map((link, index) => (
-                      <motion.div
-                        key={link.id}
-                        className="flex items-center gap-3"
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                      >
-                        <Input
-                          value={link.text}
-                          onChange={(e) => updateLink(link.id, e.target.value)}
-                          placeholder="e.g., https://demo.example.com, https://docs.example.com..."
-                          className="flex-1 bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-orange-500"
-                        />
-                        {links.length > 1 && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeLink(link.id)}
-                            className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </motion.div>
-                    ))}
-
-                    <Button
-                      type="button"
-                      onClick={addLink}
-                      variant="outline"
-                      className="w-full border-gray-600 text-gray-300 hover:text-white hover:border-orange-500"
-                    >
-                      <Plus className="mr-2 h-4 w-4" />
-                      Add Link
-                    </Button>
-                  </CardContent>
-                </Card>
 
                 {/* Media Upload */}
                 <Card className="bg-gray-800/30 border-gray-700/50 backdrop-blur-sm">

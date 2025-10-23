@@ -40,6 +40,7 @@ export default function AdsForm({ isOpen, onClose, onSuccess, editData }: AdsFor
   })
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [imageDeleted, setImageDeleted] = useState(false)
   const isEditMode = !!editData
 
   // Update form data when editData changes
@@ -53,6 +54,8 @@ export default function AdsForm({ isOpen, onClose, onSuccess, editData }: AdsFor
         image_url: editData.image_url || "",
         status: editData.status || "pending"
       })
+      setImageDeleted(false)
+      setSelectedImage(null)
     } else {
       // Reset form when not in edit mode
       setFormData({
@@ -63,6 +66,8 @@ export default function AdsForm({ isOpen, onClose, onSuccess, editData }: AdsFor
         image_url: "",
         status: "pending"
       })
+      setImageDeleted(false)
+      setSelectedImage(null)
     }
   }, [editData])
 
@@ -77,6 +82,14 @@ export default function AdsForm({ isOpen, onClose, onSuccess, editData }: AdsFor
     setSelectedImage(file)
     // You can upload the image here and get the URL
     // For now, we'll just store the file
+  }
+
+  const handleDeleteCurrentImage = () => {
+    setImageDeleted(true)
+    setFormData(prev => ({
+      ...prev,
+      image_url: ""
+    }))
   }
 
   const handleSubmit = async (e: React.FormEvent | React.MouseEvent) => {
@@ -145,6 +158,7 @@ export default function AdsForm({ isOpen, onClose, onSuccess, editData }: AdsFor
           status: "pending"
         })
         setSelectedImage(null)
+        setImageDeleted(false)
       } else {
         const error = await response.json().catch(() => ({ error: "Unknown error" }))
         console.error('Error creating ad:', error)
@@ -257,30 +271,56 @@ export default function AdsForm({ isOpen, onClose, onSuccess, editData }: AdsFor
               <label className="text-sm font-medium text-gray-300 mb-2 block">
                 Ad Image
               </label>
-               <FileUpload
-                 onFileSelect={handleImageUpload}
-                 onFileRemove={() => setSelectedImage(null)}
-                 selectedFile={selectedImage}
-                 accept="image/*"
-                 maxSize={5}
-                 className="w-full"
-                 purpose="ad"
-               />
-              {selectedImage && (
-                <div className="mt-2 flex items-center gap-2">
-                  <Badge variant="secondary" className="bg-green-900/20 text-green-400">
-                    {selectedImage.name}
-                  </Badge>
+              
+              {/* Show existing image preview with delete button when editing and image exists */}
+              {isEditMode && formData.image_url && !imageDeleted && !selectedImage ? (
+                <div className="p-3 border border-gray-600 rounded-lg bg-gray-700/30">
+                  <p className="text-xs text-gray-400 mb-2">Current Image:</p>
+                  <img 
+                    src={formData.image_url} 
+                    alt="Current ad" 
+                    className="w-full h-32 object-cover rounded-lg mb-3"
+                  />
                   <Button
                     type="button"
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
-                    onClick={() => setSelectedImage(null)}
-                    className="text-red-400 hover:text-red-300"
+                    onClick={handleDeleteCurrentImage}
+                    className="w-full border-red-600 text-red-400 hover:bg-red-900/20 hover:text-red-300"
                   >
-                    <X className="h-3 w-3" />
+                    <X className="h-3 w-3 mr-2" />
+                    Delete Image
                   </Button>
                 </div>
+              ) : (
+                <>
+                  {/* Show upload box when no existing image or image was deleted */}
+                  <FileUpload
+                    onFileSelect={handleImageUpload}
+                    onFileRemove={() => setSelectedImage(null)}
+                    selectedFile={selectedImage}
+                    accept="image/*"
+                    maxSize={5}
+                    className="w-full"
+                    purpose="ad"
+                  />
+                  {selectedImage && (
+                    <div className="mt-2 flex items-center gap-2">
+                      <Badge variant="secondary" className="bg-green-900/20 text-green-400">
+                        {selectedImage.name}
+                      </Badge>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setSelectedImage(null)}
+                        className="text-red-400 hover:text-red-300"
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  )}
+                </>
               )}
             </div>
 

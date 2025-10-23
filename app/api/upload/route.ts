@@ -1,16 +1,18 @@
 import { NextRequest, NextResponse } from "next/server"
 import { uploadToS3, generateS3Key } from "@/lib/s3"
 
-// Size limits in bytes
+// Size limits in bytes (before optimization)
+// Note: Images are automatically resized and converted to WebP by Sharp
+// Final uploaded files will be smaller than these limits
 const SIZE_LIMITS = {
-  // Image limits
-  coverImage: 500 * 1024, // 500KB
-  screenshot: 400 * 1024, // 400KB
-  thumbnail: 100 * 1024,  // 100KB
+  // Image limits (will be optimized before upload)
+  coverImage: 5 * 1024 * 1024,  // 5MB (before optimization)
+  screenshot: 5 * 1024 * 1024,  // 5MB (before optimization)
+  thumbnail: 2 * 1024 * 1024,   // 2MB (before optimization)
   
-  // Video limits
-  demoVideo: 10 * 1024 * 1024,  // 10MB
-  trailerVideo: 25 * 1024 * 1024, // 25MB
+  // Video limits (uploaded as-is)
+  demoVideo: 50 * 1024 * 1024,  // 50MB
+  trailerVideo: 50 * 1024 * 1024, // 50MB
 }
 
 // Dimension limits
@@ -102,16 +104,19 @@ export async function POST(request: NextRequest) {
     // Generate S3 key
     const s3Key = generateS3Key(type as 'image' | 'video', purpose, file.name)
 
-    // Upload to S3
+    // Upload to S3 (images are automatically optimized)
     const publicUrl = await uploadToS3(buffer, s3Key, file.type)
 
     console.log(`File uploaded to S3: ${publicUrl}`)
+    console.log(`Original size: ${(file.size / 1024).toFixed(2)}KB | Type: ${file.type} | Purpose: ${purpose}`)
 
     return NextResponse.json({ 
       success: true, 
       url: publicUrl,
       key: s3Key,
-      size: file.size,
+      originalSize: file.size,
+      optimized: type === 'image' && file.type !== 'image/gif', // Indicates if image was optimized
+      format: type === 'image' && file.type !== 'image/gif' ? 'webp' : file.type.split('/')[1],
       dimensions: maxDimensions
     })
 

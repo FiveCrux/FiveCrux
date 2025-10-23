@@ -4,14 +4,6 @@ import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { useParams, useRouter } from "next/navigation"
 import {
-  Star,
-  ShoppingCart,
-  Heart,
-  Share2,
-  Download,
-  Shield,
-  Clock,
-  Users,
   Package,
   CheckCircle,
   AlertCircle,
@@ -30,7 +22,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/componentss/ui/tabs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/componentss/ui/avatar"
 import Navbar from "@/componentss/shared/navbar"
 import Footer from "@/componentss/shared/footer"
-import ReviewSection from "@/componentss/shared/review-section"
 
 interface Script {
   id: number
@@ -46,7 +37,7 @@ interface Script {
   seller_image?: string
   features: string[]
   requirements: string[]
-  links: string[]
+  link?: string
   images: string[]
   videos: string[]
   screenshots: string[]
@@ -210,7 +201,6 @@ export default function ScriptDetailPage() {
   const [script, setScript] = useState<Script | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [isWishlisted, setIsWishlisted] = useState(false)
   const [selectedTab, setSelectedTab] = useState("overview")
 
   useEffect(() => {
@@ -328,23 +318,6 @@ export default function ScriptDetailPage() {
 
                 <h1 className="text-4xl font-bold text-white mb-4">{script.title}</h1>
 
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="flex items-center">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                                                  className={`h-5 w-5 ${
-                            i < Math.floor(Number(script.rating) || 0) ? "text-yellow-400 fill-current" : "text-gray-600"
-                          }`}
-                      />
-                    ))}
-                  </div>
-                  <span className="text-white font-semibold">{(Number(script.rating) || 0).toFixed(1)}</span>
-                  <span className="text-gray-400">({script.review_count || 0} reviews)</span>
-                  <span className="text-gray-400">•</span>
-                                              <span className="text-gray-400">{script.downloads || 0} downloads</span>
-                </div>
-
                 <p className="text-gray-300 text-lg leading-relaxed mb-6">{script.description}</p>
 
                 {/* Seller Info */}
@@ -389,50 +362,21 @@ export default function ScriptDetailPage() {
                 </div>
 
                 <div className="space-y-4">
-                  <Button className="w-full bg-gradient-to-r from-orange-500 to-yellow-400 hover:from-orange-600 hover:to-yellow-500 text-black font-bold py-3 text-lg">
-                    <ShoppingCart className="mr-2 h-5 w-5" />
-                    Add to Cart
+                  <Button 
+                    className="w-full bg-gradient-to-r from-orange-500 to-yellow-400 hover:from-orange-600 hover:to-yellow-500 text-black font-bold py-3 text-lg"
+                    onClick={() => {
+                      if (script.link) {
+                        window.open(script.link, '_blank', 'noopener,noreferrer')
+                      }
+                    }}
+                    disabled={!script.link}
+                  >
+                    <ExternalLink className="mr-2 h-5 w-5" />
+                    Buy Now
                   </Button>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <Button
-                      variant="outline"
-                      className="w-full border-gray-600 text-gray-300 hover:text-white hover:border-orange-500"
-                      onClick={() => setIsWishlisted(!isWishlisted)}
-                    >
-                      <Heart className={`mr-2 h-4 w-4 ${isWishlisted ? "fill-current text-red-500" : ""}`} />
-                      {isWishlisted ? "Wishlisted" : "Wishlist"}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="w-full border-gray-600 text-gray-300 hover:text-white hover:border-orange-500"
-                    >
-                      <Share2 className="mr-2 h-4 w-4" />
-                      Share
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Quick Info */}
-                <div className="mt-6 pt-6 border-t border-gray-700/50">
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div className="flex items-center gap-2 text-gray-400">
-                      <Download className="h-4 w-4" />
-                      <span>Instant Download</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-400">
-                      <Shield className="h-4 w-4" />
-                      <span>Secure Payment</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-400">
-                      <Clock className="h-4 w-4" />
-                      <span>Lifetime Updates</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-400">
-                      <Users className="h-4 w-4" />
-                      <span>24/7 Support</span>
-                    </div>
-                  </div>
+                  {!script.link && (
+                    <p className="text-sm text-gray-400 text-center">No purchase link available</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -486,12 +430,6 @@ export default function ScriptDetailPage() {
                   Requirements
                 </TabsTrigger>
                 <TabsTrigger
-                  value="reviews"
-                  className="data-[state=active]:bg-orange-500 data-[state=active]:text-white"
-                >
-                  Reviews
-                </TabsTrigger>
-                <TabsTrigger
                   value="support"
                   className="data-[state=active]:bg-orange-500 data-[state=active]:text-white"
                 >
@@ -524,10 +462,6 @@ export default function ScriptDetailPage() {
                           <div className="flex justify-between">
                             <span className="text-gray-400">Last Updated:</span>
                             <span className="text-white">{new Date(script.last_updated).toLocaleDateString()}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-400">Downloads:</span>
-                            <span className="text-white">{(script.downloads || 0).toLocaleString()}</span>
                           </div>
                           {script.framework && (
                             <div className="flex justify-between">
@@ -590,19 +524,11 @@ export default function ScriptDetailPage() {
                 </Card>
               </TabsContent>
 
-              <TabsContent value="reviews" className="mt-6">
-                <ReviewSection 
-                  itemId={script.id}
-                  itemType="script"
-                  itemTitle={script.title}
-                />
-              </TabsContent>
-
               <TabsContent value="support" className="mt-6">
                 <Card className="bg-gray-800/30 border-gray-700/50">
                   <CardHeader>
                     <CardTitle className="text-white flex items-center gap-2">
-                      <Users className="h-5 w-5 text-orange-500" />
+                      <Info className="h-5 w-5 text-orange-500" />
                       Support & Documentation
                     </CardTitle>
                   </CardHeader>
@@ -616,22 +542,8 @@ export default function ScriptDetailPage() {
                             <p className="text-sm text-gray-400">Complete setup and usage guide</p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-700/30">
-                          <CheckCircle className="h-5 w-5 text-green-500" />
-                          <div>
-                            <h4 className="text-white font-semibold">Discord Support</h4>
-                            <p className="text-sm text-gray-400">24/7 community support</p>
-                          </div>
-                        </div>
                       </div>
                       <div className="space-y-4">
-                        <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-700/30">
-                          <CheckCircle className="h-5 w-5 text-green-500" />
-                          <div>
-                            <h4 className="text-white font-semibold">Lifetime Updates</h4>
-                            <p className="text-sm text-gray-400">Free updates for life</p>
-                          </div>
-                        </div>
                         <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-700/30">
                           <CheckCircle className="h-5 w-5 text-green-500" />
                           <div>
@@ -640,22 +552,6 @@ export default function ScriptDetailPage() {
                           </div>
                         </div>
                       </div>
-                    </div>
-                    <div className="mt-6 flex flex-wrap gap-4">
-                      {script.links && script.links.length > 0 ? (
-                        script.links.map((link, index) => (
-                          <Button 
-                            key={index}
-                            className="bg-blue-600 hover:bg-blue-700"
-                            onClick={() => window.open(link, '_blank')}
-                          >
-                            <ExternalLink className="mr-2 h-4 w-4" />
-                            Link {index + 1}
-                          </Button>
-                        ))
-                      ) : (
-                        <p className="text-gray-400">No links available</p>
-                      )}
                     </div>
                   </CardContent>
                 </Card>

@@ -149,7 +149,7 @@ export async function createScript(scriptData: NewScript & { framework?: string 
     // tags: scriptData.tags || [],
     features: scriptData.features || [],
     requirements: scriptData.requirements || [],
-    links: scriptData.links || [],
+    link: scriptData.link || null,
     // Normalize framework as text[] for DB with validation
     framework: validatedFrameworks,
   };
@@ -489,7 +489,7 @@ export async function updateScriptForReapproval(id: number, updateData: any) {
     assignIfDefined('tags', updateData.tags);
     assignIfDefined('features', updateData.features);
     assignIfDefined('requirements', updateData.requirements);
-    assignIfDefined('links', updateData.links);
+    assignIfDefined('link', updateData.link);
     assignIfDefined('images', updateData.images);
     assignIfDefined('videos', updateData.videos);
     assignIfDefined('screenshots', updateData.screenshots);
@@ -551,7 +551,7 @@ export async function updatePendingScript(id: number, updateData: any) {
     assignIfDefined('tags', updateData.tags);
     assignIfDefined('features', updateData.features);
     assignIfDefined('requirements', updateData.requirements);
-    assignIfDefined('links', updateData.links);
+    assignIfDefined('link', updateData.link);
     assignIfDefined('images', updateData.images);
     assignIfDefined('videos', updateData.videos);
     assignIfDefined('screenshots', updateData.screenshots);
@@ -604,7 +604,7 @@ export async function updateRejectedScriptForReapproval(id: number, updateData: 
     assignIfDefined('tags', updateData.tags);
     assignIfDefined('features', updateData.features);
     assignIfDefined('requirements', updateData.requirements);
-    assignIfDefined('links', updateData.links);
+    assignIfDefined('link', updateData.link);
     assignIfDefined('images', updateData.images);
     assignIfDefined('videos', updateData.videos);
     assignIfDefined('screenshots', updateData.screenshots);
@@ -662,7 +662,7 @@ export async function updateScript(id: number, updateData: any) {
     assignIfDefined('tags', updateData.tags);
     assignIfDefined('features', updateData.features);
     assignIfDefined('requirements', updateData.requirements);
-    assignIfDefined('links', updateData.links);
+    assignIfDefined('link', updateData.link);
     assignIfDefined('images', updateData.images);
     assignIfDefined('videos', updateData.videos);
     assignIfDefined('screenshots', updateData.screenshots);
