@@ -17,13 +17,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Check if user has permission to view scripts (founder, admin, verified_creator)
+    // User must be authenticated
     const user = session.user as any
-    if (!user.roles || !hasAnyRole(user.roles, ['founder', 'admin', 'verified_creator'])) {
-      return NextResponse.json({ 
-        error: "You need founder, admin, or verified creator access to view scripts." 
-      }, { status: 403 });
-    }
 
     // Get pagination params from query string
     const { searchParams } = new URL(request.url);

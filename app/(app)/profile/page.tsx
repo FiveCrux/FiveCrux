@@ -30,6 +30,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/componentss/ui/avatar"
 import Navbar from "@/componentss/shared/navbar"
 import Footer from "@/componentss/shared/footer"
 import AdsForm from "@/componentss/ads/ads-form"
+import { useUserScripts, useDeleteUserScript } from "@/hooks/use-scripts-queries"
+import { useUserGiveaways, useDeleteUserGiveaway, useUserCreatorGiveawayEntries } from "@/hooks/use-giveaways-queries"
+import { useUserAdvertisements } from "@/hooks/use-profile-queries"
+import { toast } from "sonner"
 
 interface Script {
   id: number
@@ -105,232 +109,63 @@ export default function ProfilePage() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const [activeTab, setActiveTab] = useState("overview")
-  const [scripts, setScripts] = useState<Script[]>([])
-  const [giveaways, setGiveaways] = useState<Giveaway[]>([])
-  const [ads, setAds] = useState<Ad[]>([])
-  const [giveawayEntries, setGiveawayEntries] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [loadingMore, setLoadingMore] = useState(false)
   
-  // Pagination state for each resource
-  const [scriptsPage, setScriptsPage] = useState(0)
-  const [scriptsHasMore, setScriptsHasMore] = useState(true)
-  const [scriptsTotal, setScriptsTotal] = useState(0)
-  const [scriptsLoaded, setScriptsLoaded] = useState(false)
+  // Track which tabs have been visited for lazy loading
+  const [visitedTabs, setVisitedTabs] = useState<Set<string>>(new Set(["overview"]))
   
-  const [giveawaysPage, setGiveawaysPage] = useState(0)
-  const [giveawaysHasMore, setGiveawaysHasMore] = useState(true)
-  const [giveawaysTotal, setGiveawaysTotal] = useState(0)
-  const [giveawaysLoaded, setGiveawaysLoaded] = useState(false)
+  // Fetch data using React Query with lazy loading
+  const { data: scriptsData, isLoading: scriptsLoading, refetch: refetchScripts } = useUserScripts(
+    100, // Get more items for now
+    0
+  )
   
-  const [adsPage, setAdsPage] = useState(0)
-  const [adsHasMore, setAdsHasMore] = useState(true)
-  const [adsTotal, setAdsTotal] = useState(0)
-  const [adsLoaded, setAdsLoaded] = useState(false)
+  const { data: giveawaysData, isLoading: giveawaysLoading, refetch: refetchGiveaways } = useUserGiveaways(
+    100,
+    0
+  )
   
-  const [entriesPage, setEntriesPage] = useState(0)
-  const [entriesHasMore, setEntriesHasMore] = useState(true)
-  const [entriesTotal, setEntriesTotal] = useState(0)
-  const [entriesLoaded, setEntriesLoaded] = useState(false)
+  const { data: adsData, isLoading: adsLoading, refetch: refetchAds } = useUserAdvertisements(
+    100,
+    0
+  )
   
-  const [overviewLoaded, setOverviewLoaded] = useState(false)
+  const { data: entriesData, isLoading: entriesLoading, refetch: refetchEntries } = useUserCreatorGiveawayEntries(
+    100,
+    0
+  )
   
-  const [stats, setStats] = useState({
-    totalScripts: 0,
-    totalGiveaways: 0,
-    totalAds: 0,
-    totalEntries: 0,
-  })
+  // Mutations for delete operations
+  const deleteScriptMutation = useDeleteUserScript()
+  const deleteGiveawayMutation = useDeleteUserGiveaway()
+  
   const [showAdsForm, setShowAdsForm] = useState(false)
   const [editingAd, setEditingAd] = useState<any>(null)
   
-  const ITEMS_PER_PAGE = 10
+  // Extract data from React Query responses
+  const scripts = scriptsData?.scripts || []
+  const scriptsTotal = scriptsData?.total || 0
+  const giveaways = giveawaysData?.giveaways || []
+  const giveawaysTotal = giveawaysData?.total || 0
+  const ads = adsData?.ads || []
+  const adsTotal = adsData?.total || 0
+  const giveawayEntries = entriesData?.entries || []
+  const entriesTotal = entriesData?.total || 0
+  
+  // Combined loading state
+  const loading = scriptsLoading || giveawaysLoading || adsLoading || entriesLoading
+  
+  const stats = {
+    totalScripts: scriptsTotal,
+    totalGiveaways: giveawaysTotal,
+    totalAds: adsTotal,
+    totalEntries: entriesTotal,
+  }
 
-  // Lazy load data based on active tab
+  // Track tab visits for better UX
   useEffect(() => {
     if (status !== "authenticated") return
-    
-    switch(activeTab) {
-      case "scripts":
-        if (!scriptsLoaded) fetchScripts(0)
-        break
-      case "giveaways":
-        if (!giveawaysLoaded) fetchGiveaways(0)
-        break
-      case "ads":
-        if (!adsLoaded) fetchAds(0)
-        break
-      case "entries":
-        if (!entriesLoaded) fetchEntries(0)
-        break
-      case "overview":
-        if (!overviewLoaded) fetchOverviewData()
-        break
-    }
-  }, [activeTab, status, scriptsLoaded, giveawaysLoaded, adsLoaded, entriesLoaded, overviewLoaded])
-
-  // Fetch minimal data for overview (just counts + recent 3 items)
-  const fetchOverviewData = async () => {
-    try {
-      setLoading(true)
-      console.log("Profile - Fetching overview data")
-      
-      const [scriptsRes, giveawaysRes, adsRes, entriesRes] = await Promise.all([
-        fetch(`/api/users/scripts?limit=3&offset=0`, { credentials: 'include' }),
-        fetch(`/api/users/giveaways?limit=3&offset=0`, { credentials: 'include' }),
-        fetch(`/api/users/advertisements?limit=3&offset=0`, { credentials: 'include' }),
-        fetch(`/api/users/creator-giveaway-entries?limit=0&offset=0`, { credentials: 'include' })
-      ])
-      
-      if (scriptsRes.ok) {
-        const data = await scriptsRes.json()
-        setScriptsTotal(data.total || 0)
-        setStats(prev => ({ ...prev, totalScripts: data.total || 0 }))
-      }
-      
-      if (giveawaysRes.ok) {
-        const data = await giveawaysRes.json()
-        setGiveawaysTotal(data.total || 0)
-        setStats(prev => ({ ...prev, totalGiveaways: data.total || 0 }))
-      }
-
-      if (adsRes.ok) {
-        const data = await adsRes.json()
-        setAdsTotal(data.total || 0)
-        setStats(prev => ({ ...prev, totalAds: data.total || 0 }))
-      }
-
-      if (entriesRes.ok) {
-        const data = await entriesRes.json()
-        setEntriesTotal(data.total || 0)
-        setStats(prev => ({ ...prev, totalEntries: data.total || 0 }))
-      }
-
-      setOverviewLoaded(true)
-    } catch (error) {
-      console.error("Error fetching overview:", error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const fetchScripts = async (page: number, append = false) => {
-    try {
-      setLoadingMore(append)
-      if (!append) setLoading(true)
-      
-      const offset = page * ITEMS_PER_PAGE
-      const response = await fetch(
-        `/api/users/scripts?limit=${ITEMS_PER_PAGE}&offset=${offset}`,
-        { credentials: 'include' }
-      )
-      
-      if (response.ok) {
-        const data = await response.json()
-        setScripts(prev => append ? [...prev, ...data.scripts] : data.scripts)
-        setScriptsTotal(data.total || 0)
-        setScriptsHasMore(data.hasMore || false)
-        setScriptsPage(page)
-        setScriptsLoaded(true)
-        setStats(prev => ({ ...prev, totalScripts: data.total || 0 }))
-      }
-    } catch (error) {
-      console.error("Error fetching scripts:", error)
-    } finally {
-      setLoading(false)
-      setLoadingMore(false)
-    }
-  }
-
-  const fetchGiveaways = async (page: number, append = false) => {
-    try {
-      setLoadingMore(append)
-      if (!append) setLoading(true)
-      
-      const offset = page * ITEMS_PER_PAGE
-      const response = await fetch(
-        `/api/users/giveaways?limit=${ITEMS_PER_PAGE}&offset=${offset}`,
-        { credentials: 'include' }
-      )
-      
-      if (response.ok) {
-        const data = await response.json()
-        setGiveaways(prev => append ? [...prev, ...data.giveaways] : data.giveaways)
-        setGiveawaysTotal(data.total || 0)
-        setGiveawaysHasMore(data.hasMore || false)
-        setGiveawaysPage(page)
-        setGiveawaysLoaded(true)
-        setStats(prev => ({ ...prev, totalGiveaways: data.total || 0 }))
-      }
-    } catch (error) {
-      console.error("Error fetching giveaways:", error)
-    } finally {
-      setLoading(false)
-      setLoadingMore(false)
-    }
-  }
-
-  const fetchAds = async (page: number, append = false) => {
-    try {
-      setLoadingMore(append)
-      if (!append) setLoading(true)
-      
-      const offset = page * ITEMS_PER_PAGE
-      const response = await fetch(
-        `/api/users/advertisements?limit=${ITEMS_PER_PAGE}&offset=${offset}`,
-        { credentials: 'include' }
-      )
-      
-      if (response.ok) {
-        const data = await response.json()
-        setAds(prev => append ? [...prev, ...data.ads] : data.ads)
-        setAdsTotal(data.total || 0)
-        setAdsHasMore(data.hasMore || false)
-        setAdsPage(page)
-        setAdsLoaded(true)
-        setStats(prev => ({ ...prev, totalAds: data.total || 0 }))
-      }
-    } catch (error) {
-      console.error("Error fetching ads:", error)
-    } finally {
-      setLoading(false)
-      setLoadingMore(false)
-    }
-  }
-
-  const fetchEntries = async (page: number, append = false) => {
-    try {
-      setLoadingMore(append)
-      if (!append) setLoading(true)
-      
-      const offset = page * ITEMS_PER_PAGE
-      const response = await fetch(
-        `/api/users/creator-giveaway-entries?limit=${ITEMS_PER_PAGE}&offset=${offset}`,
-        { credentials: 'include' }
-      )
-      
-      if (response.ok) {
-        const data = await response.json()
-        setGiveawayEntries(prev => append ? [...prev, ...data.entries] : data.entries)
-        setEntriesTotal(data.total || 0)
-        setEntriesHasMore(data.hasMore || false)
-        setEntriesPage(page)
-        setEntriesLoaded(true)
-        setStats(prev => ({ ...prev, totalEntries: data.total || 0 }))
-      }
-    } catch (error) {
-      console.error("Error fetching entries:", error)
-    } finally {
-      setLoading(false)
-      setLoadingMore(false)
-    }
-  }
-
-  // Load more button handlers
-  const loadMoreScripts = () => fetchScripts(scriptsPage + 1, true)
-  const loadMoreGiveaways = () => fetchGiveaways(giveawaysPage + 1, true)
-  const loadMoreAds = () => fetchAds(adsPage + 1, true)
-  const loadMoreEntries = () => fetchEntries(entriesPage + 1, true)
+    setVisitedTabs(prev => new Set([...prev, activeTab]))
+  }, [activeTab, status])
 
   const handleEditScript = (scriptId: number) => {
     router.push(`/scripts/submit?edit=${scriptId}`)
@@ -341,7 +176,7 @@ export default function ProfilePage() {
   }
 
   const handleEditAd = (adId: number) => {
-    const ad = ads.find(a => a.id === adId)
+    const ad = ads.find((a: any) => a.id === adId)
     if (ad) {
       setEditingAd(ad)
       setShowAdsForm(true)
@@ -350,65 +185,19 @@ export default function ProfilePage() {
 
   const handleDeleteScript = async (scriptId: number) => {
     if (!confirm("Are you sure you want to delete this script?")) return
-
-    try {
-      const response = await fetch(`/api/users/scripts?id=${scriptId}`, {
-        method: "DELETE",
-        credentials: 'include'
-      })
-
-      if (response.ok) {
-        setScripts(scripts.filter(script => script.id !== scriptId))
-        // Update stats without full page refresh
-        setStats(prevStats => ({
-          ...prevStats,
-          totalScripts: prevStats.totalScripts - 1
-        }))
-      } else {
-        alert("Failed to delete script")
-      }
-    } catch (error) {
-      console.error("Error deleting script:", error)
-      alert("Error deleting script")
-    }
+    deleteScriptMutation.mutate(scriptId)
   }
 
   const handleDeleteGiveaway = async (giveawayId: number) => {
     if (!confirm("Are you sure you want to delete this giveaway?")) return
-
-    try {
-      const response = await fetch(`/api/users/giveaways?id=${giveawayId}`, {
-        method: "DELETE",
-        credentials: 'include'
-      })
-
-      if (response.ok) {
-        setGiveaways(giveaways.filter(giveaway => giveaway.id !== giveawayId))
-        // Update stats without full page refresh
-        setStats(prevStats => ({
-          ...prevStats,
-          totalGiveaways: prevStats.totalGiveaways - 1
-        }))
-      } else {
-        alert("Failed to delete giveaway")
-      }
-    } catch (error) {
-      console.error("Error deleting giveaway:", error)
-      alert("Error deleting giveaway")
-    }
+    deleteGiveawayMutation.mutate(giveawayId)
   }
 
   const handleDeleteAd = async (adId: number) => {
     if (!confirm("Are you sure you want to delete this ad?")) return
 
     try {
-      console.log("Attempting to delete ad with ID:", adId)
-      console.log("Session:", session)
-      
-      const url = `/api/users/advertisements?id=${adId}`
-      console.log("DELETE URL:", url)
-      
-      const response = await fetch(url, {
+      const response = await fetch(`/api/users/advertisements?id=${adId}`, {
         method: "DELETE",
         credentials: 'include',
         headers: {
@@ -416,28 +205,16 @@ export default function ProfilePage() {
         }
       })
 
-      console.log("Response status:", response.status)
-      console.log("Response ok:", response.ok)
-
       if (response.ok) {
-        const result = await response.json()
-        console.log("Delete result:", result)
-        setAds(ads.filter(ad => ad.id !== adId))
-        // Update stats without full component refresh
-        setStats(prevStats => ({
-          ...prevStats,
-          totalAds: prevStats.totalAds - 1
-        }))
-        alert("Ad deleted successfully!")
+        // Refetch ads to update the list
+        refetchAds()
+        toast.success("Ad deleted successfully!")
       } else {
-        const errorText = await response.text()
-        console.error("Delete failed:", response.status, errorText)
-        alert(`Failed to delete ad: ${response.status} - ${errorText}`)
+        toast.error("Failed to delete ad")
       }
     } catch (error) {
       console.error("Error deleting ad:", error)
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-      alert(`Network error: ${errorMessage}`)
+      toast.error("Error deleting ad")
     }
   }
 
@@ -460,7 +237,7 @@ export default function ProfilePage() {
 
   const handleAdCreated = () => {
     // Refresh ads data after creating/updating an ad
-    fetchAds(0)
+    refetchAds()
     setEditingAd(null)
   }
 
@@ -612,7 +389,7 @@ export default function ProfilePage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {scripts.slice(0, 3).map((script) => (
+                      {scripts.slice(0, 3).map((script: any) => (
                         <div key={script.id} className="flex items-center justify-between p-4 bg-gray-700/30 rounded-lg">
                           <div className="flex items-center gap-4">
                             <Package className="h-5 w-5 text-orange-500" />
@@ -626,7 +403,7 @@ export default function ProfilePage() {
                           </Badge>
                         </div>
                       ))}
-                      {giveaways.slice(0, 3).map((giveaway) => (
+                      {giveaways.slice(0, 3).map((giveaway: any) => (
                         <div key={giveaway.id} className="flex items-center justify-between p-4 bg-gray-700/30 rounded-lg">
                           <div className="flex items-center gap-4">
                             <Gift className="h-5 w-5 text-green-500" />
@@ -664,13 +441,13 @@ export default function ProfilePage() {
                   </Button>
                 </div>
 
-                {loading && !scriptsLoaded ? (
+                {scriptsLoading ? (
                   <div className="flex justify-center items-center py-20">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {scripts.map((script) => (
+                  {scripts.map((script: any) => (
                     <Card key={script.id} className="bg-gray-800/30 border-gray-700/50 hover:border-orange-500/50 transition-colors">
                       <CardContent className="p-6">
                         <div className="aspect-video bg-gray-700 rounded-lg mb-4 overflow-hidden">
@@ -751,26 +528,6 @@ export default function ProfilePage() {
                     </Card>
                   ))}
 
-                  {scripts.length > 0 && scriptsHasMore && (
-                    <div className="flex justify-center mt-6">
-                      <Button 
-                        onClick={loadMoreScripts}
-                        disabled={loadingMore}
-                        variant="outline"
-                        className="border-orange-500 text-orange-500 hover:bg-orange-500/10"
-                      >
-                        {loadingMore ? (
-                          <>
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-500 mr-2"></div>
-                            Loading...
-                          </>
-                        ) : (
-                          `Load More (${scriptsTotal - scripts.length} remaining)`
-                        )}
-                      </Button>
-                    </div>
-                  )}
-
                   {scripts.length === 0 && !loading && (
                     <Card className="bg-gray-800/30 border-gray-700/50">
                       <CardContent className="p-12 text-center">
@@ -810,13 +567,13 @@ export default function ProfilePage() {
                   </Button>
                 </div>
 
-                {loading && !giveawaysLoaded ? (
+                {giveawaysLoading ? (
                   <div className="flex justify-center items-center py-20">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {giveaways.map((giveaway) => (
+                  {giveaways.map((giveaway: any) => (
                     <Card key={giveaway.id} className="bg-gray-800/30 border-gray-700/50 hover:border-green-500/50 transition-colors">
                       <CardContent className="p-6">
                         <div className="aspect-video bg-gray-700 rounded-lg mb-4 overflow-hidden">
@@ -904,26 +661,6 @@ export default function ProfilePage() {
                     </Card>
                   ))}
 
-                  {giveaways.length > 0 && giveawaysHasMore && (
-                    <div className="flex justify-center mt-6">
-                      <Button 
-                        onClick={loadMoreGiveaways}
-                        disabled={loadingMore}
-                        variant="outline"
-                        className="border-green-500 text-green-500 hover:bg-green-500/10"
-                      >
-                        {loadingMore ? (
-                          <>
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-500 mr-2"></div>
-                            Loading...
-                          </>
-                        ) : (
-                          `Load More (${giveawaysTotal - giveaways.length} remaining)`
-                        )}
-                      </Button>
-                    </div>
-                  )}
-
                   {giveaways.length === 0 && !loading && (
                     <Card className="bg-gray-800/30 border-gray-700/50">
                       <CardContent className="p-12 text-center">
@@ -963,14 +700,14 @@ export default function ProfilePage() {
                   </Button>
                 </div>
 
-                {loading && !adsLoaded ? (
+                {adsLoading ? (
                   <div className="flex justify-center items-center py-20">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
                   </div>
                 ) : ads.length > 0 ? (
                   <>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {ads.map((ad) => (
+                      {ads.map((ad: any) => (
                         <Card key={ad.id} className="bg-gray-800/30 border-gray-700/50 hover:border-orange-500/50 transition-all duration-300">
                           <CardHeader className="pb-3">
                             <div className="flex items-center justify-between">
@@ -1042,26 +779,6 @@ export default function ProfilePage() {
                         </Card>
                       ))}
                     </div>
-
-                    {adsHasMore && (
-                      <div className="flex justify-center mt-6">
-                        <Button 
-                          onClick={loadMoreAds}
-                          disabled={loadingMore}
-                          variant="outline"
-                          className="border-orange-500 text-orange-500 hover:bg-orange-500/10"
-                        >
-                          {loadingMore ? (
-                            <>
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-500 mr-2"></div>
-                              Loading...
-                            </>
-                          ) : (
-                            `Load More (${adsTotal - ads.length} remaining)`
-                          )}
-                        </Button>
-                      </div>
-                    )}
                   </>
                 ) : (
                   <Card className="bg-gray-800/30 border-gray-700/50">
@@ -1095,13 +812,13 @@ export default function ProfilePage() {
                   <h2 className="text-2xl font-bold">Giveaway Entries</h2>
                   <p className="text-gray-400 text-sm">Entries from users who participated in your giveaways</p>
                 </div>
-                {loading && !entriesLoaded ? (
+                {entriesLoading ? (
                   <div className="flex justify-center items-center py-20">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
                   </div>
                 ) : (
                   <div className="grid gap-6">
-                  {giveawayEntries.map((entry, index) => (
+                  {giveawayEntries.map((entry: any, index: number) => (
                     <Card key={entry.id} className="bg-gray-800/30 border-gray-700/50 hover:border-orange-500/50 transition-colors">
                       <CardContent className="p-6">
                         <div className="flex items-start justify-between">
@@ -1165,26 +882,6 @@ export default function ProfilePage() {
                       </CardContent>
                     </Card>
                   ))}
-
-                  {giveawayEntries.length > 0 && entriesHasMore && (
-                    <div className="flex justify-center mt-6">
-                      <Button 
-                        onClick={loadMoreEntries}
-                        disabled={loadingMore}
-                        variant="outline"
-                        className="border-purple-500 text-purple-500 hover:bg-purple-500/10"
-                      >
-                        {loadingMore ? (
-                          <>
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-500 mr-2"></div>
-                            Loading...
-                          </>
-                        ) : (
-                          `Load More (${entriesTotal - giveawayEntries.length} remaining)`
-                        )}
-                      </Button>
-                    </div>
-                  )}
 
                   {giveawayEntries.length === 0 && !loading && (
                     <Card className="bg-gray-800/30 border-gray-700/50">

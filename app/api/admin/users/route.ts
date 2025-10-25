@@ -24,11 +24,21 @@ export async function GET(request: NextRequest) {
     }
 
     console.log("User is admin, fetching users...")
-    // Get all users using the database function
-    const users = await getAllUsers()
-    console.log("Found users:", users.length)
+    // Get limit and offset from query params
+    const { searchParams } = new URL(request.url)
+    const limit = parseInt(searchParams.get('limit') || '10', 10)
+    const offset = parseInt(searchParams.get('offset') || '0', 10)
     
-    return NextResponse.json({ users })
+    // Get all users using the database function (fetch limit + 1 to check if there are more)
+    const users = await getAllUsers(limit + 1)
+    
+    // Apply offset manually
+    const paginatedUsers = users.slice(offset, offset + limit)
+    const hasMore = users.length > offset + limit
+    
+    console.log("Found users:", paginatedUsers.length, "Has more:", hasMore)
+    
+    return NextResponse.json({ users: paginatedUsers, hasMore })
   } catch (error) {
     console.error("Error fetching users:", error)
     return NextResponse.json({ error: "Failed to fetch users" }, { status: 500 })

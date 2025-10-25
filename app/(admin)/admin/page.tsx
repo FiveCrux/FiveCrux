@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { motion } from "framer-motion"
 import { useSession } from "next-auth/react"
 import {
@@ -48,6 +48,18 @@ import Navbar from "@/componentss/shared/navbar"
 import Footer from "@/componentss/shared/footer"
 import FileUpload from "@/componentss/shared/file-upload"
 import { useRoleValidation } from "@/hooks/use-role-validation"
+import { 
+  useAdminUsers, 
+  useAdminScripts, 
+  useAdminGiveaways, 
+  useAdminAds,
+  useUpdateUserRoles,
+  useUpdateScript,
+  useUpdateGiveaway,
+  useUpdateAd,
+  useCreateAd,
+  useDeleteAd
+} from "@/hooks/use-admin-queries"
 
 interface User {
   id: string
@@ -126,14 +138,16 @@ interface Ad {
   id: number
   title: string
   description: string
-  imageUrl?: string
-  linkUrl?: string
-  category: string
-  status: string
-  createdAt?: string
-  updatedAt?: string
-  rejectionReason?: string
-  adminNotes?: string
+  image: string
+  link: string
+  banner_type: string
+  status?: "active" | "inactive" | "pending" | "approved" | "rejected" | string
+  created_at: string
+  updated_at: string
+  creator_name: string
+  creator_email: string
+  rejection_reason?: string
+  category?: string
 }
 
 // Updated role options to the requested set. Values should match DB enum (lowercase/underscored).
@@ -151,12 +165,60 @@ export default function AdminPage() {
   // Auto-validate roles and refresh if changed
   useRoleValidation()
   
+  // Fetch data using React Query (infinite queries for pagination)
+  const { 
+    data: usersData, 
+    isLoading: usersLoading, 
+    fetchNextPage: fetchNextUsers,
+    hasNextPage: hasMoreUsers,
+    isFetchingNextPage: loadingMoreUsers 
+  } = useAdminUsers()
+  
+  const { 
+    data: scriptsData, 
+    isLoading: scriptsLoading, 
+    fetchNextPage: fetchNextScripts,
+    hasNextPage: hasMoreScripts,
+    isFetchingNextPage: loadingMoreScripts 
+  } = useAdminScripts()
+  
+  const { 
+    data: giveawaysData, 
+    isLoading: giveawaysLoading, 
+    fetchNextPage: fetchNextGiveaways,
+    hasNextPage: hasMoreGiveaways,
+    isFetchingNextPage: loadingMoreGiveaways 
+  } = useAdminGiveaways()
+  
+  const { 
+    data: adsData, 
+    isLoading: adsLoading, 
+    fetchNextPage: fetchNextAds,
+    hasNextPage: hasMoreAds,
+    isFetchingNextPage: loadingMoreAds 
+  } = useAdminAds()
+  
+  // Flatten paginated data
+  const users = usersData?.pages.flatMap(page => page.users) || []
+  const scripts = scriptsData?.pages.flatMap(page => page.scripts) || []
+  const giveaways = giveawaysData?.pages.flatMap(page => page.giveaways) || []
+  const ads = adsData?.pages.flatMap(page => page.ads) || []
+  
+  // Debug logging for ads
+  console.log('Admin Dashboard - Ads:', ads.length, 'Loading:', adsLoading)
+  
+  // Mutations
+  const updateUserRolesMutation = useUpdateUserRoles()
+  const updateScriptMutation = useUpdateScript()
+  const updateGiveawayMutation = useUpdateGiveaway()
+  const updateAdMutation = useUpdateAd()
+  const createAdMutation = useCreateAd()
+  const deleteAdMutation = useDeleteAd()
+  
+  // Combined loading state
+  const loading = usersLoading || scriptsLoading || giveawaysLoading || adsLoading
+  
   const [activeTab, setActiveTab] = useState("dashboard")
-  const [users, setUsers] = useState<User[]>([])
-  const [scripts, setScripts] = useState<Script[]>([])
-  const [giveaways, setGiveaways] = useState<Giveaway[]>([])
-  const [ads, setAds] = useState<Ad[]>([])
-  const [loading, setLoading] = useState(true)
   
   // Check if user has moderator role
   const userRoles = (session?.user as any)?.roles || []
@@ -191,84 +253,6 @@ export default function AdminPage() {
   const [rejectingAdLoading, setRejectingAdLoading] = useState(false)
   const [adRejectionReason, setAdRejectionReason] = useState("")
 
-  const loadData = async () => {
-    try {
-      setLoading(true)
-      console.log("Loading admin data...")
-      
-      // First check if user has admin roles
-      if (!session?.user) {
-        console.log("No session found")
-        setLoading(false)
-        return
-      }
-
-      const userRoles = (session.user as any).roles || []
-      console.log("User roles:", userRoles)
-      
-      if (!userRoles.includes('admin') && !userRoles.includes('founder')) {
-        console.log("User is not admin or founder, skipping API calls")
-        setLoading(false)
-        return
-      }
-
-      console.log("User has admin access, proceeding with API calls...")
-      
-      const [usersRes, scriptsRes, giveawaysRes, adsRes] = await Promise.all([
-        fetch("/api/admin/users", { credentials: 'include' }),
-        fetch("/api/admin/scripts", { credentials: 'include' }),
-        fetch("/api/admin/giveaways", { credentials: 'include' }),
-        fetch("/api/admin/advertisements", { credentials: 'include' }),
-      ])
-
-      console.log("API responses:", {
-        users: usersRes.status,
-        scripts: scriptsRes.status,
-        giveaways: giveawaysRes.status,
-        ads: adsRes.status
-      })
-
-      if (usersRes.ok) {
-        const usersData = await usersRes.json()
-        console.log("Users data:", usersData)
-        setUsers(usersData.users || [])
-      } else {
-        console.error("Users API error:", usersRes.status, await usersRes.text())
-      }
-
-      if (scriptsRes.ok) {
-        const scriptsData = await scriptsRes.json()
-        console.log("Scripts data:", scriptsData)
-        setScripts(scriptsData.scripts || [])
-      } else {
-        console.error("Scripts API error:", scriptsRes.status, await scriptsRes.text())
-      }
-
-      if (giveawaysRes.ok) {
-        const giveawaysData = await giveawaysRes.json()
-        setGiveaways(giveawaysData.giveaways || [])
-      }
-
-      if (adsRes.ok) {
-        const adsData = await adsRes.json()
-        console.log("Admin - Ads API response:", adsData)
-        setAds(adsData.data || [])
-      } else {
-        console.error("Admin - Ads API error:", adsRes.status, await adsRes.text())
-      }
-    } catch (error) {
-      console.error("Error loading data:", error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    if (session?.user) {
-      loadData()
-    }
-  }, [session])
-
   const handleRoleChange = (role: string, checked: boolean) => {
     // Prevent moderators from assigning moderator or founder roles
     if (isModerator && !isFounder && (role === 'moderator' || role === 'founder') && checked) {
@@ -291,30 +275,15 @@ export default function AdminPage() {
       rolesToSave = editingRoles.filter(role => role !== 'moderator' && role !== 'founder')
     }
 
-    try {
-      const response = await fetch(`/api/admin/users/${selectedUser.id}/roles`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: 'include',
-        body: JSON.stringify({ roles: rolesToSave }),
-      })
-
-      if (response.ok) {
-        setUsers(users.map(user => 
-          user.id === selectedUser.id 
-            ? { ...user, roles: rolesToSave }
-            : user
-        ))
-        setSelectedUser(null)
-        setEditingRoles([])
-        toast.success("User roles updated successfully")
-      } else {
-        toast.error("Failed to update user roles")
+    updateUserRolesMutation.mutate(
+      { userId: selectedUser.id, roles: rolesToSave },
+      {
+        onSuccess: () => {
+          setSelectedUser(null)
+          setEditingRoles([])
+        }
       }
-    } catch (error) {
-      console.error("Error updating user roles:", error)
-      toast.error("An error occurred while updating user roles")
-    }
+    )
   }
 
   const createAd = async () => {
@@ -335,7 +304,7 @@ export default function AdminPage() {
           const uploadResult = await uploadResponse.json()
           imageUrl = uploadResult.url
         } else {
-          console.error("Failed to upload image")
+          toast.error("Failed to upload image")
           return
         }
       }
@@ -345,43 +314,29 @@ export default function AdminPage() {
         imageUrl: imageUrl,
       }
 
-      const response = await fetch("/api/ads", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(adData),
+      createAdMutation.mutate(adData, {
+        onSuccess: () => {
+          setNewAd({
+            title: "",
+            description: "",
+            imageUrl: "",
+            linkUrl: "",
+            category: "",
+            status: "active",
+          })
+          setSelectedImage(null)
+          setShowAdDialog(false)
+        }
       })
-
-      if (response.ok) {
-        const result = await response.json()
-        setAds([...ads, { ...adData, id: result.adId, createdAt: new Date().toISOString() }])
-        setNewAd({
-          title: "",
-          description: "",
-          imageUrl: "",
-          linkUrl: "",
-          category: "",
-          status: "active",
-        })
-        setSelectedImage(null)
-        setShowAdDialog(false)
-      }
     } catch (error) {
       console.error("Error creating ad:", error)
+      toast.error("An error occurred while creating ad")
     }
   }
 
   const deleteAd = async (adId: number) => {
-    try {
-      const response = await fetch(`/api/ads/${adId}`, {
-        method: "DELETE",
-      })
-
-      if (response.ok) {
-        setAds(ads.filter(ad => ad.id !== adId))
-      }
-    } catch (error) {
-      console.error("Error deleting ad:", error)
-    }
+    if (!confirm("Are you sure you want to delete this ad?")) return
+    deleteAdMutation.mutate(adId)
   }
 
   const stats = {
@@ -407,172 +362,90 @@ export default function AdminPage() {
 
   // Handle script approval/rejection
   const handleScriptAction = async (scriptId: number, status: "approved" | "rejected") => {
-    try {
-      if (status === "rejected") {
-        setRejectingScriptLoading(true)
-      } else if (status === "approved") {
-        setApprovingScript(scriptId)
-      }
-      
-      const updateData: any = { status }
-      
-      if (status === "rejected" && rejectionReason) {
-        updateData.reason = rejectionReason
-      }
-      
-      const response = await fetch("/api/admin/scripts", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: 'include',
-        body: JSON.stringify({ scriptId, ...updateData }),
-      })
-
-      if (response.ok) {
-        // Update local state
-        setScripts(scripts.map(script => 
-          script.id === scriptId 
-            ? { ...script, status, rejection_reason: status === "rejected" ? rejectionReason : undefined }
-            : script
-        ))
-        
-        // Show success toast
-        if (status === "approved") {
-          toast.success("Script approved successfully!", {
-            description: "The script is now live and visible to users.",
-          })
-        } else {
-          toast.success("Script rejected", {
-            description: "The seller has been notified.",
-          })
-        }
-        
-        if (status === "rejected") {
-          setRejectingScript(null)
-          setRejectionReason("")
-        }
-        
-        // Reload data in background without redirect
-        await loadData()
-      } else {
-        toast.error(status === "approved" ? "Failed to approve script" : "Failed to reject script", {
-          description: "Please try again.",
-        })
-      }
-    } catch (error) {
-      console.error("Error updating script:", error)
-      toast.error("An error occurred", {
-        description: "Please try again later.",
-      })
-    } finally {
-      if (status === "rejected") {
-        setRejectingScriptLoading(false)
-      } else if (status === "approved") {
-        setApprovingScript(null)
-      }
+    if (status === "rejected") {
+      setRejectingScriptLoading(true)
+    } else if (status === "approved") {
+      setApprovingScript(scriptId)
     }
+
+    updateScriptMutation.mutate(
+      { 
+        scriptId, 
+        status, 
+        reason: status === "rejected" ? rejectionReason : undefined 
+      },
+      {
+        onSuccess: () => {
+          if (status === "rejected") {
+            setRejectingScript(null)
+            setRejectionReason("")
+          }
+        },
+        onSettled: () => {
+          if (status === "rejected") {
+            setRejectingScriptLoading(false)
+          } else if (status === "approved") {
+            setApprovingScript(null)
+          }
+        }
+      }
+    )
   }
 
   // Handle giveaway approval/rejection
   const handleGiveawayAction = async (giveawayId: number, status: "approved" | "rejected") => {
-    try {
-      if (status === "rejected") {
-        setRejectingGiveawayLoading(true)
-      }
-      
-      const updateData: any = { status }
-      
-      if (status === "rejected" && giveawayRejectionReason) {
-        updateData.reason = giveawayRejectionReason
-      }
-      
-      const response = await fetch("/api/admin/giveaways", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: 'include',
-        body: JSON.stringify({ giveawayId, ...updateData }),
-      })
-
-      if (response.ok) {
-        // Update local state
-        setGiveaways(giveaways.map(giveaway => 
-          giveaway.id === giveawayId 
-            ? { ...giveaway, status, rejection_reason: status === "rejected" ? giveawayRejectionReason : undefined }
-            : giveaway
-        ))
-        
-        if (status === "rejected") {
-          setRejectingGiveaway(null)
-          setGiveawayRejectionReason("")
-        }
-        
-        // Reload data to get updated information
-        loadData()
-        
-        // If giveaway was approved, show success message and redirect to giveaways page
-        if (status === "approved") {
-          alert("Giveaway approved successfully! Redirecting to giveaways page...")
-          window.location.href = "/giveaways"
-        }
-      }
-    } catch (error) {
-      console.error("Error updating giveaway:", error)
-    } finally {
-      if (status === "rejected") {
-        setRejectingGiveawayLoading(false)
-      }
+    if (status === "rejected") {
+      setRejectingGiveawayLoading(true)
     }
+
+    updateGiveawayMutation.mutate(
+      { 
+        giveawayId, 
+        status, 
+        reason: status === "rejected" ? giveawayRejectionReason : undefined 
+      },
+      {
+        onSuccess: () => {
+          if (status === "rejected") {
+            setRejectingGiveaway(null)
+            setGiveawayRejectionReason("")
+          }
+        },
+        onSettled: () => {
+          if (status === "rejected") {
+            setRejectingGiveawayLoading(false)
+          }
+        }
+      }
+    )
   }
 
   // Handle ad approval/rejection
   const handleAdAction = async (adId: number, status: "approved" | "rejected") => {
-    try {
-      if (status === "rejected") {
-        setRejectingAdLoading(true)
-      }
-      
-      const updateData: any = { 
-        action: status === "approved" ? "approve" : "reject",
-        adId 
-      }
-      
-      if (status === "rejected" && adRejectionReason) {
-        updateData.rejectionReason = adRejectionReason
-      }
-      
-      const response = await fetch("/api/admin/advertisements", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: 'include',
-        body: JSON.stringify(updateData),
-      })
-
-      if (response.ok) {
-        // Update local state
-        setAds(ads.map(ad => 
-          ad.id === adId 
-            ? { ...ad, status, rejectionReason: status === "rejected" ? adRejectionReason : undefined }
-            : ad
-        ))
-        
-        if (status === "rejected") {
-          setRejectingAd(null)
-          setAdRejectionReason("")
-        }
-        
-        // Avoid full reload on rejection; local state is already updated.
-        // Reload only when approving if needed.
-        if (status === "approved") {
-          await loadData()
-          alert("Ad approved successfully!")
-        }
-      }
-    } catch (error) {
-      console.error("Error updating ad:", error)
-    } finally {
-      if (status === "rejected") {
-        setRejectingAdLoading(false)
-      }
+    if (status === "rejected") {
+      setRejectingAdLoading(true)
     }
+
+    updateAdMutation.mutate(
+      { 
+        adId, 
+        status, 
+        rejectionReason: status === "rejected" ? adRejectionReason : undefined 
+      },
+      {
+        onSuccess: () => {
+          if (status === "rejected") {
+            setRejectingAd(null)
+            setAdRejectionReason("")
+          }
+        },
+        onSettled: () => {
+          if (status === "rejected") {
+            setRejectingAdLoading(false)
+          }
+        }
+      }
+    )
   }
 
   if (loading) {
@@ -808,6 +681,27 @@ export default function AdminPage() {
                         </div>
                       </div>
                     ))}
+                    
+                    {/* Load More Button for Users */}
+                    {hasMoreUsers && (
+                      <div className="flex justify-center pt-6">
+                        <Button
+                          onClick={() => fetchNextUsers()}
+                          disabled={loadingMoreUsers}
+                          variant="outline"
+                          className="border-gray-600 text-gray-300 hover:text-white hover:bg-gray-700"
+                        >
+                          {loadingMoreUsers ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                              Loading...
+                            </>
+                          ) : (
+                            'Load More Users'
+                          )}
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -975,6 +869,27 @@ export default function AdminPage() {
                         <p>No scripts found with the selected filter.</p>
                       </div>
                     )}
+                    
+                    {/* Load More Button for Scripts */}
+                    {filteredScripts.length > 0 && hasMoreScripts && (
+                      <div className="flex justify-center pt-6">
+                        <Button
+                          onClick={() => fetchNextScripts()}
+                          disabled={loadingMoreScripts}
+                          variant="outline"
+                          className="border-gray-600 text-gray-300 hover:text-white hover:bg-gray-700"
+                        >
+                          {loadingMoreScripts ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                              Loading...
+                            </>
+                          ) : (
+                            'Load More Scripts'
+                          )}
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -1127,6 +1042,27 @@ export default function AdminPage() {
                         <p>No giveaways found with the selected filter.</p>
                       </div>
                     )}
+                    
+                    {/* Load More Button for Giveaways */}
+                    {filteredGiveaways.length > 0 && hasMoreGiveaways && (
+                      <div className="flex justify-center pt-6">
+                        <Button
+                          onClick={() => fetchNextGiveaways()}
+                          disabled={loadingMoreGiveaways}
+                          variant="outline"
+                          className="border-gray-600 text-gray-300 hover:text-white hover:bg-gray-700"
+                        >
+                          {loadingMoreGiveaways ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                              Loading...
+                            </>
+                          ) : (
+                            'Load More Giveaways'
+                          )}
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -1257,18 +1193,30 @@ export default function AdminPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {ads
-                      .filter(ad => {
-                        if (activeAdFilter === "all") return true
-                        // For pending ads, they might not have a status field or it might be null
-                        if (activeAdFilter === "pending") return !ad.status || ad.status === "pending"
-                        if (activeAdFilter === "approved") return ad.status === "approved" || ad.status === "active"
-                        if (activeAdFilter === "rejected") return ad.status === "rejected"
-                        return true
-                      })
-                      .map((ad) => {
-                        console.log("Admin - Ad:", ad.id, "Status:", ad.status, "Has buttons:", (ad.status === "pending" || ad.status === "approved"))
-                        return (
+                    {adsLoading ? (
+                      <div className="flex items-center justify-center p-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+                        <span className="ml-3 text-gray-400">Loading ads...</span>
+                      </div>
+                    ) : ads.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center p-8 text-center">
+                        <Megaphone className="h-12 w-12 text-gray-600 mb-4" />
+                        <p className="text-gray-400">No advertisements found</p>
+                        <p className="text-sm text-gray-500 mt-2">Create your first ad to get started</p>
+                      </div>
+                    ) : (
+                      ads
+                        .filter(ad => {
+                          if (activeAdFilter === "all") return true
+                          // For pending ads, they might not have a status field or it might be null
+                          if (activeAdFilter === "pending") return !ad.status || ad.status === "pending"
+                          if (activeAdFilter === "approved") return ad.status === "approved" || ad.status === "active"
+                          if (activeAdFilter === "rejected") return ad.status === "rejected"
+                          return true
+                        })
+                        .map((ad) => {
+                          console.log("Admin - Ad:", ad.id, "Status:", ad.status, "Has buttons:", (ad.status === "pending" || ad.status === "approved"))
+                          return (
                       <div key={ad.id} className="flex items-center justify-between p-4 rounded-lg bg-gray-700/30">
                         <div className="flex items-center gap-3">
                           <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-orange-500/20 to-yellow-400/20 flex items-center justify-center">
@@ -1277,15 +1225,16 @@ export default function AdminPage() {
                           <div>
                             <p className="text-white font-medium">{ad.title}</p>
                             <p className="text-sm text-gray-400">{ad.description}</p>
-                            <div className="flex gap-2 mt-1">
-                              <Badge variant="secondary" className="bg-gray-600 text-gray-300">
-                                {ad.category}
-                              </Badge>
-                              
-                            </div>
-                            {ad.rejectionReason && (
+                            {ad.category && (
+                              <div className="flex gap-2 mt-1">
+                                <Badge variant="secondary" className="bg-gray-600 text-gray-300">
+                                  {ad.category}
+                                </Badge>
+                              </div>
+                            )}
+                            {ad.rejection_reason && (
                               <div className="mt-2 p-2 bg-red-900/20 border border-red-500/30 rounded text-red-300 text-sm">
-                                <strong>Rejection Reason:</strong> {ad.rejectionReason}
+                                <strong>Rejection Reason:</strong> {ad.rejection_reason}
                               </div>
                             )}
                           </div>
@@ -1343,7 +1292,29 @@ export default function AdminPage() {
                         </div>
                       </div>
                         )
-                      })}
+                      })
+                    )}
+                    
+                    {/* Load More Button for Ads */}
+                    {ads.length > 0 && hasMoreAds && (
+                      <div className="flex justify-center pt-6">
+                        <Button
+                          onClick={() => fetchNextAds()}
+                          disabled={loadingMoreAds}
+                          variant="outline"
+                          className="border-gray-600 text-gray-300 hover:text-white hover:bg-gray-700"
+                        >
+                          {loadingMoreAds ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                              Loading...
+                            </>
+                          ) : (
+                            'Load More Ads'
+                          )}
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>

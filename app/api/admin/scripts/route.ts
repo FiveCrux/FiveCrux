@@ -23,14 +23,21 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const status = searchParams.get('status')
 
+    const limit = parseInt(searchParams.get('limit') || '10', 10)
+    const offset = parseInt(searchParams.get('offset') || '0', 10)
+
     let scripts: any[] = []
+    let hasMore = false
+    
     if (!status || status === 'all') {
+      // Fetch extra items to check if there are more
       const [pending, approved, rejected] = await Promise.all([
-        getPendingScripts(1000),
-        getApprovedScripts(1000),
-        getRejectedScripts(1000),
+        getPendingScripts(limit + offset + 1),
+        getApprovedScripts(limit + offset + 1),
+        getRejectedScripts(limit + offset + 1),
       ])
-      scripts = [
+      
+      const allScripts = [
         ...pending.map((s: any) => ({
           ...s,
           status: 'pending',
@@ -66,8 +73,12 @@ export async function GET(request: NextRequest) {
           rejection_reason: s.rejectionReason,
         })),
       ]
+      
+      // Apply pagination
+      scripts = allScripts.slice(offset, offset + limit)
+      hasMore = allScripts.length > offset + limit
     } else if (status === 'pending') {
-      scripts = (await getPendingScripts(1000)).map((s: any) => ({
+      const allScripts = (await getPendingScripts(limit + offset + 1)).map((s: any) => ({
         ...s,
         status: 'pending',
         seller_name: s.seller_name,
@@ -78,8 +89,10 @@ export async function GET(request: NextRequest) {
         created_at: s.createdAt || s.submittedAt,
         updated_at: s.updatedAt,
       }))
+      scripts = allScripts.slice(offset, offset + limit)
+      hasMore = allScripts.length > offset + limit
     } else if (status === 'approved') {
-      scripts = (await getApprovedScripts(1000)).map((s: any) => ({
+      const allScripts = (await getApprovedScripts(limit + offset + 1)).map((s: any) => ({
         ...s,
         status: 'approved',
         seller_name: s.seller_name,
@@ -90,8 +103,10 @@ export async function GET(request: NextRequest) {
         created_at: s.createdAt || s.approvedAt,
         updated_at: s.updatedAt,
       }))
+      scripts = allScripts.slice(offset, offset + limit)
+      hasMore = allScripts.length > offset + limit
     } else if (status === 'rejected') {
-      scripts = (await getRejectedScripts(1000)).map((s: any) => ({
+      const allScripts = (await getRejectedScripts(limit + offset + 1)).map((s: any) => ({
         ...s,
         status: 'rejected',
         seller_name: s.seller_name,
@@ -103,9 +118,11 @@ export async function GET(request: NextRequest) {
         updated_at: s.updatedAt,
         rejection_reason: s.rejectionReason,
       }))
+      scripts = allScripts.slice(offset, offset + limit)
+      hasMore = allScripts.length > offset + limit
     }
 
-    return NextResponse.json({ scripts })
+    return NextResponse.json({ scripts, hasMore })
   } catch (error) {
     console.error('Error in admin scripts API:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

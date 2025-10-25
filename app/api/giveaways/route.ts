@@ -13,13 +13,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Check if user has permission to create giveaways (founder, admin, verified_creator)
+    // User must be authenticated
     const user = session.user as any
-    if (!user.roles || !hasAnyRole(user.roles, ['founder', 'admin', 'verified_creator'])) {
-      return NextResponse.json({ 
-        error: "You need founder, admin, or verified creator access to submit giveaways." 
-      }, { status: 403 })
-    }
 
     // Determine approval status based on user role
     const isFounderOrAdmin = hasAnyRole(user.roles, ['founder', 'admin'])
