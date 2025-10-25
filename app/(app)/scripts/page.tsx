@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo, useRef } from "react"
+import { useState, useEffect, useMemo, useRef, useCallback } from "react"
 import { motion, useInView, AnimatePresence } from "framer-motion"
 import { Search, Filter, Star, Eye, Grid, List, ChevronDown, X, Sparkles, Zap } from "lucide-react"
 import { Button } from "@/componentss/ui/button"
@@ -64,7 +64,7 @@ export default function ScriptsPage() {
   const scriptsInView = useInView(scriptsRef, { once: true })
 
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
-  const [priceRange, setPriceRange] = useState([0, 10000])
+  const [priceRange, setPriceRange] = useState<number[]>([0, 100])
   const [sortBy, setSortBy] = useState("popular")
   const categoryParam = searchParams.get("category") ?? ""
 
@@ -119,28 +119,28 @@ export default function ScriptsPage() {
           console.log("Scripts count:", data.scripts?.length || 0)
           
           const mappedScripts = (data.scripts || []).map((s: any) => {
-            const image = s.coverImage || (s.images && s.images[0]) || (s.screenshots && s.screenshots[0]) || "/placeholder.jpg";
-            console.log(`Script ${s.id} (${s.title}): coverImage=${s.coverImage}, images=${JSON.stringify(s.images)}, screenshots=${JSON.stringify(s.screenshots)}, final image=${image}`);
+            const image = s.cover_image || (s.images && s.images[0]) || (s.screenshots && s.screenshots[0]) || "/placeholder.jpg"
+            console.log(`Script ${s.id} (${s.title}): cover_image=${s.cover_image}, images=${JSON.stringify(s.images)}, screenshots=${JSON.stringify(s.screenshots)}, final image=${image}`)
             return {
               id: s.id,
               title: s.title,
               description: s.description,
               price: Number(s.price) || 0,
-              originalPrice: s.originalPrice ? Number(s.originalPrice) : undefined,
+              originalPrice: s.original_price ? Number(s.original_price) : undefined,
               rating: s.rating || 0,
               reviews: s.review_count || 0,
               image: image,
               category: s.category,
               categoryName: s.category,
               seller: s.seller_name,
-              discount: s.originalPrice ? Math.max(0, Math.round(((Number(s.originalPrice) - Number(s.price)) / Number(s.originalPrice)) * 100)) : 0,
+              discount: s.original_price ? Math.max(0, Math.round(((Number(s.original_price) - Number(s.price)) / Number(s.original_price)) * 100)) : 0,
               framework: Array.isArray(s.framework) ? s.framework : (s.framework ? [s.framework] : []),
               priceCategory: Number(s.price) <= 15 ? "Budget" : Number(s.price) <= 30 ? "Standard" : "Premium",
               tags: (s.tags || []) as string[],
-              lastUpdated: s.last_updated,
-            };
-          });
-          console.log("Mapped scripts:", mappedScripts);
+              lastUpdated: s.updated_at,
+            }
+          })
+          console.log("Mapped scripts:", mappedScripts)
           setAllScripts(mappedScripts)
         }
 
@@ -194,7 +194,7 @@ export default function ScriptsPage() {
 
       if (selectedFrameworks.length > 0 && !selectedFrameworks.includes("All Frameworks")) {
         if (!script.framework || script.framework.length === 0) return false
-        const hasMatch = script.framework.some(fw => selectedFrameworks.includes(fw))
+        const hasMatch = script.framework.some((fw: string) => selectedFrameworks.includes(fw))
         if (!hasMatch) return false
       }
 
@@ -202,8 +202,10 @@ export default function ScriptsPage() {
         return false
       }
 
-      if (script.price < priceRange[0] || script.price > priceRange[1]) {
-        return false
+      if (priceRange && priceRange.length === 2) {
+        if (script.price < priceRange[0] || script.price > priceRange[1]) {
+          return false
+        }
       }
 
       if (selectedRatings.length > 0 && !selectedRatings.some((rating) => (Number(script.rating) || 0) >= rating)) {
@@ -248,39 +250,39 @@ export default function ScriptsPage() {
 
   // Debug logging removed for production
 
-  const handleCategoryChange = (category: string, checked: boolean) => {
+  const handleCategoryChange = useCallback((category: string, checked: boolean) => {
     if (checked) {
-      setSelectedCategories([...selectedCategories, category])
+      setSelectedCategories(prev => [...prev, category])
     } else {
-      setSelectedCategories(selectedCategories.filter((c) => c !== category))
+      setSelectedCategories(prev => prev.filter((c) => c !== category))
     }
-  }
+  }, [])
 
-  const handleFrameworkChange = (framework: string, checked: boolean) => {
+  const handleFrameworkChange = useCallback((framework: string, checked: boolean) => {
     if (checked) {
-      setSelectedFrameworks([...selectedFrameworks, framework])
+      setSelectedFrameworks(prev => [...prev, framework])
     } else {
-      setSelectedFrameworks(selectedFrameworks.filter((f) => f !== framework))
+      setSelectedFrameworks(prev => prev.filter((f) => f !== framework))
     }
-  }
+  }, [])
 
-  const handlePriceCategoryChange = (category: string, checked: boolean) => {
+  const handlePriceCategoryChange = useCallback((category: string, checked: boolean) => {
     if (checked) {
-      setSelectedPriceCategories([...selectedPriceCategories, category])
+      setSelectedPriceCategories(prev => [...prev, category])
     } else {
-      setSelectedPriceCategories(selectedPriceCategories.filter((c) => c !== category))
+      setSelectedPriceCategories(prev => prev.filter((c) => c !== category))
     }
-  }
+  }, [])
 
-  const handleRatingChange = (rating: number, checked: boolean) => {
+  const handleRatingChange = useCallback((rating: number, checked: boolean) => {
     if (checked) {
-      setSelectedRatings([...selectedRatings, rating])
+      setSelectedRatings(prev => [...prev, rating])
     } else {
-      setSelectedRatings(selectedRatings.filter((r) => r !== rating))
+      setSelectedRatings(prev => prev.filter((r) => r !== rating))
     }
-  }
+  }, [])
 
-  const clearAllFilters = () => {
+  const clearAllFilters = useCallback(() => {
     setSelectedCategories([])
     setSelectedFrameworks([])
     setSelectedPriceCategories([])
@@ -289,9 +291,9 @@ export default function ScriptsPage() {
     setOnSaleOnly(false)
     setSearchQuery("")
     router.push("/scripts")
-  }
+  }, [router])
 
-  const removeFilter = (type: string, value: string | number) => {
+  const removeFilter = useCallback((type: string, value: string | number) => {
     switch (type) {
       case "category":
         handleCategoryChange(value as string, false)
@@ -306,14 +308,16 @@ export default function ScriptsPage() {
         handleRatingChange(value as number, false)
         break
     }
-  }
+  }, [handleCategoryChange, handleFrameworkChange, handlePriceCategoryChange, handleRatingChange])
 
-  const activeFiltersCount =
+  const activeFiltersCount = useMemo(() => 
     selectedCategories.length +
     selectedFrameworks.length +
     selectedPriceCategories.length +
     selectedRatings.length +
-    (onSaleOnly ? 1 : 0)
+    (onSaleOnly ? 1 : 0),
+    [selectedCategories.length, selectedFrameworks.length, selectedPriceCategories.length, selectedRatings.length, onSaleOnly]
+  )
 
   // Get random ads for scripts page
   const randomAds = useRandomAds(ads, 2)

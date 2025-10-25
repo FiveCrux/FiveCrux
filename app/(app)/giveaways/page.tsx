@@ -32,6 +32,8 @@ import Navbar from "@/componentss/shared/navbar"
 import Footer from "@/componentss/shared/footer"
 import Link from "next/link"
 import AdCard, { useRandomAds } from "@/componentss/ads/ad-card"
+import { useGiveaways, usePromotedGiveaways, useUserGiveawayEntries } from "@/hooks/use-giveaways-queries"
+import { toast } from "sonner"
 
 // Animated background particles
 const AnimatedParticles = () => {
@@ -257,11 +259,11 @@ export default function GiveawaysPage() {
         // Refresh the page to update entry counts
         window.location.reload()
       } else {
-        alert(data.error || "Failed to enter giveaway")
+        toast.error(data.error || "Failed to enter giveaway")
       }
     } catch (error) {
       console.error('Error entering giveaway:', error)
-      alert("Failed to enter giveaway. Please try again.")
+      toast.error("Failed to enter giveaway. Please try again.")
     }
   }
 

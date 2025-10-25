@@ -32,6 +32,7 @@ import { Switch } from "@/componentss/ui/switch"
 import { Label } from "@/componentss/ui/label"
 import Navbar from "@/componentss/shared/navbar"
 import Footer from "@/componentss/shared/footer"
+import { toast } from "sonner"
 import FileUpload from "@/componentss/shared/file-upload"
 
 // Animated background particles
@@ -207,12 +208,7 @@ export default function EditGiveawayPage() {
     }
   }, [giveawayId, session, router])
 
-  // Check if user has verified_creator role
-  const hasVerifiedCreatorRole = session?.user && 
-    (session.user as any).roles && 
-    (session.user as any).roles.includes('verified_creator')
-
-  // Redirect if not authenticated or doesn't have verified_creator role
+  // Redirect if not authenticated
   if (status === "loading") {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>
   }
@@ -220,36 +216,6 @@ export default function EditGiveawayPage() {
   if (!session) {
     router.push('/auth/signin')
     return null
-  }
-
-  if (!hasVerifiedCreatorRole) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
-        <Navbar />
-        <div className="container mx-auto px-4 py-16">
-          <div className="max-w-2xl mx-auto text-center">
-            <div className="bg-white rounded-2xl shadow-2xl p-8 border border-orange-200">
-              <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <AlertCircle className="w-8 h-8 text-orange-600" />
-              </div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-4">
-                Verified Creator Access Required
-              </h1>
-              <p className="text-gray-600 mb-6">
-                Only verified creators can edit giveaways. Please contact an admin to get verified creator access.
-              </p>
-              <Button 
-                onClick={() => router.push('/')}
-                className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg"
-              >
-                Go Back Home
-              </Button>
-            </div>
-          </div>
-        </div>
-        <Footer />
-      </div>
-    )
   }
 
   if (loading) {
@@ -383,17 +349,19 @@ export default function EditGiveawayPage() {
       if (res.ok) {
         const result = await res.json();
         if (result.needsReapproval) {
-          alert('Giveaway updated successfully! It has been moved to pending status and will require admin approval before going live again.');
+          toast.success('Giveaway updated successfully!', {
+            description: 'It has been moved to pending status and will require admin approval before going live again.'
+          });
         } else {
-          alert('Giveaway updated successfully!');
+          toast.success('Giveaway updated successfully!');
         }
         router.push('/profile');
       } else {
         const errorData = await res.json();
-        alert(`Error updating giveaway: ${errorData.error || 'Unknown error'}`);
+        toast.error(`Error updating giveaway: ${errorData.error || 'Unknown error'}`);
       }
     } catch (err: any) {
-      alert('Network error: ' + err.message);
+      toast.error('Network error: ' + err.message);
     } finally {
       setSaving(false);
     }
@@ -422,7 +390,7 @@ export default function EditGiveawayPage() {
       return result.url
     } catch (error) {
       console.error("Upload error:", error)
-      alert(`Failed to upload ${type}: ${error instanceof Error ? error.message : "Unknown error"}`)
+      toast.error(`Failed to upload ${type}: ${error instanceof Error ? error.message : "Unknown error"}`)
       return null
     }
   }
@@ -449,7 +417,7 @@ export default function EditGiveawayPage() {
     for (let i = 0; i < files.length; i++) {
       const file = files[i]
       if (media.images.length + newImages.length >= 10) {
-        alert("Maximum 10 images allowed")
+        toast.warning("Maximum 10 images allowed")
         break
       }
 
@@ -475,7 +443,7 @@ export default function EditGiveawayPage() {
     for (let i = 0; i < files.length; i++) {
       const file = files[i]
       if (media.videos.length + newVideos.length >= 5) {
-        alert("Maximum 5 videos allowed")
+        toast.warning("Maximum 5 videos allowed")
         break
       }
 

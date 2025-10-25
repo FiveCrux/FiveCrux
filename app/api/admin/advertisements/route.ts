@@ -24,35 +24,53 @@ export async function GET(request: NextRequest) {
     const url = new URL(request.url)
     const type = url.searchParams.get('type') || 'all'
     const limit = url.searchParams.get('limit') ? Number(url.searchParams.get('limit')) : undefined
+    const offset = url.searchParams.get('offset') ? Number(url.searchParams.get('offset')) : 0
 
     if (type === 'approved') {
       console.log("Fetching approved ads...")
-      const data = await getApprovedAds(limit)
+      const allData = await getApprovedAds(limit ? limit + offset + 1 : undefined)
+      const dataWithStatus = allData.map(ad => ({ ...ad, status: ad.status || 'approved' }))
+      const data = dataWithStatus.slice(offset, limit ? offset + limit : undefined)
+      const hasMore = limit ? allData.length > offset + limit : false
       console.log("Approved ads found:", data.length)
-      return NextResponse.json({ data })
+      return NextResponse.json({ data, hasMore })
     }
     if (type === 'rejected') {
       console.log("Fetching rejected ads...")
-      const data = await getRejectedAds(limit)
+      const allData = await getRejectedAds(limit ? limit + offset + 1 : undefined)
+      const dataWithStatus = allData.map(ad => ({ ...ad, status: 'rejected' }))
+      const data = dataWithStatus.slice(offset, limit ? offset + limit : undefined)
+      const hasMore = limit ? allData.length > offset + limit : false
       console.log("Rejected ads found:", data.length)
-      return NextResponse.json({ data })
+      return NextResponse.json({ data, hasMore })
     }
     if (type === 'pending') {
       console.log("Fetching pending ads...")
-      const data = await getPendingAds(limit)
+      const allData = await getPendingAds(limit ? limit + offset + 1 : undefined)
+      const dataWithStatus = allData.map(ad => ({ ...ad, status: 'pending' }))
+      const data = dataWithStatus.slice(offset, limit ? offset + limit : undefined)
+      const hasMore = limit ? allData.length > offset + limit : false
       console.log("Pending ads found:", data.length)
-      return NextResponse.json({ data })
+      return NextResponse.json({ data, hasMore })
     }
     // For 'all' type, fetch from all tables
     console.log("Fetching all ads...")
     const [pendingData, approvedData, rejectedData] = await Promise.all([
-      getPendingAds(limit),
-      getApprovedAds(limit),
-      getRejectedAds(limit)
+      getPendingAds(limit ? limit + offset + 1 : undefined),
+      getApprovedAds(limit ? limit + offset + 1 : undefined),
+      getRejectedAds(limit ? limit + offset + 1 : undefined)
     ])
     console.log("All ads - Pending:", pendingData.length, "Approved:", approvedData.length, "Rejected:", rejectedData.length)
-    const allData = [...pendingData, ...approvedData, ...rejectedData]
-    return NextResponse.json({ data: allData })
+    
+    // Add status field to each ad based on its source
+    const allData = [
+      ...pendingData.map(ad => ({ ...ad, status: 'pending' })),
+      ...approvedData.map(ad => ({ ...ad, status: ad.status || 'approved' })),
+      ...rejectedData.map(ad => ({ ...ad, status: 'rejected' }))
+    ]
+    const data = allData.slice(offset, limit ? offset + limit : undefined)
+    const hasMore = limit ? allData.length > offset + limit : false
+    return NextResponse.json({ data, hasMore })
   } catch (error) {
     console.error('Error fetching admin advertisements:', error)
     console.error('Error details:', {

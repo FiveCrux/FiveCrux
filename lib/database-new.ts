@@ -205,7 +205,16 @@ export async function getScripts(filters?: ScriptFilters) {
       .limit(limit)
       .offset(offset);
       
-    return results;
+    // Map database fields to API-expected field names
+    return results.map(script => ({
+      ...script,
+      cover_image: script.coverImage,
+      original_price: script.originalPrice,
+      seller_name: script.seller_name,
+      seller_email: script.seller_email,
+      created_at: script.createdAt,
+      updated_at: script.updatedAt,
+    }));
   } catch (error) {
     console.error('Error fetching scripts:', error);
     throw error;

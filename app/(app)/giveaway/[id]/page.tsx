@@ -33,6 +33,7 @@ import Link from "next/link"
 import { useParams } from "next/navigation"
 import Navbar from "@/componentss/shared/navbar"
 import Footer from "@/componentss/shared/footer"
+import { toast } from "sonner"
 
 // Add CSS for spin animation
 const spinStyle = `
@@ -625,7 +626,7 @@ export default function GiveawayDetailPage() {
           setCompletedTasks(newCompleted);
           // Update points in database
           updatePointsInDatabase(newCompleted)
-          alert(`✅ You're already a member of this Discord server. Task completed!`);
+          toast.success(`✅ You're already a member of this Discord server. Task completed!`);
           return;
         }
         
@@ -638,11 +639,11 @@ export default function GiveawayDetailPage() {
         }
         
         // Show instructions to user
-        alert("Discord invite opened! Please join the server and then click 'Verify Join' to check your membership.");
+        toast.info("Discord invite opened! Please join the server and then click 'Verify Join' to check your membership.");
         
       } catch (error) {
         console.error('Error opening Discord link:', error);
-        alert("Error opening Discord invite. Please try again.");
+        toast.error("Error opening Discord invite. Please try again.");
       } finally {
         // Clear loading state
         setLoadingStates(prev => ({ ...prev, [taskId]: false }));
@@ -777,7 +778,7 @@ export default function GiveawayDetailPage() {
     const completedRequired = requiredTasks.every((task: any) => completedTasks.includes(task.id))
 
     if (!completedRequired) {
-      alert("Please complete all required tasks first!")
+      toast.warning("Please complete all required tasks first!")
       return
     }
 
@@ -802,11 +803,11 @@ export default function GiveawayDetailPage() {
         // Entry count will be updated automatically when the page refreshes
         // since getGiveawayById now counts actual entries from giveaway_entries table
       } else {
-        alert(data.error || "Failed to enter giveaway")
+        toast.error(data.error || "Failed to enter giveaway")
       }
     } catch (error) {
       console.error('Error entering giveaway:', error)
-      alert("Failed to enter giveaway. Please try again.")
+      toast.error("Failed to enter giveaway. Please try again.")
     } finally {
       setIsEnteringGiveaway(false)
     }
@@ -1311,13 +1312,13 @@ export default function GiveawayDetailPage() {
                                         setCompletedTasks(newCompleted);
                                         // Update points in database
                                         updatePointsInDatabase(newCompleted)
-                                        alert(`✅ Verified! You're a member of this Discord server. Task completed!`);
+                                        toast.success(`✅ Verified! You're a member of this Discord server. Task completed!`);
                                       } else {
-                                        alert("❌ You haven't joined the Discord server yet. Please join first and try again.");
+                                        toast.warning("❌ You haven't joined the Discord server yet. Please join first and try again.");
                                       }
                                     } catch (error) {
                                       console.error('Error verifying Discord membership:', error);
-                                      alert("Error verifying Discord membership. Please try again.");
+                                      toast.error("Error verifying Discord membership. Please try again.");
                                     } finally {
                                       setLoadingStates(prev => ({ ...prev, [task.id]: false }));
                                     }

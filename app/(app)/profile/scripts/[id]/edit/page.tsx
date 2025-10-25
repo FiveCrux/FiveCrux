@@ -34,6 +34,7 @@ import { Switch } from "@/componentss/ui/switch"
 import { Label } from "@/componentss/ui/label"
 import Navbar from "@/componentss/shared/navbar"
 import Footer from "@/componentss/shared/footer"
+import { toast } from "sonner"
 
 interface Script {
   id: number
@@ -222,7 +223,7 @@ export default function EditScriptPage() {
       return result.url
     } catch (error) {
       console.error("Upload error:", error)
-      alert(`Failed to upload ${type}: ${error instanceof Error ? error.message : "Unknown error"}`)
+      toast.error(`Failed to upload ${type}: ${error instanceof Error ? error.message : "Unknown error"}`)
       return null
     }
   }
@@ -235,7 +236,7 @@ export default function EditScriptPage() {
     for (let i = 0; i < files.length; i++) {
       const file = files[i]
       if (media.screenshots.length + newScreenshots.length >= 10) {
-        alert("Maximum 10 screenshots allowed")
+        toast.warning("Maximum 10 screenshots allowed")
         break
       }
 
@@ -367,9 +368,11 @@ export default function EditScriptPage() {
       if (response.ok) {
         const result = await response.json()
         if (result.needsReapproval) {
-          alert("Script updated successfully! It has been moved to pending status and will require admin approval before going live again.")
+          toast.success("Script updated successfully!", {
+            description: "It has been moved to pending status and will require admin approval before going live again."
+          })
         } else {
-          alert("Script updated successfully!")
+          toast.success("Script updated successfully!")
         }
         router.push("/profile")
       } else {
@@ -377,7 +380,7 @@ export default function EditScriptPage() {
       }
     } catch (error) {
       console.error("Error updating script:", error)
-      alert("Error updating script. Please try again.")
+      toast.error("Error updating script. Please try again.")
     } finally {
       setSaving(false)
     }

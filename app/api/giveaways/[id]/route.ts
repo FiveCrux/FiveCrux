@@ -48,13 +48,8 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Check if user has permission to edit giveaways (founder, admin, verified_creator)
+    // User must be authenticated
     const user = session.user as any
-    if (!user.roles || !hasAnyRole(user.roles, ['founder', 'admin', 'verified_creator'])) {
-      return NextResponse.json({ 
-        error: "You need founder, admin, or verified creator access to edit giveaways." 
-      }, { status: 403 })
-    }
 
     const data = await request.json()
     const { giveaway, requirements, prizes } = data

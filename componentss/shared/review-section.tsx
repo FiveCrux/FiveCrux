@@ -10,6 +10,7 @@ import { Textarea } from "@/componentss/ui/textarea"
 import { Input } from "@/componentss/ui/input"
 import { Badge } from "@/componentss/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/componentss/ui/avatar"
+import { toast } from "sonner"
 
 interface Review {
   id: number
@@ -95,11 +96,11 @@ export default function ReviewSection({ itemId, itemType, itemTitle, onReviewSub
         onReviewSubmitted?.()
       } else {
         const error = await response.json()
-        alert(error.error || "Failed to submit review")
+        toast.error(error.error || "Failed to submit review")
       }
     } catch (error) {
       console.error('Error submitting review:', error)
-      alert("Failed to submit review")
+      toast.error("Failed to submit review")
     } finally {
       setSubmitting(false)
     }

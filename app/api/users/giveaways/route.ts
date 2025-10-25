@@ -20,13 +20,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Check if user has permission to view giveaways (founder, admin, verified_creator)
+    // User must be authenticated
     const user = session.user as any
-    if (!user.roles || !hasAnyRole(user.roles, ['founder', 'admin', 'verified_creator'])) {
-      return NextResponse.json({ 
-        error: "You need founder, admin, or verified creator access to view giveaways." 
-      }, { status: 403 });
-    }
 
     // Get pagination params from query string
     const { searchParams } = new URL(request.url);
@@ -136,13 +131,8 @@ export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions);
     if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    // Check if user has permission to create giveaways (founder, admin, verified_creator)
+    // User must be authenticated
     const user = session.user as any
-    if (!user.roles || !hasAnyRole(user.roles, ['founder', 'admin', 'verified_creator'])) {
-      return NextResponse.json({ 
-        error: "You need founder, admin, or verified creator access to create giveaways." 
-      }, { status: 403 });
-    }
 
     const body = await request.json();
 
