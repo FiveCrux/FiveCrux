@@ -8,8 +8,11 @@ import {
   approveGiveaway,
   rejectGiveaway,
   getGiveawayRequirements,
-  getGiveawayPrizes
+  getGiveawayPrizes,
+  getGiveawayById,
+  getUserById
 } from '@/lib/database-new';
+import { announceGiveawayApproval } from '@/lib/discord';
 
 export async function GET(request: NextRequest) {
   try {
@@ -205,6 +208,40 @@ export async function PATCH(request: NextRequest) {
     
     if (status === 'approved') {
       result = await approveGiveaway(giveawayId, (session.user as any).id, adminNotes);
+      
+      // Send Discord notification for giveaway approval
+      if (result) {
+        try {
+          const giveaway = await getGiveawayById(giveawayId);
+          if (giveaway && giveaway.creatorId) {
+            const creator = await getUserById(giveaway.creatorId);
+            if (creator) {
+              await announceGiveawayApproval(
+                {
+                  id: giveaway.id,
+                  title: giveaway.title,
+                  totalValue: giveaway.totalValue,
+                  difficulty: giveaway.difficulty,
+                  endDate: giveaway.endDate,
+                  coverImage: giveaway.coverImage,
+                  creatorId: giveaway.creatorId,
+                },
+                {
+                  id: creator.id,
+                  name: creator.name,
+                },
+                {
+                  id: (session.user as any).id,
+                  name: session.user?.name || null,
+                }
+              );
+            }
+          }
+        } catch (discordError) {
+          console.error('Failed to send Discord notification for giveaway approval:', discordError);
+          // Don't fail the approval if Discord notification fails
+        }
+      }
     } else if (status === 'rejected') {
       if (!reason) {
         return NextResponse.json({ error: "Rejection reason is required" }, { status: 400 });
