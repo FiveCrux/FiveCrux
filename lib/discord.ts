@@ -15,8 +15,8 @@ type DiscordEmbed = {
   timestamp?: string
 }
 
-export async function sendDiscordWebhook(embed: DiscordEmbed) {
-  const webhookUrl = env.DISCORD_WEBHOOK_URL
+export async function sendDiscordWebhook(embed: DiscordEmbed, customWebhookUrl?: string) {
+  const webhookUrl = customWebhookUrl || env.DISCORD_WEBHOOK_URL
   if (!webhookUrl) {
     console.warn('Discord webhook URL not configured')
     return { success: false, error: 'Webhook not configured' }
@@ -86,6 +86,328 @@ export async function announceGiveawayWinners(
   }
 
   return await sendDiscordWebhook(embed)
+}
+
+export async function announceScriptApproval(
+  script: {
+    id: number
+    title: string
+    coverImage?: string | null
+    sellerId?: string | null
+  },
+  seller: {
+    id: string
+    name: string | null
+  },
+  approver: {
+    id: string
+    name: string | null
+  }
+) {
+  const embed: DiscordEmbed = {
+    title: '✅ Script Approved!',
+    description: `**${script.title}** has been approved and is now live on the marketplace!`,
+    color: 0x00ff00, // Green color
+    fields: [
+      {
+        name: 'Creator',
+        value: script.sellerId ? `<@${script.sellerId}> (${seller.name ?? 'Unknown'})` : seller.name ?? 'Unknown',
+        inline: true,
+      },
+      {
+        name: 'Approved By',
+        value: `<@${approver.id}> (${approver.name ?? 'Admin'})`,
+        inline: true,
+      },
+      {
+        name: 'Script ID',
+        value: `#${script.id}`,
+        inline: true,
+      },
+      {
+        name: 'Link',
+        value: `${env.NEXTAUTH_URL ?? ''}/script/${script.id}`,
+      },
+    ],
+    thumbnail: script.coverImage ? { url: script.coverImage } : undefined,
+    footer: { text: 'Crux Marketplace • Script Approval System' },
+    timestamp: new Date().toISOString(),
+  }
+
+  // Use the script approval webhook if configured, otherwise fall back to default
+  return await sendDiscordWebhook(embed, env.DISCORD_SCRIPT_APPROVAL_WEBHOOK_URL)
+}
+
+export async function announceScriptPending(
+  script: {
+    id: number
+    title: string
+    description: string
+    price: string
+    category: string
+    coverImage?: string | null
+    sellerId?: string | null
+  },
+  seller: {
+    id: string
+    name: string | null
+  },
+  isUpdate: boolean = false
+) {
+  const embed: DiscordEmbed = {
+    title: isUpdate ? '🔄 Script Updated - Re-approval Required!' : '📝 New Script Submission!',
+    description: isUpdate 
+      ? `**${script.title}** has been updated and is awaiting re-approval.`
+      : `**${script.title}** has been submitted and is awaiting approval.`,
+    color: isUpdate ? 0x3498db : 0xffa500, // Blue for updates, Orange for new submissions
+    fields: [
+      {
+        name: 'Creator',
+        value: script.sellerId ? `<@${script.sellerId}> (${seller.name ?? 'Unknown'})` : seller.name ?? 'Unknown',
+        inline: true,
+      },
+      {
+        name: 'Script ID',
+        value: `#${script.id}`,
+        inline: true,
+      },
+      {
+        name: 'Price',
+        value: `$${script.price}`,
+        inline: true,
+      },
+      {
+        name: 'Category',
+        value: script.category,
+        inline: true,
+      },
+      {
+        name: 'Description',
+        value: script.description.length > 200 
+          ? script.description.substring(0, 200) + '...' 
+          : script.description,
+      },
+      {
+        name: 'Admin Panel',
+        value: `${env.NEXTAUTH_URL ?? ''}/admin`,
+      },
+    ],
+    thumbnail: script.coverImage ? { url: script.coverImage } : undefined,
+    footer: { text: isUpdate ? 'Crux Marketplace • Script Update System' : 'Crux Marketplace • Script Submission System' },
+    timestamp: new Date().toISOString(),
+  }
+
+  // Use the script pending webhook if configured, otherwise fall back to default
+  return await sendDiscordWebhook(embed, env.DISCORD_SCRIPT_PENDING_WEBHOOK_URL)
+}
+
+export async function announceScriptRejection(
+  script: {
+    id: number
+    title: string
+    description: string
+    coverImage?: string | null
+    sellerId?: string | null
+  },
+  seller: {
+    id: string
+    name: string | null
+  },
+  rejectionReason: string,
+  rejectedBy: {
+    id: string
+    name: string | null
+  }
+) {
+  const embed: DiscordEmbed = {
+    title: '❌ Script Rejected',
+    description: `**${script.title}** has been rejected by the admin team.`,
+    color: 0xff0000, // Red color for rejection
+    fields: [
+      {
+        name: 'Creator',
+        value: script.sellerId ? `<@${script.sellerId}> (${seller.name ?? 'Unknown'})` : seller.name ?? 'Unknown',
+        inline: true,
+      },
+      {
+        name: 'Rejected By',
+        value: `<@${rejectedBy.id}> (${rejectedBy.name ?? 'Admin'})`,
+        inline: true,
+      },
+      {
+        name: 'Script ID',
+        value: `#${script.id}`,
+        inline: true,
+      },
+      {
+        name: 'Rejection Reason',
+        value: rejectionReason.length > 500 
+          ? rejectionReason.substring(0, 500) + '...' 
+          : rejectionReason,
+      },
+      {
+        name: 'Description',
+        value: script.description.length > 200 
+          ? script.description.substring(0, 200) + '...' 
+          : script.description,
+      },
+    ],
+    thumbnail: script.coverImage ? { url: script.coverImage } : undefined,
+    footer: { text: 'Crux Marketplace • Script Rejection System' },
+    timestamp: new Date().toISOString(),
+  }
+
+  // Use the script rejection webhook if configured, otherwise fall back to default
+  return await sendDiscordWebhook(embed, env.DISCORD_SCRIPT_REJECTION_WEBHOOK_URL)
+}
+
+export async function announceGiveawayApproval(
+  giveaway: {
+    id: number
+    title: string
+    totalValue: string
+    difficulty: string
+    endDate: string
+    coverImage?: string | null
+    creatorId?: string | null
+  },
+  creator: {
+    id: string
+    name: string | null
+  },
+  approver: {
+    id: string
+    name: string | null
+  }
+) {
+  const embed: DiscordEmbed = {
+    title: '✅ Giveaway Approved!',
+    description: `**${giveaway.title}** has been approved and is now live!`,
+    color: 0x00ff00, // Green color
+    fields: [
+      {
+        name: 'Creator',
+        value: giveaway.creatorId ? `<@${giveaway.creatorId}> (${creator.name ?? 'Unknown'})` : creator.name ?? 'Unknown',
+        inline: true,
+      },
+      {
+        name: 'Approved By',
+        value: `<@${approver.id}> (${approver.name ?? 'Admin'})`,
+        inline: true,
+      },
+      {
+        name: 'Giveaway ID',
+        value: `#${giveaway.id}`,
+        inline: true,
+      },
+      {
+        name: 'Total Value',
+        value: giveaway.totalValue,
+        inline: true,
+      },
+      {
+        name: 'Difficulty',
+        value: giveaway.difficulty,
+        inline: true,
+      },
+      {
+        name: 'End Date',
+        value: new Date(giveaway.endDate).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        }),
+        inline: true,
+      },
+      {
+        name: 'Link',
+        value: `${env.NEXTAUTH_URL ?? ''}/giveaway/${giveaway.id}`,
+      },
+    ],
+    thumbnail: giveaway.coverImage ? { url: giveaway.coverImage } : undefined,
+    footer: { text: 'Crux Marketplace • Giveaway Approval System' },
+    timestamp: new Date().toISOString(),
+  }
+
+  // Use the giveaway approval webhook if configured, otherwise fall back to default
+  return await sendDiscordWebhook(embed, env.DISCORD_GIVEAWAY_APPROVAL_WEBHOOK_URL)
+}
+
+export async function announceGiveawayPending(
+  giveaway: {
+    id: number
+    title: string
+    description: string
+    totalValue: string
+    difficulty: string
+    endDate: string
+    coverImage?: string | null
+    creatorId?: string | null
+  },
+  creator: {
+    id: string
+    name: string | null
+  },
+  isUpdate: boolean = false
+) {
+  console.log('announceGiveawayPending called with:', { giveawayId: giveaway.id, isUpdate, webhookUrl: env.DISCORD_GIVEAWAY_PENDING_WEBHOOK_URL ? 'configured' : 'not configured' })
+  
+  const embed: DiscordEmbed = {
+    title: isUpdate ? '🔄 Giveaway Updated - Re-approval Required!' : '📝 New Giveaway Submission!',
+    description: isUpdate 
+      ? `**${giveaway.title}** has been updated and is awaiting re-approval.`
+      : `**${giveaway.title}** has been submitted and is awaiting approval.`,
+    color: isUpdate ? 0x3498db : 0xffa500, // Blue for updates, Orange for new submissions
+    fields: [
+      {
+        name: 'Creator',
+        value: giveaway.creatorId ? `<@${giveaway.creatorId}> (${creator.name ?? 'Unknown'})` : creator.name ?? 'Unknown',
+        inline: true,
+      },
+      {
+        name: 'Giveaway ID',
+        value: `#${giveaway.id}`,
+        inline: true,
+      },
+      {
+        name: 'Total Value',
+        value: giveaway.totalValue,
+        inline: true,
+      },
+      {
+        name: 'Difficulty',
+        value: giveaway.difficulty,
+        inline: true,
+      },
+      {
+        name: 'End Date',
+        value: new Date(giveaway.endDate).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        }),
+        inline: true,
+      },
+      {
+        name: 'Description',
+        value: giveaway.description.length > 200 
+          ? giveaway.description.substring(0, 200) + '...' 
+          : giveaway.description,
+      },
+      {
+        name: 'Admin Panel',
+        value: `${env.NEXTAUTH_URL ?? ''}/admin`,
+      },
+    ],
+    thumbnail: giveaway.coverImage ? { url: giveaway.coverImage } : undefined,
+    footer: { text: isUpdate ? 'Crux Marketplace • Giveaway Update System' : 'Crux Marketplace • Giveaway Submission System' },
+    timestamp: new Date().toISOString(),
+  }
+
+  // Use the giveaway pending webhook if configured, otherwise fall back to default
+  const result = await sendDiscordWebhook(embed, env.DISCORD_GIVEAWAY_PENDING_WEBHOOK_URL)
+  console.log('announceGiveawayPending result:', result)
+  return result
 }
 
 

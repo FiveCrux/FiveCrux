@@ -7,7 +7,9 @@ import {
   getRejectedScripts,
   approveScript,
   rejectScript,
+  getUserById,
 } from '@/lib/database-new'
+import { announceScriptApproval, announceScriptRejection } from '@/lib/discord'
 
 export async function GET(request: NextRequest) {
   try {
@@ -148,6 +150,35 @@ export async function PATCH(request: NextRequest) {
 
     if (status === 'approved') {
       const result = await approveScript(Number(scriptId), (session.user as any).id, adminNotes)
+      
+      // Send Discord notification for script approval
+      if (result && result.sellerId) {
+        try {
+          const seller = await getUserById(result.sellerId)
+          if (seller) {
+            await announceScriptApproval(
+              {
+                id: result.id,
+                title: result.title,
+                coverImage: result.coverImage,
+                sellerId: result.sellerId,
+              },
+              {
+                id: seller.id,
+                name: seller.name,
+              },
+              {
+                id: (session.user as any).id,
+                name: session.user?.name || null,
+              }
+            )
+          }
+        } catch (discordError) {
+          console.error('Failed to send Discord notification:', discordError)
+          // Don't fail the approval if Discord notification fails
+        }
+      }
+      
       return NextResponse.json({ success: true, result })
     }
     if (status === 'rejected') {
@@ -155,6 +186,37 @@ export async function PATCH(request: NextRequest) {
         return NextResponse.json({ error: 'Rejection reason is required' }, { status: 400 })
       }
       const result = await rejectScript(Number(scriptId), (session.user as any).id, reason, adminNotes)
+      
+      // Send Discord notification for script rejection
+      if (result && result.sellerId) {
+        try {
+          const seller = await getUserById(result.sellerId)
+          if (seller) {
+            await announceScriptRejection(
+              {
+                id: result.id,
+                title: result.title,
+                description: result.description,
+                coverImage: result.coverImage,
+                sellerId: result.sellerId,
+              },
+              {
+                id: seller.id,
+                name: seller.name,
+              },
+              reason,
+              {
+                id: (session.user as any).id,
+                name: session.user?.name || null,
+              }
+            )
+          }
+        } catch (discordError) {
+          console.error('Failed to send Discord notification for script rejection:', discordError)
+          // Don't fail the rejection if Discord notification fails
+        }
+      }
+      
       return NextResponse.json({ success: true, result })
     }
 

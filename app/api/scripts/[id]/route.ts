@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/auth"
 import { getScriptById, updateScript, updateScriptForReapproval, updatePendingScript, updateRejectedScriptForReapproval, deleteScript } from "@/lib/database-new"
+import { announceScriptPending } from "@/lib/discord"
 
 export async function GET(
   request: NextRequest,
@@ -143,6 +144,32 @@ export async function PATCH(
     console.log('PATCH success:', { id: updatedScript.id })
     
     const movedToPending = currentScript.status === "approved" || currentScript.status === "rejected"
+    
+    // Send Discord notification for scripts that need re-approval or are updated while pending
+    if (movedToPending && updatedScript.sellerId) {
+      try {
+        await announceScriptPending(
+          {
+            id: updatedScript.id,
+            title: body.title || currentScript.title,
+            description: body.description || currentScript.description,
+            price: String(body.price || currentScript.price),
+            category: body.category || currentScript.category,
+            coverImage: body.cover_image || currentScript.coverImage,
+            sellerId: updatedScript.sellerId,
+          },
+          {
+            id: updatedScript.sellerId,
+            name: session.user?.name || null,
+          },
+          true // isUpdate = true
+        )
+      } catch (discordError) {
+        console.error('Failed to send Discord notification for script update:', discordError)
+        // Don't fail the update if Discord notification fails
+      }
+    }
+    
     const message = movedToPending
       ? "Script updated successfully! It has been moved to pending status and will require admin approval before going live again."
       : "Script updated successfully!"

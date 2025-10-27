@@ -5,6 +5,7 @@ import { getGiveawayById, updateGiveaway, updateGiveawayForReapproval, createGiv
 import { db } from "@/lib/db/client"
 import { eq } from "drizzle-orm"
 import { giveawayRequirements, giveawayPrizes } from "@/lib/db/schema"
+import { announceGiveawayPending } from "@/lib/discord"
 
 export async function GET(
   request: NextRequest,
@@ -109,6 +110,32 @@ export async function PATCH(
           ...prize,
           giveawayId: id,
         })
+      }
+    }
+
+    // Send Discord notification for giveaways that need re-approval
+    if (needsReapproval && updatedGiveaway.creatorId) {
+      try {
+        await announceGiveawayPending(
+          {
+            id: updatedGiveaway.id,
+            title: giveaway.title || currentGiveaway.title,
+            description: giveaway.description || currentGiveaway.description,
+            totalValue: giveaway.total_value || currentGiveaway.totalValue,
+            difficulty: giveaway.difficulty || currentGiveaway.difficulty,
+            endDate: giveaway.end_date || currentGiveaway.endDate,
+            coverImage: giveaway.cover_image || currentGiveaway.coverImage,
+            creatorId: updatedGiveaway.creatorId,
+          },
+          {
+            id: updatedGiveaway.creatorId,
+            name: session.user?.name || null,
+          },
+          true // isUpdate = true
+        )
+      } catch (discordError) {
+        console.error('Failed to send Discord notification for giveaway update:', discordError)
+        // Don't fail the update if Discord notification fails
       }
     }
 
