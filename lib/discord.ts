@@ -16,7 +16,7 @@ type DiscordEmbed = {
 }
 
 export async function sendDiscordWebhook(embed: DiscordEmbed, customWebhookUrl?: string) {
-  const webhookUrl = customWebhookUrl || env.DISCORD_WEBHOOK_URL
+  const webhookUrl = customWebhookUrl || env.DISCORD_GIVEAWAY_WINNER_WEBHOOK_URL
   if (!webhookUrl) {
     console.warn('Discord webhook URL not configured')
     return { success: false, error: 'Webhook not configured' }
