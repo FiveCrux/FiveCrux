@@ -1,28 +1,14 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { db } from '@/lib/db/client'
 import { approvedGiveaways, giveawayPrizes } from '@/lib/db/schema'
-import { and, lt, eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 
-// For GitHub Actions cron, verify secret
-const CRON_SECRET = process.env.CRON_SECRET
-
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    // If called from GitHub Actions, verify authorization
-    const authHeader = request.headers.get('authorization')
-    const isCronCall = authHeader?.startsWith('Bearer ')
-    
-    if (isCronCall && authHeader) {
-      const token = authHeader.replace('Bearer ', '')
-      if (token !== CRON_SECRET) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-      }
-    }
-
     const now = new Date()
     
-    // Find ended giveaways without winners
-    const endedGiveaways = await db
+    // Find active giveaways with autoAnnounce, then filter by date in JavaScript
+    const activeGiveaways = await db
       .select({
         id: approvedGiveaways.id,
         title: approvedGiveaways.title,
@@ -31,12 +17,18 @@ export async function GET(request: NextRequest) {
       .from(approvedGiveaways)
       .where(
         and(
-          lt(approvedGiveaways.endDate, now.toISOString()),
           eq(approvedGiveaways.status, 'active'),
           eq(approvedGiveaways.autoAnnounce, true)
         )
       )
-      .limit(5) // Process up to 5 at once
+    
+    // Filter in JavaScript to handle date comparison properly
+    const endedGiveaways = activeGiveaways
+      .filter(g => {
+        const endDate = new Date(g.endDate)
+        return endDate < now
+      })
+      .slice(0, 5) // Process up to 5 at once
 
     if (endedGiveaways.length === 0) {
       return NextResponse.json({ 

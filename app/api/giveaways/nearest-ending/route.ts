@@ -1,14 +1,14 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db/client'
 import { approvedGiveaways } from '@/lib/db/schema'
-import { eq, and, gt, asc } from 'drizzle-orm'
+import { eq, and } from 'drizzle-orm'
 
 export async function GET() {
   try {
     const now = new Date()
     
-    // Find the giveaway ending soonest (but not yet ended)
-    const nearest = await db
+    // Find all active giveaways with autoAnnounce
+    const allGiveaways = await db
       .select({
         id: approvedGiveaways.id,
         title: approvedGiveaways.title,
@@ -18,21 +18,23 @@ export async function GET() {
       .where(
         and(
           eq(approvedGiveaways.status, 'active'),
-          eq(approvedGiveaways.autoAnnounce, true),
-          gt(approvedGiveaways.endDate, now.toISOString())
+          eq(approvedGiveaways.autoAnnounce, true)
         )
       )
-      .orderBy(asc(approvedGiveaways.endDate))
-      .limit(1)
+    
+    // Filter for not-yet-ended giveaways and find the nearest one
+    const futureGiveaways = allGiveaways
+      .filter(g => new Date(g.endDate) > now)
+      .sort((a, b) => new Date(a.endDate).getTime() - new Date(b.endDate).getTime())
 
-    if (nearest.length === 0) {
+    if (futureGiveaways.length === 0) {
       return NextResponse.json({ 
         hasGiveaways: false,
         message: 'No active giveaways ending soon'
       })
     }
 
-    const giveaway = nearest[0]
+    const giveaway = futureGiveaways[0]
     const endTime = new Date(giveaway.endDate).getTime()
     const timeLeft = endTime - Date.now()
 

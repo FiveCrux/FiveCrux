@@ -13,11 +13,12 @@ export const Env = z.object({
   AWS_REGION: z.string().optional(),
   AWS_S3_BUCKET_NAME: z.string().optional(),
   AWS_S3_BUCKET_URL: z.string().optional(),
-  DISCORD_WEBHOOK_URL: z.string().url().optional(), // For giveaway winners
+  // DISCORD_WEBHOOK_URL: z.string().url().optional(), // For giveaway winners
   DISCORD_SCRIPT_APPROVAL_WEBHOOK_URL: z.string().url().optional(), // For script approvals
   DISCORD_SCRIPT_PENDING_WEBHOOK_URL: z.string().url().optional(), // For script pending submissions
   DISCORD_SCRIPT_REJECTION_WEBHOOK_URL: z.string().url().optional(), // For script rejections
   DISCORD_GIVEAWAY_APPROVAL_WEBHOOK_URL: z.string().url().optional(), // For giveaway approvals
+  DISCORD_GIVEAWAY_WINNER_WEBHOOK_URL: z.string().url().optional(), // For giveaway winners
   DISCORD_GIVEAWAY_PENDING_WEBHOOK_URL: z.string().url().optional(), // For giveaway pending submissions
   DISCORD_GIVEAWAY_REJECTED_WEBHOOK_URL: z.string().url().optional(), // For giveaway rejections
   DISCORD_AD_PENDING_WEBHOOK_URL: z.string().url().optional(), // For ad pending submissions
