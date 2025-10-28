@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/auth"
 import { getAdById, updateAd, deleteAd } from "@/lib/database-new"
+import { announceAdPending } from "@/lib/discord"
 
 export async function GET(
   request: NextRequest,
@@ -43,6 +44,9 @@ export async function PATCH(
 
     const body = await request.json()
     
+    // Check if ad is being updated and needs re-approval
+    const needsReapproval = ad.status === 'active' && body.status === 'pending'
+    
     // Update the ad
     const updatedAd = await updateAd(adId, {
       title: body.title,
@@ -58,6 +62,31 @@ export async function PATCH(
 
     if (!updatedAd) {
       return NextResponse.json({ error: "Failed to update ad" }, { status: 500 })
+    }
+
+    // Send Discord notification for ad updates that need re-approval
+    if (needsReapproval) {
+      try {
+        await announceAdPending(
+          {
+            id: adId,
+            title: body.title || ad.title,
+            description: body.description || ad.description,
+            category: body.category || ad.category,
+            linkUrl: body.link_url || ad.linkUrl,
+            imageUrl: body.image_url || ad.imageUrl,
+            createdBy: ad.createdBy,
+          },
+          {
+            id: (session.user as any).id,
+            name: session.user?.name || null,
+          },
+          true // isUpdate = true for re-approvals
+        )
+      } catch (discordError) {
+        console.error('Failed to send Discord notification for ad update:', discordError)
+        // Don't fail the update if Discord notification fails
+      }
     }
 
     return NextResponse.json({ 

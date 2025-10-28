@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/auth'
-import { getApprovedAds, getPendingAds, getRejectedAds, approveAd, rejectAd } from '@/lib/database-new'
+import { getApprovedAds, getPendingAds, getRejectedAds, approveAd, rejectAd, getAdById, getUserById } from '@/lib/database-new'
+import { announceAdApproval, announceAdRejection } from '@/lib/discord'
 
 export async function GET(request: NextRequest) {
   try {
@@ -109,13 +110,80 @@ export async function PATCH(request: NextRequest) {
 
     if (action === 'approve') {
       await approveAd(adId, adminId, adminNotes)
+      
+      // Send Discord notification for ad approval
+      try {
+        const ad = await getAdById(adId)
+        if (ad && ad.createdBy) {
+          const creator = await getUserById(ad.createdBy)
+          if (creator) {
+            await announceAdApproval(
+              {
+                id: ad.id,
+                title: ad.title,
+                description: ad.description,
+                category: ad.category,
+                linkUrl: ad.linkUrl,
+                imageUrl: ad.imageUrl,
+                createdBy: ad.createdBy,
+              },
+              {
+                id: creator.id,
+                name: creator.name,
+              },
+              {
+                id: adminId,
+                name: session.user?.name || null,
+              }
+            )
+          }
+        }
+      } catch (discordError) {
+        console.error('Failed to send Discord notification for ad approval:', discordError)
+        // Don't fail the approval if Discord notification fails
+      }
+      
       return NextResponse.json({ success: true })
     }
 
     if (!rejectionReason) {
       return NextResponse.json({ error: 'rejectionReason is required for reject' }, { status: 400 })
     }
+    
     await rejectAd(adId, adminId, rejectionReason, adminNotes)
+    
+    // Send Discord notification for ad rejection
+    try {
+      const ad = await getAdById(adId)
+      if (ad && ad.createdBy) {
+        const creator = await getUserById(ad.createdBy)
+        if (creator) {
+          await announceAdRejection(
+            {
+              id: ad.id,
+              title: ad.title,
+              description: ad.description,
+              category: ad.category,
+              imageUrl: ad.imageUrl,
+              createdBy: ad.createdBy,
+            },
+            {
+              id: creator.id,
+              name: creator.name,
+            },
+            rejectionReason,
+            {
+              id: adminId,
+              name: session.user?.name || null,
+            }
+          )
+        }
+      }
+    } catch (discordError) {
+      console.error('Failed to send Discord notification for ad rejection:', discordError)
+      // Don't fail the rejection if Discord notification fails
+    }
+    
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Error updating advertisement status:', error)

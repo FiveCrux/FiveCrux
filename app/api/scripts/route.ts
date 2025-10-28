@@ -51,29 +51,27 @@ export async function POST(request: NextRequest) {
       id: 0
     })
 
-    // Send Discord notification for pending scripts (only for non-admin/founder users)
-    if (approvalStatus === 'pending') {
-      try {
-        await announceScriptPending(
-          {
-            id: scriptId,
-            title: body.title,
-            description: body.description,
-            price: String(body.price),
-            category: body.category,
-            coverImage: body.cover_image || null,
-            sellerId: (session.user as any).id,
-          },
-          {
-            id: (session.user as any).id,
-            name: session.user?.name || null,
-          },
-          false // isUpdate = false for new submissions
-        )
-      } catch (discordError) {
-        console.error('Failed to send Discord notification for pending script:', discordError)
-        // Don't fail the submission if Discord notification fails
-      }
+    // Send Discord notification for ALL script creations
+    try {
+      await announceScriptPending(
+        {
+          id: scriptId,
+          title: body.title,
+          description: body.description,
+          price: String(body.price),
+          category: body.category,
+          coverImage: body.cover_image || null,
+          sellerId: (session.user as any).id,
+        },
+        {
+          id: (session.user as any).id,
+          name: session.user?.name || null,
+        },
+        false // isUpdate = false for new submissions
+      )
+    } catch (discordError) {
+      console.error('Failed to send Discord notification for script creation:', discordError)
+      // Don't fail the submission if Discord notification fails
     }
 
     const message = isFounderOrAdmin 

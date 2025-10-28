@@ -12,7 +12,7 @@ import {
   getGiveawayById,
   getUserById
 } from '@/lib/database-new';
-import { announceGiveawayApproval } from '@/lib/discord';
+import { announceGiveawayApproval, announceGiveawayRejection } from '@/lib/discord';
 
 export async function GET(request: NextRequest) {
   try {
@@ -247,6 +247,39 @@ export async function PATCH(request: NextRequest) {
         return NextResponse.json({ error: "Rejection reason is required" }, { status: 400 });
       }
       result = await rejectGiveaway(giveawayId, (session.user as any).id, reason, adminNotes);
+      
+      // Send Discord notification for giveaway rejection
+      if (result) {
+        try {
+          const giveaway = await getGiveawayById(giveawayId);
+          if (giveaway && giveaway.creatorId) {
+            const creator = await getUserById(giveaway.creatorId);
+            if (creator) {
+              await announceGiveawayRejection(
+                {
+                  id: giveaway.id,
+                  title: giveaway.title,
+                  description: giveaway.description,
+                  coverImage: giveaway.coverImage,
+                  creatorId: giveaway.creatorId,
+                },
+                {
+                  id: creator.id,
+                  name: creator.name,
+                },
+                reason,
+                {
+                  id: (session.user as any).id,
+                  name: session.user?.name || null,
+                }
+              );
+            }
+          }
+        } catch (discordError) {
+          console.error('Failed to send Discord notification for giveaway rejection:', discordError);
+          // Don't fail the rejection if Discord notification fails
+        }
+      }
     } else {
       return NextResponse.json({ error: "Invalid status" }, { status: 400 });
     }
