@@ -29,9 +29,9 @@ export default function RootLayout({
         <SessionProvider>
           <QueryProvider>
             <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
-              <AutoCheckWrapper>
+              {/* <AutoCheckWrapper> */}
                 {children}
-              </AutoCheckWrapper>
+              {/* </AutoCheckWrapper> */}
               <Toaster />
               <Sonner />
             </ThemeProvider>
