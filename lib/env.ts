@@ -19,5 +19,9 @@ export const Env = z.object({
   DISCORD_SCRIPT_REJECTION_WEBHOOK_URL: z.string().url().optional(), // For script rejections
   DISCORD_GIVEAWAY_APPROVAL_WEBHOOK_URL: z.string().url().optional(), // For giveaway approvals
   DISCORD_GIVEAWAY_PENDING_WEBHOOK_URL: z.string().url().optional(), // For giveaway pending submissions
+  DISCORD_GIVEAWAY_REJECTED_WEBHOOK_URL: z.string().url().optional(), // For giveaway rejections
+  DISCORD_AD_PENDING_WEBHOOK_URL: z.string().url().optional(), // For ad pending submissions
+  DISCORD_AD_APPROVAL_WEBHOOK_URL: z.string().url().optional(), // For ad approvals
+  DISCORD_AD_REJECTION_WEBHOOK_URL: z.string().url().optional(), // For ad rejections
 });
 export const env = Env.parse(process.env);

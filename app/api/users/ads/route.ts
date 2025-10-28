@@ -103,6 +103,31 @@ export async function POST(request: NextRequest) {
       endDate: body.end_date,
       createdBy: (session.user as any).id,
     } as any);
+    
+    // Send Discord notification for ALL ad creations
+    try {
+      const { announceAdPending } = await import('@/lib/discord');
+      await announceAdPending(
+        {
+          id: adId,
+          title: body.title,
+          description: body.description,
+          category: body.category,
+          linkUrl: body.link_url || null,
+          imageUrl: body.image_url || null,
+          createdBy: (session.user as any).id,
+        },
+        {
+          id: (session.user as any).id,
+          name: session.user?.name || null,
+        },
+        false // isUpdate = false for new submissions
+      )
+    } catch (discordError) {
+      console.error('Failed to send Discord notification for ad creation:', discordError)
+      // Don't fail the submission if Discord notification fails
+    }
+    
     return NextResponse.json({ success: true, adId });
   } catch (error) {
     console.error('Error creating user ad:', error);
@@ -138,6 +163,8 @@ export async function PATCH(request: NextRequest) {
 
     // Determine which flow to use based on current status
     let updatedAd;
+    const needsReapproval = ad.status === "approved" || ad.status === "rejected";
+    
     if (ad.status === "approved") {
       // Approved -> move to pending with updates
       updatedAd = await updateApprovedAdForReapproval(Number(adId), updateData);
@@ -149,10 +176,36 @@ export async function PATCH(request: NextRequest) {
       updatedAd = await updatePendingAd(Number(adId), updateData);
     }
 
+    // Send Discord notification for ad updates that need re-approval
+    if (needsReapproval) {
+      try {
+        const { announceAdPending } = await import('@/lib/discord');
+        await announceAdPending(
+          {
+            id: Number(adId),
+            title: updateData.title || ad.title,
+            description: updateData.description || ad.description,
+            category: updateData.category || ad.category,
+            linkUrl: updateData.link_url || ad.linkUrl,
+            imageUrl: updateData.image_url || ad.imageUrl,
+            createdBy: ad.createdBy,
+          },
+          {
+            id: (session.user as any).id,
+            name: session.user?.name || null,
+          },
+          true // isUpdate = true for re-approvals
+        )
+      } catch (discordError) {
+        console.error('Failed to send Discord notification for ad update:', discordError)
+        // Don't fail the update if Discord notification fails
+      }
+    }
+
     return NextResponse.json({ 
       success: !!updatedAd,
-      needsReapproval: ad.status === "approved" || ad.status === "rejected",
-      message: (ad.status === "approved" || ad.status === "rejected") 
+      needsReapproval,
+      message: needsReapproval
         ? "Ad updated successfully! It has been moved to pending status and will require admin approval before going live again."
         : "Ad updated successfully!"
     });

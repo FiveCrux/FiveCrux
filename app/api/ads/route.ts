@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/auth"
 import { getAds, hasRole, hasAnyRole, createPendingAd } from "@/lib/database-new"
+import { announceAdPending } from "@/lib/discord"
 
 export async function POST(request: NextRequest) {
   try {
@@ -51,6 +52,29 @@ export async function POST(request: NextRequest) {
       updatedAt: new Date(),
     })
 
+    // Send Discord notification for ALL ad creations
+    try {
+      await announceAdPending(
+        {
+          id: adId,
+          title: body.title,
+          description: body.description,
+          category: body.category,
+          linkUrl: body.link_url || null,
+          imageUrl: body.image_url || null,
+          createdBy: (session.user as any).id,
+        },
+        {
+          id: (session.user as any).id,
+          name: session.user?.name || null,
+        },
+        false // isUpdate = false for new submissions
+      )
+    } catch (discordError) {
+      console.error('Failed to send Discord notification for ad creation:', discordError)
+      // Don't fail the submission if Discord notification fails
+    }
+
     const message = isFounderOrAdmin 
       ? "Ad created and approved successfully!" 
       : "Ad submitted successfully! It will be reviewed by an admin before going live."
@@ -59,7 +83,7 @@ export async function POST(request: NextRequest) {
       {
         success: true,
         message,
-        // adId,
+        adId,
         status: approvalStatus,
       },
       { status: 201 },

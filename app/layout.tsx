@@ -7,6 +7,7 @@ import SessionProvider from "@/providers/session-provider"
 import { QueryProvider } from "@/providers/query-provider"
 import { Toaster } from "@/componentss/ui/toaster"
 import { Toaster as Sonner } from "@/componentss/ui/sonner"
+import { AutoCheckWrapper } from "@/components/auto-check-wrapper"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -28,7 +29,9 @@ export default function RootLayout({
         <SessionProvider>
           <QueryProvider>
             <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
-              {children}
+              <AutoCheckWrapper>
+                {children}
+              </AutoCheckWrapper>
               <Toaster />
               <Sonner />
             </ThemeProvider>

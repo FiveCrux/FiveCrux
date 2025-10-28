@@ -20,8 +20,6 @@ export async function POST(request: NextRequest) {
     // Determine approval status based on user role
     const isFounderOrAdmin = hasAnyRole(user.roles, ['founder', 'admin'])
     const approvalStatus = isFounderOrAdmin ? 'active' : 'pending'
-    
-    console.log('Giveaway submission - User roles:', user.roles, 'isFounderOrAdmin:', isFounderOrAdmin, 'approvalStatus:', approvalStatus)
 
     // Validate required fields
     if (!giveaway.title || !giveaway.description || !giveaway.total_value || !giveaway.end_date) {
@@ -57,32 +55,26 @@ export async function POST(request: NextRequest) {
     }
 
     // Send Discord notification for ALL giveaway creations
-    console.log('Sending notification for giveaway creation. approvalStatus:', approvalStatus, 'giveawayId:', giveawayId)
     try {
-      const notificationData = {
-        id: giveawayId,
-        title: giveaway.title,
-        description: giveaway.description,
-        totalValue: giveaway.total_value,
-        difficulty: giveaway.difficulty,
-        endDate: giveaway.end_date,
-        coverImage: giveaway.cover_image || null,
-        creatorId: (session.user as any).id,
-      }
-      console.log('Notification data:', JSON.stringify(notificationData, null, 2))
-      
-      const notificationResult = await announceGiveawayPending(
-        notificationData,
+      await announceGiveawayPending(
+        {
+          id: giveawayId,
+          title: giveaway.title,
+          description: giveaway.description,
+          totalValue: giveaway.total_value,
+          difficulty: giveaway.difficulty,
+          endDate: giveaway.end_date,
+          coverImage: giveaway.cover_image || null,
+          creatorId: (session.user as any).id,
+        },
         {
           id: (session.user as any).id,
           name: session.user?.name || null,
         },
         false // isUpdate = false for new submissions
       )
-      console.log('Discord notification result:', notificationResult)
     } catch (discordError) {
       console.error('Failed to send Discord notification for giveaway creation:', discordError)
-      console.error('Discord error details:', discordError)
       // Don't fail the submission if Discord notification fails
     }
 
