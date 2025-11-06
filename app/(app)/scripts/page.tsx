@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef, useCallback } from "react"
 import { motion, useInView, AnimatePresence } from "framer-motion"
-import { Search, Filter, Star, Eye, Grid, List, ChevronDown, X, Sparkles, Zap } from "lucide-react"
+import { Search, Filter, Star, Eye, Grid, List, ChevronDown, X, Sparkles, Zap, Code, DollarSign, Sliders } from "lucide-react"
 import { Button } from "@/componentss/ui/button"
 import { Input } from "@/componentss/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/componentss/ui/card"
@@ -59,6 +59,7 @@ export default function ScriptsPage() {
   const router = useRouter()
   const filtersRef = useRef(null)
   const scriptsRef = useRef(null)
+  const filterContainerRef = useRef<HTMLDivElement>(null)
 
   const filtersInView = useInView(filtersRef, { once: true })
   const scriptsInView = useInView(scriptsRef, { once: true })
@@ -76,9 +77,9 @@ export default function ScriptsPage() {
 
   const [selectedFrameworks, setSelectedFrameworks] = useState<string[]>([])
   const [selectedPriceCategories, setSelectedPriceCategories] = useState<string[]>([])
-  const [selectedRatings, setSelectedRatings] = useState<number[]>([])
   const [onSaleOnly, setOnSaleOnly] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
+  const [openFilter, setOpenFilter] = useState<string | null>(null)
 
   type UIScript = {
     id: number
@@ -208,10 +209,6 @@ export default function ScriptsPage() {
         }
       }
 
-      if (selectedRatings.length > 0 && !selectedRatings.some((rating) => (Number(script.rating) || 0) >= rating)) {
-        return false
-      }
-
       if (onSaleOnly && script.discount === 0) {
         return false
       }
@@ -225,7 +222,6 @@ export default function ScriptsPage() {
     selectedFrameworks,
     selectedPriceCategories,
     priceRange,
-    selectedRatings,
     onSaleOnly,
   ])
 
@@ -274,19 +270,10 @@ export default function ScriptsPage() {
     }
   }, [])
 
-  const handleRatingChange = useCallback((rating: number, checked: boolean) => {
-    if (checked) {
-      setSelectedRatings(prev => [...prev, rating])
-    } else {
-      setSelectedRatings(prev => prev.filter((r) => r !== rating))
-    }
-  }, [])
-
   const clearAllFilters = useCallback(() => {
     setSelectedCategories([])
     setSelectedFrameworks([])
     setSelectedPriceCategories([])
-    setSelectedRatings([])
     setPriceRange([0, 100])
     setOnSaleOnly(false)
     setSearchQuery("")
@@ -304,20 +291,37 @@ export default function ScriptsPage() {
       case "priceCategory":
         handlePriceCategoryChange(value as string, false)
         break
-      case "rating":
-        handleRatingChange(value as number, false)
-        break
     }
-  }, [handleCategoryChange, handleFrameworkChange, handlePriceCategoryChange, handleRatingChange])
+  }, [handleCategoryChange, handleFrameworkChange, handlePriceCategoryChange])
 
   const activeFiltersCount = useMemo(() => 
     selectedCategories.length +
     selectedFrameworks.length +
     selectedPriceCategories.length +
-    selectedRatings.length +
     (onSaleOnly ? 1 : 0),
-    [selectedCategories.length, selectedFrameworks.length, selectedPriceCategories.length, selectedRatings.length, onSaleOnly]
+    [selectedCategories.length, selectedFrameworks.length, selectedPriceCategories.length, onSaleOnly]
   )
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node
+      if (
+        filterContainerRef.current &&
+        !filterContainerRef.current.contains(target) &&
+        openFilter !== null
+      ) {
+        setOpenFilter(null)
+      }
+    }
+
+    if (openFilter !== null) {
+      document.addEventListener("mousedown", handleClickOutside)
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside)
+      }
+    }
+  }, [openFilter])
 
   // Get random ads for scripts page
   const randomAds = useRandomAds(ads, 2)
@@ -349,7 +353,7 @@ export default function ScriptsPage() {
 
         {/* Header */}
         <motion.div
-          className="bg-gray-900/30 backdrop-blur-xl py-8 px-4 sm:px-6 lg:px-8 border-b border-gray-800/50"
+          className="bg-gray-900/30 backdrop-blur-xl py-8 px-4 sm:px-6 lg:px-8 border-b border-gray-800/50 mt-11"
           initial={{ opacity: 0, y: -50 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
@@ -409,224 +413,7 @@ export default function ScriptsPage() {
         </motion.div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex flex-col lg:flex-row gap-8">
-            {/* Filters Sidebar */}
-            <motion.div
-              ref={filtersRef}
-              className="lg:w-80 space-y-6"
-              initial={{ opacity: 0, x: -50 }}
-              animate={filtersInView ? { opacity: 1, x: 0 } : {}}
-              transition={{ duration: 0.8 }}
-            >
-              <Card className="bg-gray-800/30 border-gray-700/50 backdrop-blur-xl">
-                <CardHeader>
-                  <CardTitle className="text-white flex items-center justify-between">
-                    <motion.div className="flex items-center" whileHover={{ scale: 1.05 }}>
-                      <Filter className="mr-2 h-5 w-5" />
-                      Filters
-                      {activeFiltersCount > 0 && (
-                        <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} whileHover={{ scale: 1.1 }}>
-                          <Badge className="ml-2 bg-orange-500 text-white">{activeFiltersCount}</Badge>
-                        </motion.div>
-                      )}
-                    </motion.div>
-                    {activeFiltersCount > 0 && (
-                      <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={clearAllFilters}
-                          className="text-orange-500 hover:text-orange-400 p-0 h-auto"
-                        >
-                          Clear All
-                        </Button>
-                      </motion.div>
-                    )}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  {/* Categories Filter */}
-                  <Collapsible defaultOpen>
-                    <CollapsibleTrigger className="flex items-center justify-between w-full text-left group">
-                      <span className="text-sm font-medium text-white group-hover:text-orange-500 transition-colors">
-                        Categories
-                      </span>
-                      <motion.div whileHover={{ rotate: 180 }} transition={{ duration: 0.3 }}>
-                        <ChevronDown className="h-4 w-4 text-gray-400" />
-                      </motion.div>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent className="space-y-2 mt-2">
-                      {categories.map((category, index) => (
-                        <motion.div
-                          key={category.id}
-                          className="flex items-center space-x-2"
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: index * 0.05 }}
-                          whileHover={{ x: 5 }}
-                        >
-                          <Checkbox
-                            id={`category-${category.id}`}
-                            checked={selectedCategories.includes(category.id)}
-                            onCheckedChange={(checked) => handleCategoryChange(category.id, checked as boolean)}
-                          />
-                          <label
-                            htmlFor={`category-${category.id}`}
-                            className="text-sm text-gray-300 hover:text-white transition-colors cursor-pointer"
-                          >
-                            {category.name}
-                          </label>
-                        </motion.div>
-                      ))}
-                    </CollapsibleContent>
-                  </Collapsible>
-
-                  {/* Framework Filter */}
-                  <Collapsible defaultOpen>
-                    <CollapsibleTrigger className="flex items-center justify-between w-full text-left group">
-                      <span className="text-sm font-medium text-white group-hover:text-orange-500 transition-colors">
-                        Framework
-                      </span>
-                      <motion.div whileHover={{ rotate: 180 }} transition={{ duration: 0.3 }}>
-                        <ChevronDown className="h-4 w-4 text-gray-400" />
-                      </motion.div>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent className="space-y-2 mt-2">
-                      {frameworks.map((framework, index) => (
-                        <motion.div
-                          key={framework.value}
-                          className="flex items-center space-x-2"
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: index * 0.05 }}
-                          whileHover={{ x: 5 }}
-                        >
-                          <Checkbox
-                            id={`framework-${framework.value}`}
-                            checked={selectedFrameworks.includes(framework.value)}
-                            onCheckedChange={(checked) => handleFrameworkChange(framework.value, checked as boolean)}
-                          />
-                          <label
-                            htmlFor={`framework-${framework.value}`}
-                            className="text-sm text-gray-300 hover:text-white transition-colors cursor-pointer"
-                          >
-                            {framework.label}
-                          </label>
-                        </motion.div>
-                      ))}
-                    </CollapsibleContent>
-                  </Collapsible>
-
-                  {/* Price Categories */}
-                  <Collapsible defaultOpen>
-                    <CollapsibleTrigger className="flex items-center justify-between w-full text-left group">
-                      <span className="text-sm font-medium text-white group-hover:text-orange-500 transition-colors">
-                        Price Range
-                      </span>
-                      <motion.div whileHover={{ rotate: 180 }} transition={{ duration: 0.3 }}>
-                        <ChevronDown className="h-4 w-4 text-gray-400" />
-                      </motion.div>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent className="space-y-2 mt-2">
-                      {priceCategories.map((category, index) => (
-                        <motion.div
-                          key={category}
-                          className="flex items-center space-x-2"
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: index * 0.05 }}
-                          whileHover={{ x: 5 }}
-                        >
-                          <Checkbox
-                            id={`price-${category}`}
-                            checked={selectedPriceCategories.includes(category)}
-                            onCheckedChange={(checked) => handlePriceCategoryChange(category, checked as boolean)}
-                          />
-                          <label
-                            htmlFor={`price-${category}`}
-                            className="text-sm text-gray-300 hover:text-white transition-colors cursor-pointer"
-                          >
-                            {category} {category === "Budget" && "($0-$15)"}
-                            {category === "Standard" && "($15-$30)"}
-                            {category === "Premium" && "($30+)"}
-                          </label>
-                        </motion.div>
-                      ))}
-                    </CollapsibleContent>
-                  </Collapsible>
-
-                  {/* Custom Price Range */}
-                  <Collapsible>
-                    <CollapsibleTrigger className="flex items-center justify-between w-full text-left group">
-                      <span className="text-sm font-medium text-white group-hover:text-orange-500 transition-colors">
-                        Custom Range: ${priceRange[0]} - ${priceRange[1]}
-                      </span>
-                      <motion.div whileHover={{ rotate: 180 }} transition={{ duration: 0.3 }}>
-                        <ChevronDown className="h-4 w-4 text-gray-400" />
-                      </motion.div>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent className="mt-2">
-                      <Slider value={priceRange} onValueChange={setPriceRange} max={100} step={1} className="w-full" />
-                    </CollapsibleContent>
-                  </Collapsible>
-
-                  {/* Rating Filter */}
-                  <Collapsible>
-                    <CollapsibleTrigger className="flex items-center justify-between w-full text-left group">
-                      <span className="text-sm font-medium text-white group-hover:text-orange-500 transition-colors">
-                        Minimum Rating
-                      </span>
-                      <motion.div whileHover={{ rotate: 180 }} transition={{ duration: 0.3 }}>
-                        <ChevronDown className="h-4 w-4 text-gray-400" />
-                      </motion.div>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent className="space-y-2 mt-2">
-                      {[4, 3, 2, 1].map((rating, index) => (
-                        <motion.div
-                          key={rating}
-                          className="flex items-center space-x-2"
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: index * 0.05 }}
-                          whileHover={{ x: 5 }}
-                        >
-                          <Checkbox
-                            id={`rating-${rating}`}
-                            checked={selectedRatings.includes(rating)}
-                            onCheckedChange={(checked) => handleRatingChange(rating, checked as boolean)}
-                          />
-                          <label
-                            htmlFor={`rating-${rating}`}
-                            className="text-sm text-gray-300 flex items-center hover:text-white transition-colors cursor-pointer"
-                          >
-                            {[...Array(rating)].map((_, i) => (
-                              <Star key={i} className="h-4 w-4 text-yellow-400 fill-current" />
-                            ))}
-                            <span className="ml-1">& up</span>
-                          </label>
-                        </motion.div>
-                      ))}
-                    </CollapsibleContent>
-                  </Collapsible>
-
-                  {/* Discount Filter */}
-                  <motion.div className="flex items-center space-x-2" whileHover={{ x: 5 }}>
-                    <Checkbox
-                      id="on-sale"
-                      checked={onSaleOnly}
-                      onCheckedChange={(checked) => setOnSaleOnly(checked as boolean)}
-                    />
-                    <label
-                      htmlFor="on-sale"
-                      className="text-sm text-gray-300 hover:text-white transition-colors cursor-pointer"
-                    >
-                      On Sale Only
-                    </label>
-                  </motion.div>
-                </CardContent>
-              </Card>
-            </motion.div>
-
+          <div className="flex flex-col gap-8">
             {/* Main Content */}
             <motion.div
               ref={scriptsRef}
@@ -635,21 +422,257 @@ export default function ScriptsPage() {
               animate={scriptsInView ? { opacity: 1, x: 0 } : {}}
               transition={{ duration: 0.8 }}
             >
+              {/* Filters Bar */}
+              <motion.div
+                ref={filtersRef}
+                className="mb-6 relative z-30"
+                initial={{ opacity: 0, y: -20 }}
+                animate={filtersInView ? { opacity: 1, y: 0 } : {}}
+                transition={{ duration: 0.8 }}
+              >
+                <Card className="bg-gray-800/30 border-gray-700/50 backdrop-blur-xl">
+                  <CardContent className="p-4">
+                    <div className="flex flex-col gap-4">
+                      {/* Filter Header */}
+                      <div className="flex items-center justify-between flex-wrap gap-4">
+                        <motion.div className="flex items-center gap-2" whileHover={{ scale: 1.05 }}>
+                          <Filter className="h-5 w-5 text-orange-500" />
+                          <span className="text-white font-semibold">Filters</span>
+                          {activeFiltersCount > 0 && (
+                            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} whileHover={{ scale: 1.1 }}>
+                              <Badge className="bg-orange-500 text-white">{activeFiltersCount}</Badge>
+                            </motion.div>
+                          )}
+                        </motion.div>
+                        {activeFiltersCount > 0 && (
+                          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={clearAllFilters}
+                              className="text-orange-500 hover:text-orange-400 hover:bg-orange-500/10"
+                            >
+                              Clear All
+                            </Button>
+                          </motion.div>
+                        )}
+                      </div>
+
+                      {/* Horizontal Filters */}
+                      <div ref={filterContainerRef} className="flex flex-wrap gap-3 items-start">
+                        {/* Categories Filter */}
+                        <Collapsible open={openFilter === "categories"} onOpenChange={(open) => setOpenFilter(open ? "categories" : null)}>
+                          <div className="relative z-30">
+                            <CollapsibleTrigger asChild>
+                              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                                <Button
+                                  variant="outline"
+                                  className={`bg-gradient-to-r from-gray-800/80 to-gray-900/80 border-2 text-white font-semibold px-4 py-2 rounded-lg shadow-lg transition-all duration-300 ${
+                                    openFilter === "categories"
+                                      ? "border-orange-500 bg-gradient-to-r from-orange-500/20 to-orange-600/20 shadow-orange-500/50"
+                                      : "border-gray-600/50 hover:border-orange-500/70 hover:from-gray-700/80 hover:to-gray-800/80"
+                                  }`}
+                                >
+                                  <span className="text-sm font-medium flex items-center gap-2">
+                                    <Filter className="h-4 w-4" />
+                                    Categories
+                                  </span>
+                                  <ChevronDown className={`ml-2 h-4 w-4 transition-transform duration-300 ${openFilter === "categories" ? "rotate-180" : ""}`} />
+                                </Button>
+                              </motion.div>
+                            </CollapsibleTrigger>
+                            <CollapsibleContent className="absolute z-[100] mt-2 left-0 bg-gray-900 border border-gray-700/50 rounded-lg p-4 shadow-xl min-w-[200px]">
+                            <div className="space-y-2">
+                              {categories.map((category) => (
+                                <motion.div
+                                  key={category.id}
+                                  className="flex items-center space-x-2"
+                                  whileHover={{ x: 5 }}
+                                >
+                                  <Checkbox
+                                    id={`category-${category.id}`}
+                                    checked={selectedCategories.includes(category.id)}
+                                    onCheckedChange={(checked) => handleCategoryChange(category.id, checked as boolean)}
+                                  />
+                                  <label
+                                    htmlFor={`category-${category.id}`}
+                                    className="text-sm text-gray-300 hover:text-white transition-colors cursor-pointer"
+                                  >
+                                    {category.name}
+                                  </label>
+                                </motion.div>
+                              ))}
+                            </div>
+                            </CollapsibleContent>
+                          </div>
+                        </Collapsible>
+
+                        {/* Framework Filter */}
+                        <Collapsible open={openFilter === "framework"} onOpenChange={(open) => setOpenFilter(open ? "framework" : null)}>
+                          <div className="relative z-30">
+                            <CollapsibleTrigger asChild>
+                              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                                <Button
+                                  variant="outline"
+                                  className={`bg-gradient-to-r from-gray-800/80 to-gray-900/80 border-2 text-white font-semibold px-4 py-2 rounded-lg shadow-lg transition-all duration-300 ${
+                                    openFilter === "framework"
+                                      ? "border-orange-500 bg-gradient-to-r from-orange-500/20 to-orange-600/20 shadow-orange-500/50"
+                                      : "border-gray-600/50 hover:border-orange-500/70 hover:from-gray-700/80 hover:to-gray-800/80"
+                                  }`}
+                                >
+                                  <span className="text-sm font-medium flex items-center gap-2">
+                                    <Code className="h-4 w-4" />
+                                    Framework
+                                  </span>
+                                  <ChevronDown className={`ml-2 h-4 w-4 transition-transform duration-300 ${openFilter === "framework" ? "rotate-180" : ""}`} />
+                                </Button>
+                              </motion.div>
+                            </CollapsibleTrigger>
+                            <CollapsibleContent className="absolute z-[100] mt-2 left-0 bg-gray-900 border border-gray-700/50 rounded-lg p-4 shadow-xl min-w-[200px]">
+                            <div className="space-y-2">
+                              {frameworks.map((framework) => (
+                                <motion.div
+                                  key={framework.value}
+                                  className="flex items-center space-x-2"
+                                  whileHover={{ x: 5 }}
+                                >
+                                  <Checkbox
+                                    id={`framework-${framework.value}`}
+                                    checked={selectedFrameworks.includes(framework.value)}
+                                    onCheckedChange={(checked) => handleFrameworkChange(framework.value, checked as boolean)}
+                                  />
+                                  <label
+                                    htmlFor={`framework-${framework.value}`}
+                                    className="text-sm text-gray-300 hover:text-white transition-colors cursor-pointer"
+                                  >
+                                    {framework.label}
+                                  </label>
+                                </motion.div>
+                              ))}
+                            </div>
+                            </CollapsibleContent>
+                          </div>
+                        </Collapsible>
+
+                        {/* Price Range Filter */}
+                        <Collapsible open={openFilter === "priceRange"} onOpenChange={(open) => setOpenFilter(open ? "priceRange" : null)}>
+                          <div className="relative z-30">
+                            <CollapsibleTrigger asChild>
+                              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                                <Button
+                                  variant="outline"
+                                  className={`bg-gradient-to-r from-gray-800/80 to-gray-900/80 border-2 text-white font-semibold px-4 py-2 rounded-lg shadow-lg transition-all duration-300 ${
+                                    openFilter === "priceRange"
+                                      ? "border-orange-500 bg-gradient-to-r from-orange-500/20 to-orange-600/20 shadow-orange-500/50"
+                                      : "border-gray-600/50 hover:border-orange-500/70 hover:from-gray-700/80 hover:to-gray-800/80"
+                                  }`}
+                                >
+                                  <span className="text-sm font-medium flex items-center gap-2">
+                                    <DollarSign className="h-4 w-4" />
+                                    Price Range
+                                  </span>
+                                  <ChevronDown className={`ml-2 h-4 w-4 transition-transform duration-300 ${openFilter === "priceRange" ? "rotate-180" : ""}`} />
+                                </Button>
+                              </motion.div>
+                            </CollapsibleTrigger>
+                            <CollapsibleContent className="absolute z-[100] mt-2 left-0 bg-gray-900 border border-gray-700/50 rounded-lg p-4 shadow-xl min-w-[200px]">
+                            <div className="space-y-3">
+                              {priceCategories.map((category) => (
+                                <motion.div
+                                  key={category}
+                                  className="flex items-center space-x-2"
+                                  whileHover={{ x: 5 }}
+                                >
+                                  <Checkbox
+                                    id={`price-${category}`}
+                                    checked={selectedPriceCategories.includes(category)}
+                                    onCheckedChange={(checked) => handlePriceCategoryChange(category, checked as boolean)}
+                                  />
+                                  <label
+                                    htmlFor={`price-${category}`}
+                                    className="text-sm text-gray-300 hover:text-white transition-colors cursor-pointer"
+                                  >
+                                    {category} {category === "Budget" && "($0-$15)"}
+                                    {category === "Standard" && "($15-$30)"}
+                                    {category === "Premium" && "($30+)"}
+                                  </label>
+                                </motion.div>
+                              ))}
+                            </div>
+                            </CollapsibleContent>
+                          </div>
+                        </Collapsible>
+
+                        {/* Custom Price Range */}
+                        <Collapsible open={openFilter === "customPrice"} onOpenChange={(open) => setOpenFilter(open ? "customPrice" : null)}>
+                          <div className="relative z-30">
+                            <CollapsibleTrigger asChild>
+                              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                                <Button
+                                  variant="outline"
+                                  className={`bg-gradient-to-r from-gray-800/80 to-gray-900/80 border-2 text-white font-semibold px-4 py-2 rounded-lg shadow-lg transition-all duration-300 ${
+                                    openFilter === "customPrice"
+                                      ? "border-orange-500 bg-gradient-to-r from-orange-500/20 to-orange-600/20 shadow-orange-500/50"
+                                      : "border-gray-600/50 hover:border-orange-500/70 hover:from-gray-700/80 hover:to-gray-800/80"
+                                  }`}
+                                >
+                                  <span className="text-sm font-medium flex items-center gap-2">
+                                    <Sliders className="h-4 w-4" />
+                                    Custom: ${priceRange[0]}-${priceRange[1]}
+                                  </span>
+                                  <ChevronDown className={`ml-2 h-4 w-4 transition-transform duration-300 ${openFilter === "customPrice" ? "rotate-180" : ""}`} />
+                                </Button>
+                              </motion.div>
+                            </CollapsibleTrigger>
+                            <CollapsibleContent className="absolute z-[100] mt-2 left-0 bg-gray-900 border border-gray-700/50 rounded-lg p-4 shadow-xl min-w-[250px]">
+                              <Slider value={priceRange} onValueChange={setPriceRange} max={100} step={1} className="w-full" />
+                            </CollapsibleContent>
+                          </div>
+                        </Collapsible>
+
+                        {/* On Sale Only Filter */}
+                        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                          <Button
+                            variant="outline"
+                            className={`bg-gradient-to-r from-gray-800/80 to-gray-900/80 border-2 text-white font-semibold px-4 py-2 rounded-lg shadow-lg transition-all duration-300 ${
+                              onSaleOnly
+                                ? "border-orange-500 bg-gradient-to-r from-orange-500/20 to-orange-600/20 shadow-orange-500/50"
+                                : "border-gray-600/50 hover:border-orange-500/70 hover:from-gray-700/80 hover:to-gray-800/80"
+                            }`}
+                            onClick={() => setOnSaleOnly(!onSaleOnly)}
+                          >
+                            <Checkbox
+                              id="on-sale"
+                              checked={onSaleOnly}
+                              onCheckedChange={(checked) => setOnSaleOnly(checked as boolean)}
+                              className="mr-2"
+                            />
+                            <span className="text-sm font-medium flex items-center gap-2">
+                              <Zap className="h-4 w-4" />
+                              On Sale Only
+                            </span>
+                          </Button>
+                        </motion.div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
               {/* Search and Sort Bar */}
               <motion.div
-                className="flex flex-col sm:flex-row gap-4 mb-6"
+                className="flex flex-col sm:flex-row gap-4 mb-6 relative z-0"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
               >
                 <div className="flex-1 relative group">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 group-focus-within:text-orange-500 transition-colors" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4  " />
                   <Input
                     type="search"
                     placeholder="Search scripts..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 bg-gray-900/30 border-gray-700/50 text-white placeholder-gray-400 focus:border-orange-500 focus:bg-gray-900/50 backdrop-blur-sm transition-all duration-300"
+                    className="pl-10 bg-gray-900/30 border-gray-700/50 text-white placeholder-gray-400 focus:border-orange-500 focus:bg-gray-900/50 transition-all duration-300"
                   />
                 </div>
                 <motion.div whileHover={{ scale: 1.02 }}>
@@ -775,31 +798,6 @@ export default function ScriptsPage() {
                             {category}
                             <motion.button
                               onClick={() => removeFilter("priceCategory", category)}
-                              className="hover:text-white transition-colors"
-                              whileHover={{ scale: 1.2 }}
-                              whileTap={{ scale: 0.8 }}
-                            >
-                              <X className="h-3 w-3" />
-                            </motion.button>
-                          </Badge>
-                        </motion.div>
-                      ))}
-                      {selectedRatings.map((rating, index) => (
-                        <motion.div
-                          key={rating}
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.8 }}
-                          transition={{ delay: index * 0.05 }}
-                          whileHover={{ scale: 1.05 }}
-                        >
-                          <Badge
-                            variant="secondary"
-                            className="bg-green-500/20 text-green-400 border-green-500/30 flex items-center gap-1 backdrop-blur-sm"
-                          >
-                            {rating}+ stars
-                            <motion.button
-                              onClick={() => removeFilter("rating", rating)}
                               className="hover:text-white transition-colors"
                               whileHover={{ scale: 1.2 }}
                               whileTap={{ scale: 0.8 }}
