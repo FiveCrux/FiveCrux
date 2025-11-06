@@ -34,6 +34,7 @@ import Navbar from "@/componentss/shared/navbar"
 import Footer from "@/componentss/shared/footer"
 import { toast } from "sonner"
 import FileUpload from "@/componentss/shared/file-upload"
+import { DateTimePicker } from "@/componentss/ui/date-time-picker"
 
 // Animated background particles
 const AnimatedParticles = () => {
@@ -76,7 +77,7 @@ export default function CreateGiveawayPage() {
     title: "",
     description: "",
     value: "",
-    endDate: "",
+    endDate: undefined as Date | undefined,
     difficulty: "Easy",
     featured: false,
     autoAnnounce: true,
@@ -170,7 +171,7 @@ export default function CreateGiveawayPage() {
           title: formData.title,
           description: formData.description,
           total_value: formData.value,
-          end_date: formData.endDate,
+          end_date: formData.endDate ? formData.endDate.toISOString() : "",
           difficulty: formData.difficulty,
           featured: formData.featured,
           auto_announce: true,
@@ -201,7 +202,7 @@ export default function CreateGiveawayPage() {
           title: "",
           description: "",
           value: "",
-          endDate: "",
+          endDate: undefined,
           difficulty: "Easy",
           featured: false,
           autoAnnounce: true,
@@ -479,16 +480,11 @@ export default function CreateGiveawayPage() {
                       </div>
 
                       <div>
-                        <Label htmlFor="endDate" className="text-white font-medium">
-                          End Date *
-                        </Label>
-                        <Input
+                        <DateTimePicker 
+                          date={formData.endDate}
+                          onDateChange={(date) => setFormData({ ...formData, endDate: date })}
+                          label="End Date*"
                           id="endDate"
-                          type="datetime-local"
-                          value={formData.endDate}
-                          onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                          className="mt-2 bg-gray-900/50 border-gray-700 text-white focus:border-yellow-500"
-                          required
                         />
                       </div>
                     </div>
@@ -1024,7 +1020,7 @@ export default function CreateGiveawayPage() {
                           <Clock className="h-4 w-4" />
                           <span>
                             {formData.endDate
-                              ? `Ends ${new Date(formData.endDate).toLocaleDateString()}`
+                              ? `Ends ${formData.endDate.toLocaleDateString()} at ${formData.endDate.toLocaleTimeString()}`
                               : "End date not set"}
                           </span>
                         </div>
