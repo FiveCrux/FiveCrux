@@ -78,7 +78,6 @@ export default function CreateGiveawayPage() {
     description: "",
     value: "",
     endDate: undefined as Date | undefined,
-    difficulty: "Easy",
     featured: false,
     autoAnnounce: true,
     creatorName: session?.user?.name || "",
@@ -172,7 +171,6 @@ export default function CreateGiveawayPage() {
           description: formData.description,
           total_value: formData.value,
           end_date: formData.endDate ? formData.endDate.toISOString() : "",
-          difficulty: formData.difficulty,
           featured: formData.featured,
           auto_announce: true,
           creator_name: formData.creatorName,
@@ -203,7 +201,6 @@ export default function CreateGiveawayPage() {
           description: "",
           value: "",
           endDate: undefined,
-          difficulty: "Easy",
           featured: false,
           autoAnnounce: true,
           creatorName: session?.user?.name || "",
@@ -435,9 +432,9 @@ export default function CreateGiveawayPage() {
                       />
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className=" grid-cols-1 hidden md:grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="creatorName" className="text-white font-medium">
+                        <Label htmlFor="creatorName" className="text-white  font-medium">
                           Creator Name *
                         </Label>
                         <Input
@@ -486,27 +483,6 @@ export default function CreateGiveawayPage() {
                           label="End Date*"
                           id="endDate"
                         />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="difficulty" className="text-white font-medium">
-                          Difficulty
-                        </Label>
-                        <Select
-                          value={formData.difficulty}
-                          onValueChange={(value) => setFormData({ ...formData, difficulty: value })}
-                        >
-                          <SelectTrigger className="mt-2 bg-gray-900/50 border-gray-700 text-white">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent className="bg-gray-900 border-gray-700">
-                            <SelectItem value="Easy">Easy</SelectItem>
-                            <SelectItem value="Medium">Medium</SelectItem>
-                            <SelectItem value="Hard">Hard</SelectItem>
-                          </SelectContent>
-                        </Select>
                       </div>
                     </div>
 
@@ -986,17 +962,6 @@ export default function CreateGiveawayPage() {
                       <div className="flex items-center justify-between">
                         <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
                           {formData.value || "$0"} Value
-                        </Badge>
-                        <Badge
-                          className={`${
-                            formData.difficulty === "Easy"
-                              ? "bg-green-500/20 text-green-400 border-green-500/30"
-                              : formData.difficulty === "Medium"
-                                ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
-                                : "bg-red-500/20 text-red-400 border-red-500/30"
-                          }`}
-                        >
-                          {formData.difficulty}
                         </Badge>
                       </div>
 

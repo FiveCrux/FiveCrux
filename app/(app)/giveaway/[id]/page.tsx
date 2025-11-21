@@ -461,7 +461,6 @@ export default function GiveawayDetailPage() {
     entries: giveaway?.entriesCount || 0,
     timeLeft: calculateTimeLeft(giveaway?.endDate || "2024-12-31"),
     endDate: giveaway?.endDate || "2024-12-31",
-    difficulty: giveaway?.difficulty || "Medium",
     category: giveaway?.category || "Scripts",
     createdAt: giveaway?.createdAt || giveaway?.createdAt || new Date().toISOString(),
     updatedAt: giveaway?.updatedAt || giveaway?.updatedAt || new Date().toISOString(),
@@ -913,17 +912,6 @@ export default function GiveawayDetailPage() {
               >
                 <div className="flex items-center gap-2 mb-2">
                   <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">{transformedGiveaway.category}</Badge>
-                  <Badge
-                    className={`${
-                      transformedGiveaway.difficulty === "Easy"
-                        ? "bg-green-500/20 text-green-400 border-green-500/30"
-                        : transformedGiveaway.difficulty === "Medium"
-                          ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
-                          : "bg-red-500/20 text-red-400 border-red-500/30"
-                    }`}
-                  >
-                    {transformedGiveaway.difficulty}
-                  </Badge>
                   {transformedGiveaway.featured && <Badge className="bg-orange-500 text-white">Featured</Badge>}
                 </div>
 

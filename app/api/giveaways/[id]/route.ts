@@ -122,7 +122,6 @@ export async function PATCH(
             title: giveaway.title || currentGiveaway.title,
             description: giveaway.description || currentGiveaway.description,
             totalValue: giveaway.total_value || currentGiveaway.totalValue,
-            difficulty: giveaway.difficulty || currentGiveaway.difficulty,
             endDate: giveaway.end_date || currentGiveaway.endDate,
             coverImage: giveaway.cover_image || currentGiveaway.coverImage,
             creatorId: updatedGiveaway.creatorId,

@@ -98,6 +98,7 @@ export default function SubmitScriptPage() {
 
   const [features, setFeatures] = useState([{ id: 1, text: "" }])
   const [requirements, setRequirements] = useState([{ id: 1, text: "" }])
+  const [otherLinks, setOtherLinks] = useState([{ id: 1, text: "" }])
   const [link, setLink] = useState("")
   const [media, setMedia] = useState<{
     images: string[]
@@ -162,6 +163,13 @@ export default function SubmitScriptPage() {
             // Set link
             if (script.link) {
               setLink(script.link)
+            }
+            
+            // Set other links
+            if (script.other_links && script.other_links.length > 0) {
+              setOtherLinks(script.other_links.map((link: string, index: number) => ({ id: index + 1, text: link })))
+            } else {
+              setOtherLinks([{ id: 1, text: "" }])
             }
             
             // Set media
@@ -243,6 +251,19 @@ export default function SubmitScriptPage() {
 
   const updateRequirement = (id: number, text: string) => {
     setRequirements(requirements.map((r) => (r.id === id ? { ...r, text } : r)))
+  }
+
+  const addOtherLink = () => {
+    const newId = Math.max(...otherLinks.map((l) => l.id)) + 1
+    setOtherLinks([...otherLinks, { id: newId, text: "" }])
+  }
+
+  const removeOtherLink = (id: number) => {
+    setOtherLinks(otherLinks.filter((l) => l.id !== id))
+  }
+
+  const updateOtherLink = (id: number, text: string) => {
+    setOtherLinks(otherLinks.map((l) => (l.id === id ? { ...l, text } : l)))
   }
 
 
@@ -368,6 +389,7 @@ export default function SubmitScriptPage() {
         features: features.filter((f) => f.text.trim()).map((f) => f.text.trim()),
         requirements: requirements.filter((r) => r.text.trim()).map((r) => r.text.trim()),
         link: link.trim() || null,
+        other_links: otherLinks.filter((l) => l.text.trim()).map((l) => l.text.trim()),
         images: media.images,
         videos: media.videos,
         screenshots: media.screenshots,
@@ -581,7 +603,7 @@ export default function SubmitScriptPage() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className=" grid-cols-1 hidden md:grid-cols-2 gap-4">
                       <div>
                         <Label htmlFor="sellerName" className="text-white font-medium">
                           Your Name *
@@ -801,6 +823,54 @@ export default function SubmitScriptPage() {
                   </CardContent>
                 </Card>
 
+                {/* Other Links */}
+                <Card className="bg-gray-800/30 border-gray-700/50 backdrop-blur-sm">
+                  <CardHeader>
+                    <CardTitle className="text-white flex items-center gap-2">
+                      <ExternalLink className="h-5 w-5 text-orange-500" />
+                      Other Links
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {otherLinks.map((otherLink, index) => (
+                      <motion.div
+                        key={otherLink.id}
+                        className="flex items-center gap-3"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                      >
+                        <Input
+                          value={otherLink.text}
+                          onChange={(e) => updateOtherLink(otherLink.id, e.target.value)}
+                          placeholder="https://example.com/documentation"
+                          className="flex-1 bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-orange-500"
+                        />
+                        {otherLinks.length > 1 && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeOtherLink(otherLink.id)}
+                            className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </motion.div>
+                    ))}
+
+                    <Button
+                      type="button"
+                      onClick={addOtherLink}
+                      variant="outline"
+                      className="w-full border-gray-600 text-gray-300 hover:text-white hover:border-orange-500"
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
+                      Add Link
+                    </Button>
+                  </CardContent>
+                </Card>
 
                 {/* Media Upload */}
                 <Card className="bg-gray-800/30 border-gray-700/50 backdrop-blur-sm">

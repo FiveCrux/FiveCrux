@@ -77,7 +77,6 @@ export interface Giveaway extends BaseEntity {
   category: string;
   endDate: string;
   maxEntries?: number;
-  difficulty: string;
   featured: boolean;
   autoAnnounce: boolean;
   creatorName: string;

@@ -266,7 +266,6 @@ export async function announceGiveawayApproval(
     id: number
     title: string
     totalValue: string
-    difficulty: string
     endDate: string
     coverImage?: string | null
     creatorId?: string | null
@@ -306,11 +305,6 @@ export async function announceGiveawayApproval(
         inline: true,
       },
       {
-        name: 'Difficulty',
-        value: giveaway.difficulty,
-        inline: true,
-      },
-      {
         name: 'End Date',
         value: new Date(giveaway.endDate).toLocaleDateString('en-US', {
           year: 'numeric',
@@ -339,7 +333,6 @@ export async function announceGiveawayPending(
     title: string
     description: string
     totalValue: string
-    difficulty: string
     endDate: string
     coverImage?: string | null
     creatorId?: string | null
@@ -370,11 +363,6 @@ export async function announceGiveawayPending(
       {
         name: 'Total Value',
         value: giveaway.totalValue,
-        inline: true,
-      },
-      {
-        name: 'Difficulty',
-        value: giveaway.difficulty,
         inline: true,
       },
       {

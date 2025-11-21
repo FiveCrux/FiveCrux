@@ -5,6 +5,7 @@ import { motion } from "framer-motion"
 import Link from "next/link"
 import { useSession, signIn, signOut } from "next-auth/react"
 import { Avatar, AvatarImage, AvatarFallback } from "@/componentss/ui/avatar"
+import { getSessionUserProfilePicture } from "@/lib/user-utils"
 import {
   Navbar,
   NavBody,
@@ -20,6 +21,11 @@ import {
 export default function NavbarComponent() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const { data: session, status } = useSession()
+
+  // Check if user has admin access (admin, founder, or moderator roles)
+  const userRoles = (session?.user as any)?.roles || []
+  const hasAdminAccess = userRoles.includes('admin') || userRoles.includes('founder') || userRoles.includes('moderator')
+  const profilePictureUrl = getSessionUserProfilePicture(session)
 
   const navItems = [
     { name: "Home", link: "/" },
@@ -74,15 +80,17 @@ export default function NavbarComponent() {
               <>
                 <Link href="/profile" className="block">
                   <Avatar className="h-9 w-9 ring-1 ring-gray-700/60">
-                    <AvatarImage src={String((session?.user as any)?.image || "")} alt={String(session?.user?.name || "User")} />
+                    <AvatarImage src={profilePictureUrl || ""} alt={String(session?.user?.name || "User")} />
                     <AvatarFallback className="bg-gray-800 text-white text-sm">
                       {String(session?.user?.name || "U").charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                 </Link>
-                <NavbarButton variant="secondary" href="/admin">
-                  Admin
-                </NavbarButton>
+                {hasAdminAccess && (
+                  <NavbarButton variant="secondary" href="/admin">
+                    Admin
+                  </NavbarButton>
+                )}
                 <NavbarButton
                   variant="secondary"
                   as="button"
@@ -132,7 +140,7 @@ export default function NavbarComponent() {
               <div className="flex w-full flex-col gap-4">
                 <div className="flex items-center space-x-3 pb-4 border-b border-gray-700">
                   <Avatar className="h-10 w-10 ring-1 ring-gray-700/60">
-                    <AvatarImage src={String((session?.user as any)?.image || "")} alt={String(session?.user?.name || "User")} />
+                    <AvatarImage src={profilePictureUrl || ""} alt={String(session?.user?.name || "User")} />
                     <AvatarFallback className="bg-gray-800 text-white text-sm">
                       {String(session?.user?.name || "U").charAt(0).toUpperCase()}
                     </AvatarFallback>
@@ -149,13 +157,15 @@ export default function NavbarComponent() {
                 >
                   <span className="block">Profile</span>
                 </Link>
-                <Link
-                  href="/admin"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="relative text-neutral-600 dark:text-neutral-300"
-                >
-                  <span className="block">Admin</span>
-                </Link>
+                {hasAdminAccess && (
+                  <Link
+                    href="/admin"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="relative text-neutral-600 dark:text-neutral-300"
+                  >
+                    <span className="block">Admin</span>
+                  </Link>
+                )}
                 <NavbarButton
                   onClick={() => {
                     signOut()

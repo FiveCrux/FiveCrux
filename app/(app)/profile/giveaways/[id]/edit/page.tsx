@@ -79,7 +79,6 @@ export default function EditGiveawayPage() {
     description: "",
     value: "",
     endDate: "",
-    difficulty: "Easy",
     featured: false,
     autoAnnounce: true,
     creatorName: session?.user?.name || "",
@@ -138,7 +137,6 @@ export default function EditGiveawayPage() {
             description: giveaway.description || "",
             value: giveaway.total_value || giveaway.totalValue || "",
             endDate: giveaway.end_date || giveaway.endDate || "",
-            difficulty: giveaway.difficulty || "Easy",
             featured: giveaway.featured || false,
             autoAnnounce: giveaway.auto_announce || giveaway.autoAnnounce || true,
             creatorName: giveaway.creator_name || giveaway.creatorName || session?.user?.name || "",
@@ -324,7 +322,6 @@ export default function EditGiveawayPage() {
           description: formData.description,
           total_value: formData.value,
           end_date: formData.endDate,
-          difficulty: formData.difficulty,
           featured: formData.featured,
           auto_announce: formData.autoAnnounce,
           creator_name: formData.creatorName,
@@ -628,27 +625,6 @@ export default function EditGiveawayPage() {
                           className="mt-2 bg-gray-900/50 border-gray-700 text-white focus:border-yellow-500"
                           required
                         />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="difficulty" className="text-white font-medium">
-                          Difficulty
-                        </Label>
-                        <Select
-                          value={formData.difficulty}
-                          onValueChange={(value) => setFormData({ ...formData, difficulty: value })}
-                        >
-                          <SelectTrigger className="mt-2 bg-gray-900/50 border-gray-700 text-white">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent className="bg-gray-900 border-gray-700">
-                            <SelectItem value="Easy">Easy</SelectItem>
-                            <SelectItem value="Medium">Medium</SelectItem>
-                            <SelectItem value="Hard">Hard</SelectItem>
-                          </SelectContent>
-                        </Select>
                       </div>
                     </div>
 
@@ -1094,17 +1070,6 @@ export default function EditGiveawayPage() {
                       <div className="flex items-center justify-between">
                         <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
                           {formData.value || "$0"} Value
-                        </Badge>
-                        <Badge
-                          className={`${
-                            formData.difficulty === "Easy"
-                              ? "bg-green-500/20 text-green-400 border-green-500/30"
-                              : formData.difficulty === "Medium"
-                                ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
-                                : "bg-red-500/20 text-red-400 border-red-500/30"
-                          }`}
-                        >
-                          {formData.difficulty}
                         </Badge>
                       </div>
 
