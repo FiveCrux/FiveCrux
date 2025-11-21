@@ -62,7 +62,6 @@ export async function POST(request: NextRequest) {
           title: giveaway.title,
           description: giveaway.description,
           totalValue: giveaway.total_value,
-          difficulty: giveaway.difficulty,
           endDate: giveaway.end_date,
           coverImage: giveaway.cover_image || null,
           creatorId: (session.user as any).id,

@@ -49,7 +49,6 @@ interface Giveaway {
   description: string
   total_value: string
   category: string
-  difficulty: string
   status: string
   creator_name: string
   creator_email: string

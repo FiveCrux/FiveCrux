@@ -554,78 +554,76 @@ export default function ScriptsPage() {
                           </div>
                         </Collapsible>
 
-                        {/* Price Range Filter */}
-                        <Collapsible open={openFilter === "priceRange"} onOpenChange={(open) => setOpenFilter(open ? "priceRange" : null)}>
+                        {/* Price Filter - Combined */}
+                        <Collapsible open={openFilter === "price"} onOpenChange={(open) => setOpenFilter(open ? "price" : null)}>
                           <div className="relative z-30">
                             <CollapsibleTrigger asChild>
                               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                                 <Button
                                   variant="outline"
                                   className={`bg-gradient-to-r from-gray-800/80 to-gray-900/80 border-2 text-white font-semibold px-4 py-2 rounded-lg shadow-lg transition-all duration-300 ${
-                                    openFilter === "priceRange"
+                                    openFilter === "price" || selectedPriceCategories.length > 0 || (priceRange[0] !== 0 || priceRange[1] !== 100)
                                       ? "border-orange-500 bg-gradient-to-r from-orange-500/20 to-orange-600/20 shadow-orange-500/50"
                                       : "border-gray-600/50 hover:border-orange-500/70 hover:from-gray-700/80 hover:to-gray-800/80"
                                   }`}
                                 >
                                   <span className="text-sm font-medium flex items-center gap-2">
                                     <DollarSign className="h-4 w-4" />
-                                    Price Range
+                                    Price
+                                    {(selectedPriceCategories.length > 0 || (priceRange[0] !== 0 || priceRange[1] !== 100)) && (
+                                      <span className="text-orange-400">
+                                        {selectedPriceCategories.length > 0 && ` (${selectedPriceCategories.length})`}
+                                        {(priceRange[0] !== 0 || priceRange[1] !== 100) && ` $${priceRange[0]}-${priceRange[1]}`}
+                                      </span>
+                                    )}
                                   </span>
-                                  <ChevronDown className={`ml-2 h-4 w-4 transition-transform duration-300 ${openFilter === "priceRange" ? "rotate-180" : ""}`} />
-                                </Button>
-                              </motion.div>
-                            </CollapsibleTrigger>
-                            <CollapsibleContent className="absolute z-[100] mt-2 left-0 bg-gray-900 border border-gray-700/50 rounded-lg p-4 shadow-xl min-w-[200px]">
-                            <div className="space-y-3">
-                              {priceCategories.map((category) => (
-                                <motion.div
-                                  key={category}
-                                  className="flex items-center space-x-2"
-                                  whileHover={{ x: 5 }}
-                                >
-                                  <Checkbox
-                                    id={`price-${category}`}
-                                    checked={selectedPriceCategories.includes(category)}
-                                    onCheckedChange={(checked) => handlePriceCategoryChange(category, checked as boolean)}
-                                  />
-                                  <label
-                                    htmlFor={`price-${category}`}
-                                    className="text-sm text-gray-300 hover:text-white transition-colors cursor-pointer"
-                                  >
-                                    {category} {category === "Budget" && "($0-$15)"}
-                                    {category === "Standard" && "($15-$30)"}
-                                    {category === "Premium" && "($30+)"}
-                                  </label>
-                                </motion.div>
-                              ))}
-                            </div>
-                            </CollapsibleContent>
-                          </div>
-                        </Collapsible>
-
-                        {/* Custom Price Range */}
-                        <Collapsible open={openFilter === "customPrice"} onOpenChange={(open) => setOpenFilter(open ? "customPrice" : null)}>
-                          <div className="relative z-30">
-                            <CollapsibleTrigger asChild>
-                              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                                <Button
-                                  variant="outline"
-                                  className={`bg-gradient-to-r from-gray-800/80 to-gray-900/80 border-2 text-white font-semibold px-4 py-2 rounded-lg shadow-lg transition-all duration-300 ${
-                                    openFilter === "customPrice"
-                                      ? "border-orange-500 bg-gradient-to-r from-orange-500/20 to-orange-600/20 shadow-orange-500/50"
-                                      : "border-gray-600/50 hover:border-orange-500/70 hover:from-gray-700/80 hover:to-gray-800/80"
-                                  }`}
-                                >
-                                  <span className="text-sm font-medium flex items-center gap-2">
-                                    <Sliders className="h-4 w-4" />
-                                    Custom: ${priceRange[0]}-${priceRange[1]}
-                                  </span>
-                                  <ChevronDown className={`ml-2 h-4 w-4 transition-transform duration-300 ${openFilter === "customPrice" ? "rotate-180" : ""}`} />
+                                  <ChevronDown className={`ml-2 h-4 w-4 transition-transform duration-300 ${openFilter === "price" ? "rotate-180" : ""}`} />
                                 </Button>
                               </motion.div>
                             </CollapsibleTrigger>
                             <CollapsibleContent className="absolute z-[100] mt-2 left-0 bg-gray-900 border border-gray-700/50 rounded-lg p-4 shadow-xl min-w-[250px]">
-                              <Slider value={priceRange} onValueChange={setPriceRange} max={100} step={1} className="w-full" />
+                              <div className="space-y-4">
+                                {/* Price Categories */}
+                                <div>
+                                  <h4 className="text-white font-semibold mb-3 text-sm">Price Category</h4>
+                                  <div className="space-y-3">
+                                    {priceCategories.map((category) => (
+                                      <motion.div
+                                        key={category}
+                                        className="flex items-center space-x-2"
+                                        whileHover={{ x: 5 }}
+                                      >
+                                        <Checkbox
+                                          id={`price-${category}`}
+                                          checked={selectedPriceCategories.includes(category)}
+                                          onCheckedChange={(checked) => handlePriceCategoryChange(category, checked as boolean)}
+                                        />
+                                        <label
+                                          htmlFor={`price-${category}`}
+                                          className="text-sm text-gray-300 hover:text-white transition-colors cursor-pointer"
+                                        >
+                                          {category} {category === "Budget" && "($0-$15)"}
+                                          {category === "Standard" && "($15-$30)"}
+                                          {category === "Premium" && "($30+)"}
+                                        </label>
+                                      </motion.div>
+                                    ))}
+                                  </div>
+                                </div>
+                                
+                                {/* Divider */}
+                                <div className="border-t border-gray-700/50"></div>
+                                
+                                {/* Custom Price Range */}
+                                <div>
+                                  <h4 className="text-white font-semibold mb-3 text-sm">Custom Range</h4>
+                                  <Slider value={priceRange} onValueChange={setPriceRange} max={100} step={1} className="w-full mb-2" />
+                                  <div className="flex justify-between text-sm text-gray-400">
+                                    <span>${priceRange[0]}</span>
+                                    <span>${priceRange[1]}</span>
+                                  </div>
+                                </div>
+                              </div>
                             </CollapsibleContent>
                           </div>
                         </Collapsible>

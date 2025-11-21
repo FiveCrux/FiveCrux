@@ -221,7 +221,6 @@ export async function PATCH(request: NextRequest) {
                   id: giveaway.id,
                   title: giveaway.title,
                   totalValue: giveaway.totalValue,
-                  difficulty: giveaway.difficulty,
                   endDate: giveaway.endDate,
                   coverImage: giveaway.coverImage,
                   creatorId: giveaway.creatorId,

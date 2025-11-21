@@ -16,6 +16,7 @@ const IMAGE_DIMENSIONS = {
   'screenshot': { width: 1920, height: 1080, fit: 'inside' as const }, // Screenshots
   'ad': { width: 800, height: 600, fit: 'cover' as const }, // Advertisement images
   'giveaway': { width: 1200, height: 800, fit: 'inside' as const }, // Giveaway images
+  'profile': { width: 400, height: 400, fit: 'cover' as const }, // Profile pictures (square)
   'default': { width: 1200, height: 1200, fit: 'inside' as const }, // Default fallback
 }
 

@@ -34,6 +34,9 @@ import { useUserScripts, useDeleteUserScript } from "@/hooks/use-scripts-queries
 import { useUserGiveaways, useDeleteUserGiveaway, useUserCreatorGiveawayEntries } from "@/hooks/use-giveaways-queries"
 import { useUserAdvertisements } from "@/hooks/use-profile-queries"
 import { toast } from "sonner"
+import { getSessionUserProfilePicture } from "@/lib/user-utils"
+import { useSession as useNextAuthSession } from "next-auth/react"
+import { Camera, X } from "lucide-react"
 
 interface Script {
   id: number
@@ -73,7 +76,6 @@ interface Giveaway {
   category: string
   end_date: string
   max_entries?: number
-  difficulty: "Easy" | "Medium" | "Hard"
   featured: boolean
   auto_announce: boolean
   creator_name: string
@@ -107,8 +109,10 @@ interface Ad {
 
 export default function ProfilePage() {
   const { data: session, status } = useSession()
+  const { update: updateSession } = useNextAuthSession()
   const router = useRouter()
   const [activeTab, setActiveTab] = useState("overview")
+  const [uploadingProfilePicture, setUploadingProfilePicture] = useState(false)
   
   // Track which tabs have been visited for lazy loading
   const [visitedTabs, setVisitedTabs] = useState<Set<string>>(new Set(["overview"]))
@@ -140,6 +144,9 @@ export default function ProfilePage() {
   
   const [showAdsForm, setShowAdsForm] = useState(false)
   const [editingAd, setEditingAd] = useState<any>(null)
+  const [editingName, setEditingName] = useState(false)
+  const [nameValue, setNameValue] = useState("")
+  const [savingName, setSavingName] = useState(false)
   
   // Extract data from React Query responses
   const scripts = scriptsData?.scripts || []
@@ -166,6 +173,13 @@ export default function ProfilePage() {
     if (status !== "authenticated") return
     setVisitedTabs(prev => new Set([...prev, activeTab]))
   }, [activeTab, status])
+
+  // Initialize name value from session
+  useEffect(() => {
+    if (session?.user?.name) {
+      setNameValue(session.user.name)
+    }
+  }, [session?.user?.name])
 
   const handleEditScript = (scriptId: number) => {
     router.push(`/scripts/submit?edit=${scriptId}`)
@@ -241,6 +255,112 @@ export default function ProfilePage() {
     setEditingAd(null)
   }
 
+  const handleProfilePictureUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    setUploadingProfilePicture(true)
+    try {
+      const formData = new FormData()
+      formData.append("file", file)
+
+      const response = await fetch("/api/user/profile-picture", {
+        method: "POST",
+        body: formData,
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || "Upload failed")
+      }
+
+      const result = await response.json()
+      toast.success("Profile picture updated successfully!")
+      
+      // Refresh session to get updated profile picture
+      await updateSession()
+    } catch (error) {
+      console.error("Upload error:", error)
+      toast.error(`Failed to upload profile picture: ${error instanceof Error ? error.message : "Unknown error"}`)
+    } finally {
+      setUploadingProfilePicture(false)
+      // Reset input
+      if (event.target) {
+        event.target.value = ""
+      }
+    }
+  }
+
+  const handleRemoveProfilePicture = async () => {
+    if (!confirm("Are you sure you want to remove your profile picture?")) return
+
+    try {
+      const response = await fetch("/api/user/profile-picture", {
+        method: "DELETE",
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to remove profile picture")
+      }
+
+      toast.success("Profile picture removed successfully!")
+      
+      // Refresh session to get updated profile picture
+      await updateSession()
+    } catch (error) {
+      console.error("Remove error:", error)
+      toast.error("Failed to remove profile picture")
+    }
+  }
+
+  const handleSaveName = async () => {
+    if (!nameValue.trim()) {
+      toast.error("Name cannot be empty")
+      return
+    }
+
+    if (nameValue.trim() === session?.user?.name) {
+      setEditingName(false)
+      return
+    }
+
+    setSavingName(true)
+    try {
+      const response = await fetch("/api/user/name", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ name: nameValue.trim() }),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || "Failed to update name")
+      }
+
+      toast.success("Name updated successfully!")
+      setEditingName(false)
+      
+      // Refresh session to get updated name
+      await updateSession()
+    } catch (error) {
+      console.error("Save name error:", error)
+      toast.error(`Failed to update name: ${error instanceof Error ? error.message : "Unknown error"}`)
+      // Reset to original name on error
+      setNameValue(session?.user?.name || "")
+    } finally {
+      setSavingName(false)
+    }
+  }
+
+  const handleCancelEditName = () => {
+    setNameValue(session?.user?.name || "")
+    setEditingName(false)
+  }
+
+  const profilePictureUrl = getSessionUserProfilePicture(session)
+
   if (status === "loading") {
     return (
       <>
@@ -269,12 +389,40 @@ export default function ProfilePage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
             >
-              <Avatar className="h-20 w-20">
-                <AvatarImage src={session.user?.image || ""} />
-                <AvatarFallback className="bg-orange-500 text-white text-2xl">
-                  {session.user?.name?.charAt(0) || "U"}
-                </AvatarFallback>
-              </Avatar>
+              <div className="relative group">
+                <Avatar className="h-20 w-20">
+                  <AvatarImage src={profilePictureUrl || ""} />
+                  <AvatarFallback className="bg-orange-500 text-white text-2xl">
+                    {session.user?.name?.charAt(0) || "U"}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-full flex items-center justify-center">
+                  <label className="cursor-pointer">
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/jpg,image/png,image/webp"
+                      onChange={handleProfilePictureUpload}
+                      disabled={uploadingProfilePicture}
+                      className="hidden"
+                    />
+                    <Camera className="h-6 w-6 text-white" />
+                  </label>
+                </div>
+                {uploadingProfilePicture && (
+                  <div className="absolute inset-0 bg-black/70 rounded-full flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+                  </div>
+                )}
+                {profilePictureUrl && (
+                  <button
+                    onClick={handleRemoveProfilePicture}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                    title="Remove profile picture"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
               <div>
                 <h1 className="text-3xl font-bold">{session.user?.name}</h1>
                 <p className="text-gray-400">{session.user?.email}</p>
@@ -322,19 +470,19 @@ export default function ProfilePage() {
               </TabsTrigger>
               <TabsTrigger value="scripts" className="data-[state=active]:bg-orange-500">
                 <Package className="h-4 w-4 mr-2" />
-                Scripts ({scriptsTotal})
-              </TabsTrigger>
+                Scripts 
+              </TabsTrigger> 
               <TabsTrigger value="giveaways" className="data-[state=active]:bg-orange-500">
                 <Gift className="h-4 w-4 mr-2" />
-                Giveaways ({giveawaysTotal})
+                Giveaways 
               </TabsTrigger>
               <TabsTrigger value="ads" className="data-[state=active]:bg-orange-500">
                 <Tag className="h-4 w-4 mr-2" />
-                Ads ({adsTotal})
+                Ads 
               </TabsTrigger>
               <TabsTrigger value="entries" className="data-[state=active]:bg-orange-500">
                 <Sparkles className="h-4 w-4 mr-2" />
-                Entries ({entriesTotal})
+                Entries
               </TabsTrigger>
               <TabsTrigger value="settings" className="data-[state=active]:bg-orange-500">
                 <Settings className="h-4 w-4 mr-2" />
@@ -924,12 +1072,45 @@ export default function ProfilePage() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-400 mb-2">Name</label>
-                          <input
-                            type="text"
-                            value={session.user?.name || ""}
-                            disabled
-                            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white disabled:opacity-50"
-                          />
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="text"
+                              value={nameValue}
+                              onChange={(e) => setNameValue(e.target.value)}
+                              onFocus={() => setEditingName(true)}
+                              disabled={savingName}
+                              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:border-orange-500 focus:outline-none disabled:opacity-50"
+                              placeholder="Enter your name"
+                            />
+                            {editingName && (
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  size="sm"
+                                  onClick={handleSaveName}
+                                  disabled={savingName || !nameValue.trim() || nameValue.trim() === session?.user?.name}
+                                  className="bg-orange-500 hover:bg-orange-600 text-white"
+                                >
+                                  {savingName ? (
+                                    <>
+                                      <Settings className="h-4 w-4 mr-1 animate-spin" />
+                                      Saving...
+                                    </>
+                                  ) : (
+                                    "Save"
+                                  )}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={handleCancelEditName}
+                                  disabled={savingName}
+                                  className="border-gray-600 text-gray-300 hover:text-white"
+                                >
+                                  Cancel
+                                </Button>
+                              </div>
+                            )}
+                          </div>
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-400 mb-2">Email</label>
@@ -939,6 +1120,7 @@ export default function ProfilePage() {
                             disabled
                             className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white disabled:opacity-50"
                           />
+                          <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
                         </div>
                       </div>
                     </div>

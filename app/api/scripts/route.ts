@@ -43,6 +43,7 @@ export async function POST(request: NextRequest) {
       features: body.features || [],
       requirements: body.requirements || [],
       link: body.link || null,
+      otherLinks: body.other_links || [],
       images: body.images || [],
       videos: body.videos || [],
       screenshots: body.screenshots || [],

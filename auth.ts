@@ -1,6 +1,6 @@
 import type { NextAuthOptions } from "next-auth"
 import Discord from "next-auth/providers/discord"
-import { upsertUser, getUserById } from "@/lib/database-new"
+import { upsertUser, getUserById, getUserProfilePicture } from "@/lib/database-new"
 
 export const authOptions: NextAuthOptions = {
 	providers: [
@@ -51,6 +51,12 @@ export const authOptions: NextAuthOptions = {
 						console.log("Auth callback - User roles from DB:", dbUser.roles)
 						;(session.user as any).roles = dbUser.roles
 						;(session.user as any).username = dbUser.username
+						// Use name from database if available, otherwise use Discord name
+						if (dbUser.name) {
+							session.user.name = dbUser.name
+						}
+						// Use profile picture with priority: profile_picture first, then Discord image
+						;(session.user as any).profilePicture = getUserProfilePicture(dbUser)
 					}
 				} catch (e) {
 					console.error("Auth callback - Error fetching user:", e)

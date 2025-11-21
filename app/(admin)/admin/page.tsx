@@ -1,8 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { useSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
 import {
   Users,
   Package,
@@ -48,6 +49,7 @@ import Navbar from "@/componentss/shared/navbar"
 import Footer from "@/componentss/shared/footer"
 import FileUpload from "@/componentss/shared/file-upload"
 import { useRoleValidation } from "@/hooks/use-role-validation"
+import { getUserProfilePicture } from "@/lib/user-utils"
 import { 
   useAdminUsers, 
   useAdminScripts, 
@@ -66,6 +68,7 @@ interface User {
   name: string | null
   email: string | null
   image: string | null
+  profilePicture?: string | null
   username: string | null
   roles: string[]
   created_at?: string
@@ -86,6 +89,7 @@ interface Script {
   features: string[]
   requirements: string[]
   link?: string
+  other_links?: string[]
   images: string[]
   videos: string[]
   screenshots: string[]
@@ -106,7 +110,6 @@ interface Giveaway {
   description: string
   total_value: string
   category: string
-  difficulty: string
   status: string
   creator_name: string
   creator_email: string
@@ -160,10 +163,29 @@ const roleOptions = [
 ]
 
 export default function AdminPage() {
-  const { data: session } = useSession()
+  const { data: session, status } = useSession()
+  const router = useRouter()
   
   // Auto-validate roles and refresh if changed
   useRoleValidation()
+  
+  // Check if user has admin access and redirect if not
+  useEffect(() => {
+    if (status === "loading") return // Wait for session to load
+    
+    if (!session) {
+      router.push("/auth/signin")
+      return
+    }
+    
+    const userRoles = (session?.user as any)?.roles || []
+    const hasAdminAccess = userRoles.includes('admin') || userRoles.includes('founder') || userRoles.includes('moderator')
+    
+    if (!hasAdminAccess) {
+      router.push("/")
+      return
+    }
+  }, [session, status, router])
   
   // Fetch data using React Query (infinite queries for pagination)
   const { 
@@ -448,7 +470,8 @@ export default function AdminPage() {
     )
   }
 
-  if (loading) {
+  // Show loading or redirect if not authorized
+  if (status === "loading" || loading) {
     return (
       <>
         <Navbar />
@@ -458,6 +481,14 @@ export default function AdminPage() {
         {/* <Footer /> */}
       </>
     );
+  }
+  
+  // Check if user has admin access (using userRoles defined above)
+  const hasAdminAccess = userRoles.includes('admin') || userRoles.includes('founder') || userRoles.includes('moderator')
+  
+  // Redirect unauthorized users (this is a fallback, useEffect should handle it)
+  if (!session || !hasAdminAccess) {
+    return null // useEffect will handle redirect
   }
 
   return (
@@ -634,19 +665,22 @@ export default function AdminPage() {
                       <div key={user.id} className="flex items-center justify-between p-4 rounded-lg bg-gray-700/30">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-r from-orange-500 to-yellow-400 flex items-center justify-center">
-                            {user.image ? (
-                              <img 
-                                src={user.image} 
-                                alt={user.name || "User"} 
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                  const target = e.target as HTMLImageElement;
-                                  target.style.display = 'none';
-                                  target.nextElementSibling?.classList.remove('hidden');
-                                }}
-                              />
-                            ) : null}
-                            <span className={`text-black font-bold ${user.image ? 'hidden' : ''}`}>
+                            {(() => {
+                              const profilePic = getUserProfilePicture(user);
+                              return profilePic ? (
+                                <img 
+                                  src={profilePic} 
+                                  alt={user.name || "User"} 
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.style.display = 'none';
+                                    target.nextElementSibling?.classList.remove('hidden');
+                                  }}
+                                />
+                              ) : null;
+                            })()}
+                            <span className={`text-black font-bold ${getUserProfilePicture(user) ? 'hidden' : ''}`}>
                               {user.name?.[0] || "U"}
                             </span>
                           </div>
@@ -958,10 +992,6 @@ export default function AdminPage() {
                               <div>
                                 <span className="text-gray-400">Total Value:</span>
                                 <p className="text-white">${giveaway.total_value}</p>
-                              </div>
-                              <div>
-                                <span className="text-gray-400">Difficulty:</span>
-                                <p className="text-white">{giveaway.difficulty || "N/A"}</p>
                               </div>
                             </div>
                             <div className="mt-3">
@@ -1694,6 +1724,36 @@ export default function AdminPage() {
                       </div>
                     )}
                   </div>
+
+                  {/* Other Links Section */}
+                  <div>
+                    <h3 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+                      <ExternalLink className="h-5 w-5 text-orange-500" />
+                      Other Links
+                    </h3>
+                    {viewingScript.other_links && viewingScript.other_links.length > 0 ? (
+                      <div className="space-y-2">
+                        {viewingScript.other_links.map((link, index) => (
+                          <div key={index} className="flex items-center gap-2 bg-gray-900/50 p-3 rounded-lg">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-blue-400 hover:text-blue-300 border-blue-500/50"
+                              onClick={() => window.open(link, '_blank')}
+                            >
+                              <ExternalLink className="h-3 w-3 mr-1" />
+                              View
+                            </Button>
+                            <span className="text-gray-300 text-sm truncate flex-1">{link}</span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-gray-400 text-sm bg-gray-900/50 p-3 rounded-lg">
+                        No other links provided
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -1907,10 +1967,6 @@ export default function AdminPage() {
                         </p>
                       </div>
                       <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <span className="text-gray-400 text-sm font-medium">Difficulty:</span>
-                          <p className="text-white">{viewingGiveaway.difficulty}</p>
-                        </div>
                         <div>
                           <span className="text-gray-400 text-sm font-medium">Max Entries:</span>
                           <p className="text-white">{(viewingGiveaway as any).maxEntries || "Unlimited"}</p>

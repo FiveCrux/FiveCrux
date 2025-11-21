@@ -121,6 +121,30 @@ export async function updateUserRole(userId: string, roles: string[]) {
   return result[0] ?? null;
 }
 
+export async function updateUserProfilePicture(userId: string, profilePictureUrl: string | null) {
+  const result = await db.update(users)
+    .set({ profilePicture: profilePictureUrl, updatedAt: new Date() })
+    .where(eq(users.id, userId))
+    .returning();
+  
+  return result[0] ?? null;
+}
+
+export async function updateUserName(userId: string, name: string | null) {
+  const result = await db.update(users)
+    .set({ name: name, updatedAt: new Date() })
+    .where(eq(users.id, userId))
+    .returning();
+  
+  return result[0] ?? null;
+}
+
+// Helper function to get user profile picture with priority: profile_picture first, then Discord image
+export function getUserProfilePicture(user: { profilePicture?: string | null; image?: string | null } | null): string | null {
+  if (!user) return null;
+  return user.profilePicture || user.image || null;
+}
+
 // Script functions
 export async function createScript(scriptData: NewScript & { framework?: string | string[] }): Promise<number> {
   // Generate a smaller ID that fits PostgreSQL integer limits (max: 2,147,483,647)
@@ -150,6 +174,7 @@ export async function createScript(scriptData: NewScript & { framework?: string 
     features: scriptData.features || [],
     requirements: scriptData.requirements || [],
     link: scriptData.link || null,
+    otherLinks: (scriptData as any).otherLinks || [],
     // Normalize framework as text[] for DB with validation
     framework: validatedFrameworks,
   };
@@ -212,6 +237,7 @@ export async function getScripts(filters?: ScriptFilters) {
       original_price: script.originalPrice,
       seller_name: script.seller_name,
       seller_email: script.seller_email,
+      other_links: script.otherLinks || [],
       created_at: script.createdAt,
       updated_at: script.updatedAt,
     }));
@@ -234,12 +260,12 @@ export async function getScriptById(id: number) {
     if (approvedScript.length > 0) {
       const script = approvedScript[0];
       
-      // Fetch seller's Discord profile picture if sellerId exists
+      // Fetch seller's profile picture with priority: profile_picture first, then Discord image
       let sellerImage = null;
       if (script.sellerId) {
         const sellerResult = await db.select().from(users).where(eq(users.id, script.sellerId));
         if (sellerResult.length > 0) {
-          sellerImage = sellerResult[0].image;
+          sellerImage = getUserProfilePicture(sellerResult[0]);
         }
       }
       
@@ -251,6 +277,7 @@ export async function getScriptById(id: number) {
         original_price: script.originalPrice,
         seller_name: script.seller_name,
         seller_email: script.seller_email,
+        other_links: script.otherLinks || [],
         created_at: script.createdAt,
         updated_at: script.updatedAt,
       };
@@ -266,12 +293,12 @@ export async function getScriptById(id: number) {
     if (pendingScript.length > 0) {
       const script = pendingScript[0];
       
-      // Fetch seller's Discord profile picture if sellerId exists
+      // Fetch seller's profile picture with priority: profile_picture first, then Discord image
       let sellerImage = null;
       if (script.sellerId) {
         const sellerResult = await db.select().from(users).where(eq(users.id, script.sellerId));
         if (sellerResult.length > 0) {
-          sellerImage = sellerResult[0].image;
+          sellerImage = getUserProfilePicture(sellerResult[0]);
         }
       }
       
@@ -283,6 +310,7 @@ export async function getScriptById(id: number) {
         original_price: script.originalPrice,
         seller_name: script.seller_name,
         seller_email: script.seller_email,
+        other_links: script.otherLinks || [],
         created_at: script.createdAt,
         updated_at: script.updatedAt,
       };
@@ -298,12 +326,12 @@ export async function getScriptById(id: number) {
     if (rejectedScript.length > 0) {
       const script = rejectedScript[0];
       
-      // Fetch seller's Discord profile picture if sellerId exists
+      // Fetch seller's profile picture with priority: profile_picture first, then Discord image
       let sellerImage = null;
       if (script.sellerId) {
         const sellerResult = await db.select().from(users).where(eq(users.id, script.sellerId));
         if (sellerResult.length > 0) {
-          sellerImage = sellerResult[0].image;
+          sellerImage = getUserProfilePicture(sellerResult[0]);
         }
       }
       
@@ -315,6 +343,7 @@ export async function getScriptById(id: number) {
         original_price: script.originalPrice,
         seller_name: script.seller_name,
         seller_email: script.seller_email,
+        other_links: script.otherLinks || [],
         created_at: script.createdAt,
         updated_at: script.updatedAt,
       };
@@ -499,6 +528,8 @@ export async function updateScriptForReapproval(id: number, updateData: any) {
     assignIfDefined('features', updateData.features);
     assignIfDefined('requirements', updateData.requirements);
     assignIfDefined('link', updateData.link);
+    if (updateData.otherLinks !== undefined) assignIfDefined('otherLinks', updateData.otherLinks);
+    if (updateData.other_links !== undefined) assignIfDefined('otherLinks', updateData.other_links);
     assignIfDefined('images', updateData.images);
     assignIfDefined('videos', updateData.videos);
     assignIfDefined('screenshots', updateData.screenshots);
@@ -561,6 +592,8 @@ export async function updatePendingScript(id: number, updateData: any) {
     assignIfDefined('features', updateData.features);
     assignIfDefined('requirements', updateData.requirements);
     assignIfDefined('link', updateData.link);
+    if (updateData.otherLinks !== undefined) assignIfDefined('otherLinks', updateData.otherLinks);
+    if (updateData.other_links !== undefined) assignIfDefined('otherLinks', updateData.other_links);
     assignIfDefined('images', updateData.images);
     assignIfDefined('videos', updateData.videos);
     assignIfDefined('screenshots', updateData.screenshots);
@@ -614,6 +647,8 @@ export async function updateRejectedScriptForReapproval(id: number, updateData: 
     assignIfDefined('features', updateData.features);
     assignIfDefined('requirements', updateData.requirements);
     assignIfDefined('link', updateData.link);
+    if (updateData.otherLinks !== undefined) assignIfDefined('otherLinks', updateData.otherLinks);
+    if (updateData.other_links !== undefined) assignIfDefined('otherLinks', updateData.other_links);
     assignIfDefined('images', updateData.images);
     assignIfDefined('videos', updateData.videos);
     assignIfDefined('screenshots', updateData.screenshots);
@@ -672,6 +707,8 @@ export async function updateScript(id: number, updateData: any) {
     assignIfDefined('features', updateData.features);
     assignIfDefined('requirements', updateData.requirements);
     assignIfDefined('link', updateData.link);
+    if (updateData.otherLinks !== undefined) assignIfDefined('otherLinks', updateData.otherLinks);
+    if (updateData.other_links !== undefined) assignIfDefined('otherLinks', updateData.other_links);
     assignIfDefined('images', updateData.images);
     assignIfDefined('videos', updateData.videos);
     assignIfDefined('screenshots', updateData.screenshots);
@@ -811,14 +848,14 @@ export async function getGiveaways(filters?: {
   const offseted = filters?.offset ? limited.offset(filters.offset) : limited;
   const giveaways = await (offseted as any);
   
-  // Fetch creator images for each giveaway
+  // Fetch creator images for each giveaway with priority: profile_picture first, then Discord image
   const giveawaysWithImages = await Promise.all(
     giveaways.map(async (giveaway: any) => {
       let creatorImage = null;
       if (giveaway.creatorId) {
         const creatorResult = await db.select().from(users).where(eq(users.id, giveaway.creatorId));
         if (creatorResult.length > 0) {
-          creatorImage = creatorResult[0].image;
+          creatorImage = getUserProfilePicture(creatorResult[0]);
         }
       }
       return {
@@ -858,13 +895,13 @@ export async function getGiveawayById(id: number, session?: any) {
         userEntry = userEntryResult[0] || null;
       }
       
-      // Fetch creator's Discord profile picture and roles if creatorId exists
+      // Fetch creator's profile picture (with priority) and roles if creatorId exists
       let creatorImage = null;
       let creatorRoles = null;
       if (giveaway.creatorId) {
         const creatorResult = await db.select().from(users).where(eq(users.id, giveaway.creatorId));
         if (creatorResult.length > 0) {
-          creatorImage = creatorResult[0].image;
+          creatorImage = getUserProfilePicture(creatorResult[0]);
           creatorRoles = creatorResult[0].roles;
         }
       }
@@ -893,13 +930,13 @@ export async function getGiveawayById(id: number, session?: any) {
         .where(eq(giveawayEntries.giveawayId, id));
       const actualEntryCount = actualEntries[0]?.count || 0;
       
-      // Fetch creator's Discord profile picture and roles if creatorId exists
+      // Fetch creator's profile picture (with priority) and roles if creatorId exists
       let creatorImage = null;
       let creatorRoles = null;
       if (giveaway.creatorId) {
         const creatorResult = await db.select().from(users).where(eq(users.id, giveaway.creatorId));
         if (creatorResult.length > 0) {
-          creatorImage = creatorResult[0].image;
+          creatorImage = getUserProfilePicture(creatorResult[0]);
           creatorRoles = creatorResult[0].roles;
         }
       }
@@ -927,13 +964,13 @@ export async function getGiveawayById(id: number, session?: any) {
         .where(eq(giveawayEntries.giveawayId, id));
       const actualEntryCount = actualEntries[0]?.count || 0;
       
-      // Fetch creator's Discord profile picture and roles if creatorId exists
+      // Fetch creator's profile picture (with priority) and roles if creatorId exists
       let creatorImage = null;
       let creatorRoles = null;
       if (giveaway.creatorId) {
         const creatorResult = await db.select().from(users).where(eq(users.id, giveaway.creatorId));
         if (creatorResult.length > 0) {
-          creatorImage = creatorResult[0].image;
+          creatorImage = getUserProfilePicture(creatorResult[0]);
           creatorRoles = creatorResult[0].roles;
         }
       }
@@ -983,7 +1020,6 @@ export async function updateGiveawayForReapproval(id: number, updateData: any) {
     assignIfDefined('description', updateData.description);
     if (updateData.total_value !== undefined) assignIfDefined('totalValue', updateData.total_value);
     if (updateData.end_date !== undefined) assignIfDefined('endDate', updateData.end_date);
-    assignIfDefined('difficulty', updateData.difficulty);
     assignIfDefined('creator_name', updateData.creator_name);
     assignIfDefined('creator_email', updateData.creator_email);
     assignIfDefined('creator_id', updateData.creator_id);
@@ -1060,7 +1096,6 @@ export async function updateGiveaway(id: number, updateData: Partial<NewGiveaway
       totalValue: giveaway.totalValue,
       endDate: giveaway.endDate,
       maxEntries: giveaway.maxEntries,
-      difficulty: giveaway.difficulty,
       creatorName: giveaway.creatorName,
       creatorEmail: giveaway.creatorEmail,
       creatorId: giveaway.creatorId,

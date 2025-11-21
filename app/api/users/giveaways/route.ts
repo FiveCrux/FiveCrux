@@ -143,7 +143,6 @@ export async function POST(request: NextRequest) {
       category: body.category,
       endDate: body.end_date,
       maxEntries: body.max_entries,
-      difficulty: body.difficulty,
       featured: body.featured ?? false,
       autoAnnounce: true,
       creatorName: (session.user as any).name || 'Unknown Creator',
