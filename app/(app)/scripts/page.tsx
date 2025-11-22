@@ -931,6 +931,7 @@ export default function ScriptsPage() {
                         whileHover={{ y: -5, scale: 1.02 }}
                         className="group"
                       >
+                        <Link href={`/script/${script.id}`}>
                         <Card
                           className={`bg-gray-800/30 border-gray-700/50 hover:border-orange-500/50 transition-all duration-500 cursor-pointer h-full backdrop-blur-sm relative overflow-hidden ${viewMode === "list" ? "flex" : ""}`}
                         >
@@ -989,9 +990,7 @@ export default function ScriptsPage() {
                             <div className={viewMode === "list" ? "flex justify-between h-full" : ""}>
                               <div className={viewMode === "list" ? "flex-1 pr-4" : ""}>
                                 <CardTitle className="text-white text-lg mb-2 group-hover:text-orange-500 transition-colors duration-300">
-                                  <Link href={`/script/${script.id}`} className="hover:underline">
-                                    {script.title}
-                                  </Link>
+                                  {script.title}
                                 </CardTitle>
                                 <CardDescription className="text-gray-400 text-sm mb-3 leading-relaxed">
                                   {script.description}
@@ -1073,7 +1072,6 @@ export default function ScriptsPage() {
                                   )}
                                 </div>
                                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                                  <Link href={`/script/${script.id}`}>
                                     <Button
                                       size="sm"
                                       className="bg-gradient-to-r from-orange-500 to-yellow-400 hover:from-orange-600 hover:to-yellow-500 text-black font-semibold shadow-lg"
@@ -1081,12 +1079,12 @@ export default function ScriptsPage() {
                                       <Eye className="mr-2 h-4 w-4" />
                                       View Details
                                     </Button>
-                                  </Link>
                                 </motion.div>
                               </div>
                             </div>
                           </CardContent>
                         </Card>
+                        </Link>
                       </motion.div>
                         );
                       });
