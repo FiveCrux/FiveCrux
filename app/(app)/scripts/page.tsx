@@ -679,11 +679,11 @@ export default function ScriptsPage() {
                       <SelectValue placeholder="Sort by" />
                     </SelectTrigger>
                     <SelectContent className="bg-gray-900/95 border-gray-700/50 backdrop-blur-xl">
-                      <SelectItem value="popular">Most Popular</SelectItem>
-                      <SelectItem value="newest">Newest First</SelectItem>
-                      <SelectItem value="price-low">Price: Low to High</SelectItem>
-                      <SelectItem value="price-high">Price: High to Low</SelectItem>
-                      <SelectItem value="rating">Highest Rated</SelectItem>
+                      <SelectItem value="popular" className="text-white">Most Popular</SelectItem>
+                      <SelectItem value="newest" className="text-white">Newest First</SelectItem>
+                      <SelectItem value="price-low" className="text-white">Price: Low to High</SelectItem>
+                      <SelectItem value="price-high" className="text-white">Price: High to Low</SelectItem>
+                      <SelectItem value="rating" className="text-white">Highest Rated</SelectItem>
                     </SelectContent>
                   </Select>
                 </motion.div>

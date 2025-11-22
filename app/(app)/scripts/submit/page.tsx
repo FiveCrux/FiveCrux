@@ -32,6 +32,10 @@ import { Badge } from "@/componentss/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/componentss/ui/select"
 import { Switch } from "@/componentss/ui/switch"
 import { Label } from "@/componentss/ui/label"
+import { Popover, PopoverContent, PopoverTrigger } from "@/componentss/ui/popover"
+import { Checkbox } from "@/componentss/ui/checkbox"
+import { ChevronDown } from "lucide-react"
+import { cn } from "@/lib/utils"
 import Navbar from "@/componentss/shared/navbar"
 import Footer from "@/componentss/shared/footer"
 import { toast } from "sonner"
@@ -579,27 +583,63 @@ export default function SubmitScriptPage() {
 
                       <div>
                         <Label className="text-white font-medium">Frameworks *</Label>
-                        <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          {frameworks.map((fw) => {
-                            const checked = formData.framework.includes(fw.value)
-                            return (
-                              <label key={fw.value} className="flex items-center gap-2 text-sm text-gray-200">
-                                <input
-                                  type="checkbox"
-                                  className="accent-orange-500"
-                                  checked={checked}
-                                  onChange={(e) => {
-                                    const next = e.target.checked
-                                      ? [...formData.framework, fw.value]
-                                      : formData.framework.filter((v) => v !== fw.value)
-                                    setFormData({ ...formData, framework: next })
-                                  }}
-                                />
-                                {fw.label}
-                              </label>
-                            )
-                          })}
-                        </div>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              className={cn(
+                                "mt-2 w-full justify-between bg-gray-900/50 border-gray-700 text-white hover:bg-gray-800/50",
+                                formData.framework.length === 0 && "text-gray-400"
+                              )}
+                            >
+                              {formData.framework.length > 0
+                                ? `${formData.framework.length} framework${formData.framework.length > 1 ? 's' : ''} selected`
+                                : "Select frameworks"}
+                              <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-[200px] p-0 bg-gray-900 border-gray-700" align="start">
+                            <div className="p-2 space-y-2">
+                              {frameworks.map((fw) => {
+                                const checked = formData.framework.includes(fw.value)
+                                return (
+                                  <label
+                                    key={fw.value}
+                                    className="flex items-center gap-2 px-2 py-1.5 rounded-sm hover:bg-gray-800 cursor-pointer"
+                                  >
+                                    <Checkbox
+                                      checked={checked}
+                                      onCheckedChange={(checked) => {
+                                        const next = checked
+                                          ? [...formData.framework, fw.value]
+                                          : formData.framework.filter((v) => v !== fw.value)
+                                        setFormData({ ...formData, framework: next })
+                                      }}
+                                      className="border-gray-600 data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500"
+                                    />
+                                    <span className="text-sm text-white">{fw.label}</span>
+                                  </label>
+                                )
+                              })}
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                        {formData.framework.length > 0 && (
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {formData.framework.map((fwValue) => {
+                              const fw = frameworks.find((f) => f.value === fwValue)
+                              return fw ? (
+                                <Badge
+                                  key={fwValue}
+                                  className="bg-orange-500/20 text-orange-400 border-orange-500/30"
+                                >
+                                  {fw.label}
+                                </Badge>
+                              ) : null
+                            })}
+                          </div>
+                        )}
                       </div>
                     </div>
 

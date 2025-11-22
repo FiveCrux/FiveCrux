@@ -170,14 +170,23 @@ export const NavBody = ({ children, className, visible }: NavBodyProps) => {
   );
 };
 
-export const NavItems = ({ items, className, onItemClick }: NavItemsProps) => {
+export const NavItems = ({ items, className, onItemClick, textColorClassName }: NavItemsProps & { textColorClassName?: string }) => {
   const [hovered, setHovered] = useState<number | null>(null);
+  
+  // Default text colors if not provided
+  const defaultTextColor = "text-zinc-600 dark:text-neutral-300"
+  const textColor = textColorClassName || defaultTextColor
+  const hoverTextColor = textColorClassName 
+    ? (textColorClassName.includes("text-white") ? "hover:text-gray-200" : "hover:text-zinc-800 dark:hover:text-neutral-100")
+    : "hover:text-zinc-800 dark:hover:text-neutral-100"
 
   return (
     <motion.div
       onMouseLeave={() => setHovered(null)}
       className={cn(
-        "absolute inset-0 hidden flex-1 flex-row items-center justify-center space-x-1 text-sm font-medium text-zinc-600 transition duration-200 hover:text-zinc-800 lg:flex lg:space-x-2 px-2",
+        "absolute inset-0 hidden flex-1 flex-row items-center justify-center space-x-1 text-sm font-medium transition duration-200 lg:flex lg:space-x-2 px-2",
+        textColor,
+        hoverTextColor,
         className,
       )}
     >
@@ -185,7 +194,7 @@ export const NavItems = ({ items, className, onItemClick }: NavItemsProps) => {
         <Link
           onMouseEnter={() => setHovered(idx)}
           onClick={onItemClick}
-          className="relative px-2 py-2 text-neutral-600 dark:text-neutral-300 whitespace-nowrap"
+          className={cn("relative px-2 py-2 whitespace-nowrap", textColor)}
           key={`link-${idx}`}
           href={item.link}
         >
@@ -276,14 +285,19 @@ export const MobileNavMenu = ({
 export const MobileNavToggle = ({
   isOpen,
   onClick,
+  textColorClassName,
 }: {
   isOpen: boolean;
   onClick: () => void;
+  textColorClassName?: string;
 }) => {
+  const defaultTextColor = "text-black dark:text-white"
+  const textColor = textColorClassName || defaultTextColor
+  
   return isOpen ? (
-    <X className="text-black dark:text-white h-6 w-6 cursor-pointer" onClick={onClick} />
+    <X className={cn(textColor, "h-6 w-6 cursor-pointer")} onClick={onClick} />
   ) : (
-    <Menu className="text-black dark:text-white h-6 w-6 cursor-pointer" onClick={onClick} />
+    <Menu className={cn(textColor, "h-6 w-6 cursor-pointer")} onClick={onClick} />
   );
 };
 
@@ -310,6 +324,7 @@ export const NavbarButton = ({
   children,
   className,
   variant = "primary",
+  textColorClassName,
   ...props
 }: {
   href?: string;
@@ -317,6 +332,7 @@ export const NavbarButton = ({
   children: React.ReactNode;
   className?: string;
   variant?: "primary" | "secondary" | "dark" | "gradient";
+  textColorClassName?: string;
 } & (
   | React.ComponentPropsWithoutRef<"a">
   | React.ComponentPropsWithoutRef<"button">
@@ -327,7 +343,7 @@ export const NavbarButton = ({
   const variantStyles = {
     primary:
       "shadow-[0_0_24px_rgba(34,_42,_53,_0.06),_0_1px_1px_rgba(0,_0,_0,_0.05),_0_0_0_1px_rgba(34,_42,_53,_0.04),_0_0_4px_rgba(34,_42,_53,_0.08),_0_16px_68px_rgba(47,_48,_55,_0.05),_0_1px_0_rgba(255,_255,_255,_0.1)_inset]",
-    secondary: "bg-transparent shadow-none dark:text-white",
+    secondary: cn("bg-transparent shadow-none", textColorClassName || "text-neutral-600 dark:text-neutral-300"),
     dark: "bg-black text-white shadow-[0_0_24px_rgba(34,_42,_53,_0.06),_0_1px_1px_rgba(0,_0,_0,_0.05),_0_0_0_1px_rgba(34,_42,_53,_0.04),_0_0_4px_rgba(34,_42,_53,_0.08),_0_16px_68px_rgba(47,_48,_55,_0.05),_0_1px_0_rgba(255,_255,_255,_0.1)_inset]",
     gradient:
       "bg-gradient-to-b from-blue-500 to-blue-700 text-white shadow-[0px_2px_0px_0px_rgba(255,255,255,0.3)_inset]",

@@ -822,7 +822,7 @@ export default function GiveawayDetailPage() {
     return (
       <>
         <Navbar />
-        <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="min-h-screen bg-black text-white flex items-center justify-center py-20">
           <div className="text-center">
             <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-yellow-400 mx-auto mb-4"></div>
             <p className="text-xl">Loading giveaway...</p>
@@ -845,7 +845,7 @@ export default function GiveawayDetailPage() {
       <div className="relative z-50">
         <Navbar />
       </div>
-      <div className="min-h-screen bg-black text-white relative overflow-hidden">
+      <div className="min-h-screen bg-black text-white relative overflow-hidden py-20 z-10">
         <AnimatedParticles />
 
         {/* Animated background */}

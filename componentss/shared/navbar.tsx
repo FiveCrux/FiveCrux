@@ -70,7 +70,7 @@ export default function NavbarComponent() {
 
   return (
     <div className="relative w-full">
-      <Navbar className="top-0 z-50">
+      <Navbar className="top-0 z-30 mt-2">
         {/* Desktop Navigation */}
         <NavBody>
           <CustomLogo />
