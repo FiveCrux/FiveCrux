@@ -495,7 +495,7 @@ export default function AdminPage() {
     <>
       <Navbar />
       <div className="min-h-screen bg-black text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           {/* Header */}
           <motion.div
             className="mb-8"
@@ -518,50 +518,58 @@ export default function AdminPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
           >
-            <Card className="bg-gradient-to-br from-blue-500/10 to-blue-600/10 border-blue-500/20">
+            <Card className="bg-gradient-to-br from-blue-500/5 to-blue-600/5 border-blue-500/30 hover:border-blue-500/50 transition-all hover:shadow-lg hover:shadow-blue-500/20">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-blue-400">Total Users</p>
-                    <p className="text-2xl font-bold text-white">{stats.totalUsers}</p>
+                    <p className="text-sm text-blue-400 font-medium mb-2">Total Users</p>
+                    <p className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-500 bg-clip-text text-transparent">{stats.totalUsers}</p>
                   </div>
-                  <Users className="h-8 w-8 text-blue-400" />
+                  <div className="p-3 bg-blue-500/20 rounded-xl">
+                    <Users className="h-8 w-8 text-blue-400" />
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-green-500/10 to-green-600/10 border-green-500/20">
+            <Card className="bg-gradient-to-br from-emerald-500/5 to-emerald-600/5 border-emerald-500/30 hover:border-emerald-500/50 transition-all hover:shadow-lg hover:shadow-emerald-500/20">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-green-400">Total Scripts</p>
-                    <p className="text-2xl font-bold text-white">{stats.totalScripts}</p>
+                    <p className="text-sm text-emerald-400 font-medium mb-2">Total Scripts</p>
+                    <p className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-emerald-500 bg-clip-text text-transparent">{stats.totalScripts}</p>
                   </div>
-                  <Package className="h-8 w-8 text-green-400" />
+                  <div className="p-3 bg-emerald-500/20 rounded-xl">
+                    <Package className="h-8 w-8 text-emerald-400" />
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-purple-500/10 to-purple-600/10 border-purple-500/20">
+            <Card className="bg-gradient-to-br from-violet-500/5 to-violet-600/5 border-violet-500/30 hover:border-violet-500/50 transition-all hover:shadow-lg hover:shadow-violet-500/20">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-purple-400">Total Giveaways</p>
-                    <p className="text-2xl font-bold text-white">{stats.totalGiveaways}</p>
+                    <p className="text-sm text-violet-400 font-medium mb-2">Total Giveaways</p>
+                    <p className="text-3xl font-bold bg-gradient-to-r from-violet-600 to-violet-500 bg-clip-text text-transparent">{stats.totalGiveaways}</p>
                   </div>
-                  <Gift className="h-8 w-8 text-purple-400" />
+                  <div className="p-3 bg-violet-500/20 rounded-xl">
+                    <Gift className="h-8 w-8 text-violet-400" />
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-orange-500/10 to-orange-600/10 border-orange-500/20">
+            <Card className="bg-gradient-to-br from-amber-500/5 to-amber-600/5 border-amber-500/30 hover:border-amber-500/50 transition-all hover:shadow-lg hover:shadow-amber-500/20">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-orange-400">Total Ads</p>
-                    <p className="text-2xl font-bold text-white">{stats.totalAds}</p>
+                    <p className="text-sm text-amber-400 font-medium mb-2">Total Ads</p>
+                    <p className="text-3xl font-bold bg-gradient-to-r from-amber-600 to-amber-500 bg-clip-text text-transparent">{stats.totalAds}</p>
                   </div>
-                  <Megaphone className="h-8 w-8 text-orange-400" />
+                  <div className="p-3 bg-amber-500/20 rounded-xl">
+                    <Megaphone className="h-8 w-8 text-amber-400" />
+                  </div>
                 </div>
               </CardContent>
             </Card>

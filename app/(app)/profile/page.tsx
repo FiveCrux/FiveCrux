@@ -381,7 +381,7 @@ export default function ProfilePage() {
       <Navbar />
       <div className="min-h-screen bg-black text-white">
         {/* Header */}
-        <div className="bg-gradient-to-r from-orange-500/10 to-yellow-400/10 py-12 px-4 sm:px-6 lg:px-8 border-b border-gray-800/50">
+        <div className="bg-gradient-to-r from-orange-500/10 to-yellow-400/10 py-16 px-4 sm:px-6 lg:px-8 border-b border-gray-800/50">
           <div className="max-w-7xl mx-auto">
             <motion.div
               className="flex items-center gap-6"
