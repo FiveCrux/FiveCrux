@@ -77,7 +77,7 @@ const pricingPackages: PricingPackage[] = [
       { label: "1 Month", months: 1, price: 100, originalPrice: 210 },
       { label: "3 Months", months: 3, price: 275, originalPrice: 630 },
       { label: "6 Months", months: 6, price: 500, originalPrice: 1260 },
-      { label: "Yearly", months: 12, price: 900, originalPrice: 3420 }
+      { label: "Yearly", months: 12, price: 900, originalPrice: 2520 }
     ]
   },
   {
