@@ -1,10 +1,11 @@
 "use client"
 
-import { useRef } from "react"
+import { useRef, useState } from "react"
 import { motion, useInView, AnimatePresence } from "framer-motion"
 import { Button } from "@/componentss/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/componentss/ui/card"
 import { Badge } from "@/componentss/ui/badge"
+import { Tabs, TabsList, TabsTrigger } from "@/componentss/ui/tabs"
 import Navbar from "@/componentss/shared/navbar"
 import { StarsBackground } from "@/components/animate-ui/components/backgrounds/stars"
 import { HexagonBackground } from "@/components/animate-ui/components/backgrounds/hexagon"
@@ -21,93 +22,73 @@ import {
   Eye,
   MousePointerClick,
   Calendar,
-  Award
+  Award,
+  Crown
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useTheme } from "next-themes"
 
-interface PricingTier {
-  name: string
+interface PricingDuration {
+  label: string
+  months: number
   price: number
-  period: string
-  description: string
-  features: string[]
-  popular?: boolean
-  gradient: string
-  icon: typeof Zap
-  cta: string
-  impressions?: string
-  clicks?: string
-  duration?: string
+  originalPrice: number
 }
 
-const pricingTiers: PricingTier[] = [
+interface PricingPackage {
+  name: string
+  packageId: string
+  slotsPerMonth: number
+  description: string
+  gradient: string
+  icon: typeof Zap
+  popular?: boolean
+  durations: PricingDuration[]
+}
+
+const pricingPackages: PricingPackage[] = [
   {
-    name: "Starter",
-    price: 49,
-    period: "per week",
-    description: "Perfect for small businesses and individual creators",
-    features: [
-      "10,000+ impressions per week",
-      "Featured placement in marketplace",
-      "Basic analytics dashboard",
-      "Email support",
-      "7-day campaign duration",
-      "Standard ad placement"
-    ],
+    name: "STARTER PACK",
+    packageId: "starter",
+    slotsPerMonth: 1,
+    description: "Perfect for small businesses and individual creators. One-time payment, all slots unlocked immediately.",
     gradient: "from-gray-600 to-gray-700",
     icon: Target,
-    cta: "Get Started",
-    impressions: "10K+",
-    clicks: "500+",
-    duration: "7 days"
+    durations: [
+      { label: "1 Month", months: 1, price: 40, originalPrice: 70 },
+      { label: "3 Months", months: 3, price: 110, originalPrice: 210 },
+      { label: "6 Months", months: 6, price: 200, originalPrice: 420 },
+      { label: "Yearly", months: 12, price: 360, originalPrice: 840 }
+    ]
   },
   {
-    name: "Premium",
-    price: 149,
-    period: "per week",
-    description: "Ideal for growing businesses with higher visibility needs",
-    features: [
-      "50,000+ impressions per week",
-      "Premium featured placement",
-      "Advanced analytics & insights",
-      "Priority email support",
-      "14-day campaign duration",
-      "Top banner placement",
-      "Click-through rate optimization",
-      "A/B testing capabilities"
-    ],
-    popular: true,
+    name: "PREMIUM PACK",
+    packageId: "premium",
+    slotsPerMonth: 3,
+    description: "Ideal for growing businesses with higher visibility needs. One-time payment, all slots unlocked immediately.",
     gradient: "from-orange-500 to-yellow-400",
     icon: TrendingUp,
-    cta: "Choose Premium",
-    impressions: "50K+",
-    clicks: "2.5K+",
-    duration: "14 days"
+    popular: true,
+    durations: [
+      { label: "1 Month", months: 1, price: 100, originalPrice: 210 },
+      { label: "3 Months", months: 3, price: 275, originalPrice: 630 },
+      { label: "6 Months", months: 6, price: 500, originalPrice: 1260 },
+      { label: "Yearly", months: 12, price: 900, originalPrice: 3420 }
+    ]
   },
   {
-    name: "Enterprise",
-    price: 399,
-    period: "per week",
-    description: "Maximum exposure for established brands and agencies",
-    features: [
-      "150,000+ impressions per week",
-      "Exclusive premium placement",
-      "Real-time analytics dashboard",
-      "24/7 dedicated support",
-      "30-day campaign duration",
-      "Multiple ad placements",
-      "Custom targeting options",
-      "Performance optimization",
-      "Dedicated account manager",
-      "Custom reporting"
-    ],
+    name: "EXECUTIVE PACK",
+    packageId: "executive",
+    slotsPerMonth: 5,
+    description: "Maximum exposure for established brands and agencies. One-time payment, all slots unlocked immediately.",
     gradient: "from-yellow-400 via-orange-500 to-red-500",
-    icon: Sparkles,
-    cta: "Contact Sales",
-    impressions: "150K+",
-    clicks: "7.5K+",
-    duration: "30 days"
+    icon: Crown,
+    durations: [ 
+      { label: "1 Month", months: 1, price: 150, originalPrice: 350 },
+      { label: "3 Months", months: 3, price: 420, originalPrice: 1050 },
+      { label: "6 Months", months: 6, price: 750, originalPrice: 2100 },
+      { label: "Yearly", months: 12, price: 1350, originalPrice: 4200 }
+    ]
   }
 ]
 
@@ -143,10 +124,37 @@ export default function AdvertisePage() {
   const pricingRef = useRef(null)
   const benefitsRef = useRef(null)
   const { resolvedTheme } = useTheme()
+  
+  // State for selected duration per package
+  const [selectedDurations, setSelectedDurations] = useState<Record<string, number>>({
+    starter: 0,
+    premium: 0,
+    executive: 0
+  })
 
   const heroInView = useInView(heroRef, { once: true })
   const pricingInView = useInView(pricingRef, { once: true })
   const benefitsInView = useInView(benefitsRef, { once: true })
+  
+  const handleDurationChange = (packageId: string, durationIndex: number) => {
+    setSelectedDurations(prev => ({
+      ...prev,
+      [packageId]: durationIndex
+    }))
+  }
+  
+  const handlePurchase = (pkg: PricingPackage, durationIndex: number) => {
+    const duration = pkg.durations[durationIndex]
+    // TODO: Implement PayPal integration
+    console.log('Purchase:', {
+      package: pkg.packageId,
+      duration: duration.label,
+      price: duration.price,
+      slotsPerMonth: pkg.slotsPerMonth,
+      totalMonths: duration.months,
+      totalSlots: pkg.slotsPerMonth * duration.months
+    })
+  }
 
   return (
     <div className="min-h-screen bg-neutral-950 text-white overflow-hidden">
@@ -328,18 +336,21 @@ export default function AdvertisePage() {
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-10">
-            {pricingTiers.map((tier, index) => {
-              const Icon = tier.icon
-  return (
+            {pricingPackages.map((pkg, index) => {
+              const Icon = pkg.icon
+              const selectedDuration = pkg.durations[selectedDurations[pkg.packageId] || 0]
+              const discount = Math.round(((selectedDuration.originalPrice - selectedDuration.price) / selectedDuration.originalPrice) * 100)
+              
+              return (
                 <motion.div
-                  key={tier.name}
+                  key={pkg.packageId}
                   initial={{ opacity: 0, y: 50 }}
                   animate={pricingInView ? { opacity: 1, y: 0 } : {}}
                   transition={{ duration: 0.8, delay: index * 0.15 }}
                   whileHover={{ scale: 1.02, y: -5 }}
                   className="relative"
                 >
-                  {tier.popular && (
+                  {pkg.popular && (
                     <motion.div
                       className="absolute -top-4 left-1/2 -translate-x-1/2 z-20"
                       animate={{
@@ -358,62 +369,133 @@ export default function AdvertisePage() {
                   )}
                   <Card className={cn(
                     "bg-neutral-900/60 border-gray-700/50 backdrop-blur-sm h-full relative overflow-hidden transition-all duration-500",
-                    tier.popular 
+                    pkg.popular 
                       ? "border-2 border-orange-500/50 shadow-2xl shadow-orange-500/20" 
                       : "hover:border-orange-500/50"
                   )}>
                     <CardHeader className="p-8 pb-4 relative z-10">
-                      <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br ${tier.gradient} mb-6`}>
+                      <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br ${pkg.gradient} mb-6`}>
                         <Icon className="h-8 w-8 text-white" />
                       </div>
-                      <CardTitle className="text-3xl font-bold text-white mb-2">
-                        {tier.name}
+                      <CardTitle className="text-2xl font-bold text-white mb-2">
+                        {pkg.name}
                       </CardTitle>
-                      <CardDescription className="text-gray-400 text-base">
-                        {tier.description}
+                      <CardDescription className="text-gray-400 text-base mb-4">
+                        {pkg.description}
                       </CardDescription>
+                      <div className="flex items-center gap-2 mb-4 flex-wrap">
+                        <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30">
+                          {pkg.slotsPerMonth} Slot{pkg.slotsPerMonth > 1 ? 's' : ''} per Month
+                        </Badge>
+                        <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
+                          One-Time Payment
+                        </Badge>
+                      </div>
                     </CardHeader>
                     <CardContent className="p-8 pt-4 relative z-10">
-                      <div className="mb-8">
+                      {/* Duration Selection */}
+                      <div className="mb-6">
+                        <Tabs 
+                          value={selectedDurations[pkg.packageId]?.toString() || "0"}
+                          onValueChange={(value) => handleDurationChange(pkg.packageId, parseInt(value))}
+                          className="w-full"
+                        >
+                          <TabsList className="grid w-full grid-cols-4 bg-neutral-800/50 border border-gray-700/50">
+                            {pkg.durations.map((duration, durIndex) => (
+                              <TabsTrigger
+                                key={durIndex}
+                                value={durIndex.toString()}
+                                className="text-xs data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-yellow-400 data-[state=active]:text-black data-[state=active]:font-bold"
+                              >
+                                {duration.label.split(' ')[0]}
+                              </TabsTrigger>
+                            ))}
+                          </TabsList>
+                        </Tabs>
+                      </div>
+
+                      {/* Pricing Display */}
+                      <div className="mb-6">
                         <div className="flex items-baseline gap-2 mb-2">
                           <motion.span
                             className="text-5xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent"
                             animate={pricingInView ? { scale: [1, 1.1, 1] } : {}}
                             transition={{ delay: index * 0.15 + 0.3, duration: 0.5 }}
+                            key={selectedDuration.price}
                           >
-                            ${tier.price}
+                            €{selectedDuration.price}
                           </motion.span>
-                          <span className="text-gray-400 text-lg">/{tier.period}</span>
                         </div>
-                        {tier.impressions && (
-                          <div className="flex items-center gap-4 mt-4 text-sm text-gray-400">
-                            <div className="flex items-center gap-1">
-                              <Eye className="h-4 w-4 text-orange-500" />
-                              <span>{tier.impressions} impressions</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <MousePointerClick className="h-4 w-4 text-yellow-400" />
-                              <span>{tier.clicks} clicks</span>
-                            </div>
-                          </div>
-                        )}
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-gray-400 text-sm line-through">
+                            €{selectedDuration.originalPrice}
+                          </span>
+                          <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-xs">
+                            Save {discount}%
+                          </Badge>
+                        </div>
+                        <div className="text-gray-400 text-sm mt-2">
+                          One-time payment • No recurring charges
+                        </div>
+                        <div className="text-orange-400 text-sm font-semibold mt-1">
+                          Get {pkg.slotsPerMonth * selectedDuration.months} slot{pkg.slotsPerMonth * selectedDuration.months > 1 ? 's' : ''} immediately ({pkg.slotsPerMonth} slot{pkg.slotsPerMonth > 1 ? 's' : ''} × {selectedDuration.months} month{selectedDuration.months > 1 ? 's' : ''})
+                        </div>
                       </div>
 
-                      <ul className="space-y-4 mb-8">
-                        {tier.features.map((feature, featureIndex) => (
-                          <motion.li
-                            key={featureIndex}
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={pricingInView ? { opacity: 1, x: 0 } : {}}
-                            transition={{ delay: index * 0.15 + featureIndex * 0.05 }}
-                            className="flex items-start gap-3"
-                          >
-                            <div className={`flex-shrink-0 w-5 h-5 rounded-full bg-gradient-to-br ${tier.gradient} flex items-center justify-center mt-0.5`}>
-                              <Check className="h-3 w-3 text-white" />
-                            </div>
-                            <span className="text-gray-300 text-sm leading-relaxed">{feature}</span>
-                          </motion.li>
-                        ))}
+                      {/* Features */}
+                      <ul className="space-y-3 mb-6">
+                        <motion.li
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={pricingInView ? { opacity: 1, x: 0 } : {}}
+                          transition={{ delay: index * 0.15 }}
+                          className="flex items-start gap-3"
+                        >
+                          <div className={`flex-shrink-0 w-5 h-5 rounded-full bg-gradient-to-br ${pkg.gradient} flex items-center justify-center mt-0.5`}>
+                            <Check className="h-3 w-3 text-white" />
+                          </div>
+                          <span className="text-gray-300 text-sm leading-relaxed">
+                            {pkg.slotsPerMonth * selectedDuration.months} ad slot{pkg.slotsPerMonth * selectedDuration.months > 1 ? 's' : ''} (all slots unlocked immediately)
+                          </span>
+                        </motion.li>
+                        <motion.li
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={pricingInView ? { opacity: 1, x: 0 } : {}}
+                          transition={{ delay: index * 0.15 + 0.1 }}
+                          className="flex items-start gap-3"
+                        >
+                          <div className={`flex-shrink-0 w-5 h-5 rounded-full bg-gradient-to-br ${pkg.gradient} flex items-center justify-center mt-0.5`}>
+                            <Check className="h-3 w-3 text-white" />
+                          </div>
+                          <span className="text-gray-300 text-sm leading-relaxed">
+                            Featured placement in marketplace
+                          </span>
+                        </motion.li>
+                        <motion.li
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={pricingInView ? { opacity: 1, x: 0 } : {}}
+                          transition={{ delay: index * 0.15 + 0.2 }}
+                          className="flex items-start gap-3"
+                        >
+                          <div className={`flex-shrink-0 w-5 h-5 rounded-full bg-gradient-to-br ${pkg.gradient} flex items-center justify-center mt-0.5`}>
+                            <Check className="h-3 w-3 text-white" />
+                          </div>
+                          <span className="text-gray-300 text-sm leading-relaxed">
+                            Analytics dashboard
+                          </span>
+                        </motion.li>
+                        <motion.li
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={pricingInView ? { opacity: 1, x: 0 } : {}}
+                          transition={{ delay: index * 0.15 + 0.3 }}
+                          className="flex items-start gap-3"
+                        >
+                          <div className={`flex-shrink-0 w-5 h-5 rounded-full bg-gradient-to-br ${pkg.gradient} flex items-center justify-center mt-0.5`}>
+                            <Check className="h-3 w-3 text-white" />
+                          </div>
+                          <span className="text-gray-300 text-sm leading-relaxed">
+                            Email support
+                          </span>
+                        </motion.li>
                       </ul>
 
                       <motion.div
@@ -422,14 +504,15 @@ export default function AdvertisePage() {
                         className="w-full"
                       >
                         <Button
+                          onClick={() => handlePurchase(pkg, selectedDurations[pkg.packageId] || 0)}
                           className={cn(
                             "w-full py-6 text-lg font-bold rounded-full transition-all duration-300",
-                            tier.popular
+                            pkg.popular
                               ? "bg-gradient-to-r from-orange-500 via-yellow-400 to-orange-500 hover:from-orange-600 hover:via-yellow-500 hover:to-orange-600 text-black shadow-2xl shadow-orange-500/30"
                               : "bg-neutral-800 hover:bg-neutral-700 text-white border border-gray-700 hover:border-orange-500/50"
                           )}
                         >
-                          {tier.cta}
+                          Purchase Now
                           <ArrowRight className="ml-2 h-5 w-5" />
                         </Button>
                       </motion.div>
