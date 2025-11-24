@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useRef, useState, useEffect } from "react"
 import { motion, useInView, AnimatePresence } from "framer-motion"
 import { Button } from "@/componentss/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/componentss/ui/card"
@@ -23,10 +23,14 @@ import {
   MousePointerClick,
   Calendar,
   Award,
-  Crown
+  Crown,
+  Loader2
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useTheme } from "next-themes"
+import { PayPalScriptProvider, PayPalButtons, usePayPalScriptReducer } from "@paypal/react-paypal-js"
+import { useRouter, useSearchParams } from "next/navigation"
+import { toast } from "sonner"
 
 interface PricingDuration {
   label: string
@@ -119,11 +123,110 @@ const benefits = [
   }
 ]
 
+// PayPal Button Wrapper Component
+function PayPalButtonWrapper({
+  pkg,
+  durationIndex,
+  onSuccess,
+  onError,
+}: {
+  pkg: PricingPackage
+  durationIndex: number
+  onSuccess: () => void
+  onError: (error: string) => void
+}) {
+  const [{ isPending }] = usePayPalScriptReducer()
+  const duration = pkg.durations[durationIndex]
+  const totalSlots = pkg.slotsPerMonth * duration.months
+
+  const createOrder = async () => {
+    try {
+      const response = await fetch("/api/paypal/create-order", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          packageId: pkg.packageId,
+          durationMonths: duration.months,
+          price: duration.price,
+          slotsToAdd: totalSlots,
+        }),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || "Failed to create order")
+      }
+
+      const data = await response.json()
+      return data.orderId
+    } catch (error) {
+      console.error("Error creating order:", error)
+      onError(error instanceof Error ? error.message : "Failed to create order")
+      throw error
+    }
+  }
+
+  const onApprove = async (data: { orderID: string }) => {
+    try {
+      const response = await fetch("/api/paypal/capture-order", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          orderId: data.orderID,
+        }),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || "Failed to capture order")
+      }
+
+      const result = await response.json()
+      toast.success(result.message || "Payment successful! Your ad slots have been activated.")
+      onSuccess()
+    } catch (error) {
+      console.error("Error capturing order:", error)
+      onError(error instanceof Error ? error.message : "Failed to process payment")
+    }
+  }
+
+  if (isPending) {
+    return (
+      <div className="flex items-center justify-center py-4">
+        <Loader2 className="h-6 w-6 animate-spin text-orange-500" />
+      </div>
+    )
+  }
+
+  return (
+    <PayPalButtons
+      createOrder={createOrder}
+      onApprove={onApprove}
+      onError={(err) => {
+        console.error("PayPal error:", err)
+        onError("Payment was canceled or failed")
+      }}
+      style={{
+        layout: "vertical",
+        color: "gold",
+        shape: "rect",
+        label: "paypal",
+      }}
+    />
+  )
+}
+
 export default function AdvertisePage() {
   const heroRef = useRef(null)
   const pricingRef = useRef(null)
   const benefitsRef = useRef(null)
   const { resolvedTheme } = useTheme()
+  const router = useRouter()
+  const searchParams = useSearchParams()
   
   // State for selected duration per package
   const [selectedDurations, setSelectedDurations] = useState<Record<string, number>>({
@@ -131,6 +234,44 @@ export default function AdvertisePage() {
     premium: 0,
     executive: 0
   })
+
+  // State for PayPal client ID
+  const [paypalClientId, setPaypalClientId] = useState<string | null>(null)
+  const [isLoadingPaypal, setIsLoadingPaypal] = useState(true)
+
+  // Get PayPal client ID from server
+  useEffect(() => {
+    const fetchPaypalClientId = async () => {
+      try {
+        const response = await fetch("/api/paypal/client-id")
+        if (response.ok) {
+          const data = await response.json()
+          setPaypalClientId(data.clientId)
+        } else {
+          console.error("Failed to fetch PayPal client ID")
+        }
+      } catch (error) {
+        console.error("Error loading PayPal:", error)
+      } finally {
+        setIsLoadingPaypal(false)
+      }
+    }
+    fetchPaypalClientId()
+  }, [])
+
+  // Handle success/cancel from PayPal redirect
+  useEffect(() => {
+    const success = searchParams.get("success")
+    const canceled = searchParams.get("canceled")
+    
+    if (success) {
+      toast.success("Payment successful! Your ad slots have been activated.")
+      router.replace("/advertise")
+    } else if (canceled) {
+      toast.info("Payment was canceled")
+      router.replace("/advertise")
+    }
+  }, [searchParams, router])
 
   const heroInView = useInView(heroRef, { once: true })
   const pricingInView = useInView(pricingRef, { once: true })
@@ -143,17 +284,13 @@ export default function AdvertisePage() {
     }))
   }
   
-  const handlePurchase = (pkg: PricingPackage, durationIndex: number) => {
-    const duration = pkg.durations[durationIndex]
-    // TODO: Implement PayPal integration
-    console.log('Purchase:', {
-      package: pkg.packageId,
-      duration: duration.label,
-      price: duration.price,
-      slotsPerMonth: pkg.slotsPerMonth,
-      totalMonths: duration.months,
-      totalSlots: pkg.slotsPerMonth * duration.months
-    })
+  const handlePurchaseSuccess = () => {
+    // Refresh the page or update UI as needed
+    router.refresh()
+  }
+
+  const handlePurchaseError = (error: string) => {
+    toast.error(error)
   }
 
   return (
@@ -498,24 +635,46 @@ export default function AdvertisePage() {
                         </motion.li>
                       </ul>
 
-                      <motion.div
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        className="w-full"
-                      >
-                        <Button
-                          onClick={() => handlePurchase(pkg, selectedDurations[pkg.packageId] || 0)}
-                          className={cn(
-                            "w-full py-6 text-lg font-bold rounded-full transition-all duration-300",
-                            pkg.popular
-                              ? "bg-gradient-to-r from-orange-500 via-yellow-400 to-orange-500 hover:from-orange-600 hover:via-yellow-500 hover:to-orange-600 text-black shadow-2xl shadow-orange-500/30"
-                              : "bg-neutral-800 hover:bg-neutral-700 text-white border border-gray-700 hover:border-orange-500/50"
-                          )}
-                        >
-                          Purchase Now
-                          <ArrowRight className="ml-2 h-5 w-5" />
-                        </Button>
-                      </motion.div>
+                      <div className="w-full">
+                        {isLoadingPaypal ? (
+                          <div className="flex items-center justify-center py-6">
+                            <Loader2 className="h-6 w-6 animate-spin text-orange-500" />
+                          </div>
+                        ) : paypalClientId ? (
+                          <PayPalScriptProvider
+                            options={{
+                              clientId: paypalClientId,
+                              currency: "EUR",
+                              intent: "capture",
+                            }}
+                          >
+                            <PayPalButtonWrapper
+                              pkg={pkg}
+                              durationIndex={selectedDurations[pkg.packageId] || 0}
+                              onSuccess={handlePurchaseSuccess}
+                              onError={handlePurchaseError}
+                            />
+                          </PayPalScriptProvider>
+                        ) : (
+                          <motion.div
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            className="w-full"
+                          >
+                            <Button
+                              disabled
+                              className={cn(
+                                "w-full py-6 text-lg font-bold rounded-full transition-all duration-300",
+                                pkg.popular
+                                  ? "bg-gradient-to-r from-orange-500 via-yellow-400 to-orange-500 hover:from-orange-600 hover:via-yellow-500 hover:to-orange-600 text-black shadow-2xl shadow-orange-500/30"
+                                  : "bg-neutral-800 hover:bg-neutral-700 text-white border border-gray-700 hover:border-orange-500/50"
+                              )}
+                            >
+                              PayPal Not Configured
+                            </Button>
+                          </motion.div>
+                        )}
+                      </div>
                     </CardContent>
                   </Card>
                 </motion.div>
