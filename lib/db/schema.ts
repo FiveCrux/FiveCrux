@@ -10,6 +10,7 @@ export const users = pgTable('users', {
   profilePicture: text('profile_picture'),
   username: text('username'),
   roles: text('roles').array().default(['user']),
+  purchasedAdSlots: integer('purchased_ad_slots').default(0), 
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 });
@@ -165,6 +166,7 @@ const baseAdFields = {
   imageUrl: text('image_url'),
   linkUrl: text('link_url'),
   category: text('category').notNull(),
+  slotUniqueId: text('slot_unique_id'), // Unique ID to identify which slot this ad belongs to
   startDate: timestamp('start_date').defaultNow(),
   endDate: timestamp('end_date'),
   createdBy: text('created_by').notNull(),
@@ -196,9 +198,33 @@ export const rejectedAds = pgTable('rejected_ads', {
   adminNotes: text('admin_notes'),
 });
 
+// User Ad Slots table (one-time purchase, not subscription)
+export const userAdSlots = pgTable('user_ad_slots', {
+  id: integer('id').primaryKey().notNull(),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  slotNumber: integer('slot_number').notNull(), // Sequential slot number (1, 2, 3, etc.)
+  slotUniqueIds: text('slot_unique_ids').array().default([]), // Array of unique IDs for this slot
+  purchaseDate: timestamp('purchase_date').defaultNow().notNull(),
+  endDate: timestamp('end_date'), // When this slot expires (calculated as purchaseDate + durationMonths: 1, 3, 6, or 12 months)
+  packageId: text('package_id'), // Package type: 'starter', 'premium', or 'executive'
+  durationMonths: integer('duration_months'), // Duration: 1, 3, 6, or 12 months
+  paypalOrderId: text('paypal_order_id'), // PayPal order ID for one-time payment
+  status: text('status').default('active').notNull(), // 'active' | 'inactive'
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   giveawayEntries: many(giveawayEntries),
+  adSlots: many(userAdSlots),
+}));
+
+export const userAdSlotsRelations = relations(userAdSlots, ({ one }) => ({
+  user: one(users, {
+    fields: [userAdSlots.userId],
+    references: [users.id],
+  }),
 }));
 
 // Scripts relations moved to approvedScripts
@@ -252,3 +278,5 @@ export type Ad = typeof approvedAds.$inferSelect;
 export type NewAd = typeof approvedAds.$inferInsert;
 export type PendingAd = typeof pendingAds.$inferSelect;
 export type NewPendingAd = typeof pendingAds.$inferInsert;
+export type UserAdSlot = typeof userAdSlots.$inferSelect;
+export type NewUserAdSlot = typeof userAdSlots.$inferInsert;

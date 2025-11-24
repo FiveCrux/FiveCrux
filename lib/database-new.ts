@@ -1,10 +1,11 @@
 import { db } from './db/client';
-import { eq, and, or, like, gte, lte, sql, desc, getTableColumns, ne } from 'drizzle-orm';
+import { eq, and, or, like, gte, lte, sql, desc, asc, getTableColumns, ne, lt } from 'drizzle-orm';
 import { 
   users, pendingScripts, approvedScripts, rejectedScripts, 
   pendingGiveaways, approvedGiveaways, rejectedGiveaways, 
   giveawayEntries, 
   giveawayRequirements, giveawayPrizes, pendingAds, approvedAds, rejectedAds,
+  userAdSlots,
   type Script, type Giveaway 
 } from './db/schema';
 import type { 
@@ -137,6 +138,279 @@ export async function updateUserName(userId: string, name: string | null) {
     .returning();
   
   return result[0] ?? null;
+}
+
+// Get user's purchased ad slots
+export async function getUserPurchasedAdSlots(userId: string): Promise<number> {
+  const user = await db.select({ purchasedAdSlots: users.purchasedAdSlots })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  
+  return user[0]?.purchasedAdSlots ?? 0;
+}
+
+// Add slots to user's purchased count (for PayPal purchases)
+export async function addPurchasedAdSlots(userId: string, slotsToAdd: number): Promise<number> {
+  // First get current value
+  const currentUser = await db.select({ purchasedAdSlots: users.purchasedAdSlots })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  
+  const currentSlots = currentUser[0]?.purchasedAdSlots ?? 0;
+  const newTotal = currentSlots + slotsToAdd;
+  
+  // Update with new total
+  const result = await db.update(users)
+    .set({ 
+      purchasedAdSlots: newTotal,
+      updatedAt: new Date()
+    })
+    .where(eq(users.id, userId))
+    .returning({ purchasedAdSlots: users.purchasedAdSlots });
+  
+  return result[0]?.purchasedAdSlots ?? newTotal;
+}
+
+// Generate unique slot ID
+function generateSlotUniqueId(): string {
+  const timestamp = Date.now().toString(36);
+  const random = Math.random().toString(36).substring(2, 9);
+  return `slot_${timestamp}_${random}`;
+}
+
+// Get the next available slot number for a user
+async function getNextSlotNumber(userId: string): Promise<number> {
+  // Get all slots for this user (active and inactive) to find the highest slot number
+  const allSlots = await db
+    .select({ slotNumber: userAdSlots.slotNumber })
+    .from(userAdSlots)
+    .where(eq(userAdSlots.userId, userId))
+    .orderBy(desc(userAdSlots.slotNumber))
+    .limit(1);
+
+  if (allSlots.length === 0) {
+    return 1; // First slot
+  }
+
+  return allSlots[0].slotNumber + 1;
+}
+
+// Get count of active slots for a user
+export async function getUserActiveAdSlots(userId: string): Promise<number> {
+  try {
+    const activeSlots = await db
+      .select()
+      .from(userAdSlots)
+      .where(
+        and(
+          eq(userAdSlots.userId, userId),
+          eq(userAdSlots.status, 'active')
+        )
+      );
+    
+    return activeSlots.length;
+  } catch (error) {
+    console.error('Error in getUserActiveAdSlots:', error);
+    // Return 0 if table doesn't exist or query fails
+    return 0;
+  }
+}
+
+// Create ad slots with proper slot numbers and unique IDs (one-time purchase)
+export async function createAdSlots(
+  userId: string,
+  slotsToAdd: number,
+  paypalOrderIds: string[],
+  packageId: string, // Package type: 'starter', 'premium', or 'executive'
+  durationMonths: number // Duration in months (1, 3, 6, or 12)
+): Promise<Array<{ id: number; slotNumber: number; slotUniqueIds: string[] }>> {
+  if (paypalOrderIds.length !== slotsToAdd) {
+    throw new Error('PayPal order IDs count must match slots to add');
+  }
+
+  if (!['starter', 'premium', 'executive'].includes(packageId)) {
+    throw new Error('Invalid package ID. Must be starter, premium, or executive');
+  }
+
+  if (![1, 3, 6, 12].includes(durationMonths)) {
+    throw new Error('Invalid duration. Must be 1, 3, 6, or 12 months');
+  }
+
+  const now = new Date();
+  
+  // Calculate end date based on purchase date + duration
+  const endDate = new Date(now);
+  endDate.setMonth(endDate.getMonth() + durationMonths);
+
+  // Get the starting slot number
+  const startingSlotNumber = await getNextSlotNumber(userId);
+  
+  const createdSlots = [];
+
+  // Create each slot
+  for (let i = 0; i < slotsToAdd; i++) {
+    const slotNumber = startingSlotNumber + i;
+    
+    // Generate unique IDs for this slot (one unique ID per slot)
+    const slotUniqueIds = [generateSlotUniqueId()];
+
+    // Generate ID using timestamp + random (same pattern as other tables)
+    const timestamp = Math.floor(Date.now() / 1000) + i;
+    const randomSuffix = Math.floor(Math.random() * 10000);
+    const id = timestamp + randomSuffix;
+
+    // All slots in this purchase share the same end date (calculated from purchase date + duration)
+    const slotEndDate = endDate;
+
+    const result = await db
+      .insert(userAdSlots)
+      .values({
+        id: id,
+        userId: userId,
+        slotNumber: slotNumber,
+        slotUniqueIds: slotUniqueIds,
+        purchaseDate: now,
+        endDate: slotEndDate,
+        packageId: packageId,
+        durationMonths: durationMonths,
+        paypalOrderId: paypalOrderIds[i] || null,
+        status: 'active' as const,
+        createdAt: now,
+        updatedAt: now,
+      } as any)
+      .returning({ 
+        id: userAdSlots.id,
+        slotNumber: userAdSlots.slotNumber,
+        slotUniqueIds: userAdSlots.slotUniqueIds
+      });
+
+    if (result[0]) {
+      // Ensure slotUniqueIds is never null
+      createdSlots.push({
+        id: result[0].id,
+        slotNumber: result[0].slotNumber,
+        slotUniqueIds: (result[0].slotUniqueIds || []) as string[]
+      });
+    }
+  }
+
+  return createdSlots;
+}
+
+// Get all slots for a user (for admin/debugging)
+export async function getUserAdSlots(userId: string) {
+  return await db
+    .select()
+    .from(userAdSlots)
+    .where(eq(userAdSlots.userId, userId))
+    .orderBy(asc(userAdSlots.slotNumber));
+}
+
+// Get slot by slotUniqueId to retrieve slot information (including endDate)
+export async function getSlotByUniqueId(slotUniqueId: string) {
+  // Query all slots and filter in JavaScript since Drizzle doesn't have great array support
+  const allSlots = await db
+    .select()
+    .from(userAdSlots);
+  
+  // Find slot where slotUniqueIds array contains the given slotUniqueId
+  const slot = allSlots.find(s => {
+    const uniqueIds = (s.slotUniqueIds || []) as string[];
+    return uniqueIds.includes(slotUniqueId);
+  });
+  
+  return slot || null;
+}
+
+// Check and deactivate expired slots and their associated ads
+export async function checkAndDeactivateExpiredSlots(): Promise<{ checked: number; deactivated: number; adsDeactivated: number }> {
+  const now = new Date();
+  
+  // Find all active slots that have passed their end date (only check slots with endDate set)
+  const expiredSlots = await db
+    .select()
+    .from(userAdSlots)
+    .where(
+      and(
+        eq(userAdSlots.status, 'active'),
+        sql`${userAdSlots.endDate} IS NOT NULL`,
+        sql`${userAdSlots.endDate} < ${now}`
+      )
+    );
+  
+  let adsDeactivated = 0;
+  
+  // Deactivate each expired slot and its associated ads
+  for (const slot of expiredSlots) {
+    // Get all unique IDs for this slot
+    const slotUniqueIds = (slot.slotUniqueIds || []) as string[];
+    
+    // Deactivate all ads associated with this slot's unique IDs
+    for (const uniqueId of slotUniqueIds) {
+      // Deactivate ads in approved_ads table
+      const approvedAdsToDeactivate = await db
+        .select()
+        .from(approvedAds)
+        .where(
+          and(
+            eq(approvedAds.slotUniqueId, uniqueId),
+            eq(approvedAds.status, 'active')
+          )
+        );
+      
+      for (const ad of approvedAdsToDeactivate) {
+        await db
+          .update(approvedAds)
+          .set({ 
+            status: 'inactive',
+            updatedAt: new Date()
+          })
+          .where(eq(approvedAds.id, ad.id));
+        adsDeactivated++;
+      }
+    }
+    
+    // Deactivate the slot itself
+    await db
+      .update(userAdSlots)
+      .set({ 
+        status: 'inactive',
+        updatedAt: new Date()
+      })
+      .where(eq(userAdSlots.id, slot.id));
+  }
+  
+  // Also check for individual ads that have passed their end date (independent of slot expiration)
+  const expiredAds = await db
+    .select()
+    .from(approvedAds)
+    .where(
+      and(
+        eq(approvedAds.status, 'active'),
+        sql`${approvedAds.endDate} IS NOT NULL`,
+        sql`${approvedAds.endDate} < ${now}`
+      )
+    );
+  
+  // Deactivate expired ads
+  for (const ad of expiredAds) {
+    await db
+      .update(approvedAds)
+      .set({ 
+        status: 'inactive',
+        updatedAt: new Date()
+      })
+      .where(eq(approvedAds.id, ad.id));
+    adsDeactivated++;
+  }
+  
+  return {
+    checked: expiredSlots.length,
+    deactivated: expiredSlots.length,
+    adsDeactivated
+  };
 }
 
 // Helper function to get user profile picture with priority: profile_picture first, then Discord image
@@ -1435,6 +1709,18 @@ export async function createAd(adData: NewAd & { status?: string }) {
   const randomSuffix = Math.floor(Math.random() * 10000);
   const id = timestamp + randomSuffix;
 
+  const slotUniqueId = (adData as any).slotUniqueId ?? (adData as any).slot_unique_id ?? null;
+  
+  // If slotUniqueId is provided, get the slot's endDate from PayPal
+  let adEndDate = (adData as any).endDate ?? (adData as any).end_date ?? null;
+  if (slotUniqueId) {
+    const slot = await getSlotByUniqueId(slotUniqueId);
+    if (slot && slot.endDate) {
+      // Use the slot's endDate from PayPal (same date for all ads in this slot)
+      adEndDate = slot.endDate;
+    }
+  }
+
   // Map snake_case input to camelCase schema fields and provide defaults
   const mapped = {
     id: id,
@@ -1443,8 +1729,9 @@ export async function createAd(adData: NewAd & { status?: string }) {
     imageUrl: (adData as any).imageUrl ?? (adData as any).image_url ?? null,
     linkUrl: (adData as any).linkUrl ?? (adData as any).link_url ?? null,
     category: (adData as any).category,
+    slotUniqueId: slotUniqueId,
     startDate: (adData as any).startDate ?? (adData as any).start_date ?? new Date(),
-    endDate: (adData as any).endDate ?? (adData as any).end_date ?? null,
+    endDate: adEndDate,
     createdBy: (adData as any).createdBy ?? (adData as any).created_by,
   };
 
@@ -1473,6 +1760,18 @@ export async function createPendingAd(adData: NewAd) {
   const randomSuffix = Math.floor(Math.random() * 1000);
   const id = timestamp + randomSuffix;
 
+  const slotUniqueId = (adData as any).slotUniqueId ?? (adData as any).slot_unique_id ?? null;
+  
+  // If slotUniqueId is provided, get the slot's endDate from PayPal
+  let adEndDate = (adData as any).endDate ?? (adData as any).end_date ?? null;
+  if (slotUniqueId) {
+    const slot = await getSlotByUniqueId(slotUniqueId);
+    if (slot && slot.endDate) {
+      // Use the slot's endDate from PayPal (same date for all ads in this slot)
+      adEndDate = slot.endDate;
+    }
+  }
+
   // Map snake_case input to camelCase schema fields and provide defaults
   const mapped = {
     id: id,
@@ -1481,8 +1780,9 @@ export async function createPendingAd(adData: NewAd) {
     imageUrl: (adData as any).imageUrl ?? (adData as any).image_url ?? null,
     linkUrl: (adData as any).linkUrl ?? (adData as any).link_url ?? null,
     category: (adData as any).category,
+    slotUniqueId: slotUniqueId,
     startDate: (adData as any).startDate ?? (adData as any).start_date ?? new Date(),
-    endDate: (adData as any).endDate ?? (adData as any).end_date ?? null,
+    endDate: adEndDate,
     createdBy: (adData as any).createdBy ?? (adData as any).created_by,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -1652,6 +1952,7 @@ export async function approveAd(adId: number, adminId: string, adminNotes?: stri
     imageUrl: ad.imageUrl,
     linkUrl: ad.linkUrl,
     category: ad.category,
+    slotUniqueId: ad.slotUniqueId,
     startDate: ad.startDate,
     endDate: ad.endDate,
     createdBy: ad.createdBy,

@@ -21,6 +21,7 @@ import {
   Code,
   Sparkles,
   AlertCircle,
+  Lock,
 } from "lucide-react"
 import { Button } from "@/componentss/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/componentss/ui/card"
@@ -37,6 +38,7 @@ import { toast } from "sonner"
 import { getSessionUserProfilePicture } from "@/lib/user-utils"
 import { useSession as useNextAuthSession } from "next-auth/react"
 import { Camera, X } from "lucide-react"
+import Link from "next/link"
 
 interface Script {
   id: number
@@ -147,6 +149,8 @@ export default function ProfilePage() {
   const [editingName, setEditingName] = useState(false)
   const [nameValue, setNameValue] = useState("")
   const [savingName, setSavingName] = useState(false)
+  // TODO: Fetch purchased slots from user data/API
+  const [purchasedSlots, setPurchasedSlots] = useState(0) // This should come from user data
   
   // Extract data from React Query responses
   const scripts = scriptsData?.scripts || []
@@ -157,6 +161,12 @@ export default function ProfilePage() {
   const adsTotal = adsData?.total || 0
   const giveawayEntries = entriesData?.entries || []
   const entriesTotal = entriesData?.total || 0
+  
+  // Calculate slot availability
+  const usedSlots = ads.length
+  const availableSlots = Math.max(0, purchasedSlots - usedSlots)
+  const totalSlots = 3 // Total slots available
+  const lockedSlots = Math.max(0, totalSlots - purchasedSlots)
   
   // Combined loading state
   const loading = scriptsLoading || giveawaysLoading || adsLoading || entriesLoading
@@ -180,6 +190,33 @@ export default function ProfilePage() {
       setNameValue(session.user.name)
     }
   }, [session?.user?.name])
+
+  // Fetch active ad slots on component mount
+  useEffect(() => {
+    const fetchActiveSlots = async () => {
+      if (!session?.user?.id || status !== "authenticated") return
+      
+      try {
+        const response = await fetch('/api/user/ad-slots', {
+          credentials: 'include', // Important for session cookies
+        })
+        
+        if (response.ok) {
+          const data = await response.json()
+          setPurchasedSlots(data.activeSlots || 0) // Uses activeSlots from one-time purchases
+        } else {
+          console.error('Failed to fetch active slots')
+          // Default to 0 if fetch fails
+          setPurchasedSlots(0)
+        }
+      } catch (error) {
+        console.error('Error fetching active slots:', error)
+        setPurchasedSlots(0)
+      }
+    }
+  
+    fetchActiveSlots()
+  }, [session?.user?.id, status])
 
   const handleEditScript = (scriptId: number) => {
     router.push(`/scripts/submit?edit=${scriptId}`)
@@ -837,17 +874,6 @@ export default function ProfilePage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8 }}
               >
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold text-white">My Ads</h2>
-                  <Button 
-                    onClick={() => setShowAdsForm(true)}
-                    className="bg-orange-600 hover:bg-orange-700 text-white"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create New Ad
-                  </Button>
-                </div>
-
                 {adsLoading ? (
                   <div className="flex justify-center items-center py-20">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
@@ -926,25 +952,209 @@ export default function ProfilePage() {
                           </CardContent>
                         </Card>
                       ))}
+                      {/* Available Ad Slots (Purchased but not used) */}
+                      {Array.from({ length: availableSlots }).map((_, index) => (
+                        <motion.div
+                          key={`available-slot-${index}`}
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ duration: 0.3, delay: index * 0.1 }}
+                          whileHover={{ scale: 1.02 }}
+                          className="group cursor-pointer"
+                          onClick={() => setShowAdsForm(true)}
+                        >
+                          <Card className="bg-gray-800/30 border-2 border-dashed border-orange-500/50 hover:border-orange-500 transition-all duration-300 h-full flex flex-col items-center justify-center min-h-[300px]">
+                            <CardContent className="flex flex-col items-center justify-center py-12">
+                              <div className="w-20 h-20 rounded-full bg-orange-500/10 border-2 border-dashed border-orange-500/50 flex items-center justify-center mb-4 group-hover:bg-orange-500/20 group-hover:border-orange-500 transition-all duration-300">
+                                <Plus className="h-10 w-10 text-orange-500 group-hover:scale-110 transition-transform duration-300" />
+                              </div>
+                              <h3 className="text-lg font-semibold text-white mb-2">Create New Ad</h3>
+                              <p className="text-gray-400 text-sm text-center mb-4">
+                                Click to create an advertisement in this slot
+                              </p>
+                              <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30">
+                                Available Slot
+                              </Badge>
+                            </CardContent>
+                          </Card>
+                        </motion.div>
+                      ))}
+                      {/* Locked Ad Slots */}
+                      {Array.from({ length: lockedSlots }).map((_, index) => (
+                        <motion.div
+                          key={`locked-slot-${index}`}
+                          className="group relative"
+                          whileHover={{ scale: 1.02 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <Card className="bg-gray-800/30 border-gray-700/50 relative overflow-hidden h-full">
+                            <div className="absolute inset-0 bg-gradient-to-br from-gray-900/80 to-gray-800/80 group-hover:opacity-0 transition-opacity duration-300" />
+                            <CardHeader className="pb-3 relative z-0">
+                              <div className="flex items-center justify-between">
+                                <Badge variant="secondary" className="bg-orange-500/20 text-orange-400 border-orange-500/30">
+                                  Slot {index + 1}
+                                </Badge>
+                                <Badge className="text-xs bg-gray-500/20 text-gray-400 border-gray-500/30">
+                                  <Lock className="h-3 w-3 mr-1 inline" />
+                                  Locked
+                                </Badge>
+                              </div>
+                              <CardTitle className="text-white text-lg line-clamp-2 mt-2">
+                                Available Slot
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent className="relative z-0">
+                              <p className="text-gray-400 text-sm mb-4 line-clamp-3">
+                                Purchase this slot to unlock and create your advertisement.
+                              </p>
+                              <div className="w-full h-32 rounded-lg overflow-hidden mb-4 bg-gradient-to-br from-gray-700/30 to-gray-800/30 flex items-center justify-center border border-gray-700/50">
+                                <Tag className="h-12 w-12 text-gray-600" />
+                              </div>
+
+                              <div className="flex items-center justify-between">
+                                <div className="text-xs text-gray-500">
+                                  Status: Locked
+                                </div>
+                                <div className="flex gap-2">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    type="button"
+                                    disabled
+                                    className="text-gray-500 cursor-not-allowed opacity-50"
+                                  >
+                                    <Lock className="h-4 w-4 mr-1" />
+                                    Locked
+                                  </Button>
+                                </div>
+                              </div>
+                            </CardContent>
+                            
+                            {/* Hover Overlay with Buy Slot Button */}
+                            <div className="absolute inset-0 bg-gradient-to-br from-orange-500/20 to-yellow-400/20 backdrop-blur-sm z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                              <Link href="/advertise">
+                                <motion.div
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                >
+                                  <Button
+                                    size="lg"
+                                    className="bg-gradient-to-r from-orange-500 to-yellow-400 hover:from-orange-600 hover:to-yellow-500 text-black font-bold px-8 py-3 shadow-lg"
+                                  >
+                                    <DollarSign className="h-5 w-5 mr-2" />
+                                    Buy Slot
+                                  </Button>
+                                </motion.div>
+                              </Link>
+                            </div>
+                          </Card>
+                        </motion.div>
+                      ))}
                     </div>
                   </>
                 ) : (
-                  <Card className="bg-gray-800/30 border-gray-700/50">
-                    <CardContent className="flex flex-col items-center justify-center py-12">
-                      <Tag className="h-16 w-16 text-gray-500 mb-4" />
-                      <h3 className="text-xl font-semibold text-white mb-2">No ads yet</h3>
-                      <p className="text-gray-400 text-center mb-6">
-                        Start creating your first ad to promote your content
-                      </p>
-                      <Button 
-                        onClick={() => setShowAdsForm(true)}
-                        className="bg-orange-600 hover:bg-orange-700 text-white"
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Create Your First Ad
-                      </Button>
-                    </CardContent>
-                  </Card>
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {/* Available Ad Slots (Purchased but not used) */}
+                      {Array.from({ length: availableSlots }).map((_, index) => (
+                        <motion.div
+                          key={`available-slot-empty-${index}`}
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ duration: 0.3, delay: index * 0.1 }}
+                          whileHover={{ scale: 1.02 }}
+                          className="group cursor-pointer"
+                          onClick={() => setShowAdsForm(true)}
+                        >
+                          <Card className="bg-gray-800/30 border-2 border-dashed border-orange-500/50 hover:border-orange-500 transition-all duration-300 h-full flex flex-col items-center justify-center min-h-[300px]">
+                            <CardContent className="flex flex-col items-center justify-center py-12">
+                              <div className="w-20 h-20 rounded-full bg-orange-500/10 border-2 border-dashed border-orange-500/50 flex items-center justify-center mb-4 group-hover:bg-orange-500/20 group-hover:border-orange-500 transition-all duration-300">
+                                <Plus className="h-10 w-10 text-orange-500 group-hover:scale-110 transition-transform duration-300" />
+                              </div>
+                              <h3 className="text-lg font-semibold text-white mb-2">Create New Ad</h3>
+                              <p className="text-gray-400 text-sm text-center mb-4">
+                                Click to create an advertisement in this slot
+                              </p>
+                              <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30">
+                                Available Slot
+                              </Badge>
+                            </CardContent>
+                          </Card>
+                        </motion.div>
+                      ))}
+                      {/* Locked Ad Slots */}
+                      {Array.from({ length: lockedSlots }).map((_, index) => (
+                        <motion.div
+                          key={`locked-slot-empty-${index}`}
+                          className="group relative"
+                          whileHover={{ scale: 1.02 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <Card className="bg-gray-800/30 border-gray-700/50 relative overflow-hidden h-full">
+                            <div className="absolute inset-0 bg-gradient-to-br from-gray-900/80 to-gray-800/80 z-10 group-hover:opacity-0 transition-opacity duration-300" />
+                            <CardHeader className="pb-3 relative z-0">
+                              <div className="flex items-center justify-between">
+                                <Badge variant="secondary" className="bg-orange-500/20 text-orange-400 border-orange-500/30">
+                                  Slot {index + 1}
+                                </Badge>
+                                <Badge className="text-xs bg-gray-500/20 text-gray-400 border-gray-500/30">
+                                  <Lock className="h-3 w-3 mr-1 inline" />
+                                  Locked
+                                </Badge>
+                              </div>
+                              <CardTitle className="text-white text-lg line-clamp-2 mt-2">
+                                Available Slot
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent className="relative z-0">
+                              <p className="text-gray-400 text-sm mb-4 line-clamp-3">
+                                Purchase this slot to unlock and create your advertisement.
+                              </p>
+                              <div className="w-full h-32 rounded-lg overflow-hidden mb-4 bg-gradient-to-br from-gray-700/30 to-gray-800/30 flex items-center justify-center border border-gray-700/50">
+                                <Tag className="h-12 w-12 text-gray-600" />
+                              </div>
+
+                              <div className="flex items-center justify-between">
+                                <div className="text-xs text-gray-500">
+                                  Status: Locked
+                                </div>
+                                <div className="flex gap-2">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    type="button"
+                                    disabled
+                                    className="text-gray-500 cursor-not-allowed opacity-50"
+                                  >
+                                    <Lock className="h-4 w-4 mr-1" />
+                                    Locked
+                                  </Button>
+                                </div>
+                              </div>
+                            </CardContent>
+                            
+                            {/* Hover Overlay with Buy Slot Button */}
+                            <div className="absolute inset-0 bg-gradient-to-br from-orange-500/20 to-yellow-400/20 backdrop-blur-sm z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                              <Link href="/advertise">
+                                <motion.div
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                >
+                                  <Button
+                                    size="lg"
+                                    className="bg-gradient-to-r from-orange-500 to-yellow-400 hover:from-orange-600 hover:to-yellow-500 text-black font-bold px-8 py-3 shadow-lg"
+                                  >
+                                    <DollarSign className="h-5 w-5 mr-2" />
+                                    Buy Slot
+                                  </Button>
+                                </motion.div>
+                              </Link>
+                            </div>
+                          </Card>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </>
                 )}
               </motion.div>
             </TabsContent>
