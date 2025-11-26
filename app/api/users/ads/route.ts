@@ -99,8 +99,9 @@ export async function POST(request: NextRequest) {
       imageUrl: body.image_url,
       linkUrl: body.link_url,
       category: body.category,
+      slot_unique_id: body.slot_unique_id || null, // Pass slot_unique_id if provided
       startDate: body.start_date,
-      endDate: body.end_date,
+      endDate: body.end_date, // Will be overridden by slot's endDate if slot_unique_id is provided
       createdBy: (session.user as any).id,
     } as any);
     

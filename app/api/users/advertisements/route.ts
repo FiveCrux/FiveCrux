@@ -64,23 +64,28 @@ export async function GET(request: NextRequest) {
         status: 'pending',
         image_url: a.imageUrl,
         link_url: a.linkUrl,
+        slot_unique_id: a.slotUniqueId || null,  // ✅ Add this
         created_at: a.createdAt,
         updated_at: a.updatedAt
       })),
-      ...userApproved.map(a => ({ 
+      ...userApproved
+        .filter(a => a.status !== 'inactive')
+        .map(a => ({ 
+          ...a, 
+          status: a.status || 'approved',
+          image_url: a.imageUrl,
+          link_url: a.linkUrl,
+          slot_unique_id: a.slotUniqueId || null,  // ✅ Add this
+          created_at: a.createdAt || a.approvedAt,
+          updated_at: a.updatedAt
+        })),
+      ...userRejected.filter(a => a.status !== 'inactive').map(a => ({ 
         ...a, 
-        status: 'approved',
-        image_url: a.imageUrl,
-        link_url: a.linkUrl,
-        created_at: a.createdAt || a.approvedAt,
-        updated_at: a.updatedAt
-      })),
-      ...userRejected.map(a => ({ 
-        ...a, 
-        status: 'rejected',
+        status: a.status || 'rejected',
         rejection_reason: a.rejectionReason,
         image_url: a.imageUrl,
         link_url: a.linkUrl,
+        slot_unique_id: a.slotUniqueId || null,  // ✅ Add this
         created_at: a.createdAt || a.rejectedAt,
         updated_at: a.updatedAt
       }))
@@ -127,8 +132,9 @@ export async function POST(request: NextRequest) {
       imageUrl: body.image_url,
       linkUrl: body.link_url,
       category: body.category,
+      slot_unique_id: body.slot_unique_id || null, // Pass slot_unique_id if provided
       startDate: body.start_date,
-      endDate: body.end_date,
+      endDate: body.end_date, // Will be overridden by slot's endDate if slot_unique_id is provided
       createdBy: (session.user as any).id,
     } as any);
     

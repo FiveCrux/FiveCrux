@@ -46,11 +46,12 @@ export async function POST(request: NextRequest) {
       status: approvalStatus,
       imageUrl: body.image_url || null,
       linkUrl: body.link_url || null,
+      slot_unique_id: body.slot_unique_id || null, // Pass slot_unique_id if provided
       startDate: body.start_date ? new Date(body.start_date) : new Date(),
-      endDate: body.end_date ? new Date(body.end_date) : null,
+      endDate: body.end_date ? new Date(body.end_date) : null, // Will be overridden by slot's endDate if slot_unique_id is provided
       createdAt: new Date(),
       updatedAt: new Date(),
-    })
+    } as any)
 
     // Send Discord notification for ALL ad creations
     try {

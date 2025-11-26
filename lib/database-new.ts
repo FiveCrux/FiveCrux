@@ -184,20 +184,31 @@ function generateSlotUniqueId(): string {
 async function getNextSlotNumber(userId: string): Promise<number> {
   // Get all slots for this user (active and inactive) to find the highest slot number
   const allSlots = await db
-    .select({ slotNumber: userAdSlots.slotNumber })
+    .select()
     .from(userAdSlots)
-    .where(eq(userAdSlots.userId, userId))
-    .orderBy(desc(userAdSlots.slotNumber))
-    .limit(1);
+    .where(eq(userAdSlots.userId, userId));
 
   if (allSlots.length === 0) {
     return 1; // First slot
   }
 
-  return allSlots[0].slotNumber + 1;
+  // Find the maximum slot number across all slotNumber arrays
+  let maxSlotNumber = 0;
+  for (const slot of allSlots) {
+    const slotNumbers = (slot.slotNumber || []) as number[];
+    if (slotNumbers.length > 0) {
+      const maxInSlot = Math.max(...slotNumbers);
+      if (maxInSlot > maxSlotNumber) {
+        maxSlotNumber = maxInSlot;
+      }
+    }
+  }
+
+  return maxSlotNumber + 1;
 }
 
 // Get count of active slots for a user
+// Counts the total number of slots across all active rows (sum of slotNumber array lengths)
 export async function getUserActiveAdSlots(userId: string): Promise<number> {
   try {
     const activeSlots = await db
@@ -210,7 +221,15 @@ export async function getUserActiveAdSlots(userId: string): Promise<number> {
         )
       );
     
-    return activeSlots.length;
+    // Sum up the total number of slots from all rows
+    // Each row contains an array of slot numbers, so we count the total length
+    let totalSlots = 0;
+    for (const slot of activeSlots) {
+      const slotNumbers = (slot.slotNumber || []) as number[];
+      totalSlots += slotNumbers.length;
+    }
+    
+    return totalSlots;
   } catch (error) {
     console.error('Error in getUserActiveAdSlots:', error);
     // Return 0 if table doesn't exist or query fails
@@ -219,13 +238,14 @@ export async function getUserActiveAdSlots(userId: string): Promise<number> {
 }
 
 // Create ad slots with proper slot numbers and unique IDs (one-time purchase)
+// Creates a single row with sequential slot numbers and unique IDs
 export async function createAdSlots(
   userId: string,
   slotsToAdd: number,
   paypalOrderIds: string[],
   packageId: string, // Package type: 'starter', 'premium', or 'executive'
   durationMonths: number // Duration in months (1, 3, 6, or 12)
-): Promise<Array<{ id: number; slotNumber: number; slotUniqueIds: string[] }>> {
+): Promise<{ id: number; slotNumber: number[]; slotUniqueIds: string[] }> {
   if (paypalOrderIds.length !== slotsToAdd) {
     throw new Error('PayPal order IDs count must match slots to add');
   }
@@ -244,59 +264,61 @@ export async function createAdSlots(
   const endDate = new Date(now);
   endDate.setMonth(endDate.getMonth() + durationMonths);
 
-  // Get the starting slot number
+  // Get the starting slot number for this user
   const startingSlotNumber = await getNextSlotNumber(userId);
-  
-  const createdSlots = [];
 
-  // Create each slot
+  // Generate sequential slot numbers [1, 2, 3, 4, 5] or [startingSlotNumber, startingSlotNumber+1, ...]
+  const slotNumbers: number[] = [];
   for (let i = 0; i < slotsToAdd; i++) {
-    const slotNumber = startingSlotNumber + i;
-    
-    // Generate unique IDs for this slot (one unique ID per slot)
-    const slotUniqueIds = [generateSlotUniqueId()];
-
-    // Generate ID using timestamp + random (same pattern as other tables)
-    const timestamp = Math.floor(Date.now() / 1000) + i;
-    const randomSuffix = Math.floor(Math.random() * 10000);
-    const id = timestamp + randomSuffix;
-
-    // All slots in this purchase share the same end date (calculated from purchase date + duration)
-    const slotEndDate = endDate;
-
-    const result = await db
-      .insert(userAdSlots)
-      .values({
-        id: id,
-        userId: userId,
-        slotNumber: slotNumber,
-        slotUniqueIds: slotUniqueIds,
-        purchaseDate: now,
-        endDate: slotEndDate,
-        packageId: packageId,
-        durationMonths: durationMonths,
-        paypalOrderId: paypalOrderIds[i] || null,
-        status: 'active' as const,
-        createdAt: now,
-        updatedAt: now,
-      } as any)
-      .returning({ 
-        id: userAdSlots.id,
-        slotNumber: userAdSlots.slotNumber,
-        slotUniqueIds: userAdSlots.slotUniqueIds
-      });
-
-    if (result[0]) {
-      // Ensure slotUniqueIds is never null
-      createdSlots.push({
-        id: result[0].id,
-        slotNumber: result[0].slotNumber,
-        slotUniqueIds: (result[0].slotUniqueIds || []) as string[]
-      });
-    }
+    slotNumbers.push(startingSlotNumber + i);
   }
 
-  return createdSlots;
+  // Generate unique IDs for all slots (exactly one unique ID per slot)
+  const slotUniqueIds: string[] = [];
+  for (let i = 0; i < slotsToAdd; i++) {
+    slotUniqueIds.push(generateSlotUniqueId());
+  }
+
+  // Generate ID using timestamp + random (same pattern as other tables)
+  const timestamp = Math.floor(Date.now() / 1000);
+  const randomSuffix = Math.floor(Math.random() * 10000);
+  const id = timestamp + randomSuffix;
+
+  // Use the first PayPal order ID (or combine them if needed)
+  // Since all slots are in one purchase, we'll use the first order ID
+  const paypalOrderId = paypalOrderIds[0] || null;
+
+  // Create a single row with sequential slot numbers and unique IDs
+  const result = await db
+    .insert(userAdSlots)
+    .values({
+      id: id,
+      userId: userId,
+      slotNumber: slotNumbers, // Array of sequential slot numbers [1, 2, 3, 4, 5]
+      slotUniqueIds: slotUniqueIds, // Array of unique IDs, one per slot
+      purchaseDate: now,
+      endDate: endDate,
+      packageId: packageId,
+      durationMonths: durationMonths,
+      paypalOrderId: paypalOrderId,
+      status: 'active' as const,
+    } as any)
+    .returning({ 
+      id: userAdSlots.id,
+      slotNumber: userAdSlots.slotNumber,
+      slotUniqueIds: userAdSlots.slotUniqueIds
+    });
+
+  if (!result[0]) {
+    throw new Error('Failed to create ad slots');
+  }
+
+  // Ensure slotNumber and slotUniqueIds are never null
+  return {
+    id: result[0].id,
+    slotNumber: (result[0].slotNumber || []) as number[],
+    slotUniqueIds: (result[0].slotUniqueIds || []) as string[]
+  };
 }
 
 // Get all slots for a user (for admin/debugging)
@@ -305,7 +327,7 @@ export async function getUserAdSlots(userId: string) {
     .select()
     .from(userAdSlots)
     .where(eq(userAdSlots.userId, userId))
-    .orderBy(asc(userAdSlots.slotNumber));
+    .orderBy(desc(userAdSlots.purchaseDate)); // Order by purchase date since slotNumber is now an array
 }
 
 // Get slot by slotUniqueId to retrieve slot information (including endDate)
@@ -336,7 +358,7 @@ export async function checkAndDeactivateExpiredSlots(): Promise<{ checked: numbe
       and(
         eq(userAdSlots.status, 'active'),
         sql`${userAdSlots.endDate} IS NOT NULL`,
-        sql`${userAdSlots.endDate} < ${now}`
+        sql`${userAdSlots.endDate} < CURRENT_TIMESTAMP`
       )
     );
   
@@ -376,8 +398,7 @@ export async function checkAndDeactivateExpiredSlots(): Promise<{ checked: numbe
     await db
       .update(userAdSlots)
       .set({ 
-        status: 'inactive',
-        updatedAt: new Date()
+        status: 'inactive'
       })
       .where(eq(userAdSlots.id, slot.id));
   }
@@ -1714,11 +1735,22 @@ export async function createAd(adData: NewAd & { status?: string }) {
   // If slotUniqueId is provided, get the slot's endDate from PayPal
   let adEndDate = (adData as any).endDate ?? (adData as any).end_date ?? null;
   if (slotUniqueId) {
+    console.log('createAd: Looking up slot with uniqueId:', slotUniqueId);
     const slot = await getSlotByUniqueId(slotUniqueId);
-    if (slot && slot.endDate) {
-      // Use the slot's endDate from PayPal (same date for all ads in this slot)
-      adEndDate = slot.endDate;
+    if (slot) {
+      console.log('createAd: Found slot:', { id: slot.id, endDate: slot.endDate, status: slot.status });
+      if (slot.endDate) {
+        // Use the slot's endDate from PayPal (same date for all ads in this slot)
+        adEndDate = slot.endDate;
+        console.log('createAd: Using slot endDate:', adEndDate);
+      } else {
+        console.warn('createAd: Slot found but has no endDate:', slot.id);
+      }
+    } else {
+      console.warn('createAd: Slot not found for uniqueId:', slotUniqueId);
     }
+  } else {
+    console.log('createAd: No slotUniqueId provided, using provided endDate or null');
   }
 
   // Map snake_case input to camelCase schema fields and provide defaults
@@ -1765,11 +1797,22 @@ export async function createPendingAd(adData: NewAd) {
   // If slotUniqueId is provided, get the slot's endDate from PayPal
   let adEndDate = (adData as any).endDate ?? (adData as any).end_date ?? null;
   if (slotUniqueId) {
+    console.log('createPendingAd: Looking up slot with uniqueId:', slotUniqueId);
     const slot = await getSlotByUniqueId(slotUniqueId);
-    if (slot && slot.endDate) {
-      // Use the slot's endDate from PayPal (same date for all ads in this slot)
-      adEndDate = slot.endDate;
+    if (slot) {
+      console.log('createPendingAd: Found slot:', { id: slot.id, endDate: slot.endDate, status: slot.status });
+      if (slot.endDate) {
+        // Use the slot's endDate from PayPal (same date for all ads in this slot)
+        adEndDate = slot.endDate;
+        console.log('createPendingAd: Using slot endDate:', adEndDate);
+      } else {
+        console.warn('createPendingAd: Slot found but has no endDate:', slot.id);
+      }
+    } else {
+      console.warn('createPendingAd: Slot not found for uniqueId:', slotUniqueId);
     }
+  } else {
+    console.log('createPendingAd: No slotUniqueId provided, using provided endDate or null');
   }
 
   // Map snake_case input to camelCase schema fields and provide defaults

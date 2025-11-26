@@ -147,12 +147,11 @@ export async function POST(request: NextRequest) {
 
     // Create ad slots with PayPal order ID
     // This is a ONE-TIME purchase (not a subscription)
-    // For a single purchase of multiple slots, we use the same PayPal order ID for all slots
-    // Each slot will have the same paypalOrderId stored in the database
+    // Creates a single row with all slot unique IDs in slotNumber array
     // The endDate is automatically calculated as purchaseDate + durationMonths
     const paypalOrderIds = Array(orderData.slotsToAdd).fill(orderId)
 
-    const createdSlots = await createAdSlots(
+    const createdSlot = await createAdSlots(
       userId,
       orderData.slotsToAdd,
       paypalOrderIds,
@@ -167,7 +166,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       activeSlots, // Total active slots count after purchase
-      slots: createdSlots, // Array of created slot objects with slotNumber and slotUniqueIds
+      slots: [createdSlot], // Single slot object wrapped in array (slotNumber contains all unique IDs)
       message: `Successfully purchased ${orderData.slotsToAdd} ad slot(s)`,
     })
   } catch (error) {
