@@ -137,7 +137,7 @@ function PayPalButtonWrapper({
 }) {
   const [{ isPending }] = usePayPalScriptReducer()
   const duration = pkg.durations[durationIndex]
-  const totalSlots = pkg.slotsPerMonth * duration.months
+  const totalSlots = pkg.slotsPerMonth
 
   const createOrder = async () => {
     try {

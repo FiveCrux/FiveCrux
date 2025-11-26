@@ -104,6 +104,7 @@ interface Ad {
   category: string
   status: "pending" | "approved" | "rejected"
   rejection_reason?: string
+  slot_unique_id?: string
   priority: number
   created_at: string
   updated_at: string
@@ -146,11 +147,13 @@ export default function ProfilePage() {
   
   const [showAdsForm, setShowAdsForm] = useState(false)
   const [editingAd, setEditingAd] = useState<any>(null)
+  const [selectedSlotUniqueId, setSelectedSlotUniqueId] = useState<string | null>(null)
   const [editingName, setEditingName] = useState(false)
   const [nameValue, setNameValue] = useState("")
   const [savingName, setSavingName] = useState(false)
   // TODO: Fetch purchased slots from user data/API
   const [purchasedSlots, setPurchasedSlots] = useState(0) // This should come from user data
+  const [availableSlotUniqueIds, setAvailableSlotUniqueIds] = useState<string[]>([]) // Available slot unique IDs
   
   // Extract data from React Query responses
   const scripts = scriptsData?.scripts || []
@@ -204,19 +207,27 @@ export default function ProfilePage() {
         if (response.ok) {
           const data = await response.json()
           setPurchasedSlots(data.activeSlots || 0) // Uses activeSlots from one-time purchases
+          
+          // Get available unique IDs and filter out ones already used in ads
+          const allUniqueIds = data.availableUniqueIds || []
+          const usedUniqueIds = new Set(ads.map((ad: Ad) => ad.slot_unique_id).filter(Boolean))
+          const available = allUniqueIds.filter((id: string) => !usedUniqueIds.has(id))
+          setAvailableSlotUniqueIds(available)
         } else {
           console.error('Failed to fetch active slots')
           // Default to 0 if fetch fails
           setPurchasedSlots(0)
+          setAvailableSlotUniqueIds([])
         }
       } catch (error) {
         console.error('Error fetching active slots:', error)
         setPurchasedSlots(0)
+        setAvailableSlotUniqueIds([])
       }
     }
   
     fetchActiveSlots()
-  }, [session?.user?.id, status])
+  }, [session?.user?.id, status, ads]) // Include ads in dependencies to update when ads change
 
   const handleEditScript = (scriptId: number) => {
     router.push(`/scripts/submit?edit=${scriptId}`)
@@ -953,7 +964,9 @@ export default function ProfilePage() {
                         </Card>
                       ))}
                       {/* Available Ad Slots (Purchased but not used) */}
-                      {Array.from({ length: availableSlots }).map((_, index) => (
+                      {Array.from({ length: availableSlots }).map((_, index) => {
+                        const slotUniqueId = availableSlotUniqueIds[index] || null
+                        return (
                         <motion.div
                           key={`available-slot-${index}`}
                           initial={{ opacity: 0, scale: 0.9 }}
@@ -961,7 +974,10 @@ export default function ProfilePage() {
                           transition={{ duration: 0.3, delay: index * 0.1 }}
                           whileHover={{ scale: 1.02 }}
                           className="group cursor-pointer"
-                          onClick={() => setShowAdsForm(true)}
+                          onClick={() => {
+                            setSelectedSlotUniqueId(slotUniqueId)
+                            setShowAdsForm(true)
+                          }}
                         >
                           <Card className="bg-gray-800/30 border-2 border-dashed border-orange-500/50 hover:border-orange-500 transition-all duration-300 h-full flex flex-col items-center justify-center min-h-[300px]">
                             <CardContent className="flex flex-col items-center justify-center py-12">
@@ -978,7 +994,8 @@ export default function ProfilePage() {
                             </CardContent>
                           </Card>
                         </motion.div>
-                      ))}
+                        )
+                      })}
                       {/* Locked Ad Slots */}
                       {Array.from({ length: lockedSlots }).map((_, index) => (
                         <motion.div
@@ -1056,7 +1073,9 @@ export default function ProfilePage() {
                   <>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                       {/* Available Ad Slots (Purchased but not used) */}
-                      {Array.from({ length: availableSlots }).map((_, index) => (
+                      {Array.from({ length: availableSlots }).map((_, index) => {
+                        const slotUniqueId = availableSlotUniqueIds[index] || null
+                        return (
                         <motion.div
                           key={`available-slot-empty-${index}`}
                           initial={{ opacity: 0, scale: 0.9 }}
@@ -1064,7 +1083,10 @@ export default function ProfilePage() {
                           transition={{ duration: 0.3, delay: index * 0.1 }}
                           whileHover={{ scale: 1.02 }}
                           className="group cursor-pointer"
-                          onClick={() => setShowAdsForm(true)}
+                          onClick={() => {
+                            setSelectedSlotUniqueId(slotUniqueId)
+                            setShowAdsForm(true)
+                          }}
                         >
                           <Card className="bg-gray-800/30 border-2 border-dashed border-orange-500/50 hover:border-orange-500 transition-all duration-300 h-full flex flex-col items-center justify-center min-h-[300px]">
                             <CardContent className="flex flex-col items-center justify-center py-12">
@@ -1081,7 +1103,8 @@ export default function ProfilePage() {
                             </CardContent>
                           </Card>
                         </motion.div>
-                      ))}
+                        )
+                      })}
                       {/* Locked Ad Slots */}
                       {Array.from({ length: lockedSlots }).map((_, index) => (
                         <motion.div
@@ -1367,9 +1390,11 @@ export default function ProfilePage() {
         onClose={() => {
           setShowAdsForm(false)
           setEditingAd(null)
+          setSelectedSlotUniqueId(null)
         }}
         onSuccess={handleAdCreated}
         editData={editingAd}
+        slotUniqueId={selectedSlotUniqueId}
       />
     </>
   )
