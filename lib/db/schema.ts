@@ -167,6 +167,7 @@ const baseAdFields = {
   linkUrl: text('link_url'),
   category: text('category').notNull(),
   slotUniqueId: text('slot_unique_id'), // Unique ID to identify which slot this ad belongs to
+  slotStatus: text('slot_status').default('active').notNull(), // 'active' when endDate > current date, 'inactive' when current date passes endDate
   startDate: timestamp('start_date').defaultNow(),
   endDate: timestamp('end_date'),
   createdBy: text('created_by').notNull(),
