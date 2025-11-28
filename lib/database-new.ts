@@ -369,7 +369,7 @@ export async function checkAndDeactivateExpiredSlots(): Promise<{ checked: numbe
     // Get all unique IDs for this slot
     const slotUniqueIds = (slot.slotUniqueIds || []) as string[];
     
-    // Deactivate all ads associated with this slot's unique IDs
+    // Deactivate all ads associated with this slot's unique IDs (check all ad tables)
     for (const uniqueId of slotUniqueIds) {
       // Deactivate ads in approved_ads table
       const approvedAdsToDeactivate = await db
@@ -378,7 +378,7 @@ export async function checkAndDeactivateExpiredSlots(): Promise<{ checked: numbe
         .where(
           and(
             eq(approvedAds.slotUniqueId, uniqueId),
-            eq(approvedAds.status, 'active')
+            eq(approvedAds.slotStatus, 'active')
           )
         );
       
@@ -387,9 +387,54 @@ export async function checkAndDeactivateExpiredSlots(): Promise<{ checked: numbe
           .update(approvedAds)
           .set({ 
             status: 'inactive',
+            slotStatus: 'inactive',
             updatedAt: new Date()
           })
           .where(eq(approvedAds.id, ad.id));
+        adsDeactivated++;
+      }
+      
+      // Deactivate ads in pending_ads table
+      const pendingAdsToDeactivate = await db
+        .select()
+        .from(pendingAds)
+        .where(
+          and(
+            eq(pendingAds.slotUniqueId, uniqueId),
+            eq(pendingAds.slotStatus, 'active')
+          )
+        );
+      
+      for (const ad of pendingAdsToDeactivate) {
+        await db
+          .update(pendingAds)
+          .set({ 
+            slotStatus: 'inactive',
+            updatedAt: new Date()
+          })
+          .where(eq(pendingAds.id, ad.id));
+        adsDeactivated++;
+      }
+      
+      // Deactivate ads in rejected_ads table
+      const rejectedAdsToDeactivate = await db
+        .select()
+        .from(rejectedAds)
+        .where(
+          and(
+            eq(rejectedAds.slotUniqueId, uniqueId),
+            eq(rejectedAds.slotStatus, 'active')
+          )
+        );
+      
+      for (const ad of rejectedAdsToDeactivate) {
+        await db
+          .update(rejectedAds)
+          .set({ 
+            slotStatus: 'inactive',
+            updatedAt: new Date()
+          })
+          .where(eq(rejectedAds.id, ad.id));
         adsDeactivated++;
       }
     }
@@ -404,26 +449,74 @@ export async function checkAndDeactivateExpiredSlots(): Promise<{ checked: numbe
   }
   
   // Also check for individual ads that have passed their end date (independent of slot expiration)
-  const expiredAds = await db
+  // Update slotStatus to 'inactive' for ads where endDate < current date
+  const expiredApprovedAds = await db
     .select()
     .from(approvedAds)
     .where(
       and(
-        eq(approvedAds.status, 'active'),
+        eq(approvedAds.slotStatus, 'active'),
         sql`${approvedAds.endDate} IS NOT NULL`,
-        sql`${approvedAds.endDate} < ${now}`
+        sql`${approvedAds.endDate} < CURRENT_TIMESTAMP`
       )
     );
   
-  // Deactivate expired ads
-  for (const ad of expiredAds) {
+  // Deactivate expired ads (set both status and slotStatus to inactive)
+  for (const ad of expiredApprovedAds) {
     await db
       .update(approvedAds)
       .set({ 
         status: 'inactive',
+        slotStatus: 'inactive',
         updatedAt: new Date()
       })
       .where(eq(approvedAds.id, ad.id));
+    adsDeactivated++;
+  }
+  
+  // Check pending ads with expired endDate
+  const expiredPendingAds = await db
+    .select()
+    .from(pendingAds)
+    .where(
+      and(
+        eq(pendingAds.slotStatus, 'active'),
+        sql`${pendingAds.endDate} IS NOT NULL`,
+        sql`${pendingAds.endDate} < CURRENT_TIMESTAMP`
+      )
+    );
+  
+  for (const ad of expiredPendingAds) {
+    await db
+      .update(pendingAds)
+      .set({ 
+        slotStatus: 'inactive',
+        updatedAt: new Date()
+      })
+      .where(eq(pendingAds.id, ad.id));
+    adsDeactivated++;
+  }
+  
+  // Check rejected ads with expired endDate
+  const expiredRejectedAds = await db
+    .select()
+    .from(rejectedAds)
+    .where(
+      and(
+        eq(rejectedAds.slotStatus, 'active'),
+        sql`${rejectedAds.endDate} IS NOT NULL`,
+        sql`${rejectedAds.endDate} < CURRENT_TIMESTAMP`
+      )
+    );
+  
+  for (const ad of expiredRejectedAds) {
+    await db
+      .update(rejectedAds)
+      .set({ 
+        slotStatus: 'inactive',
+        updatedAt: new Date()
+      })
+      .where(eq(rejectedAds.id, ad.id));
     adsDeactivated++;
   }
   
@@ -1753,6 +1846,10 @@ export async function createAd(adData: NewAd & { status?: string }) {
     console.log('createAd: No slotUniqueId provided, using provided endDate or null');
   }
 
+  // Calculate slotStatus: 'active' if endDate is null or in the future, 'inactive' if endDate has passed
+  const now = new Date();
+  const slotStatus = adEndDate && new Date(adEndDate) <= now ? 'inactive' : 'active';
+
   // Map snake_case input to camelCase schema fields and provide defaults
   const mapped = {
     id: id,
@@ -1762,6 +1859,7 @@ export async function createAd(adData: NewAd & { status?: string }) {
     linkUrl: (adData as any).linkUrl ?? (adData as any).link_url ?? null,
     category: (adData as any).category,
     slotUniqueId: slotUniqueId,
+    slotStatus: slotStatus,
     startDate: (adData as any).startDate ?? (adData as any).start_date ?? new Date(),
     endDate: adEndDate,
     createdBy: (adData as any).createdBy ?? (adData as any).created_by,
@@ -1815,6 +1913,10 @@ export async function createPendingAd(adData: NewAd) {
     console.log('createPendingAd: No slotUniqueId provided, using provided endDate or null');
   }
 
+  // Calculate slotStatus: 'active' if endDate is null or in the future, 'inactive' if endDate has passed
+  const now = new Date();
+  const slotStatus = adEndDate && new Date(adEndDate) <= now ? 'inactive' : 'active';
+
   // Map snake_case input to camelCase schema fields and provide defaults
   const mapped = {
     id: id,
@@ -1824,6 +1926,7 @@ export async function createPendingAd(adData: NewAd) {
     linkUrl: (adData as any).linkUrl ?? (adData as any).link_url ?? null,
     category: (adData as any).category,
     slotUniqueId: slotUniqueId,
+    slotStatus: slotStatus,
     startDate: (adData as any).startDate ?? (adData as any).start_date ?? new Date(),
     endDate: adEndDate,
     createdBy: (adData as any).createdBy ?? (adData as any).created_by,
@@ -1909,6 +2012,8 @@ export async function getPendingAds(limit?: number): Promise<any[]> {
       imageUrl: pendingAds.imageUrl,
       linkUrl: pendingAds.linkUrl,
       category: pendingAds.category,
+      slotUniqueId: pendingAds.slotUniqueId,
+      slotStatus: pendingAds.slotStatus,
       startDate: pendingAds.startDate,
       endDate: pendingAds.endDate,
       createdBy: pendingAds.createdBy,
@@ -1921,6 +2026,7 @@ export async function getPendingAds(limit?: number): Promise<any[]> {
     })
     .from(pendingAds)
     .leftJoin(users, eq(pendingAds.createdBy, users.id))
+    .where(eq(pendingAds.slotStatus, 'active')) // Only return ads with active slotStatus
     .orderBy(desc(pendingAds.createdAt));
   return await (limit ? base.limit(limit) : base) as any[];
 }
@@ -1934,6 +2040,8 @@ export async function getApprovedAds(limit?: number): Promise<any[]> {
       imageUrl: approvedAds.imageUrl,
       linkUrl: approvedAds.linkUrl,
       category: approvedAds.category,
+      slotUniqueId: approvedAds.slotUniqueId,
+      slotStatus: approvedAds.slotStatus,
       startDate: approvedAds.startDate,
       endDate: approvedAds.endDate,
       createdBy: approvedAds.createdBy,
@@ -1949,6 +2057,7 @@ export async function getApprovedAds(limit?: number): Promise<any[]> {
     })
     .from(approvedAds)
     .leftJoin(users, eq(approvedAds.createdBy, users.id))
+    .where(eq(approvedAds.slotStatus, 'active')) // Only return ads with active slotStatus
     .orderBy(desc(approvedAds.approvedAt));
   return await (limit ? base.limit(limit) : base) as any[];
 }
@@ -1962,6 +2071,8 @@ export async function getRejectedAds(limit?: number): Promise<any[]> {
       imageUrl: rejectedAds.imageUrl,
       linkUrl: rejectedAds.linkUrl,
       category: rejectedAds.category,
+      slotUniqueId: rejectedAds.slotUniqueId,
+      slotStatus: rejectedAds.slotStatus,
       startDate: rejectedAds.startDate,
       endDate: rejectedAds.endDate,
       createdBy: rejectedAds.createdBy,
@@ -1977,6 +2088,7 @@ export async function getRejectedAds(limit?: number): Promise<any[]> {
     })
     .from(rejectedAds)
     .leftJoin(users, eq(rejectedAds.createdBy, users.id))
+    .where(eq(rejectedAds.slotStatus, 'active')) // Only return ads with active slotStatus
     .orderBy(desc(rejectedAds.rejectedAt));
   return await (limit ? base.limit(limit) : base) as any[];
 }
@@ -1996,6 +2108,7 @@ export async function approveAd(adId: number, adminId: string, adminNotes?: stri
     linkUrl: ad.linkUrl,
     category: ad.category,
     slotUniqueId: ad.slotUniqueId,
+    slotStatus: ad.slotStatus || 'active', // ✅ Include slotStatus
     startDate: ad.startDate,
     endDate: ad.endDate,
     createdBy: ad.createdBy,
@@ -2012,13 +2125,25 @@ export async function approveAd(adId: number, adminId: string, adminNotes?: stri
 
 export async function rejectAd(adId: number, adminId: string, rejectionReason: string, adminNotes?: string) {
   try {
-    // First try to get from pending ads
-    let ad: any[] = await db.select().from(pendingAds).where(eq(pendingAds.id, adId)).limit(1) as any;
+    // First try to get from pending ads - explicitly select all columns including slotUniqueId and slotStatus
+    let ad: any[] = await db
+      .select({
+        ...getTableColumns(pendingAds),
+      })
+      .from(pendingAds)
+      .where(eq(pendingAds.id, adId))
+      .limit(1) as any;
     let sourceTable = 'pending';
     
     // If not found in pending, try approved ads
     if (ad.length === 0) {
-      const approvedAd = await db.select().from(approvedAds).where(eq(approvedAds.id, adId)).limit(1);
+      const approvedAd = await db
+        .select({
+          ...getTableColumns(approvedAds),
+        })
+        .from(approvedAds)
+        .where(eq(approvedAds.id, adId))
+        .limit(1);
       if (approvedAd.length > 0) {
         // Convert approved ad to pending ad format for rejection
         const approvedData = approvedAd[0];
@@ -2045,6 +2170,14 @@ export async function rejectAd(adId: number, adminId: string, rejectionReason: s
     
     const adData = ad[0];
     
+    // Debug log to check if slotUniqueId is present
+    console.log('rejectAd - adData:', { 
+      id: adData.id, 
+      slotUniqueId: adData.slotUniqueId, 
+      slotStatus: adData.slotStatus,
+      hasSlotUniqueId: 'slotUniqueId' in adData 
+    });
+    
     // Insert into rejected_ads table
     await db.insert(rejectedAds).values({
       id: adData.id,
@@ -2053,6 +2186,8 @@ export async function rejectAd(adId: number, adminId: string, rejectionReason: s
       imageUrl: adData.imageUrl,
       linkUrl: adData.linkUrl,
       category: adData.category,
+      slotUniqueId: adData.slotUniqueId ?? null, // ✅ Include slotUniqueId (use ?? instead of || to preserve empty strings)
+      slotStatus: adData.slotStatus ?? 'active', // ✅ Include slotStatus (use ?? instead of ||)
       startDate: adData.startDate,
       endDate: adData.endDate,
       createdBy: adData.createdBy,
