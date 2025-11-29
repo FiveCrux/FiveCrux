@@ -26,10 +26,9 @@ interface AdsFormProps {
     priority: number
     status: string
   }
-  slotUniqueId?: string | null
 }
 
-export default function AdsForm({ isOpen, onClose, onSuccess, editData, slotUniqueId }: AdsFormProps) {
+export default function AdsForm({ isOpen, onClose, onSuccess, editData }: AdsFormProps) {
   const { toast } = useToast()
   const [formData, setFormData] = useState({
     title: "",
@@ -127,8 +126,7 @@ export default function AdsForm({ isOpen, onClose, onSuccess, editData, slotUniq
           })
         : JSON.stringify({
             ...formData,
-            image_url: imageUrl,
-            slot_unique_id: slotUniqueId || null
+            image_url: imageUrl
           })
 
       const response = await fetch(url, {

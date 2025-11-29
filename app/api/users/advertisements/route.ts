@@ -57,39 +57,35 @@ export async function GET(request: NextRequest) {
       userRejected: userRejected.length 
     });
 
-    // Combine and format the ads (filter out ads with inactive slotStatus)
+    // Combine and format the ads
     const allAds = [
-      ...userPending
-        .filter(a => a.slotStatus !== 'inactive')
-        .map(a => ({ 
+      ...userPending.map(a => ({ 
         ...a, 
         status: 'pending',
         image_url: a.imageUrl,
         link_url: a.linkUrl,
-        slot_unique_id: a.slotUniqueId || null,
+        slot_unique_id: a.slotUniqueId || null,  // ✅ Add this
         created_at: a.createdAt,
         updated_at: a.updatedAt
       })),
       ...userApproved
-        .filter(a => a.status !== 'inactive' && a.slotStatus !== 'inactive')
+        .filter(a => a.status !== 'inactive')
         .map(a => ({ 
         ...a, 
           status: a.status || 'approved',
         image_url: a.imageUrl,
         link_url: a.linkUrl,
-          slot_unique_id: a.slotUniqueId || null,
+          slot_unique_id: a.slotUniqueId || null,  // ✅ Add this
         created_at: a.createdAt || a.approvedAt,
         updated_at: a.updatedAt
       })),
-      ...userRejected
-        .filter(a => a.status !== 'inactive' && a.slotStatus !== 'inactive')
-        .map(a => ({ 
+      ...userRejected.filter(a => a.status !== 'inactive').map(a => ({ 
         ...a, 
         status: a.status || 'rejected',
         rejection_reason: a.rejectionReason,
         image_url: a.imageUrl,
         link_url: a.linkUrl,
-        slot_unique_id: a.slotUniqueId || null,
+        slot_unique_id: a.slotUniqueId || null,  // ✅ Add this
         created_at: a.createdAt || a.rejectedAt,
         updated_at: a.updatedAt
       }))
