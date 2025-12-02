@@ -17,6 +17,7 @@ import {
   MobileNavToggle,
   MobileNavMenu,
 } from "@/components/ui/resizable-navbar"
+import { Megaphone, Home,Package,Gift } from "lucide-react"
 
 export default function NavbarComponent() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -28,10 +29,10 @@ export default function NavbarComponent() {
   const profilePictureUrl = getSessionUserProfilePicture(session)
 
   const navItems = [
-    { name: "Home", link: "/" },
-    { name: "Marketplace", link: "/scripts" },
-    { name: "Giveaways", link: "/giveaways" },
-    { name: "Advertise", link: "/advertise" },
+    { name: "Home", link: "/" ,icon: <Home className="w-4 h-4" /> },
+    { name: "Marketplace", link: "/scripts", icon: <Package className="w-4 h-4" /> },
+    { name: "Giveaways", link: "/giveaways", icon: <Gift className="w-4 h-4" /> },
+    { name: "Advertise", link: "/advertise", icon: <Megaphone className="w-4 h-4" /> },
   ]
 
   // Custom logo component
