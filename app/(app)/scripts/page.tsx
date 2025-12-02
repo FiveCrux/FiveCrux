@@ -1,32 +1,62 @@
-"use client"
+"use client";
 
-import { useState, useEffect, useMemo, useRef, useCallback } from "react"
-import { motion, useInView, AnimatePresence } from "framer-motion"
-import { Search, Filter, Star, Eye, Grid, List, ChevronDown, X, Sparkles, Zap, Code, DollarSign, Sliders } from "lucide-react"
-import { Button } from "@/componentss/ui/button"
-import { Input } from "@/componentss/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/componentss/ui/card"
-import { Badge } from "@/componentss/ui/badge"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/componentss/ui/select"
-import { Checkbox } from "@/componentss/ui/checkbox"
-import { Slider } from "@/componentss/ui/slider"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/componentss/ui/collapsible"
-import Link from "next/link"
-import { useSearchParams, useRouter } from "next/navigation"
-import Navbar from "@/componentss/shared/navbar"
-import Footer from "@/componentss/shared/footer"
-import AdCard, { useRandomAds } from "@/componentss/ads/ad-card"
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { motion, useInView, AnimatePresence } from "framer-motion";
+import {
+  Search,
+  Filter,
+  Star,
+  Eye,
+  Grid,
+  List,
+  ChevronDown,
+  X,
+  Sparkles,
+  Zap,
+  Code,
+  DollarSign,
+  Sliders,
+} from "lucide-react";
+import { Button } from "@/componentss/ui/button";
+import { Input } from "@/componentss/ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/componentss/ui/card";
+import { Badge } from "@/componentss/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/componentss/ui/select";
+import { Checkbox } from "@/componentss/ui/checkbox";
+import { Slider } from "@/componentss/ui/slider";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/componentss/ui/collapsible";
+import Link from "next/link";
+import { useSearchParams, useRouter } from "next/navigation";
+import Navbar from "@/componentss/shared/navbar";
+import Footer from "@/componentss/shared/footer";
+import AdCard, { useRandomAds } from "@/componentss/ads/ad-card";
 
 // Animated background particles - Client only to avoid hydration issues
 const AnimatedParticles = () => {
-  const [mounted, setMounted] = useState(false)
-  
+  const [mounted, setMounted] = useState(false);
+
   useEffect(() => {
-    setMounted(true)
-  }, [])
-  
-  if (!mounted) return null
-  
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden">
       {[...Array(5)].map((_, i) => (
@@ -34,127 +64,163 @@ const AnimatedParticles = () => {
           key={i}
           className="absolute w-1 h-1 bg-orange-500/30 rounded-full"
           animate={{
-            x: [0, (i * 40) - 100],
-            y: [0, (i * 30) - 75],
+            x: [0, i * 40 - 100],
+            y: [0, i * 30 - 75],
             opacity: [0, 1, 0],
             scale: [0, 1, 0],
           }}
           transition={{
-            duration: 15 + (i * 2),
+            duration: 15 + i * 2,
             repeat: Number.POSITIVE_INFINITY,
             delay: i * 0.5,
           }}
           style={{
-            left: `${20 + (i * 15)}%`,
-            top: `${25 + (i * 12)}%`,
+            left: `${20 + i * 15}%`,
+            top: `${25 + i * 12}%`,
           }}
         />
       ))}
     </div>
-  )
-}
+  );
+};
 
 export default function ScriptsPage() {
-  const searchParams = useSearchParams()
-  const router = useRouter()
-  const filtersRef = useRef(null)
-  const scriptsRef = useRef(null)
-  const filterContainerRef = useRef<HTMLDivElement>(null)
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const filtersRef = useRef(null);
+  const scriptsRef = useRef(null);
+  const filterContainerRef = useRef<HTMLDivElement>(null);
 
-  const filtersInView = useInView(filtersRef, { once: true })
-  const scriptsInView = useInView(scriptsRef, { once: true })
+  const filtersInView = useInView(filtersRef, { once: true });
+  const scriptsInView = useInView(scriptsRef, { once: true });
 
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
-  const [priceRange, setPriceRange] = useState<number[]>([0, 100])
-  const [sortBy, setSortBy] = useState("popular")
-  const categoryParam = searchParams.get("category") ?? ""
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [priceRange, setPriceRange] = useState<number[]>([0, 100]);
+  const [sortBy, setSortBy] = useState("popular");
+  const categoryParam = searchParams.get("category") ?? "";
 
-  const [selectedCategories, setSelectedCategories] = useState<string[]>(() => (categoryParam ? [categoryParam] : []))
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(() =>
+    categoryParam ? [categoryParam] : []
+  );
 
   useEffect(() => {
-    setSelectedCategories(categoryParam ? [categoryParam] : [])
-  }, [categoryParam])
+    setSelectedCategories(categoryParam ? [categoryParam] : []);
+  }, [categoryParam]);
 
-  const [selectedFrameworks, setSelectedFrameworks] = useState<string[]>([])
-  const [selectedPriceCategories, setSelectedPriceCategories] = useState<string[]>([])
-  const [onSaleOnly, setOnSaleOnly] = useState(false)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [openFilter, setOpenFilter] = useState<string | null>(null)
+  const [selectedFrameworks, setSelectedFrameworks] = useState<string[]>([]);
+  const [selectedPriceCategories, setSelectedPriceCategories] = useState<
+    string[]
+  >([]);
+  const [onSaleOnly, setOnSaleOnly] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [openFilter, setOpenFilter] = useState<string | null>(null);
 
   type UIScript = {
-    id: number
-    title: string
-    description: string
-    price: number
-    originalPrice?: number
-    rating: number
-    reviews: number
-    image: string
-    category: string
-    categoryName: string
-    seller: string
-    discount: number
-    framework?: string[]
-    priceCategory: string
-    tags: string[]
-    lastUpdated: string
-  }
+    id: number;
+    title: string;
+    description: string;
+    price: number;
+    originalPrice?: number;
+    rating: number;
+    reviews: number;
+    image: string;
+    category: string;
+    categoryName: string;
+    seller: string;
+    discount: number;
+    framework?: string[];
+    priceCategory: string;
+    tags: string[];
+    lastUpdated: string;
+  };
 
-  type GridItem = UIScript | (any & { isAd: boolean })
+  type GridItem = UIScript | (any & { isAd: boolean });
 
-  const [allScripts, setAllScripts] = useState<UIScript[]>([])
-  const [ads, setAds] = useState<any[]>([])
+  const [allScripts, setAllScripts] = useState<UIScript[]>([]);
+  const [ads, setAds] = useState<any[]>([]);
 
   useEffect(() => {
     const load = async () => {
       try {
-        console.log("Loading scripts...")
+        console.log("Loading scripts...");
         const [scriptsRes, adsRes] = await Promise.all([
           fetch(`/api/scripts`, { cache: "no-store" }),
-          fetch(`/api/ads/scripts`, { cache: "no-store" })
-        ])
-        
+          fetch(`/api/ads/scripts`, { cache: "no-store" }),
+        ]);
+
         if (scriptsRes.ok) {
-          const data = await scriptsRes.json()
-          console.log("Scripts API data:", data)
-          console.log("Scripts count:", data.scripts?.length || 0)
-          
+          const data = await scriptsRes.json();
+          console.log("Scripts API data:", data);
+          console.log("Scripts count:", data.scripts?.length || 0);
+
           const mappedScripts = (data.scripts || []).map((s: any) => {
-            const image = s.cover_image || (s.images && s.images[0]) || (s.screenshots && s.screenshots[0]) || "/placeholder.jpg"
-            console.log(`Script ${s.id} (${s.title}): cover_image=${s.cover_image}, images=${JSON.stringify(s.images)}, screenshots=${JSON.stringify(s.screenshots)}, final image=${image}`)
+            const image =
+              s.cover_image ||
+              (s.images && s.images[0]) ||
+              (s.screenshots && s.screenshots[0]) ||
+              "/placeholder.jpg";
+            console.log(
+              `Script ${s.id} (${s.title}): cover_image=${
+                s.cover_image
+              }, images=${JSON.stringify(
+                s.images
+              )}, screenshots=${JSON.stringify(
+                s.screenshots
+              )}, final image=${image}`
+            );
             return {
               id: s.id,
               title: s.title,
               description: s.description,
               price: Number(s.price) || 0,
-              originalPrice: s.original_price ? Number(s.original_price) : undefined,
+              originalPrice: s.original_price
+                ? Number(s.original_price)
+                : undefined,
               rating: s.rating || 0,
               reviews: s.review_count || 0,
               image: image,
               category: s.category,
               categoryName: s.category,
               seller: s.seller_name,
-              discount: s.original_price ? Math.max(0, Math.round(((Number(s.original_price) - Number(s.price)) / Number(s.original_price)) * 100)) : 0,
-              framework: Array.isArray(s.framework) ? s.framework : (s.framework ? [s.framework] : []),
-              priceCategory: Number(s.price) <= 15 ? "Budget" : Number(s.price) <= 30 ? "Standard" : "Premium",
+              discount: s.original_price
+                ? Math.max(
+                    0,
+                    Math.round(
+                      ((Number(s.original_price) - Number(s.price)) /
+                        Number(s.original_price)) *
+                        100
+                    )
+                  )
+                : 0,
+              framework: Array.isArray(s.framework)
+                ? s.framework
+                : s.framework
+                ? [s.framework]
+                : [],
+              priceCategory:
+                Number(s.price) <= 15
+                  ? "Budget"
+                  : Number(s.price) <= 30
+                  ? "Standard"
+                  : "Premium",
               tags: (s.tags || []) as string[],
               lastUpdated: s.updated_at,
-            }
-          })
-          console.log("Mapped scripts:", mappedScripts)
-          setAllScripts(mappedScripts)
+            };
+          });
+          console.log("Mapped scripts:", mappedScripts);
+          setAllScripts(mappedScripts);
         }
 
         if (adsRes.ok) {
-          const adsData = await adsRes.json()
-          setAds(adsData.ads || [])
+          const adsData = await adsRes.json();
+          setAds(adsData.ads || []);
         }
       } catch (error) {
-        console.error("Error loading data:", error)
+        console.error("Error loading data:", error);
       }
-    }
-    load()
-  }, [])
+    };
+    load();
+  }, []);
 
   const categories = [
     { id: "economy", name: "Economy" },
@@ -165,7 +231,7 @@ export default function ScriptsPage() {
     { id: "police", name: "Police" },
     { id: "utilities", name: "Utilities" },
     { id: "core", name: "Core" },
-  ]
+  ];
 
   const frameworks = [
     { value: "All Frameworks", label: "All Frameworks" },
@@ -173,9 +239,9 @@ export default function ScriptsPage() {
     { value: "qbox", label: "Qbox" },
     { value: "esx", label: "ESX" },
     { value: "ox", label: "OX" },
-    { value: "standalone", label: "Standalone" }
-  ]
-  const priceCategories = ["Budget", "Standard", "Premium"]
+    { value: "standalone", label: "Standalone" },
+  ];
+  const priceCategories = ["Budget", "Standard", "Premium"];
 
   // Real-time filtering logic
   const filteredScripts = useMemo(() => {
@@ -184,37 +250,50 @@ export default function ScriptsPage() {
         searchQuery &&
         !script.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
         !script.description.toLowerCase().includes(searchQuery.toLowerCase()) &&
-        !script.tags.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+        !script.tags.some((tag) =>
+          tag.toLowerCase().includes(searchQuery.toLowerCase())
+        )
       ) {
-        return false
+        return false;
       }
 
-      if (selectedCategories.length > 0 && !selectedCategories.includes(script.category)) {
-        return false
+      if (
+        selectedCategories.length > 0 &&
+        !selectedCategories.includes(script.category)
+      ) {
+        return false;
       }
 
-      if (selectedFrameworks.length > 0 && !selectedFrameworks.includes("All Frameworks")) {
-        if (!script.framework || script.framework.length === 0) return false
-        const hasMatch = script.framework.some((fw: string) => selectedFrameworks.includes(fw))
-        if (!hasMatch) return false
+      if (
+        selectedFrameworks.length > 0 &&
+        !selectedFrameworks.includes("All Frameworks")
+      ) {
+        if (!script.framework || script.framework.length === 0) return false;
+        const hasMatch = script.framework.some((fw: string) =>
+          selectedFrameworks.includes(fw)
+        );
+        if (!hasMatch) return false;
       }
 
-      if (selectedPriceCategories.length > 0 && !selectedPriceCategories.includes(script.priceCategory)) {
-        return false
+      if (
+        selectedPriceCategories.length > 0 &&
+        !selectedPriceCategories.includes(script.priceCategory)
+      ) {
+        return false;
       }
 
       if (priceRange && priceRange.length === 2) {
         if (script.price < priceRange[0] || script.price > priceRange[1]) {
-          return false
+          return false;
         }
       }
 
       if (onSaleOnly && script.discount === 0) {
-        return false
+        return false;
       }
 
-      return true
-    })
+      return true;
+    });
   }, [
     allScripts,
     searchQuery,
@@ -223,119 +302,141 @@ export default function ScriptsPage() {
     selectedPriceCategories,
     priceRange,
     onSaleOnly,
-  ])
-
-
+  ]);
 
   // Sorting logic
   const sortedScripts = useMemo(() => {
-    const scripts = [...filteredScripts]
+    const scripts = [...filteredScripts];
     switch (sortBy) {
       case "price-low":
-        return scripts.sort((a, b) => a.price - b.price)
+        return scripts.sort((a, b) => a.price - b.price);
       case "price-high":
-        return scripts.sort((a, b) => b.price - a.price)
+        return scripts.sort((a, b) => b.price - a.price);
       case "rating":
-        return scripts.sort((a, b) => b.rating - a.rating)
+        return scripts.sort((a, b) => b.rating - a.rating);
       case "newest":
-        return scripts.sort((a, b) => new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime())
+        return scripts.sort(
+          (a, b) =>
+            new Date(b.lastUpdated).getTime() -
+            new Date(a.lastUpdated).getTime()
+        );
       default:
-        return scripts.sort((a, b) => b.reviews - a.reviews)
+        return scripts.sort((a, b) => b.reviews - a.reviews);
     }
-  }, [filteredScripts, sortBy])
+  }, [filteredScripts, sortBy]);
 
   // Debug logging removed for production
 
-  const handleCategoryChange = useCallback((category: string, checked: boolean) => {
-    if (checked) {
-      setSelectedCategories(prev => [...prev, category])
-    } else {
-      setSelectedCategories(prev => prev.filter((c) => c !== category))
-    }
-  }, [])
+  const handleCategoryChange = useCallback(
+    (category: string, checked: boolean) => {
+      if (checked) {
+        setSelectedCategories((prev) => [...prev, category]);
+      } else {
+        setSelectedCategories((prev) => prev.filter((c) => c !== category));
+      }
+    },
+    []
+  );
 
-  const handleFrameworkChange = useCallback((framework: string, checked: boolean) => {
-    if (checked) {
-      setSelectedFrameworks(prev => [...prev, framework])
-    } else {
-      setSelectedFrameworks(prev => prev.filter((f) => f !== framework))
-    }
-  }, [])
+  const handleFrameworkChange = useCallback(
+    (framework: string, checked: boolean) => {
+      if (checked) {
+        setSelectedFrameworks((prev) => [...prev, framework]);
+      } else {
+        setSelectedFrameworks((prev) => prev.filter((f) => f !== framework));
+      }
+    },
+    []
+  );
 
-  const handlePriceCategoryChange = useCallback((category: string, checked: boolean) => {
-    if (checked) {
-      setSelectedPriceCategories(prev => [...prev, category])
-    } else {
-      setSelectedPriceCategories(prev => prev.filter((c) => c !== category))
-    }
-  }, [])
+  const handlePriceCategoryChange = useCallback(
+    (category: string, checked: boolean) => {
+      if (checked) {
+        setSelectedPriceCategories((prev) => [...prev, category]);
+      } else {
+        setSelectedPriceCategories((prev) =>
+          prev.filter((c) => c !== category)
+        );
+      }
+    },
+    []
+  );
 
   const clearAllFilters = useCallback(() => {
-    setSelectedCategories([])
-    setSelectedFrameworks([])
-    setSelectedPriceCategories([])
-    setPriceRange([0, 100])
-    setOnSaleOnly(false)
-    setSearchQuery("")
-    router.push("/scripts")
-  }, [router])
+    setSelectedCategories([]);
+    setSelectedFrameworks([]);
+    setSelectedPriceCategories([]);
+    setPriceRange([0, 100]);
+    setOnSaleOnly(false);
+    setSearchQuery("");
+    router.push("/scripts");
+  }, [router]);
 
-  const removeFilter = useCallback((type: string, value: string | number) => {
-    switch (type) {
-      case "category":
-        handleCategoryChange(value as string, false)
-        break
-      case "framework":
-        handleFrameworkChange(value as string, false)
-        break
-      case "priceCategory":
-        handlePriceCategoryChange(value as string, false)
-        break
-    }
-  }, [handleCategoryChange, handleFrameworkChange, handlePriceCategoryChange])
+  const removeFilter = useCallback(
+    (type: string, value: string | number) => {
+      switch (type) {
+        case "category":
+          handleCategoryChange(value as string, false);
+          break;
+        case "framework":
+          handleFrameworkChange(value as string, false);
+          break;
+        case "priceCategory":
+          handlePriceCategoryChange(value as string, false);
+          break;
+      }
+    },
+    [handleCategoryChange, handleFrameworkChange, handlePriceCategoryChange]
+  );
 
-  const activeFiltersCount = useMemo(() => 
-    selectedCategories.length +
-    selectedFrameworks.length +
-    selectedPriceCategories.length +
-    (onSaleOnly ? 1 : 0),
-    [selectedCategories.length, selectedFrameworks.length, selectedPriceCategories.length, onSaleOnly]
-  )
+  const activeFiltersCount = useMemo(
+    () =>
+      selectedCategories.length +
+      selectedFrameworks.length +
+      selectedPriceCategories.length +
+      (onSaleOnly ? 1 : 0),
+    [
+      selectedCategories.length,
+      selectedFrameworks.length,
+      selectedPriceCategories.length,
+      onSaleOnly,
+    ]
+  );
 
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Node
+      const target = event.target as Node;
       if (
         filterContainerRef.current &&
         !filterContainerRef.current.contains(target) &&
         openFilter !== null
       ) {
-        setOpenFilter(null)
+        setOpenFilter(null);
       }
-    }
+    };
 
     if (openFilter !== null) {
-      document.addEventListener("mousedown", handleClickOutside)
+      document.addEventListener("mousedown", handleClickOutside);
       return () => {
-        document.removeEventListener("mousedown", handleClickOutside)
-      }
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
     }
-  }, [openFilter])
+  }, [openFilter]);
 
   // Get random ads for scripts page
-  const randomAds = useRandomAds(ads, 2)
+  const randomAds = useRandomAds(ads, 2);
 
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-black text-white relative overflow-hidden">
+      <div className="min-h-screen bg-neutral-900 text-white relative overflow-hidden">
         <AnimatedParticles />
 
         {/* Animated background */}
         <div className="fixed inset-0 -z-10">
           <motion.div
-            className="absolute inset-0 bg-gradient-to-br from-black via-gray-900 to-black"
+            className="absolute inset-0 bg-gradient-to-br from-gray-300 via-gray-600 to-gray-300"
             animate={{
               background: [
                 "radial-gradient(circle at 20% 50%, rgba(249, 115, 22, 0.05) 0%, transparent 50%)",
@@ -353,7 +454,7 @@ export default function ScriptsPage() {
 
         {/* Header */}
         <motion.div
-          className="bg-gray-900/30 backdrop-blur-xl py-8 px-4 sm:px-6 lg:px-8 border-b border-gray-800/50 mt-11"
+          className="bg-neutral-850 backdrop-blur-xl py-8 px-4 sm:px-6 lg:px-8 border-b border-neutral-800/50 mt-11"
           initial={{ opacity: 0, y: -50 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
@@ -365,7 +466,10 @@ export default function ScriptsPage() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.2 }}
             >
-              <Link href="/" className="hover:text-orange-500 transition-colors">
+              <Link
+                href="/"
+                className="hover:text-orange-500 transition-colors"
+              >
                 Home
               </Link>
               <span>/</span>
@@ -403,9 +507,15 @@ export default function ScriptsPage() {
                 {sortedScripts.length} scripts found
               </div>
               {activeFiltersCount > 0 && (
-                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="flex items-center gap-2">
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="flex items-center gap-2"
+                >
                   <Zap className="h-4 w-4 text-yellow-400" />
-                  <span className="text-sm text-yellow-400">{activeFiltersCount} filters active</span>
+                  <span className="text-sm text-yellow-400">
+                    {activeFiltersCount} filters active
+                  </span>
                 </motion.div>
               )}
             </motion.div>
@@ -430,22 +540,36 @@ export default function ScriptsPage() {
                 animate={filtersInView ? { opacity: 1, y: 0 } : {}}
                 transition={{ duration: 0.8 }}
               >
-                <Card className="bg-gray-800/30 border-gray-700/50 backdrop-blur-xl">
+                <Card className="bg-neutral-800/30 border-neutral-700/50 backdrop-blur-xl">
                   <CardContent className="p-4">
                     <div className="flex flex-col gap-4">
                       {/* Filter Header */}
                       <div className="flex items-center justify-between flex-wrap gap-4">
-                        <motion.div className="flex items-center gap-2" whileHover={{ scale: 1.05 }}>
+                        <motion.div
+                          className="flex items-center gap-2"
+                          whileHover={{ scale: 1.05 }}
+                        >
                           <Filter className="h-5 w-5 text-orange-500" />
-                          <span className="text-white font-semibold">Filters</span>
+                          <span className="text-white font-semibold">
+                            Filters
+                          </span>
                           {activeFiltersCount > 0 && (
-                            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} whileHover={{ scale: 1.1 }}>
-                              <Badge className="bg-orange-500 text-white">{activeFiltersCount}</Badge>
+                            <motion.div
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              whileHover={{ scale: 1.1 }}
+                            >
+                              <Badge className="bg-orange-500 text-white">
+                                {activeFiltersCount}
+                              </Badge>
                             </motion.div>
                           )}
                         </motion.div>
                         {activeFiltersCount > 0 && (
-                          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                          <motion.div
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                          >
                             <Button
                               variant="ghost"
                               size="sm"
@@ -459,133 +583,206 @@ export default function ScriptsPage() {
                       </div>
 
                       {/* Horizontal Filters */}
-                      <div ref={filterContainerRef} className="flex flex-wrap gap-3 items-start">
+                      <div
+                        ref={filterContainerRef}
+                        className="flex flex-wrap gap-3 items-start"
+                      >
                         {/* Categories Filter */}
-                        <Collapsible open={openFilter === "categories"} onOpenChange={(open) => setOpenFilter(open ? "categories" : null)}>
+                        <Collapsible
+                          open={openFilter === "categories"}
+                          onOpenChange={(open) =>
+                            setOpenFilter(open ? "categories" : null)
+                          }
+                        >
                           <div className="relative z-30">
                             <CollapsibleTrigger asChild>
-                              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                              <motion.div
+                                whileHover={{ scale: 1.05, y: -2 }}
+                                whileTap={{ scale: 0.95 }}
+                              >
                                 <Button
                                   variant="outline"
-                                  className={`bg-gradient-to-r from-gray-800/80 to-gray-900/80 border-2 text-white font-semibold px-4 py-2 rounded-lg shadow-lg transition-all duration-300 ${
-                                    openFilter === "categories"
-                                      ? "border-orange-500 bg-gradient-to-r from-orange-500/20 to-orange-600/20 shadow-orange-500/50"
-                                      : "border-gray-600/50 hover:border-orange-500/70 hover:from-gray-700/80 hover:to-gray-800/80"
+                                  className={`bg-gradient-to-br from-gray-800 to-gray-900 border-2 text-white font-bold px-5 py-2.5 rounded-lg shadow-lg transition-all duration-300 ${
+                                    openFilter === "categories" ||
+                                    selectedCategories.length > 0
+                                      ? "border-orange-500 bg-gradient-to-br from-orange-500/20 to-orange-600/20 shadow-orange-500/50"
+                                      : "border-neutral-600/50 hover:border-orange-500/70"
                                   }`}
                                 >
-                                  <span className="text-sm font-medium flex items-center gap-2">
-                                    <Filter className="h-4 w-4" />
+                                  <span className="text-sm font-semibold flex items-center gap-2">
+                                    <Filter className="h-4 w-4 text-orange-400" />
                                     Categories
+                                    {selectedCategories.length > 0 && (
+                                      <span className="ml-1 bg-orange-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                                        {selectedCategories.length}
+                                      </span>
+                                    )}
                                   </span>
-                                  <ChevronDown className={`ml-2 h-4 w-4 transition-transform duration-300 ${openFilter === "categories" ? "rotate-180" : ""}`} />
+                                  <ChevronDown
+                                    className={`ml-2 h-4 w-4 transition-transform duration-300 text-orange-400 ${
+                                      openFilter === "categories"
+                                        ? "rotate-180"
+                                        : ""
+                                    }`}
+                                  />
                                 </Button>
                               </motion.div>
                             </CollapsibleTrigger>
-                            <CollapsibleContent className="absolute z-[100] mt-2 left-0 bg-gray-900 border border-gray-700/50 rounded-lg p-4 shadow-xl min-w-[200px]">
-                            <div className="space-y-2">
-                              {categories.map((category) => (
-                                <motion.div
-                                  key={category.id}
-                                  className="flex items-center space-x-2"
-                                  whileHover={{ x: 5 }}
-                                >
-                                  <Checkbox
-                                    id={`category-${category.id}`}
-                                    checked={selectedCategories.includes(category.id)}
-                                    onCheckedChange={(checked) => handleCategoryChange(category.id, checked as boolean)}
-                                  />
-                                  <label
-                                    htmlFor={`category-${category.id}`}
-                                    className="text-sm text-gray-300 hover:text-white transition-colors cursor-pointer"
+                            <CollapsibleContent className="absolute z-[100] mt-2 left-0 bg-neutral-900 border border-neutral-700/50 rounded-lg p-4 shadow-xl min-w-[200px]">
+                              <div className="space-y-2">
+                                {categories.map((category) => (
+                                  <motion.div
+                                    key={category.id}
+                                    className="flex items-center space-x-2"
+                                    whileHover={{ x: 5 }}
                                   >
-                                    {category.name}
-                                  </label>
-                                </motion.div>
-                              ))}
-                            </div>
+                                    <Checkbox
+                                      id={`category-${category.id}`}
+                                      checked={selectedCategories.includes(
+                                        category.id
+                                      )}
+                                      onCheckedChange={(checked) =>
+                                        handleCategoryChange(
+                                          category.id,
+                                          checked as boolean
+                                        )
+                                      }
+                                    />
+                                    <label
+                                      htmlFor={`category-${category.id}`}
+                                      className="text-sm text-gray-300 hover:text-white transition-colors cursor-pointer"
+                                    >
+                                      {category.name}
+                                    </label>
+                                  </motion.div>
+                                ))}
+                              </div>
                             </CollapsibleContent>
                           </div>
                         </Collapsible>
 
                         {/* Framework Filter */}
-                        <Collapsible open={openFilter === "framework"} onOpenChange={(open) => setOpenFilter(open ? "framework" : null)}>
+                        <Collapsible
+                          open={openFilter === "framework"}
+                          onOpenChange={(open) =>
+                            setOpenFilter(open ? "framework" : null)
+                          }
+                        >
                           <div className="relative z-30">
                             <CollapsibleTrigger asChild>
-                              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                              <motion.div
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                              >
                                 <Button
                                   variant="outline"
                                   className={`bg-gradient-to-r from-gray-800/80 to-gray-900/80 border-2 text-white font-semibold px-4 py-2 rounded-lg shadow-lg transition-all duration-300 ${
                                     openFilter === "framework"
                                       ? "border-orange-500 bg-gradient-to-r from-orange-500/20 to-orange-600/20 shadow-orange-500/50"
-                                      : "border-gray-600/50 hover:border-orange-500/70 hover:from-gray-700/80 hover:to-gray-800/80"
+                                      : "border-neutral-600/50 hover:border-orange-500/70 hover:from-gray-700/80 hover:to-gray-800/80"
                                   }`}
                                 >
                                   <span className="text-sm font-medium flex items-center gap-2">
                                     <Code className="h-4 w-4" />
                                     Framework
                                   </span>
-                                  <ChevronDown className={`ml-2 h-4 w-4 transition-transform duration-300 ${openFilter === "framework" ? "rotate-180" : ""}`} />
+                                  <ChevronDown
+                                    className={`ml-2 h-4 w-4 transition-transform duration-300 ${
+                                      openFilter === "framework"
+                                        ? "rotate-180"
+                                        : ""
+                                    }`}
+                                  />
                                 </Button>
                               </motion.div>
                             </CollapsibleTrigger>
-                            <CollapsibleContent className="absolute z-[100] mt-2 left-0 bg-gray-900 border border-gray-700/50 rounded-lg p-4 shadow-xl min-w-[200px]">
-                            <div className="space-y-2">
-                              {frameworks.map((framework) => (
-                                <motion.div
-                                  key={framework.value}
-                                  className="flex items-center space-x-2"
-                                  whileHover={{ x: 5 }}
-                                >
-                                  <Checkbox
-                                    id={`framework-${framework.value}`}
-                                    checked={selectedFrameworks.includes(framework.value)}
-                                    onCheckedChange={(checked) => handleFrameworkChange(framework.value, checked as boolean)}
-                                  />
-                                  <label
-                                    htmlFor={`framework-${framework.value}`}
-                                    className="text-sm text-gray-300 hover:text-white transition-colors cursor-pointer"
+                            <CollapsibleContent className="absolute z-[100] mt-2 left-0 bg-neutral-900 border border-neutral-700/50 rounded-lg p-4 shadow-xl min-w-[200px]">
+                              <div className="space-y-2">
+                                {frameworks.map((framework) => (
+                                  <motion.div
+                                    key={framework.value}
+                                    className="flex items-center space-x-2"
+                                    whileHover={{ x: 5 }}
                                   >
-                                    {framework.label}
-                                  </label>
-                                </motion.div>
-                              ))}
-                            </div>
+                                    <Checkbox
+                                      id={`framework-${framework.value}`}
+                                      checked={selectedFrameworks.includes(
+                                        framework.value
+                                      )}
+                                      onCheckedChange={(checked) =>
+                                        handleFrameworkChange(
+                                          framework.value,
+                                          checked as boolean
+                                        )
+                                      }
+                                    />
+                                    <label
+                                      htmlFor={`framework-${framework.value}`}
+                                      className="text-sm text-gray-300 hover:text-white transition-colors cursor-pointer"
+                                    >
+                                      {framework.label}
+                                    </label>
+                                  </motion.div>
+                                ))}
+                              </div>
                             </CollapsibleContent>
                           </div>
                         </Collapsible>
 
                         {/* Price Filter - Combined */}
-                        <Collapsible open={openFilter === "price"} onOpenChange={(open) => setOpenFilter(open ? "price" : null)}>
+                        <Collapsible
+                          open={openFilter === "price"}
+                          onOpenChange={(open) =>
+                            setOpenFilter(open ? "price" : null)
+                          }
+                        >
                           <div className="relative z-30">
                             <CollapsibleTrigger asChild>
-                              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                              <motion.div
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                              >
                                 <Button
                                   variant="outline"
                                   className={`bg-gradient-to-r from-gray-800/80 to-gray-900/80 border-2 text-white font-semibold px-4 py-2 rounded-lg shadow-lg transition-all duration-300 ${
-                                    openFilter === "price" || selectedPriceCategories.length > 0 || (priceRange[0] !== 0 || priceRange[1] !== 100)
+                                    openFilter === "price" ||
+                                    selectedPriceCategories.length > 0 ||
+                                    priceRange[0] !== 0 ||
+                                    priceRange[1] !== 100
                                       ? "border-orange-500 bg-gradient-to-r from-orange-500/20 to-orange-600/20 shadow-orange-500/50"
-                                      : "border-gray-600/50 hover:border-orange-500/70 hover:from-gray-700/80 hover:to-gray-800/80"
+                                      : "border-neutral-600/50 hover:border-orange-500/70 hover:from-gray-700/80 hover:to-gray-800/80"
                                   }`}
                                 >
                                   <span className="text-sm font-medium flex items-center gap-2">
                                     <DollarSign className="h-4 w-4" />
                                     Price
-                                    {(selectedPriceCategories.length > 0 || (priceRange[0] !== 0 || priceRange[1] !== 100)) && (
+                                    {(selectedPriceCategories.length > 0 ||
+                                      priceRange[0] !== 0 ||
+                                      priceRange[1] !== 100) && (
                                       <span className="text-orange-400">
-                                        {selectedPriceCategories.length > 0 && ` (${selectedPriceCategories.length})`}
-                                        {(priceRange[0] !== 0 || priceRange[1] !== 100) && ` $${priceRange[0]}-${priceRange[1]}`}
+                                        {selectedPriceCategories.length > 0 &&
+                                          ` (${selectedPriceCategories.length})`}
+                                        {(priceRange[0] !== 0 ||
+                                          priceRange[1] !== 100) &&
+                                          ` $${priceRange[0]}-${priceRange[1]}`}
                                       </span>
                                     )}
                                   </span>
-                                  <ChevronDown className={`ml-2 h-4 w-4 transition-transform duration-300 ${openFilter === "price" ? "rotate-180" : ""}`} />
+                                  <ChevronDown
+                                    className={`ml-2 h-4 w-4 transition-transform duration-300 ${
+                                      openFilter === "price" ? "rotate-180" : ""
+                                    }`}
+                                  />
                                 </Button>
                               </motion.div>
                             </CollapsibleTrigger>
-                            <CollapsibleContent className="absolute z-[100] mt-2 left-0 bg-gray-900 border border-gray-700/50 rounded-lg p-4 shadow-xl min-w-[250px]">
+                            <CollapsibleContent className="absolute z-[100] mt-2 left-0 bg-neutral-900 border border-neutral-700/50 rounded-lg p-4 shadow-xl min-w-[250px]">
                               <div className="space-y-4">
                                 {/* Price Categories */}
                                 <div>
-                                  <h4 className="text-white font-semibold mb-3 text-sm">Price Category</h4>
+                                  <h4 className="text-white font-semibold mb-3 text-sm">
+                                    Price Category
+                                  </h4>
                                   <div className="space-y-3">
                                     {priceCategories.map((category) => (
                                       <motion.div
@@ -595,29 +792,46 @@ export default function ScriptsPage() {
                                       >
                                         <Checkbox
                                           id={`price-${category}`}
-                                          checked={selectedPriceCategories.includes(category)}
-                                          onCheckedChange={(checked) => handlePriceCategoryChange(category, checked as boolean)}
+                                          checked={selectedPriceCategories.includes(
+                                            category
+                                          )}
+                                          onCheckedChange={(checked) =>
+                                            handlePriceCategoryChange(
+                                              category,
+                                              checked as boolean
+                                            )
+                                          }
                                         />
                                         <label
                                           htmlFor={`price-${category}`}
                                           className="text-sm text-gray-300 hover:text-white transition-colors cursor-pointer"
                                         >
-                                          {category} {category === "Budget" && "($0-$15)"}
-                                          {category === "Standard" && "($15-$30)"}
+                                          {category}{" "}
+                                          {category === "Budget" && "($0-$15)"}
+                                          {category === "Standard" &&
+                                            "($15-$30)"}
                                           {category === "Premium" && "($30+)"}
                                         </label>
                                       </motion.div>
                                     ))}
                                   </div>
                                 </div>
-                                
+
                                 {/* Divider */}
-                                <div className="border-t border-gray-700/50"></div>
-                                
+                                <div className="border-t border-neutral-700/50"></div>
+
                                 {/* Custom Price Range */}
                                 <div>
-                                  <h4 className="text-white font-semibold mb-3 text-sm">Custom Range</h4>
-                                  <Slider value={priceRange} onValueChange={setPriceRange} max={100} step={1} className="w-full mb-2" />
+                                  <h4 className="text-white font-semibold mb-3 text-sm">
+                                    Custom Range
+                                  </h4>
+                                  <Slider
+                                    value={priceRange}
+                                    onValueChange={setPriceRange}
+                                    max={100}
+                                    step={1}
+                                    className="w-full mb-2"
+                                  />
                                   <div className="flex justify-between text-sm text-gray-400">
                                     <span>${priceRange[0]}</span>
                                     <span>${priceRange[1]}</span>
@@ -629,20 +843,25 @@ export default function ScriptsPage() {
                         </Collapsible>
 
                         {/* On Sale Only Filter */}
-                        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                        <motion.div
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                        >
                           <Button
                             variant="outline"
                             className={`bg-gradient-to-r from-gray-800/80 to-gray-900/80 border-2 text-white font-semibold px-4 py-2 rounded-lg shadow-lg transition-all duration-300 ${
                               onSaleOnly
                                 ? "border-orange-500 bg-gradient-to-r from-orange-500/20 to-orange-600/20 shadow-orange-500/50"
-                                : "border-gray-600/50 hover:border-orange-500/70 hover:from-gray-700/80 hover:to-gray-800/80"
+                                : "border-neutral-600/50 hover:border-orange-500/70 hover:from-gray-700/80 hover:to-gray-800/80"
                             }`}
                             onClick={() => setOnSaleOnly(!onSaleOnly)}
                           >
                             <Checkbox
                               id="on-sale"
                               checked={onSaleOnly}
-                              onCheckedChange={(checked) => setOnSaleOnly(checked as boolean)}
+                              onCheckedChange={(checked) =>
+                                setOnSaleOnly(checked as boolean)
+                              }
                               className="mr-2"
                             />
                             <span className="text-sm font-medium flex items-center gap-2">
@@ -670,40 +889,64 @@ export default function ScriptsPage() {
                     placeholder="Search scripts..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 bg-gray-900/30 border-gray-700/50 text-white placeholder-gray-400 focus:border-orange-500 focus:bg-gray-900/50 transition-all duration-300"
+                    className="pl-10 bg-neutral-900/30 border-neutral-700/50 text-white placeholder-gray-400 focus:border-orange-500 focus:bg-neutral-900/50 transition-all duration-300"
                   />
                 </div>
                 <motion.div whileHover={{ scale: 1.02 }}>
                   <Select value={sortBy} onValueChange={setSortBy}>
-                    <SelectTrigger className="w-48 bg-gray-900/30 border-gray-700/50 text-white backdrop-blur-sm">
+                    <SelectTrigger className="w-48 bg-neutral-900/30 border-neutral-700/50 text-white backdrop-blur-sm">
                       <SelectValue placeholder="Sort by" />
                     </SelectTrigger>
-                    <SelectContent className="bg-gray-900/95 border-gray-700/50 backdrop-blur-xl">
-                      <SelectItem value="popular" className="text-white">Most Popular</SelectItem>
-                      <SelectItem value="newest" className="text-white">Newest First</SelectItem>
-                      <SelectItem value="price-low" className="text-white">Price: Low to High</SelectItem>
-                      <SelectItem value="price-high" className="text-white">Price: High to Low</SelectItem>
-                      <SelectItem value="rating" className="text-white">Highest Rated</SelectItem>
+                    <SelectContent className="bg-neutral-900/95 border-neutral-700/50 backdrop-blur-xl">
+                      <SelectItem value="popular" className="text-white">
+                        Most Popular
+                      </SelectItem>
+                      <SelectItem value="newest" className="text-white">
+                        Newest First
+                      </SelectItem>
+                      <SelectItem value="price-low" className="text-white">
+                        Price: Low to High
+                      </SelectItem>
+                      <SelectItem value="price-high" className="text-white">
+                        Price: High to Low
+                      </SelectItem>
+                      <SelectItem value="rating" className="text-white">
+                        Highest Rated
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </motion.div>
-                <div className="flex border border-gray-700/50 rounded-md backdrop-blur-sm">
-                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <div className="flex border border-neutral-700/50 rounded-md backdrop-blur-sm">
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
                     <Button
                       variant={viewMode === "grid" ? "default" : "ghost"}
                       size="sm"
                       onClick={() => setViewMode("grid")}
-                      className={viewMode === "grid" ? "bg-orange-500 text-white" : "text-gray-400 hover:text-white"}
+                      className={
+                        viewMode === "grid"
+                          ? "bg-orange-500 text-white"
+                          : "text-gray-400 hover:text-white"
+                      }
                     >
                       <Grid className="h-4 w-4" />
                     </Button>
                   </motion.div>
-                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
                     <Button
                       variant={viewMode === "list" ? "default" : "ghost"}
                       size="sm"
                       onClick={() => setViewMode("list")}
-                      className={viewMode === "list" ? "bg-orange-500 text-white" : "text-gray-400 hover:text-white"}
+                      className={
+                        viewMode === "list"
+                          ? "bg-orange-500 text-white"
+                          : "text-gray-400 hover:text-white"
+                      }
                     >
                       <List className="h-4 w-4" />
                     </Button>
@@ -753,7 +996,9 @@ export default function ScriptsPage() {
                         </motion.div>
                       ))}
                       {selectedFrameworks.map((framework, index) => {
-                        const frameworkObj = frameworks.find(f => f.value === framework)
+                        const frameworkObj = frameworks.find(
+                          (f) => f.value === framework
+                        );
                         return (
                           <motion.div
                             key={framework}
@@ -769,7 +1014,9 @@ export default function ScriptsPage() {
                             >
                               {frameworkObj?.label || framework}
                               <motion.button
-                                onClick={() => removeFilter("framework", framework)}
+                                onClick={() =>
+                                  removeFilter("framework", framework)
+                                }
                                 className="hover:text-white transition-colors"
                                 whileHover={{ scale: 1.2 }}
                                 whileTap={{ scale: 0.8 }}
@@ -778,7 +1025,7 @@ export default function ScriptsPage() {
                               </motion.button>
                             </Badge>
                           </motion.div>
-                        )
+                        );
                       })}
                       {selectedPriceCategories.map((category, index) => (
                         <motion.div
@@ -795,7 +1042,9 @@ export default function ScriptsPage() {
                           >
                             {category}
                             <motion.button
-                              onClick={() => removeFilter("priceCategory", category)}
+                              onClick={() =>
+                                removeFilter("priceCategory", category)
+                              }
                               className="hover:text-white transition-colors"
                               whileHover={{ scale: 1.2 }}
                               whileTap={{ scale: 0.8 }}
@@ -864,12 +1113,20 @@ export default function ScriptsPage() {
                     <motion.div
                       className="mb-6"
                       animate={{ rotate: [0, 10, -10, 0] }}
-                      transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
+                      transition={{
+                        duration: 2,
+                        repeat: Number.POSITIVE_INFINITY,
+                      }}
                     >
                       <Search className="h-16 w-16 text-gray-600 mx-auto" />
                     </motion.div>
-                    <p className="text-gray-400 text-xl mb-6">No scripts found matching your criteria</p>
-                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                    <p className="text-gray-400 text-xl mb-6">
+                      No scripts found matching your criteria
+                    </p>
+                    <motion.div
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
                       <Button
                         onClick={clearAllFilters}
                         className="bg-gradient-to-r from-orange-500 to-yellow-400 hover:from-orange-600 hover:to-yellow-500 text-black font-semibold"
@@ -880,212 +1137,327 @@ export default function ScriptsPage() {
                     </motion.div>
                   </motion.div>
                 ) : (
-                                    <motion.div
+                  <motion.div
                     className={
-                      viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6" : "space-y-4"
+                      viewMode === "grid"
+                        ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
+                        : "space-y-4"
                     }
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ duration: 0.5, staggerChildren: 0.1 }}
                   >
-                                        {(() => {
+                    {(() => {
                       const items: GridItem[] = [...sortedScripts];
                       // Insert ads at deterministic positions to avoid hydration issues
                       if (randomAds.length > 0) {
                         const adPositions = [];
                         for (let i = 0; i < randomAds.length; i++) {
                           // Use deterministic positioning based on index to avoid hydration issues
-                          const position = Math.floor((i * (items.length + 1)) / randomAds.length);
+                          const position = Math.floor(
+                            (i * (items.length + 1)) / randomAds.length
+                          );
                           adPositions.push({ ad: randomAds[i], position });
                         }
                         // Sort by position in descending order to avoid index shifting
                         adPositions.sort((a, b) => b.position - a.position);
                         adPositions.forEach(({ ad, position }) => {
-                          items.splice(position, 0, { ...ad, isAd: true } as GridItem);
+                          items.splice(position, 0, {
+                            ...ad,
+                            isAd: true,
+                          } as GridItem);
                         });
                       }
                       return items.map((item: GridItem, index) => {
                         // If it's an ad, render AdCard
-                        if ('isAd' in item && item.isAd) {
+                        if ("isAd" in item && item.isAd) {
                           return (
-                            <motion.div
-                              key={`ad-${item.id}`}
-                              initial={{ opacity: 0, y: 50 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ duration: 0.5, delay: index * 0.05 }}
-                              whileHover={{ y: -5, scale: 1.02 }}
-                            >
-                              <AdCard ad={item as any} variant="script" />
-                            </motion.div>
+                            <AdCard key={`ad-${item.id}`} ad={item as any} variant="script" />
                           );
                         }
-                        
+
                         // Otherwise render script
                         const script = item as UIScript;
                         return (
                           <motion.div
                             key={script.id}
-                        initial={{ opacity: 0, y: 50 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5, delay: index * 0.05 }}
-                        whileHover={{ y: -5, scale: 1.02 }}
-                        className="group"
-                      >
-                        <Link href={`/script/${script.id}`}>
-                        <Card
-                          className={`bg-gray-800/30 border-gray-700/50 hover:border-orange-500/50 transition-all duration-500 cursor-pointer h-full backdrop-blur-sm relative overflow-hidden ${viewMode === "list" ? "flex" : ""}`}
-                        >
-                          {/* Animated background on hover */}
-                          <motion.div
-                            className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-yellow-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                            initial={false}
-                          />
-
-                          <CardHeader className={`p-0 relative ${viewMode === "list" ? "w-48 flex-shrink-0" : ""}`}>
-                            <div className="relative overflow-hidden">
-                              <motion.img
-                                src={script.image || "/placeholder.jpg"}
-                                alt={script.title}
-                                className={`object-cover transition-transform duration-500 group-hover:scale-110 ${viewMode === "list" ? "w-full h-32 rounded-l-lg" : "w-full h-48 rounded-t-lg"}`}
-                                loading="lazy"
-                                onError={(e) => {
-                                  const target = e.target as HTMLImageElement;
-                                  target.src = "/placeholder.jpg";
-                                }}
-                              />
-                              <motion.div
-                                className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                                initial={false}
-                              />
-                              {script.discount > 0 && (
+                            initial={{ opacity: 0, y: 50 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.5, delay: index * 0.05 }}
+                            whileHover={{ y: -8, scale: 1.03 }}
+                            className="group"
+                          >
+                            <Link href={`/script/${script.id}`}>
+                              <Card
+                                className={`bg-neutral-900 border-2 border-neutral-700/50 hover:border-orange-500 transition-all duration-500 cursor-pointer h-full backdrop-blur-sm relative overflow-hidden shadow-2xl rounded-3xl ${
+                                  viewMode === "list" ? "flex" : ""
+                                }`}
+                              >
+                                {/* Animated background on hover */}
                                 <motion.div
-                                  className="absolute top-2 left-2"
-                                  initial={{ scale: 0, rotate: -180 }}
-                                  animate={{ scale: 1, rotate: 0 }}
-                                  transition={{ delay: index * 0.05 }}
-                                  whileHover={{ scale: 1.1, rotate: 5 }}
-                                >
-                                  <Badge className="bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold">
-                                    -{script.discount}%
-                                  </Badge>
-                                </motion.div>
-                              )}
-                              <motion.div
-                                className="absolute top-2 right-2"
-                                initial={{ scale: 0, rotate: 180 }}
-                                animate={{ scale: 1, rotate: 0 }}
-                                transition={{ delay: index * 0.05 + 0.1 }}
-                                whileHover={{ scale: 1.1 }}
-                              >
-                                <div className="flex flex-wrap gap-1">
-                                  {script.framework?.map((fw, idx) => (
-                                    <Badge key={idx} className="bg-black/80 text-white backdrop-blur-sm text-xs">{fw}</Badge>
-                                  ))}
-                                </div>
-                              </motion.div>
-                            </div>
-                          </CardHeader>
+                                  className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-yellow-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                                  initial={false}
+                                />
 
-                          <CardContent className={`p-4 relative z-10 ${viewMode === "list" ? "flex-1" : ""}`}>
-                            <div className={viewMode === "list" ? "flex justify-between h-full" : ""}>
-                              <div className={viewMode === "list" ? "flex-1 pr-4" : ""}>
-                                <CardTitle className="text-white text-lg mb-2 group-hover:text-orange-500 transition-colors duration-300">
-                                  {script.title}
-                                </CardTitle>
-                                <CardDescription className="text-gray-400 text-sm mb-3 leading-relaxed">
-                                  {script.description}
-                                </CardDescription>
-                                <div className="flex items-center mb-3">
-                                  <div className="flex items-center">
-                                    {[...Array(5)].map((_, i) => (
-                                      <motion.div
-                                        key={i}
-                                        initial={{ opacity: 0, scale: 0 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        transition={{ delay: index * 0.05 + i * 0.02 }}
-                                      >
-                                        <Star
-                                          className={`h-4 w-4 ${
-                                            i < Math.floor(Number(script.rating) || 0)
-                                              ? "text-yellow-400 fill-current"
-                                              : "text-gray-600"
-                                          }`}
-                                        />
-                                      </motion.div>
-                                    ))}
-                                  </div>
-                                  <span className="text-sm text-gray-400 ml-2">
-                                    {(Number(script.rating) || 0).toFixed(1)} ({script.reviews})
-                                  </span>
-                                </div>
-                                <div className="flex flex-wrap gap-1 mb-3">
-                                  <motion.div
-                                    initial={{ opacity: 0, scale: 0.8 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    transition={{ delay: index * 0.05 }}
-                                    whileHover={{ scale: 1.05 }}
-                                  >
-                                    <Badge
-                                      variant="secondary"
-                                      className="text-xs bg-gray-700/50 text-gray-300 backdrop-blur-sm"
-                                    >
-                                      {script.categoryName}
-                                    </Badge>
-                                  </motion.div>
-                                  <motion.div
-                                    initial={{ opacity: 0, scale: 0.8 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    transition={{ delay: index * 0.05 + 0.05 }}
-                                    whileHover={{ scale: 1.05 }}
-                                  >
-                                    <Badge
-                                      variant="secondary"
-                                      className="text-xs bg-gray-700/50 text-gray-300 backdrop-blur-sm"
-                                    >
-                                      {script.priceCategory}
-                                    </Badge>
-                                  </motion.div>
-                                </div>
-                                <div className="text-xs text-gray-500">by {script.seller}</div>
-                              </div>
-                              <div
-                                className={`${viewMode === "list" ? "flex flex-col justify-between items-end" : "flex items-center justify-between mt-4"}`}
-                              >
-                                <div
-                                  className={`${viewMode === "list" ? "text-right mb-4" : "flex items-center space-x-2"}`}
+                                {/* Corner accent */}
+                                {/* <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-orange-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-tl-xl" /> */}
+
+                                <CardHeader
+                                  className={`p-0 relative ${
+                                    viewMode === "list"
+                                      ? "w-48 flex-shrink-0 rounded-l-3xl overflow-hidden"
+                                      : "rounded-t-3xl overflow-hidden"
+                                  }`}
                                 >
-                                  <motion.span
-                                    className="text-orange-500 font-bold text-lg"
-                                    animate={{
-                                      textShadow: [
-                                        "0 0 0px currentColor",
-                                        "0 0 10px currentColor",
-                                        "0 0 0px currentColor",
-                                      ],
-                                    }}
-                                    transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY, delay: index * 0.1 }}
+                                  <motion.div 
+                                    className="relative overflow-hidden w-full h-full"
+                                    animate={{ y: 0 }}
+                                    whileHover={{ y: 8 }}
+                                    transition={{ duration: 0.3 }}
                                   >
-                                    ${script.price}
-                                  </motion.span>
-                                  {script.originalPrice && (
-                                    <span className="text-gray-500 line-through text-sm">${script.originalPrice}</span>
-                                  )}
-                                </div>
-                                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                                    <Button
-                                      size="sm"
-                                      className="bg-gradient-to-r from-orange-500 to-yellow-400 hover:from-orange-600 hover:to-yellow-500 text-black font-semibold shadow-lg"
+                                    <motion.img
+                                      src={script.image || "/placeholder.jpg"}
+                                      alt={script.title}
+                                      className={`object-cover w-full p-4 rounded-3xl ${
+                                        viewMode === "list" ? "h-auto" : "h-64"
+                                      }`}
+                                      style={{ 
+                                        transformOrigin: 'center',
+                                        willChange: 'transform'
+                                      }}
+                                      whileHover={{ scale: 1.1 }}
+                                      transition={{ 
+                                        duration: 0.7, 
+                                        ease: "easeOut"
+                                      }}
+                                      loading="lazy"
+                                      onError={(e) => {
+                                        const target =
+                                          e.target as HTMLImageElement;
+                                        target.src = "/placeholder.jpg";
+                                      }}
+                                    />
+                                    {/* Hover overlay */}
+                                    {/* <motion.div
+                                      className="absolute inset-0 bg-gradient-to-t from-orange-500/40 via-orange-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                                      initial={false}
+                                    /> */}
+
+                                    {/* Category badges and info */}
+                                    <div
+                                      //  className="flex flex-wrap items-center gap-2 mb-4"
+                                      className="absolute flex flex-row gap-2 bottom-6 left-2 right-0 px-4 pt-4 z-10"
                                     >
-                                      <Eye className="mr-2 h-4 w-4" />
-                                      View Details
-                                    </Button>
-                                </motion.div>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                        </Link>
-                      </motion.div>
+                                      <motion.div
+                                        initial={{ opacity: 0, scale: 0.8 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        transition={{ delay: index * 0.05 }}
+                                        whileHover={{ scale: 1.05 }}
+                                      >
+                                        <Badge
+                                          variant="secondary"
+                                          className="text-xs bg-orange-500/20 text-orange-400 border border-orange-500/40 backdrop-blur-sm font-semibold px-2.5 py-0.5"
+                                        >
+                                          {script.categoryName}
+                                        </Badge>
+                                      </motion.div>
+                                      <motion.div
+                                        initial={{ opacity: 0, scale: 0.8 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        transition={{
+                                          delay: index * 0.05 + 0.05,
+                                        }}
+                                        whileHover={{ scale: 1.05 }}
+                                      >
+                                        <Badge
+                                          variant="secondary"
+                                          className="text-xs bg-gray-700/70 text-gray-300 border border-neutral-600/50 backdrop-blur-sm font-medium px-2.5 py-0.5"
+                                        >
+                                          {script.priceCategory}
+                                        </Badge>
+                                      </motion.div>
+                                    </div>
+                                  </motion.div>
+                                </CardHeader>
+
+                                <CardContent
+                                  className={`p-5 relative z-10 ${
+                                    viewMode === "list" ? "flex-1" : ""
+                                  }`}
+                                >
+                                  <div
+                                    className={
+                                      viewMode === "list"
+                                        ? "flex justify-between h-full"
+                                        : ""
+                                    }
+                                  >
+                                    <div
+                                      className={
+                                        viewMode === "list" ? "flex-1 pr-4" : ""
+                                      }
+                                    >
+                                      {/* Discount badge*/}
+                                      {script.discount > 0 && (
+                                        <motion.div
+                                          className="absolute top-3 left-3 z-10"
+                                          initial={{ scale: 0, rotate: -180 }}
+                                          animate={{ scale: 1, rotate: 0 }}
+                                          transition={{
+                                            delay: index * 0.05,
+                                            type: "spring",
+                                          }}
+                                          whileHover={{ scale: 1.1, rotate: 5 }}
+                                        >
+                                          <Badge className="bg-gradient-to-r from-red-600 to-red-500 text-white font-bold text-sm px-3 py-1.5 shadow-lg border border-red-400/50">
+                                            -{script.discount}%
+                                          </Badge>
+                                        </motion.div>
+                                      )}
+                                      {/* Price Display*/}
+                                      <div className="flex flex-wrap items-center gap-2 mb-4">
+                                        <div className="flex items-end justify-between">
+                                          <motion.div
+                                            className="flex items-baseline gap-2"
+                                            whileHover={{ scale: 1.05 }}
+                                          >
+                                            <div className="flex items-center">
+                                              <DollarSign className="h-5 w-5 text-orange-500" />
+                                              <span className="text-2xl font-black text-white">
+                                                {script.price.toFixed(0)}
+                                              </span>
+                                              <span className="text- text-gray-400 ml-1">
+                                                .
+                                                {(script.price % 1)
+                                                  .toFixed(2)
+                                                  .substring(2)}
+                                              </span>
+                                              {/* <span className="text-gray-400 text-sm line-through mb-1">Save ${script.originalPrice - script.price}</span> */}
+                                            </div>
+                                            {script.originalPrice && (
+                                              <span className="text-gray-400 text-sm line-through mb-1">
+                                                $
+                                                {script.originalPrice.toFixed(
+                                                  2
+                                                )}
+                                                {/* <span className="text-gray-400 text-sm line-through mb-1">Save ${script.originalPrice - script.price}</span> */}
+                                              </span>
+                                            )}
+                                            {script.originalPrice && (
+                                              <span className="text-gray-400 text-sm line-through mb-1">
+                                                ${script.discount.toFixed(2)}
+                                              </span>
+                                            )}
+                                          </motion.div>
+
+                                          {/* Rating Badge */}
+                                          {script.rating > 0 && (
+                                            <motion.div
+                                              className="flex items-center gap-1 bg-black/70 backdrop-blur-sm border border-orange-500/30 rounded-lg px-2 py-1"
+                                              whileHover={{ scale: 1.05 }}
+                                            >
+                                              <Star className="h-3 w-3 fill-orange-500 text-orange-500" />
+                                              <span className="text-sm text-white font-bold">
+                                                {script.rating.toFixed(1)}
+                                              </span>
+                                            </motion.div>
+                                          )}
+                                        </div>
+                                      </div>
+
+                                      <CardTitle className="text-white text-xl font-bold mb-4 pr-20 group-hover:text-orange-500 transition-colors duration-300 leading-tight">
+                                        {script.title}
+                                      </CardTitle>
+                                      {/* Framework badges - top right corner */}
+                                      {script.framework &&
+                                        script.framework.length > 0 && (
+                                          <motion.div
+                                            className="mb-4 justify-items-start"
+                                            initial={{ scale: 0, rotate: 180 }}
+                                            animate={{ scale: 1, rotate: 0 }}
+                                            transition={{
+                                              delay: index * 0.05 + 0.1,
+                                              type: "spring",
+                                            }}
+                                          >
+                                            <div className="flex flex-wrap gap-1.5 justify-end">
+                                              {script.framework.map(
+                                                (fw, idx) => (
+                                                  <motion.div
+                                                    key={idx}
+                                                    whileHover={{
+                                                      scale: 1.1,
+                                                      y: -2,
+                                                    }}
+                                                  >
+                                                    <Badge className="bg-neutral-800/95 text-white backdrop-blur-sm text-xs font-bold border border-neutral-600/50 rounded-md px-2 py-0.5 uppercase tracking-wide shadow-lg">
+                                                      <span className="mr-1.5 text-lg font-bold">
+                                                        •
+                                                      </span>
+                                                      {fw}
+                                                    </Badge>
+                                                  </motion.div>
+                                                )
+                                              )}
+                                            </div>
+                                          </motion.div>
+                                        )}
+                                      {/* <CardDescription className="text-gray-400 text-sm mb-4 leading-relaxed line-clamp-2">
+                                        {script.description}
+                                      </CardDescription> */}
+                                      <div className="h-px bg-gradient-to-r from-transparent via-neutral-700 to-transparent my-4" />
+                                      {/* Seller info and stats */}
+                                      <div className="flex items-center justify-between text-xs mb-4">
+                                        <div className="flex items-center gap-2 text-gray-500">
+                                          <span className="text-gray-400">
+                                            by
+                                          </span>
+                                          <span className="text-gray-300 font-semibold">
+                                            {script.seller}
+                                          </span>
+                                        </div>
+                                        {/* {script.reviews > 0 && (
+                                          <div className="flex items-center gap-1 text-gray-400">
+                                            <Eye className="h-3 w-3" />
+                                            <span>
+                                              {script.reviews} reviews
+                                            </span>
+                                          </div>
+                                        )} */}
+                                      </div>
+                                      <div className="h-px bg-gradient-to-r from-transparent via-neutral-700 to-transparent my-4" />
+                                    </div>
+
+                                    <div
+                                      className={`${
+                                        viewMode === "list"
+                                          ? "flex flex-col justify-between items-end"
+                                          : "w-full"
+                                      }`}
+                                    >
+                                      <motion.div
+                                        whileHover={{ scale: 1.05 }}
+                                        whileTap={{ scale: 0.95 }}
+                                        className={
+                                          viewMode === "list" ? "" : "w-full"
+                                        }
+                                      >
+                                        <Button
+                                          size="lg"
+                                          className={`${
+                                            viewMode === "list" ? "" : "w-full"
+                                          } rounded-xl bg-gradient-to-r from-yellow-600 to-orange-500 hover:from-yellow-600 hover:to-orange-700 text-white font-bold shadow-lg shadow-orange-500/30 border border-orange-400/50 transition-all duration-300`}
+                                        >
+                                          <Eye className="mr-2 h-5 w-5" />
+                                          View Details
+                                        </Button>
+                                      </motion.div>
+                                    </div>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            </Link>
+                          </motion.div>
                         );
                       });
                     })()}
@@ -1116,7 +1488,7 @@ export default function ScriptsPage() {
                           className={
                             item === "1"
                               ? "bg-orange-500 text-white"
-                              : "bg-gray-900/30 border-gray-700/50 text-white hover:bg-orange-500 hover:border-orange-500 backdrop-blur-sm"
+                              : "bg-neutral-900/30 border-neutral-700/50 text-white hover:bg-orange-500 hover:border-orange-500 backdrop-blur-sm"
                           }
                         >
                           {item}
@@ -1132,5 +1504,5 @@ export default function ScriptsPage() {
       </div>
       <Footer />
     </>
-  )
+  );
 }

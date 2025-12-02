@@ -27,6 +27,7 @@ interface NavItemsProps {
   items: {
     name: string;
     link: string;
+    icon?: React.ReactNode;
   }[];
   className?: string;
   onItemClick?: () => void;
@@ -184,7 +185,7 @@ export const NavItems = ({ items, className, onItemClick, textColorClassName }: 
     <motion.div
       onMouseLeave={() => setHovered(null)}
       className={cn(
-        "absolute inset-0 hidden flex-1 flex-row items-center justify-center space-x-1 text-sm font-medium transition duration-200 lg:flex lg:space-x-2 px-2",
+        "absolute left-1/2 -translate-x-1/2 hidden flex-row items-center justify-center space-x-1 text-sm font-medium transition duration-200 lg:flex lg:space-x-2 px-4 py-2 bg-neutral-900/95 border-b border-neutral-700/50 rounded-lg",
         textColor,
         hoverTextColor,
         className,
@@ -194,15 +195,32 @@ export const NavItems = ({ items, className, onItemClick, textColorClassName }: 
         <Link
           onMouseEnter={() => setHovered(idx)}
           onClick={onItemClick}
-          className={cn("relative px-2 py-2 whitespace-nowrap", textColor)}
+          className={cn("relative px-2 py-2 whitespace-nowrap flex flex-row items-center gap-2", textColor)}
           key={`link-${idx}`}
           href={item.link}
         >
           {hovered === idx && (
-            <motion.div
-              layoutId="hovered"
-              className="absolute inset-0 h-full w-full rounded-full bg-gray-100 dark:bg-neutral-800"
-            />
+            <>
+              <motion.div
+                layoutId="hovered"
+                className="absolute inset-0 h-full w-full rounded-full bg-gray-100 dark:bg-neutral-800 flex flex-row items-center justify-center"
+              />
+              <motion.div
+                layoutId="underline"
+                className="absolute bottom-0 left-0 right-0 h-0.5 bg-white z-30"
+                initial={{ scaleX: 0 }}
+                animate={{ scaleX: 1 }}
+                transition={{ 
+                  type: "spring",
+                  stiffness: 400,
+                  damping: 35,
+                  mass: 0.5
+                }}
+              />
+            </>
+          )}
+          {item.icon && (
+            <span className="relative z-20">{item.icon}</span>
           )}
           <span className="relative z-20">{item.name}</span>
         </Link>

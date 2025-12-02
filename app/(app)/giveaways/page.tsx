@@ -1,8 +1,17 @@
-"use client"
+"use client";
 
-import { useEffect, useState, useRef, JSXElementConstructor, Key, ReactElement, ReactNode, ReactPortal } from "react"
-import Image from "next/image"
-import { motion, useInView, AnimatePresence } from "framer-motion"
+import {
+  useEffect,
+  useState,
+  useRef,
+  JSXElementConstructor,
+  Key,
+  ReactElement,
+  ReactNode,
+  ReactPortal,
+} from "react";
+import Image from "next/image";
+import { motion, useInView, AnimatePresence } from "framer-motion";
 import {
   Gift,
   Clock,
@@ -20,20 +29,41 @@ import {
   Filter,
   Search,
   SortAsc,
-} from "lucide-react"
-import { Button } from "@/componentss/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/componentss/ui/card"
-import { Badge } from "@/componentss/ui/badge"
-import { Progress } from "@/componentss/ui/progress"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/componentss/ui/tabs"
-import { Input } from "@/componentss/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/componentss/ui/select"
-import Navbar from "@/componentss/shared/navbar"
-import Footer from "@/componentss/shared/footer"
-import Link from "next/link"
-import AdCard, { useRandomAds } from "@/componentss/ads/ad-card"
-import { useGiveaways, usePromotedGiveaways, useUserGiveawayEntries } from "@/hooks/use-giveaways-queries"
-import { toast } from "sonner"
+} from "lucide-react";
+import { Button } from "@/componentss/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/componentss/ui/card";
+import { Badge } from "@/componentss/ui/badge";
+import { Progress } from "@/componentss/ui/progress";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/componentss/ui/tabs";
+import { Input } from "@/componentss/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/componentss/ui/select";
+import Navbar from "@/componentss/shared/navbar";
+import Footer from "@/componentss/shared/footer";
+import Link from "next/link";
+import AdCard, { useRandomAds } from "@/componentss/ads/ad-card";
+import {
+  useGiveaways,
+  usePromotedGiveaways,
+  useUserGiveawayEntries,
+} from "@/hooks/use-giveaways-queries";
+import { toast } from "sonner";
 
 // Animated background particles
 const AnimatedParticles = () => {
@@ -61,12 +91,22 @@ const AnimatedParticles = () => {
         />
       ))}
     </div>
-  )
-}
+  );
+};
 
 // Floating 3D elements
-type FloatingElementProps = { delay?: number; size?: number; icon: any; color?: string }
-const FloatingElement = ({ delay = 0, size = 60, icon: Icon, color = "text-yellow-400" }: FloatingElementProps) => {
+type FloatingElementProps = {
+  delay?: number;
+  size?: number;
+  icon: any;
+  color?: string;
+};
+const FloatingElement = ({
+  delay = 0,
+  size = 60,
+  icon: Icon,
+  color = "text-yellow-400",
+}: FloatingElementProps) => {
   return (
     <motion.div
       className={`absolute ${color} opacity-10`}
@@ -90,49 +130,49 @@ const FloatingElement = ({ delay = 0, size = 60, icon: Icon, color = "text-yello
     >
       <Icon className="w-full h-full" />
     </motion.div>
-  )
-}
+  );
+};
 
 export default function GiveawaysPage() {
-  const heroRef = useRef(null)
-  const giveawaysRef = useRef(null)
-  const statsRef = useRef(null)
+  const heroRef = useRef(null);
+  const giveawaysRef = useRef(null);
+  const statsRef = useRef(null);
 
-  const heroInView = useInView(heroRef, { once: true })
-  const giveawaysInView = useInView(giveawaysRef, { once: true })
-  const statsInView = useInView(statsRef, { once: true })
+  const heroInView = useInView(heroRef, { once: true });
+  const giveawaysInView = useInView(giveawaysRef, { once: true });
+  const statsInView = useInView(statsRef, { once: true });
 
-  const [enteredGiveaways, setEnteredGiveaways] = useState<number[]>([])
-  const [searchQuery, setSearchQuery] = useState("")
-  const [sortBy, setSortBy] = useState("ending-soon")
-  const [filterBy, setFilterBy] = useState("all")
-  const [ads, setAds] = useState<any[]>([])
+  const [enteredGiveaways, setEnteredGiveaways] = useState<number[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState("ending-soon");
+  const [filterBy, setFilterBy] = useState("all");
+  const [ads, setAds] = useState<any[]>([]);
 
   type UIGiveaway = {
-    id: number
-    title: string
-    description: string
-    totalValue: string
-    entries: number
-    maxEntries: number
-    timeLeft: string
-    endDate: string
-    image: string
-    requirements: string[]
-    difficulty: string
-    category: string
-    featured: boolean
-    trending: boolean
-    creator: string
-    tags: string[]
-  }
+    id: number;
+    title: string;
+    description: string;
+    totalValue: string;
+    entries: number;
+    maxEntries: number;
+    timeLeft: string;
+    endDate: string;
+    image: string;
+    requirements: string[];
+    difficulty: string;
+    category: string;
+    featured: boolean;
+    trending: boolean;
+    creator: string;
+    tags: string[];
+  };
 
-  type GridItem = UIGiveaway | (any & { isAd: boolean })
+  type GridItem = UIGiveaway | (any & { isAd: boolean });
 
-  const [activeGiveaways, setActiveGiveaways] = useState<UIGiveaway[]>([])
+  const [activeGiveaways, setActiveGiveaways] = useState<UIGiveaway[]>([]);
 
   // Get random ads for giveaways page
-  const randomAds = useRandomAds(ads, 2)
+  const randomAds = useRandomAds(ads, 2);
 
   useEffect(() => {
     const load = async () => {
@@ -140,13 +180,13 @@ export default function GiveawaysPage() {
         const [giveawaysRes, adsRes, entriesRes] = await Promise.all([
           fetch(`/api/giveaways`, { cache: "no-store" }),
           fetch(`/api/promotions/giveaways`, { cache: "no-store" }),
-          fetch(`/api/users/giveaway-entries`, { cache: "no-store" })
-        ])
-        
+          fetch(`/api/users/giveaway-entries`, { cache: "no-store" }),
+        ]);
+
         if (giveawaysRes.ok) {
-          const data = await giveawaysRes.json()
-          console.log('Giveaways API response:', data)
-          const list = Array.isArray(data) ? data : data.giveaways || []
+          const data = await giveawaysRes.json();
+          console.log("Giveaways API response:", data);
+          const list = Array.isArray(data) ? data : data.giveaways || [];
           setActiveGiveaways(
             list.map((g: any) => ({
               id: g.id,
@@ -157,8 +197,14 @@ export default function GiveawaysPage() {
               maxEntries: g.max_entries || 0,
               timeLeft: "", // can be computed from end_date if needed
               endDate: g.end_date,
-              image: g.cover_image || (g.images && g.images[0]) || "/placeholder.jpg",
-              requirements: (g.requirements && g.requirements.map((r: any) => r.description)) || [],
+              image:
+                g.cover_image ||
+                (g.images && g.images[0]) ||
+                "/placeholder.jpg",
+              requirements:
+                (g.requirements &&
+                  g.requirements.map((r: any) => r.description)) ||
+                [],
               difficulty: g.difficulty,
               category: g.category,
               featured: g.featured,
@@ -167,33 +213,35 @@ export default function GiveawaysPage() {
               creatorImage: g.creator_image,
               tags: g.tags || [],
             }))
-          )
+          );
         } else {
-          console.error('Failed to fetch giveaways:', giveawaysRes.status)
+          console.error("Failed to fetch giveaways:", giveawaysRes.status);
         }
 
         if (adsRes.ok) {
-          const adsData = await adsRes.json()
-          setAds(adsData.ads || [])
+          const adsData = await adsRes.json();
+          setAds(adsData.ads || []);
         }
 
         // Fetch user's entered giveaways (if logged in)
         if (entriesRes.ok) {
-          const entriesData = await entriesRes.json()
+          const entriesData = await entriesRes.json();
           if (entriesData.entries) {
-            const enteredIds = entriesData.entries.map((entry: any) => entry.giveawayId)
-            setEnteredGiveaways(enteredIds)
+            const enteredIds = entriesData.entries.map(
+              (entry: any) => entry.giveawayId
+            );
+            setEnteredGiveaways(enteredIds);
           }
         } else if (entriesRes.status === 401) {
           // User not logged in, that's okay
-          setEnteredGiveaways([])
+          setEnteredGiveaways([]);
         }
       } catch (error) {
-        console.error('Error loading giveaways:', error)
+        console.error("Error loading giveaways:", error);
       }
-    }
-    load()
-  }, [])
+    };
+    load();
+  }, []);
 
   const recentWinners = [
     {
@@ -232,66 +280,95 @@ export default function GiveawaysPage() {
       avatar: "/cat.jpg",
       verified: true,
     },
-  ]
+  ];
 
   const stats = [
-    { label: "Active Giveaways", value: activeGiveaways.length.toString(), icon: Gift, color: "text-yellow-400" },
-    { label: "Total Prize Value", value: `$${activeGiveaways.reduce((sum, g) => sum + parseInt(g.totalValue?.replace(/[^0-9]/g, '') || '0'), 0).toLocaleString()}`, icon: Trophy, color: "text-orange-500" },
-    { label: "Happy Winners", value: "150+", icon: Crown, color: "text-yellow-400" },
-    { label: "Community Members", value: "25K+", icon: Users, color: "text-orange-500" },
-  ]
+    {
+      label: "Active Giveaways",
+      value: activeGiveaways.length.toString(),
+      icon: Gift,
+      color: "text-yellow-400",
+    },
+    {
+      label: "Total Prize Value",
+      value: `$${activeGiveaways
+        .reduce(
+          (sum, g) =>
+            sum + parseInt(g.totalValue?.replace(/[^0-9]/g, "") || "0"),
+          0
+        )
+        .toLocaleString()}`,
+      icon: Trophy,
+      color: "text-orange-500",
+    },
+    {
+      label: "Happy Winners",
+      value: "150+",
+      icon: Crown,
+      color: "text-yellow-400",
+    },
+    {
+      label: "Community Members",
+      value: "25K+",
+      icon: Users,
+      color: "text-orange-500",
+    },
+  ];
 
   const enterGiveaway = async (giveawayId: number) => {
     try {
       const response = await fetch(`/api/giveaways/${giveawayId}/entries`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-      })
+      });
 
-      const data = await response.json()
+      const data = await response.json();
 
       if (response.ok) {
         if (!enteredGiveaways.includes(giveawayId)) {
-          setEnteredGiveaways([...enteredGiveaways, giveawayId])
+          setEnteredGiveaways([...enteredGiveaways, giveawayId]);
         }
         // Refresh the page to update entry counts
-        window.location.reload()
+        window.location.reload();
       } else {
-        toast.error(data.error || "Failed to enter giveaway")
+        toast.error(data.error || "Failed to enter giveaway");
       }
     } catch (error) {
-      console.error('Error entering giveaway:', error)
-      toast.error("Failed to enter giveaway. Please try again.")
+      console.error("Error entering giveaway:", error);
+      toast.error("Failed to enter giveaway. Please try again.");
     }
-  }
+  };
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
       case "Easy":
-        return "bg-green-500/20 text-green-400 border-green-500/30"
+        return "bg-green-500/20 text-green-400 border-green-500/30";
       case "Medium":
-        return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
+        return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30";
       case "Hard":
-        return "bg-red-500/20 text-red-400 border-red-500/30"
+        return "bg-red-500/20 text-red-400 border-red-500/30";
       default:
-        return "bg-gray-500/20 text-gray-400 border-gray-500/30"
+        return "bg-gray-500/20 text-gray-400 border-gray-500/30";
     }
-  }
+  };
 
   const filteredGiveaways = activeGiveaways.filter((giveaway) => {
-    if (searchQuery && !giveaway.title.toLowerCase().includes(searchQuery.toLowerCase())) {
-      return false
+    if (
+      searchQuery &&
+      !giveaway.title.toLowerCase().includes(searchQuery.toLowerCase())
+    ) {
+      return false;
     }
     if (filterBy === "featured" && !giveaway.featured) {
-      return false
+      return false;
     }
     if (filterBy === "trending" && !giveaway.trending) {
-      return false
+      return false;
     }
-    return true
-  })
+    return true;
+  });
 
   return (
     <>
@@ -305,8 +382,16 @@ export default function GiveawaysPage() {
             key={i}
             delay={i * 2}
             size={30 + Math.random() * 40}
-            icon={[Gift, Trophy, Star, Crown, Sparkles, Zap][Math.floor(Math.random() * 6)]}
-            color={["text-yellow-400", "text-orange-500", "text-red-400"][Math.floor(Math.random() * 3)]}
+            icon={
+              [Gift, Trophy, Star, Crown, Sparkles, Zap][
+                Math.floor(Math.random() * 6)
+              ]
+            }
+            color={
+              ["text-yellow-400", "text-orange-500", "text-red-400"][
+                Math.floor(Math.random() * 3)
+              ]
+            }
           />
         ))}
 
@@ -352,9 +437,13 @@ export default function GiveawaysPage() {
                       animate={{
                         backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
                       }}
-                      transition={{ duration: 6, repeat: Number.POSITIVE_INFINITY }}
+                      transition={{
+                        duration: 6,
+                        repeat: Number.POSITIVE_INFINITY,
+                      }}
                       style={{
-                        background: "linear-gradient(45deg, #f59e0b, #f97316, #eab308, #f59e0b)",
+                        background:
+                          "linear-gradient(45deg, #f59e0b, #f97316, #eab308, #f59e0b)",
                         backgroundSize: "400% 400%",
                         WebkitBackgroundClip: "text",
                         WebkitTextFillColor: "transparent",
@@ -370,8 +459,18 @@ export default function GiveawaysPage() {
                       transition={{ delay: 0.3, duration: 0.8 }}
                     >
                       <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black font-bold px-4 py-2 text-lg">
-                        <Flame className="mr-2 h-5 w-5" />
-                        ${activeGiveaways.reduce((sum, g) => sum + parseInt(g.totalValue?.replace(/[^0-9]/g, '') || '0'), 0).toLocaleString()}+ in Prizes
+                        <Flame className="mr-2 h-5 w-5" />$
+                        {activeGiveaways
+                          .reduce(
+                            (sum, g) =>
+                              sum +
+                              parseInt(
+                                g.totalValue?.replace(/[^0-9]/g, "") || "0"
+                              ),
+                            0
+                          )
+                          .toLocaleString()}
+                        + in Prizes
                       </Badge>
                       <Badge className="bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold px-4 py-2 text-lg">
                         <Crown className="mr-2 h-5 w-5" />
@@ -390,11 +489,15 @@ export default function GiveawaysPage() {
                     <motion.span
                       className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500 font-bold"
                       animate={{ scale: [1, 1.05, 1] }}
-                      transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
+                      transition={{
+                        duration: 2,
+                        repeat: Number.POSITIVE_INFINITY,
+                      }}
                     >
                       premium FiveM scripts
                     </motion.span>
-                    , custom development services, and exclusive server packages!
+                    , custom development services, and exclusive server
+                    packages!
                   </motion.p>
 
                   <motion.div
@@ -404,7 +507,10 @@ export default function GiveawaysPage() {
                     className="flex flex-col sm:flex-row gap-6 justify-center items-center"
                   >
                     <motion.div
-                      whileHover={{ scale: 1.05, boxShadow: "0 25px 50px rgba(249, 115, 22, 0.4)" }}
+                      whileHover={{
+                        scale: 1.05,
+                        boxShadow: "0 25px 50px rgba(249, 115, 22, 0.4)",
+                      }}
                       whileTap={{ scale: 0.95 }}
                     >
                       <Button
@@ -417,7 +523,10 @@ export default function GiveawaysPage() {
                     </motion.div>
 
                     <motion.div
-                      whileHover={{ scale: 1.05, boxShadow: "0 25px 50px rgba(234, 179, 8, 0.3)" }}
+                      whileHover={{
+                        scale: 1.05,
+                        boxShadow: "0 25px 50px rgba(234, 179, 8, 0.3)",
+                      }}
                       whileTap={{ scale: 0.95 }}
                     >
                       <Link href="/giveaways/create">
@@ -483,9 +592,17 @@ export default function GiveawaysPage() {
                   <motion.div
                     className={`text-5xl md:text-6xl font-bold ${stat.color} mb-2`}
                     animate={{
-                      textShadow: ["0 0 10px currentColor", "0 0 30px currentColor", "0 0 10px currentColor"],
+                      textShadow: [
+                        "0 0 10px currentColor",
+                        "0 0 30px currentColor",
+                        "0 0 10px currentColor",
+                      ],
                     }}
-                    transition={{ duration: 3, repeat: Number.POSITIVE_INFINITY, delay: index * 0.5 }}
+                    transition={{
+                      duration: 3,
+                      repeat: Number.POSITIVE_INFINITY,
+                      delay: index * 0.5,
+                    }}
                   >
                     {stat.value}
                   </motion.div>
@@ -582,7 +699,7 @@ export default function GiveawaysPage() {
               >
                 {(() => {
                   const items: GridItem[] = [...filteredGiveaways];
-                  
+
                   // Show message if no giveaways
                   if (items.length === 0) {
                     return (
@@ -594,12 +711,13 @@ export default function GiveawaysPage() {
                       >
                         <div className="bg-gray-800/30 border border-gray-700/50 rounded-lg p-8 backdrop-blur-sm">
                           <Gift className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                          <h3 className="text-xl font-semibold text-white mb-2">No Giveaways Found</h3>
+                          <h3 className="text-xl font-semibold text-white mb-2">
+                            No Giveaways Found
+                          </h3>
                           <p className="text-gray-400 mb-6">
-                            {searchQuery 
+                            {searchQuery
                               ? `No giveaways match "${searchQuery}". Try adjusting your search.`
-                              : "There are currently no active giveaways. Check back soon!"
-                            }
+                              : "There are currently no active giveaways. Check back soon!"}
                           </p>
                           {searchQuery && (
                             <Button
@@ -614,12 +732,14 @@ export default function GiveawaysPage() {
                       </motion.div>
                     );
                   }
-                  
+
                   // Insert ads at random positions
                   if (randomAds.length > 0) {
                     const adPositions = [];
                     for (let i = 0; i < randomAds.length; i++) {
-                      const position = Math.floor(Math.random() * (items.length + 1));
+                      const position = Math.floor(
+                        Math.random() * (items.length + 1)
+                      );
                       adPositions.push({ ad: randomAds[i], position });
                     }
                     // Sort by position in descending order to avoid index shifting
@@ -630,7 +750,7 @@ export default function GiveawaysPage() {
                   }
                   return items.map((item: GridItem, index) => {
                     // If it's an ad, render AdCard
-                    if ('isAd' in item && item.isAd) {
+                    if ("isAd" in item && item.isAd) {
                       return (
                         <motion.div
                           key={`ad-${item.id}`}
@@ -643,10 +763,12 @@ export default function GiveawaysPage() {
                         </motion.div>
                       );
                     }
-                    
+
                     // Otherwise render giveaway
                     const giveaway = item;
-                    const isEnded = new Date(giveaway.endDate).getTime() <= new Date().getTime();
+                    const isEnded =
+                      new Date(giveaway.endDate).getTime() <=
+                      new Date().getTime();
                     return (
                       <motion.div
                         key={giveaway.id}
@@ -657,229 +779,290 @@ export default function GiveawaysPage() {
                         className="group"
                       >
                         <Link href={`/giveaway/${giveaway.id}`}>
-                          <Card className="bg-gradient-to-br from-gray-800/40 to-gray-900/40 border-gray-700/50 hover:border-yellow-400/50 transition-all duration-500 backdrop-blur-sm relative overflow-hidden h-full cursor-pointer">
-                          {/* Animated background on hover */}
-                          <motion.div
-                            className="absolute inset-0 bg-gradient-to-br from-yellow-400/5 to-orange-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                            initial={false}
-                          />
+                          <Card className={`bg-transparent border-gray-700/50 hover:border-yellow-400/50 transition-all duration-500 backdrop-blur-sm relative overflow-hidden h-full cursor-pointer rounded-3xl ${isEnded ? 'grayscale' : ''}`}>
+                            {/* Animated background on hover */}
+                            <motion.div
+                              className="absolute inset-0 bg-gradient-to-br from-yellow-400/5 to-orange-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                              initial={false}
+                            />
 
-                          <CardHeader className="p-0 relative">
-                            <div className="relative overflow-hidden">
-                              <motion.img
-                                src={giveaway.image || "/cat.jpg"}
-                                alt={giveaway.title}
-                                className="w-full h-56 object-cover transition-transform duration-500 group-hover:scale-110"
-                                loading="lazy"
-                              />
-                              <motion.div
-                                className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"
-                                initial={false}
-                              />
-
-                              {/* Badges */}
-                              <div className="absolute top-3 left-3 flex gap-2">
-                                {isEnded && (
-                                  <motion.div
-                                    initial={{ scale: 0, rotate: 180 }}
-                                    animate={{ scale: 1, rotate: 0 }}
-                                    transition={{ delay: index * 0.1 }}
-                                    whileHover={{ scale: 1.1 }}
-                                  >
-                                    <Badge className="bg-gradient-to-r from-red-500 to-red-700 text-white font-bold">
-                                      <Clock className="mr-1 h-3 w-3" />
-                                      ENDED
-                                    </Badge>
-                                  </motion.div>
-                                )}
-                                {!isEnded && (
-                                  <motion.div
-                                    initial={{ scale: 0, rotate: -180 }}
-                                    animate={{ scale: 1, rotate: 0 }}
-                                    transition={{ delay: index * 0.1 }}
-                                    whileHover={{ scale: 1.1, rotate: 5 }}
-                                  >
-                                    <Badge className={getDifficultyColor(giveaway.difficulty)}>{giveaway.difficulty}</Badge>
-                                  </motion.div>
-                                )}
-                                {giveaway.featured && !isEnded && (
-                                  <motion.div
-                                    initial={{ scale: 0, rotate: 180 }}
-                                    animate={{ scale: 1, rotate: 0 }}
-                                    transition={{ delay: index * 0.1 + 0.1 }}
-                                    whileHover={{ scale: 1.1 }}
-                                  >
-                                    <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black font-bold">
-                                      <Crown className="mr-1 h-3 w-3" />
-                                      Featured
-                                    </Badge>
-                                  </motion.div>
-                                )}
-                                {giveaway.trending && !isEnded && (
-                                  <motion.div
-                                    initial={{ scale: 0 }}
-                                    animate={{ scale: 1 }}
-                                    transition={{ delay: index * 0.1 + 0.2 }}
-                                    whileHover={{ scale: 1.1 }}
-                                  >
-                                    <Badge className="bg-gradient-to-r from-red-500 to-pink-500 text-white font-bold">
-                                      <TrendingUp className="mr-1 h-3 w-3" />
-                                      Trending
-                                    </Badge>
-                                  </motion.div>
-                                )}
+                            {/* Ended Overlay */}
+                            {isEnded && (
+                              <div className="absolute inset-0 z-50 pointer-events-none rounded-3xl overflow-hidden">
+                                <img
+                                  src="/ended.png"
+                                  alt="Ended"
+                                  className="w-full h-full object-cover opacity-90 p-20"
+                                />
                               </div>
+                            )}
 
-                              <motion.div
-                                className="absolute top-3 right-3"
-                                initial={{ scale: 0, rotate: 180 }}
-                                animate={{ scale: 1, rotate: 0 }}
-                                transition={{ delay: index * 0.1 + 0.3 }}
-                                whileHover={{ scale: 1.1 }}
-                              >
-                                <Badge className="bg-gradient-to-r from-green-400 to-emerald-500 text-black font-bold text-lg px-3 py-1">
-                                  ${giveaway.totalValue}
-                                </Badge>
-                              </motion.div>
+                            <CardHeader className="p-0 relative rounded-t-3xl overflow-hidden">
+                              <div className="relative overflow-hidden">
+                                <motion.img
+                                  src={giveaway.image || "/cat.jpg"}
+                                  alt={giveaway.title}
+                                  className={`w-full h-56 object-cover transition-transform duration-500 rounded-t-3xl ${isEnded ? 'grayscale' : 'group-hover:scale-110'}`}
+                                  loading="lazy"
+                                />
+                                <motion.div
+                                  className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"
+                                  initial={false}
+                                />
 
-                              {/* Creator info overlay */}
-                              <div className="absolute bottom-3 left-3 right-3">
-                                <div className="flex items-center gap-2 text-white/90">
-                                  {giveaway.creatorImage ? (
-                                    <img 
-                                      src={giveaway.creatorImage} 
-                                      alt={giveaway.creator || 'Creator'} 
-                                      className="w-8 h-8 rounded-full object-cover"
-                                    />
-                                  ) : (
-                                    <div className="w-8 h-8 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center text-black font-bold text-sm">
-                                      {giveaway.creator?.[0] || 'U'}
-                                    </div>
+                                {/* Badges */}
+                                <div className="absolute top-3 left-3 flex gap-2">
+                                  {/* //TODO:change ended tag
+                                  {isEnded && (
+                                    <motion.div
+                                      initial={{ scale: 0, rotate: 180 }}
+                                      animate={{ scale: 1, rotate: 0 }}
+                                      transition={{ delay: index * 0.1 }}
+                                      whileHover={{ scale: 1.1 }}
+                                    >
+                                      <Badge className="bg-gradient-to-r from-red-500 to-red-700 text-white font-bold">
+                                        <Clock className="mr-1 h-3 w-3" />
+                                        ENDED
+                                      </Badge>
+                                    </motion.div>
+                                  )} */}
+                                  {!isEnded && (
+                                    <motion.div
+                                      initial={{ scale: 0, rotate: -180 }}
+                                      animate={{ scale: 1, rotate: 0 }}
+                                      transition={{ delay: index * 0.1 }}
+                                      whileHover={{ scale: 1.1, rotate: 5 }}
+                                    >
+                                      <Badge
+                                        className={getDifficultyColor(
+                                          giveaway.difficulty
+                                        )}
+                                      >
+                                        {giveaway.difficulty}
+                                      </Badge>
+                                    </motion.div>
                                   )}
-                                  <span className="text-sm font-medium">{giveaway.creator || 'Unknown Creator'}</span>
+                                  {giveaway.featured && !isEnded && (
+                                    <motion.div
+                                      initial={{ scale: 0, rotate: 180 }}
+                                      animate={{ scale: 1, rotate: 0 }}
+                                      transition={{ delay: index * 0.1 + 0.1 }}
+                                      whileHover={{ scale: 1.1 }}
+                                    >
+                                      <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black font-bold">
+                                        <Crown className="mr-1 h-3 w-3" />
+                                        Featured
+                                      </Badge>
+                                    </motion.div>
+                                  )}
+                                  {giveaway.trending && !isEnded && (
+                                    <motion.div
+                                      initial={{ scale: 0 }}
+                                      animate={{ scale: 1 }}
+                                      transition={{ delay: index * 0.1 + 0.2 }}
+                                      whileHover={{ scale: 1.1 }}
+                                    >
+                                      <Badge className="bg-gradient-to-r from-red-500 to-pink-500 text-white font-bold">
+                                        <TrendingUp className="mr-1 h-3 w-3" />
+                                        Trending
+                                      </Badge>
+                                    </motion.div>
+                                  )}
                                 </div>
-                              </div>
-                            </div>
-                          </CardHeader>
 
-                          <CardContent className="p-6 relative z-10">
-                            <CardTitle className="text-white text-xl mb-3 group-hover:text-yellow-400 transition-colors duration-300">
-                              {giveaway.title}
-                            </CardTitle>
-                            <CardDescription className="text-gray-400 mb-4 leading-relaxed line-clamp-3">
-                              {giveaway.description}
-                            </CardDescription>
-
-                            {/* Progress Bar */}
-                            <div className="mb-4">
-                              <div className="flex justify-between text-sm text-gray-400 mb-2">
-                                <span>{(giveaway.entries || 0).toLocaleString()} entries</span>
-                                <span>{(giveaway.maxEntries || '∞').toString()}</span>
-                              </div>
-                              <div className="relative">
-                                <Progress
-                                  value={((giveaway.entries || 0) / (giveaway.maxEntries || 1)) * 100}
-                                  className="h-3 bg-gray-700/50"
-                                />
                                 <motion.div
-                                  className="absolute inset-0 bg-gradient-to-r from-yellow-400/20 to-orange-500/20 rounded-full"
-                                  animate={{ opacity: [0.5, 1, 0.5] }}
-                                  transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
-                                />
-                              </div>
-                            </div>
-
-                            {/* Time and Stats */}
-                            <div className="flex items-center justify-between mb-4">
-                              <div className="flex items-center text-orange-500">
-                                <Clock className="mr-2 h-4 w-4" />
-                                <span className="font-semibold">{giveaway.timeLeft}</span>
-                              </div>
-                              <div className="flex items-center text-gray-400">
-                                <Users className="mr-2 h-4 w-4" />
-                                <span>{(giveaway.entries || 0).toLocaleString()}</span>
-                              </div>
-                            </div>
-
-                            {/* Tags */}
-                            <div className="flex flex-wrap gap-1 mb-4">
-                              {giveaway.tags.slice(0, 3).map((tag: string, tagIndex: number) => (
-                                <motion.div
-                                  key={tagIndex}
-                                  initial={{ opacity: 0, scale: 0.8 }}
-                                  animate={{ opacity: 1, scale: 1 }}
-                                  transition={{ delay: index * 0.1 + tagIndex * 0.05 }}
-                                  whileHover={{ scale: 1.05 }}
+                                  className="absolute top-3 right-3"
+                                  initial={{ scale: 0, rotate: 180 }}
+                                  animate={{ scale: 1, rotate: 0 }}
+                                  transition={{ delay: index * 0.1 + 0.3 }}
+                                  whileHover={{ scale: 1.1 }}
                                 >
-                                  <Badge
-                                    variant="secondary"
-                                    className="text-xs bg-gray-700/50 text-gray-300 backdrop-blur-sm"
-                                  >
-                                    {tag}
+                                  <Badge className="bg-gradient-to-r from-green-400 to-emerald-500 text-black font-bold text-lg px-3 py-1">
+                                    ${giveaway.totalValue}
                                   </Badge>
                                 </motion.div>
-                              ))}
-                            </div>
 
-                            {/* Requirements Preview */}
-                            <div className="mb-4">
-                              <h4 className="text-sm font-semibold text-white mb-2 flex items-center">
-                                <Target className="mr-1 h-4 w-4 text-yellow-400" />
-                                Requirements:
-                              </h4>
-                              <ul className="space-y-1">
-                                {giveaway.requirements.slice(0, 2).map((req: string, reqIndex: number) => (
-                                  <li key={reqIndex} className="text-sm text-gray-400 flex items-center">
+                                {/* Creator info overlay */}
+                                <div className="absolute bottom-3 left-3 right-3">
+                                  <div className="flex items-center gap-2 text-white/90">
+                                    {giveaway.creatorImage ? (
+                                      <img
+                                        src={giveaway.creatorImage}
+                                        alt={giveaway.creator || "Creator"}
+                                        className="w-8 h-8 rounded-full object-cover"
+                                      />
+                                    ) : (
+                                      <div className="w-8 h-8 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center text-black font-bold text-sm">
+                                        {giveaway.creator?.[0] || "U"}
+                                      </div>
+                                    )}
+                                    <span className="text-sm font-medium">
+                                      {giveaway.creator || "Unknown Creator"}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            </CardHeader>
+
+                            <CardContent className={`p-6 relative z-10 rounded-b-3xl ${isEnded ? 'opacity-50' : ''}`}>
+                              <CardTitle className={`text-white text-xl mb-3 transition-colors duration-300 ${isEnded ? '' : 'group-hover:text-yellow-400'}`}>
+                                {giveaway.title}
+                              </CardTitle>
+                              <CardDescription className="text-gray-400 mb-4 leading-relaxed line-clamp-3">
+                                {giveaway.description}
+                              </CardDescription>
+
+                              {/* Progress Bar */}
+                              {/* <div className="mb-4">
+                                <div className="flex justify-between text-sm text-gray-400 mb-2">
+                                  <span>
+                                    {(giveaway.entries || 0).toLocaleString()}{" "}
+                                    entries
+                                  </span>
+                                  <span>
+                                    {(giveaway.maxEntries || "∞").toString()}
+                                  </span>
+                                </div>
+                                <div className="relative">
+                                  <Progress
+                                    value={
+                                      ((giveaway.entries || 0) /
+                                        (giveaway.maxEntries || 1)) *
+                                      100
+                                    }
+                                    className="h-3 bg-gray-700/50"
+                                  />
+                                  <motion.div
+                                    className="absolute inset-0 bg-gradient-to-r from-yellow-400/20 to-orange-500/20 rounded-full"
+                                    animate={{ opacity: [0.5, 1, 0.5] }}
+                                    transition={{
+                                      duration: 2,
+                                      repeat: Number.POSITIVE_INFINITY,
+                                    }}
+                                  />
+                                </div>
+                              </div> */}
+
+                              {/* Time and Stats */}
+                              <div className="flex items-center justify-between mb-4">
+                                <div className="flex items-center text-orange-500">
+                                  <Clock className="mr-2 h-4 w-4" />
+                                  <span className="font-semibold">
+                                    {giveaway.timeLeft}
+                                  </span>
+                                </div>
+                                <div className="flex items-center text-gray-400">
+                                  <Users className="mr-2 h-4 w-4" /> Entries: 
+                                  <span>
+                                    {(giveaway.entries || 0).toLocaleString()}
+                                  </span>
+                                </div>
+                              </div>
+
+                              {/* Tags */}
+                              <div className="flex flex-wrap gap-1 mb-4">
+                                {giveaway.tags
+                                  .slice(0, 3)
+                                  .map((tag: string, tagIndex: number) => (
                                     <motion.div
-                                      className="w-1.5 h-1.5 bg-yellow-400 rounded-full mr-2"
-                                      animate={{ scale: [1, 1.3, 1] }}
+                                      key={tagIndex}
+                                      initial={{ opacity: 0, scale: 0.8 }}
+                                      animate={{ opacity: 1, scale: 1 }}
                                       transition={{
-                                        duration: 2,
-                                        repeat: Number.POSITIVE_INFINITY,
-                                        delay: reqIndex * 0.3,
+                                        delay: index * 0.1 + tagIndex * 0.05,
                                       }}
-                                    />
-                                    {req}
-                                  </li>
-                                ))}
-                                {giveaway.requirements.length > 2 && (
-                                  <li className="text-sm text-gray-500">+{giveaway.requirements.length - 2} more...</li>
-                                )}
-                              </ul>
-                            </div>
+                                      whileHover={{ scale: 1.05 }}
+                                    >
+                                      <Badge
+                                        variant="secondary"
+                                        className="text-xs bg-gray-700/50 text-gray-300 backdrop-blur-sm"
+                                      >
+                                        {tag}
+                                      </Badge>
+                                    </motion.div>
+                                  ))}
+                              </div>
 
-                            {/* Action Buttons */}
-                            <div className="flex gap-3" onClick={(e) => e.preventDefault()}>
-                              <motion.div className="flex-1" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                                <Button
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    enterGiveaway(giveaway.id);
-                                  }}
-                                  disabled={enteredGiveaways.includes(giveaway.id)}
-                                  className={`w-full ${
-                                    enteredGiveaways.includes(giveaway.id)
-                                      ? "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
-                                      : "bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 hover:from-yellow-500 hover:via-orange-600 hover:to-red-600"
-                                  } text-black font-bold shadow-lg transition-all duration-300`}
-                                >
-                                  {enteredGiveaways.includes(giveaway.id) ? (
-                                    <>
-                                      <Trophy className="mr-2 h-4 w-4" />
-                                      Entered!
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Gift className="mr-2 h-4 w-4" />
-                                      Enter Now
-                                    </>
+                              {/* Requirements Preview */}
+                              <div className="mb-4">
+                                <h4 className="text-sm font-semibold text-white mb-2 flex items-center">
+                                  <Target className="mr-1 h-4 w-4 text-yellow-400" />
+                                  Requirements:
+                                </h4>
+                                <ul className="space-y-1">
+                                  {giveaway.requirements
+                                    .slice(0, 2)
+                                    .map((req: string, reqIndex: number) => (
+                                      <li
+                                        key={reqIndex}
+                                        className="text-sm text-gray-400 flex items-center"
+                                      >
+                                        <motion.div
+                                          className="w-1.5 h-1.5 bg-yellow-400 rounded-full mr-2"
+                                          animate={{ scale: [1, 1.3, 1] }}
+                                          transition={{
+                                            duration: 2,
+                                            repeat: Number.POSITIVE_INFINITY,
+                                            delay: reqIndex * 0.3,
+                                          }}
+                                        />
+                                        {req}
+                                      </li>
+                                    ))}
+                                  {giveaway.requirements.length > 2 && (
+                                    <li className="text-sm text-gray-500">
+                                      +{giveaway.requirements.length - 2}{" "}
+                                      more...
+                                    </li>
                                   )}
-                                </Button>
-                              </motion.div>
-                            </div>
-                          </CardContent>
-                        </Card>
+                                </ul>
+                              </div>
+
+                              {/* Action Buttons */}
+                              <div
+                                className="flex gap-3"
+                                onClick={(e) => e.preventDefault()}
+                              >
+                                <motion.div
+                                  className="flex-1"
+                                  whileHover={{ scale: 1.02 }}
+                                  whileTap={{ scale: 0.98 }}
+                                >
+                                  {!isEnded && (
+                                    <Button
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        enterGiveaway(giveaway.id);
+                                      }}
+                                      disabled={enteredGiveaways.includes(
+                                        giveaway.id
+                                      )}
+                                      className={`w-full ${
+                                        enteredGiveaways.includes(giveaway.id)
+                                          ? "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
+                                          : "bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 hover:from-yellow-500 hover:via-orange-600 hover:to-red-600"
+                                      } text-black font-bold shadow-lg transition-all duration-300`}
+                                    >
+                                      {enteredGiveaways.includes(
+                                        giveaway.id
+                                      ) ? (
+                                        <>
+                                          <Trophy className="mr-2 h-4 w-4" />
+                                          Entered!
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Gift className="mr-2 h-4 w-4" />
+                                          Enter Now
+                                        </>
+                                      )}
+                                    </Button>
+                                  )}
+                                </motion.div>
+                              </div>
+                            </CardContent>
+                          </Card>
                         </Link>
                       </motion.div>
                     );
@@ -913,7 +1096,7 @@ export default function GiveawaysPage() {
                         <div className="flex items-center space-x-4">
                           <div className="relative">
                             <Image
-                                src={winner.avatar || "/cat.jpg"}
+                              src={winner.avatar || "/cat.jpg"}
                               alt={winner.winner}
                               width={40}
                               height={40}
@@ -934,20 +1117,32 @@ export default function GiveawaysPage() {
                                 </Badge>
                               )}
                             </h4>
-                            <p className="text-gray-400 text-sm">{winner.prize}</p>
+                            <p className="text-gray-400 text-sm">
+                              {winner.prize}
+                            </p>
                           </div>
                         </div>
                         <div className="text-right">
                           <motion.div
                             className="text-yellow-400 font-bold text-lg"
                             animate={{
-                              textShadow: ["0 0 0px currentColor", "0 0 10px currentColor", "0 0 0px currentColor"],
+                              textShadow: [
+                                "0 0 0px currentColor",
+                                "0 0 10px currentColor",
+                                "0 0 0px currentColor",
+                              ],
                             }}
-                            transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY, delay: index * 0.3 }}
+                            transition={{
+                              duration: 2,
+                              repeat: Number.POSITIVE_INFINITY,
+                              delay: index * 0.3,
+                            }}
                           >
                             {winner.value}
                           </motion.div>
-                          <div className="text-gray-500 text-sm">{winner.date}</div>
+                          <div className="text-gray-500 text-sm">
+                            {winner.date}
+                          </div>
                         </div>
                       </motion.div>
                     ))}
@@ -964,7 +1159,9 @@ export default function GiveawaysPage() {
                   </CardHeader>
                   <CardContent className="space-y-4 text-gray-300">
                     <div>
-                      <h4 className="text-white font-semibold mb-2">Eligibility</h4>
+                      <h4 className="text-white font-semibold mb-2">
+                        Eligibility
+                      </h4>
                       <ul className="space-y-1 text-sm">
                         <li>• Must be 18+ or have parental consent</li>
                         <li>• One entry per person per giveaway</li>
@@ -973,12 +1170,20 @@ export default function GiveawaysPage() {
                       </ul>
                     </div>
                     <div>
-                      <h4 className="text-white font-semibold mb-2">Selection Process</h4>
+                      <h4 className="text-white font-semibold mb-2">
+                        Selection Process
+                      </h4>
                       <ul className="space-y-1 text-sm">
-                        <li>• Winners selected randomly from qualified entries</li>
-                        <li>• Drawing occurs within 24 hours of giveaway end</li>
+                        <li>
+                          • Winners selected randomly from qualified entries
+                        </li>
+                        <li>
+                          • Drawing occurs within 24 hours of giveaway end
+                        </li>
                         <li>• Winners notified via Discord and email</li>
-                        <li>• 48 hours to claim prize or new winner selected</li>
+                        <li>
+                          • 48 hours to claim prize or new winner selected
+                        </li>
                       </ul>
                     </div>
                   </CardContent>
@@ -990,22 +1195,38 @@ export default function GiveawaysPage() {
                   </CardHeader>
                   <CardContent className="space-y-4 text-gray-300">
                     <div>
-                      <h4 className="text-white font-semibold mb-2">Step 1: Meet Requirements</h4>
-                      <p className="text-sm">Complete all listed requirements for the giveaway you want to enter.</p>
+                      <h4 className="text-white font-semibold mb-2">
+                        Step 1: Meet Requirements
+                      </h4>
+                      <p className="text-sm">
+                        Complete all listed requirements for the giveaway you
+                        want to enter.
+                      </p>
                     </div>
                     <div>
-                      <h4 className="text-white font-semibold mb-2">Step 2: Click &quot;Enter&quot;</h4>
-                      <p className="text-sm">Click the &quot;Enter Giveaway&quot; button to submit your entry.</p>
+                      <h4 className="text-white font-semibold mb-2">
+                        Step 2: Click &quot;Enter&quot;
+                      </h4>
+                      <p className="text-sm">
+                        Click the &quot;Enter Giveaway&quot; button to submit
+                        your entry.
+                      </p>
                     </div>
                     <div>
-                      <h4 className="text-white font-semibold mb-2">Step 3: Wait for Results</h4>
-                      <p className="text-sm">Winners are announced on our Discord server and website.</p>
+                      <h4 className="text-white font-semibold mb-2">
+                        Step 3: Wait for Results
+                      </h4>
+                      <p className="text-sm">
+                        Winners are announced on our Discord server and website.
+                      </p>
                     </div>
                     <div className="bg-yellow-400/10 border border-yellow-400/30 rounded-lg p-4">
-                      <h4 className="text-yellow-400 font-semibold mb-2">Pro Tip</h4>
+                      <h4 className="text-yellow-400 font-semibold mb-2">
+                        Pro Tip
+                      </h4>
                       <p className="text-sm">
-                        Join our Discord server to get notified about new giveaways and increase your chances of
-                        winning!
+                        Join our Discord server to get notified about new
+                        giveaways and increase your chances of winning!
                       </p>
                     </div>
                   </CardContent>
@@ -1017,5 +1238,5 @@ export default function GiveawaysPage() {
       </div>
       <Footer />
     </>
-  )
+  );
 }
