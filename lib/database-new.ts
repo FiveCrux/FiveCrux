@@ -1853,9 +1853,15 @@ export async function getAds(filters?: {
       ? db.select().from(approvedAds).where(and(...conditions))
       : db.select().from(approvedAds);
     
-    return await query
+    const results = await query
       .orderBy(desc(approvedAds.createdAt))
-      .limit(limitVal) as any;
+      .limit(limitVal) as any[];
+    
+    // Map results to set status to 'approved' for consistency with getAdById
+    return results.map(ad => ({
+      ...ad,
+      status: 'approved'
+    }));
       
   } catch (error: any) {
     console.error('Error fetching ads:', error);
@@ -1943,6 +1949,8 @@ export async function getApprovedAds(limit?: number): Promise<any[]> {
       approvedAt: approvedAds.approvedAt,
       approvedBy: approvedAds.approvedBy,
       adminNotes: approvedAds.adminNotes,
+      clickCount: approvedAds.clickCount,
+      viewCount: approvedAds.viewCount,
       creator_name: users.name,
       creator_email: users.email,
       creator_id: users.id,
@@ -1950,7 +1958,13 @@ export async function getApprovedAds(limit?: number): Promise<any[]> {
     .from(approvedAds)
     .leftJoin(users, eq(approvedAds.createdBy, users.id))
     .orderBy(desc(approvedAds.approvedAt));
-  return await (limit ? base.limit(limit) : base) as any[];
+  const results = await (limit ? base.limit(limit) : base) as any[];
+  
+  // Map results to set status to 'approved' for consistency with getAdById
+  return results.map(ad => ({
+    ...ad,
+    status: 'approved'
+  }));
 }
 
 export async function getRejectedAds(limit?: number): Promise<any[]> {
@@ -2118,6 +2132,56 @@ export async function updateAd(id: number, updateData: any) {
   } catch (error) {
     console.error('Error updating ad:', error);
     return null;
+  }
+}
+
+// Increment click count for an approved ad
+export async function incrementAdClickCount(adId: number): Promise<boolean> {
+  try {
+    const result = await db
+      .update(approvedAds)
+      .set({ 
+        clickCount: sql`${approvedAds.clickCount} + 1`,
+        updatedAt: new Date() 
+      })
+      .where(eq(approvedAds.id, adId))
+      .returning();
+    
+    if (result.length === 0) {
+      console.error(`[incrementAdClickCount] No ad found with id: ${adId}`);
+      return false;
+    }
+    
+    console.log(`[incrementAdClickCount] Successfully incremented click count for ad ${adId}. New count: ${result[0]?.clickCount}`);
+    return true;
+  } catch (error) {
+    console.error(`[incrementAdClickCount] Error incrementing ad click count for ad ${adId}:`, error);
+    return false;
+  }
+}
+
+// Increment view count for an approved ad (when ad is displayed on page)
+export async function incrementAdViewCount(adId: number): Promise<boolean> {
+  try {
+    const result = await db
+      .update(approvedAds)
+      .set({ 
+        viewCount: sql`${approvedAds.viewCount} + 1`,
+        updatedAt: new Date() 
+      })
+      .where(eq(approvedAds.id, adId))
+      .returning();
+    
+    if (result.length === 0) {
+      console.error(`[incrementAdViewCount] No ad found with id: ${adId}`);
+      return false;
+    }
+    
+    console.log(`[incrementAdViewCount] Successfully incremented view count for ad ${adId}. New count: ${result[0]?.viewCount}`);
+    return true;
+  } catch (error) {
+    console.error(`[incrementAdViewCount] Error incrementing ad view count for ad ${adId}:`, error);
+    return false;
   }
 }
 

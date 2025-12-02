@@ -64,7 +64,9 @@ export async function GET(request: NextRequest) {
         ...a, 
         status: 'approved',
         created_at: a.createdAt || a.approvedAt,
-        updated_at: a.updatedAt
+        updated_at: a.updatedAt,
+        click_count: a.clickCount || 0,
+        view_count: a.viewCount || 0,
       })),
       ...userRejected.map(a => ({ 
         ...a, 

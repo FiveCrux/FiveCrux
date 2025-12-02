@@ -188,11 +188,13 @@ export const approvedAds = pgTable('approved_ads', {
   approvedAt: timestamp('approved_at').defaultNow(),
   approvedBy: text('approved_by'),
   adminNotes: text('admin_notes'),
+  clickCount: integer('click_count').default(0).notNull(), // Track number of clicks on the ad
+  viewCount: integer('view_count').default(0).notNull(), // Track number of times ad was viewed/displayed
 });
 
 // Rejected ads
 export const rejectedAds = pgTable('rejected_ads', {
-  ...baseAdFields,
+  ...baseAdFields,  
   rejectedAt: timestamp('rejected_at').defaultNow(),
   rejectedBy: text('rejected_by'),
   rejectionReason: text('rejection_reason').notNull(),

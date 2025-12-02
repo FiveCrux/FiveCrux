@@ -22,6 +22,7 @@ import {
   Sparkles,
   AlertCircle,
   Lock,
+  MousePointer,
 } from "lucide-react"
 import { Button } from "@/componentss/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/componentss/ui/card"
@@ -106,6 +107,8 @@ interface Ad {
   rejection_reason?: string
   slot_unique_id?: string
   priority: number
+  click_count?: number
+  view_count?: number
   created_at: string
   updated_at: string
 }
@@ -933,9 +936,23 @@ export default function ProfilePage() {
                               </div>
                             )}
 
-                            <div className="flex items-center justify-between">
-                              <div className="text-xs text-gray-500">
-                                Created: {new Date(ad.created_at).toLocaleDateString()}
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-4 text-xs text-gray-500">
+                                <div>
+                                  Created: {new Date(ad.created_at).toLocaleDateString()}
+                                </div>
+                                {ad.status === "approved" && (
+                                  <div className="flex items-center gap-4">
+                                    <div className="flex items-center gap-1 text-orange-400">
+                                      <MousePointer className="h-3 w-3" />
+                                      <span>{ad.click_count || 0} clicks</span>
+                                    </div>
+                                    <div className="flex items-center gap-1 text-blue-400">
+                                      <Eye className="h-3 w-3" />
+                                      <span>{ad.view_count || 0} views</span>
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                               <div className="flex gap-2">
                                 <Button

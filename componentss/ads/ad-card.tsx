@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { motion } from "framer-motion"
 import { ExternalLink, Megaphone } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/componentss/ui/card"
@@ -25,9 +25,75 @@ interface AdCardProps {
 
 export default function AdCard({ ad, className = "", variant = 'default' }: AdCardProps) {
   const [imageError, setImageError] = useState(false)
+  const [hasTrackedView, setHasTrackedView] = useState(false)
+  const cardRef = useRef<HTMLDivElement>(null)
 
-  const handleClick = () => {
+  // Track view when ad is displayed (using Intersection Observer for better accuracy)
+  useEffect(() => {
+    if (!ad.id || ad.status !== 'approved' || hasTrackedView) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && !hasTrackedView) {
+            // Ad is visible on screen, track the view
+            setHasTrackedView(true)
+            trackView()
+            observer.disconnect() // Only track once
+          }
+        })
+      },
+      {
+        threshold: 0.5, // Track when 50% of ad is visible
+        rootMargin: '0px'
+      }
+    )
+
+    if (cardRef.current) {
+      observer.observe(cardRef.current)
+    }
+
+    return () => {
+      observer.disconnect()
+    }
+  }, [ad.id, ad.status, hasTrackedView])
+
+  const trackView = async () => {
+    if (ad.id && ad.status === 'approved') {
+      try {
+        // Fire and forget - don't wait for response
+        fetch(`/api/ads/${ad.id}/view`, {
+          method: 'POST',
+          credentials: 'include',
+        }).catch(err => {
+          // Silently fail - don't interrupt user experience
+          console.error('Failed to track ad view:', err)
+        })
+      } catch (error) {
+        // Silently fail
+        console.error('Error tracking ad view:', error)
+      }
+    }
+  }
+
+  const handleClick = async () => {
     if (ad.link_url) {
+      // Track click if ad has an ID (only for approved ads)
+      if (ad.id && ad.status === 'approved') {
+        try {
+          // Fire and forget - don't wait for response
+          fetch(`/api/ads/${ad.id}/click`, {
+            method: 'POST',
+            credentials: 'include',
+          }).catch(err => {
+            // Silently fail - don't interrupt user experience
+            console.error('Failed to track ad click:', err)
+          })
+        } catch (error) {
+          // Silently fail
+          console.error('Error tracking ad click:', error)
+        }
+      }
       window.open(ad.link_url, '_blank', 'noopener,noreferrer')
     }
   }
@@ -36,6 +102,7 @@ export default function AdCard({ ad, className = "", variant = 'default' }: AdCa
   if (variant === 'script') {
     return (
       <motion.div
+        ref={cardRef}
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
@@ -120,6 +187,7 @@ export default function AdCard({ ad, className = "", variant = 'default' }: AdCa
   if (variant === 'giveaway') {
     return (
       <motion.div
+        ref={cardRef}
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
@@ -196,6 +264,7 @@ export default function AdCard({ ad, className = "", variant = 'default' }: AdCa
   // Default variant - original style
   return (
     <motion.div
+      ref={cardRef}
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.3 }}

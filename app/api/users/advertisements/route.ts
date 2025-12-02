@@ -65,6 +65,7 @@ export async function GET(request: NextRequest) {
         image_url: a.imageUrl,
         link_url: a.linkUrl,
         slot_unique_id: a.slotUniqueId || null,  // ✅ Add this
+        click_count: 0, // Pending ads don't have click counts
         created_at: a.createdAt,
         updated_at: a.updatedAt
       })),
@@ -76,6 +77,8 @@ export async function GET(request: NextRequest) {
         image_url: a.imageUrl,
         link_url: a.linkUrl,
           slot_unique_id: a.slotUniqueId || null,  // ✅ Add this
+        click_count: a.clickCount || 0, // Include click count for approved ads
+        view_count: a.viewCount || 0, // Include view count for approved ads
         created_at: a.createdAt || a.approvedAt,
         updated_at: a.updatedAt
       })),
@@ -86,6 +89,7 @@ export async function GET(request: NextRequest) {
         image_url: a.imageUrl,
         link_url: a.linkUrl,
         slot_unique_id: a.slotUniqueId || null,  // ✅ Add this
+        click_count: 0, // Rejected ads don't have click counts
         created_at: a.createdAt || a.rejectedAt,
         updated_at: a.updatedAt
       }))
