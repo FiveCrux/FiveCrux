@@ -1062,7 +1062,7 @@ export default function GiveawayDetailPage() {
                         ) : isEntered ? (
                           <>
                             <Trophy className="mr-2 h-4 w-4" />
-                            YOU'RE IN!
+                            YOU&apos;RE IN!
                           </>
                         ) : (
                           <>
