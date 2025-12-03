@@ -32,9 +32,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/componentss/ui/avatar"
 import Navbar from "@/componentss/shared/navbar"
 import Footer from "@/componentss/shared/footer"
 import AdsForm from "@/componentss/ads/ads-form"
+import ScriptSelectionPopup from "@/componentss/featured-scripts/script-selection-popup"
 import { useUserScripts, useDeleteUserScript } from "@/hooks/use-scripts-queries"
 import { useUserGiveaways, useDeleteUserGiveaway, useUserCreatorGiveawayEntries } from "@/hooks/use-giveaways-queries"
-import { useUserAdvertisements } from "@/hooks/use-profile-queries"
+import { useUserAdvertisements, useUserFeaturedScriptSlots, useUserFeaturedScripts, useCreateFeaturedScript, useDeleteFeaturedScript } from "@/hooks/use-profile-queries"
 import { toast } from "sonner"
 import { getSessionUserProfilePicture } from "@/lib/user-utils"
 import { useSession as useNextAuthSession } from "next-auth/react"
@@ -143,6 +144,12 @@ export default function ProfilePage() {
     100,
     0
   )
+
+  // Featured Scripts
+  const { data: featuredScriptSlotsData, refetch: refetchFeaturedScriptSlots } = useUserFeaturedScriptSlots()
+  const { data: featuredScriptsData, isLoading: featuredScriptsLoading, refetch: refetchFeaturedScripts } = useUserFeaturedScripts(100)
+  const createFeaturedScriptMutation = useCreateFeaturedScript()
+  const deleteFeaturedScriptMutation = useDeleteFeaturedScript()
   
   // Mutations for delete operations
   const deleteScriptMutation = useDeleteUserScript()
@@ -151,6 +158,10 @@ export default function ProfilePage() {
   const [showAdsForm, setShowAdsForm] = useState(false)
   const [editingAd, setEditingAd] = useState<any>(null)
   const [selectedSlotUniqueId, setSelectedSlotUniqueId] = useState<string | null>(null)
+  
+  // Featured Scripts state
+  const [showScriptSelectionPopup, setShowScriptSelectionPopup] = useState(false)
+  const [selectedFeaturedScriptSlotUniqueId, setSelectedFeaturedScriptSlotUniqueId] = useState<string | null>(null)
   const [editingName, setEditingName] = useState(false)
   const [nameValue, setNameValue] = useState("")
   const [savingName, setSavingName] = useState(false)
@@ -168,11 +179,23 @@ export default function ProfilePage() {
   const giveawayEntries = entriesData?.entries || []
   const entriesTotal = entriesData?.total || 0
   
+  // Featured Scripts data
+  const featuredScripts = featuredScriptsData?.featuredScripts || []
+  const featuredScriptsTotal = featuredScriptsData?.total || 0
+  const purchasedFeaturedScriptSlots = featuredScriptSlotsData?.activeSlots || 0
+  const availableFeaturedScriptSlotUniqueIds = featuredScriptSlotsData?.availableUniqueIds || []
+  
   // Calculate slot availability
   const usedSlots = ads.length
   const availableSlots = Math.max(0, purchasedSlots - usedSlots)
   const totalSlots = 3 // Total slots available
   const lockedSlots = Math.max(0, totalSlots - purchasedSlots)
+  
+  // Calculate featured script slot availability
+  const usedFeaturedScriptSlots = featuredScripts.length
+  const availableFeaturedScriptSlots = Math.max(0, purchasedFeaturedScriptSlots - usedFeaturedScriptSlots)
+  const totalFeaturedScriptSlots = 3 // Total slots available
+  const lockedFeaturedScriptSlots = Math.max(0, totalFeaturedScriptSlots - purchasedFeaturedScriptSlots)
   
   // Combined loading state
   const loading = scriptsLoading || giveawaysLoading || adsLoading || entriesLoading
@@ -304,6 +327,29 @@ export default function ProfilePage() {
     // Refresh ads data after creating/updating an ad
     refetchAds()
     setEditingAd(null)
+  }
+
+  // Featured Scripts handlers
+  const handleSelectScriptForFeature = async (scriptId: number) => {
+    if (!selectedFeaturedScriptSlotUniqueId) return
+
+    try {
+      await createFeaturedScriptMutation.mutateAsync({
+        script_id: scriptId,
+        slot_unique_id: selectedFeaturedScriptSlotUniqueId,
+      })
+      setShowScriptSelectionPopup(false)
+      setSelectedFeaturedScriptSlotUniqueId(null)
+      refetchFeaturedScripts()
+      refetchFeaturedScriptSlots()
+    } catch (error) {
+      console.error("Error creating featured script:", error)
+    }
+  }
+
+  const handleDeleteFeaturedScript = async (featuredScriptId: number) => {
+    if (!confirm("Are you sure you want to delete this featured script?")) return
+    deleteFeaturedScriptMutation.mutate(featuredScriptId)
   }
 
   const handleProfilePictureUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -514,7 +560,7 @@ export default function ProfilePage() {
         {/* Content */}
         <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-6 bg-gray-800/50">
+            <TabsList className="grid w-full grid-cols-7 bg-gray-800/50">
               <TabsTrigger value="overview" className="data-[state=active]:bg-orange-500">
                 <User className="h-4 w-4 mr-2" />
                 Overview
@@ -530,6 +576,10 @@ export default function ProfilePage() {
               <TabsTrigger value="ads" className="data-[state=active]:bg-orange-500">
                 <Tag className="h-4 w-4 mr-2" />
                 Ads 
+              </TabsTrigger>
+              <TabsTrigger value="featured-scripts" className="data-[state=active]:bg-purple-500">
+                <Star className="h-4 w-4 mr-2" />
+                Featured Scripts
               </TabsTrigger>
               <TabsTrigger value="entries" className="data-[state=active]:bg-orange-500">
                 <Sparkles className="h-4 w-4 mr-2" />
@@ -943,9 +993,9 @@ export default function ProfilePage() {
                                 </div>
                                 {ad.status === "approved" && (
                                   <div className="flex items-center gap-4">
-                                    <div className="flex items-center gap-1 text-orange-400">
-                                      <MousePointer className="h-3 w-3" />
-                                      <span>{ad.click_count || 0} clicks</span>
+                                  <div className="flex items-center gap-1 text-orange-400">
+                                    <MousePointer className="h-3 w-3" />
+                                    <span>{ad.click_count || 0} clicks</span>
                                     </div>
                                     <div className="flex items-center gap-1 text-blue-400">
                                       <Eye className="h-3 w-3" />
@@ -1199,6 +1249,311 @@ export default function ProfilePage() {
               </motion.div>
             </TabsContent>
 
+            {/* Featured Scripts Tab */}
+            <TabsContent value="featured-scripts" className="space-y-6">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8 }}
+              >
+                {featuredScriptsLoading ? (
+                  <div className="flex justify-center items-center py-20">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+                  </div>
+                ) : featuredScripts.length > 0 ? (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {featuredScripts.map((featuredScript: any) => (
+                        <Card key={featuredScript.id} className="bg-gray-800/30 border-gray-700/50 hover:border-purple-500/50 transition-all duration-300">
+                          {featuredScript.scriptCoverImage && (
+                            <div className="relative w-full h-48 overflow-hidden rounded-t-lg">
+                              <img
+                                src={featuredScript.scriptCoverImage}
+                                alt={featuredScript.scriptTitle || `Script ${featuredScript.scriptId}`}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          )}
+                          <CardHeader className="pb-3">
+                            <div className="flex items-center justify-between">
+                              <Badge variant="secondary" className="bg-purple-500/20 text-purple-400 border-purple-500/30">
+                                Featured Script
+                              </Badge>
+                              <Badge className={`text-xs ${
+                                (featuredScript.featuredStatus || featuredScript.status) === 'active' 
+                                  ? 'bg-green-500/20 text-green-400 border-green-500/30' 
+                                  : 'bg-gray-500/20 text-gray-400 border-gray-500/30'
+                              }`}>
+                                {(featuredScript.featuredStatus || featuredScript.status) === 'active' ? 'Active' : 'Inactive'}
+                              </Badge>
+                            </div>
+                            <CardTitle className="text-white text-lg line-clamp-2">
+                              {featuredScript.scriptTitle || `Script ID: ${featuredScript.scriptId}`}
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="space-y-2">
+                              {featuredScript.scriptDescription && (
+                                <p className="text-sm text-gray-400 line-clamp-3 mb-2">
+                                  {featuredScript.scriptDescription}
+                                </p>
+                              )}
+                              <div className="flex items-center gap-4 text-xs text-gray-500">
+                                <div>
+                                  Created: {new Date(featuredScript.featuredCreatedAt || featuredScript.created_at).toLocaleDateString()}
+                                </div>
+                                {featuredScript.featuredStatus === "active" && (
+                                  <div className="flex items-center gap-4">
+                                    <div className="flex items-center gap-1 text-purple-400">
+                                      <MousePointer className="h-3 w-3" />
+                                      <span>{featuredScript.featuredClickCount || featuredScript.click_count || 0} clicks</span>
+                                    </div>
+                                    <div className="flex items-center gap-1 text-blue-400">
+                                      <Eye className="h-3 w-3" />
+                                      <span>{featuredScript.featuredViewCount || featuredScript.view_count || 0} views</span>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  type="button"
+                                  onClick={() => router.push(`/script/${featuredScript.scriptId}`)}
+                                  className="text-blue-400 hover:text-blue-300"
+                                >
+                                  <Eye className="h-4 w-4 mr-1" />
+                                  View Script
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  type="button"
+                                  onClick={() => handleDeleteFeaturedScript(featuredScript.id)}
+                                  className="text-red-400 hover:text-red-300"
+                                >
+                                  <Trash2 className="h-4 w-4 mr-1" />
+                                  Delete
+                                </Button>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                      {/* Available Featured Script Slots */}
+                      {Array.from({ length: availableFeaturedScriptSlots }).map((_, index) => {
+                        const slotUniqueId = availableFeaturedScriptSlotUniqueIds[index] || null
+                        return (
+                          <motion.div
+                            key={`available-featured-script-slot-${index}`}
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ duration: 0.3, delay: index * 0.1 }}
+                            whileHover={{ scale: 1.02 }}
+                            className="group cursor-pointer"
+                            onClick={() => {
+                              setSelectedFeaturedScriptSlotUniqueId(slotUniqueId)
+                              setShowScriptSelectionPopup(true)
+                            }}
+                          >
+                            <Card className="bg-gray-800/30 border-2 border-dashed border-purple-500/50 hover:border-purple-500 transition-all duration-300 h-full flex flex-col items-center justify-center min-h-[300px]">
+                              <CardContent className="flex flex-col items-center justify-center py-12">
+                                <div className="w-20 h-20 rounded-full bg-purple-500/10 border-2 border-dashed border-purple-500/50 flex items-center justify-center mb-4 group-hover:bg-purple-500/20 group-hover:border-purple-500 transition-all duration-300">
+                                  <Plus className="h-10 w-10 text-purple-500 group-hover:scale-110 transition-transform duration-300" />
+                                </div>
+                                <h3 className="text-lg font-semibold text-white mb-2">Feature a Script</h3>
+                                <p className="text-gray-400 text-sm text-center mb-4">
+                                  Click to select a script to feature in this slot
+                                </p>
+                                <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">
+                                  Available Slot
+                                </Badge>
+                              </CardContent>
+                            </Card>
+                          </motion.div>
+                        )
+                      })}
+                      {/* Locked Featured Script Slots */}
+                      {Array.from({ length: lockedFeaturedScriptSlots }).map((_, index) => (
+                        <motion.div
+                          key={`locked-featured-script-slot-${index}`}
+                          className="group relative"
+                          whileHover={{ scale: 1.02 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <Card className="bg-gray-800/30 border-gray-700/50 relative overflow-hidden h-full">
+                            <div className="absolute inset-0 bg-gradient-to-br from-gray-900/80 to-gray-800/80 z-10 group-hover:opacity-0 transition-opacity duration-300" />
+                            <CardHeader className="pb-3 relative z-0">
+                              <div className="flex items-center justify-between">
+                                <Badge variant="secondary" className="bg-purple-500/20 text-purple-400 border-purple-500/30">
+                                  Slot {index + 1}
+                                </Badge>
+                                <Badge className="text-xs bg-gray-500/20 text-gray-400 border-gray-500/30">
+                                  <Lock className="h-3 w-3 mr-1 inline" />
+                                  Locked
+                                </Badge>
+                              </div>
+                              <CardTitle className="text-white text-lg line-clamp-2 mt-2">
+                                Available Slot
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent className="relative z-0">
+                              <p className="text-gray-400 text-sm mb-4 line-clamp-3">
+                                Purchase this slot to unlock and feature your script.
+                              </p>
+                              <div className="w-full h-32 rounded-lg overflow-hidden mb-4 bg-gradient-to-br from-gray-700/30 to-gray-800/30 flex items-center justify-center border border-gray-700/50">
+                                <Star className="h-12 w-12 text-gray-600" />
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <div className="text-xs text-gray-500">
+                                  Status: Locked
+                                </div>
+                                <div className="flex gap-2">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    type="button"
+                                    disabled
+                                    className="text-gray-500 cursor-not-allowed opacity-50"
+                                  >
+                                    <Lock className="h-4 w-4 mr-1" />
+                                    Locked
+                                  </Button>
+                                </div>
+                              </div>
+                            </CardContent>
+                            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-pink-400/20 backdrop-blur-sm z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                              <Link href="/advertise">
+                                <motion.div
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                >
+                                  <Button
+                                    size="lg"
+                                    className="bg-gradient-to-r from-purple-500 to-pink-400 hover:from-purple-600 hover:to-pink-500 text-white font-bold px-8 py-3 shadow-lg"
+                                  >
+                                    <DollarSign className="h-5 w-5 mr-2" />
+                                    Buy Slot
+                                  </Button>
+                                </motion.div>
+                              </Link>
+                            </div>
+                          </Card>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {/* Available Featured Script Slots */}
+                      {Array.from({ length: availableFeaturedScriptSlots }).map((_, index) => {
+                        const slotUniqueId = availableFeaturedScriptSlotUniqueIds[index] || null
+                        return (
+                          <motion.div
+                            key={`available-featured-script-slot-empty-${index}`}
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ duration: 0.3, delay: index * 0.1 }}
+                            whileHover={{ scale: 1.02 }}
+                            className="group cursor-pointer"
+                            onClick={() => {
+                              setSelectedFeaturedScriptSlotUniqueId(slotUniqueId)
+                              setShowScriptSelectionPopup(true)
+                            }}
+                          >
+                            <Card className="bg-gray-800/30 border-2 border-dashed border-purple-500/50 hover:border-purple-500 transition-all duration-300 h-full flex flex-col items-center justify-center min-h-[300px]">
+                              <CardContent className="flex flex-col items-center justify-center py-12">
+                                <div className="w-20 h-20 rounded-full bg-purple-500/10 border-2 border-dashed border-purple-500/50 flex items-center justify-center mb-4 group-hover:bg-purple-500/20 group-hover:border-purple-500 transition-all duration-300">
+                                  <Plus className="h-10 w-10 text-purple-500 group-hover:scale-110 transition-transform duration-300" />
+                                </div>
+                                <h3 className="text-lg font-semibold text-white mb-2">Feature a Script</h3>
+                                <p className="text-gray-400 text-sm text-center mb-4">
+                                  Click to select a script to feature in this slot
+                                </p>
+                                <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">
+                                  Available Slot
+                                </Badge>
+                              </CardContent>
+                            </Card>
+                          </motion.div>
+                        )
+                      })}
+                      {/* Locked Featured Script Slots */}
+                      {Array.from({ length: lockedFeaturedScriptSlots }).map((_, index) => (
+                        <motion.div
+                          key={`locked-featured-script-slot-empty-${index}`}
+                          className="group relative"
+                          whileHover={{ scale: 1.02 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <Card className="bg-gray-800/30 border-gray-700/50 relative overflow-hidden h-full">
+                            <div className="absolute inset-0 bg-gradient-to-br from-gray-900/80 to-gray-800/80 z-10 group-hover:opacity-0 transition-opacity duration-300" />
+                            <CardHeader className="pb-3 relative z-0">
+                              <div className="flex items-center justify-between">
+                                <Badge variant="secondary" className="bg-purple-500/20 text-purple-400 border-purple-500/30">
+                                  Slot {index + 1}
+                                </Badge>
+                                <Badge className="text-xs bg-gray-500/20 text-gray-400 border-gray-500/30">
+                                  <Lock className="h-3 w-3 mr-1 inline" />
+                                  Locked
+                                </Badge>
+                              </div>
+                              <CardTitle className="text-white text-lg line-clamp-2 mt-2">
+                                Available Slot
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent className="relative z-0">
+                              <p className="text-gray-400 text-sm mb-4 line-clamp-3">
+                                Purchase this slot to unlock and feature your script.
+                              </p>
+                              <div className="w-full h-32 rounded-lg overflow-hidden mb-4 bg-gradient-to-br from-gray-700/30 to-gray-800/30 flex items-center justify-center border border-gray-700/50">
+                                <Star className="h-12 w-12 text-gray-600" />
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <div className="text-xs text-gray-500">
+                                  Status: Locked
+                                </div>
+                                <div className="flex gap-2">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    type="button"
+                                    disabled
+                                    className="text-gray-500 cursor-not-allowed opacity-50"
+                                  >
+                                    <Lock className="h-4 w-4 mr-1" />
+                                    Locked
+                                  </Button>
+                                </div>
+                              </div>
+                            </CardContent>
+                            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-pink-400/20 backdrop-blur-sm z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                              <Link href="/advertise">
+                                <motion.div
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                >
+                                  <Button
+                                    size="lg"
+                                    className="bg-gradient-to-r from-purple-500 to-pink-400 hover:from-purple-600 hover:to-pink-500 text-white font-bold px-8 py-3 shadow-lg"
+                                  >
+                                    <DollarSign className="h-5 w-5 mr-2" />
+                                    Buy Slot
+                                  </Button>
+                                </motion.div>
+                              </Link>
+                            </div>
+                          </Card>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </motion.div>
+            </TabsContent>
+
             {/* Entries Tab */}
             <TabsContent value="entries" className="space-y-6">
               <motion.div
@@ -1412,6 +1767,17 @@ export default function ProfilePage() {
         onSuccess={handleAdCreated}
         editData={editingAd}
         slotUniqueId={selectedSlotUniqueId}
+      />
+
+      {/* Script Selection Popup */}
+      <ScriptSelectionPopup
+        isOpen={showScriptSelectionPopup}
+        onClose={() => {
+          setShowScriptSelectionPopup(false)
+          setSelectedFeaturedScriptSlotUniqueId(null)
+        }}
+        onSelect={handleSelectScriptForFeature}
+        slotUniqueId={selectedFeaturedScriptSlotUniqueId}
       />
     </>
   )
