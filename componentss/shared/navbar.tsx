@@ -17,7 +17,8 @@ import {
   MobileNavToggle,
   MobileNavMenu,
 } from "@/components/ui/resizable-navbar"
-import { Megaphone, Home,Package,Gift } from "lucide-react"
+
+import { Home, Package, Gift, Megaphone } from "lucide-react"
 
 export default function NavbarComponent() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -29,7 +30,7 @@ export default function NavbarComponent() {
   const profilePictureUrl = getSessionUserProfilePicture(session)
 
   const navItems = [
-    { name: "Home", link: "/" ,icon: <Home className="w-4 h-4" /> },
+    { name: "Home", link: "/", icon: <Home className="w-4 h-4" /> },
     { name: "Marketplace", link: "/scripts", icon: <Package className="w-4 h-4" /> },
     { name: "Giveaways", link: "/giveaways", icon: <Gift className="w-4 h-4" /> },
     { name: "Advertise", link: "/advertise", icon: <Megaphone className="w-4 h-4" /> },
@@ -74,9 +75,11 @@ export default function NavbarComponent() {
       <Navbar className="top-0 z-30 mt-2">
         {/* Desktop Navigation */}
         <NavBody>
-          <CustomLogo />
+          <div className="flex-shrink-0 relative z-10">
+            <CustomLogo />
+          </div>
           <NavItems items={navItems} />
-          <div className="flex items-center gap-2 ml-auto pl-6 flex-shrink-0">
+          <div className="flex items-center gap-2 flex-shrink-0 relative z-10">
             {status === "authenticated" ? (
               <>
                 <Link href="/profile" className="block">
@@ -134,6 +137,9 @@ export default function NavbarComponent() {
                 className="relative text-neutral-600 dark:text-neutral-300"
               >
                 <span className="block">{item.name}</span>
+                {item.icon && (
+                  <span className="block ml-2 bg-white">{item.icon}</span>
+                )}
               </Link>
             ))}
             
