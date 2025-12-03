@@ -473,6 +473,7 @@ export default function GiveawayDetailPage() {
   }
 
   const [openedDiscordTasks, setOpenedDiscordTasks] = useState<number[]>([])
+  const [openedYoutubeTasks, setOpenedYoutubeTasks] = useState<number[]>([])
   const [serverNames, setServerNames] = useState<{[key: number]: string}>({})
   const [loadingStates, setLoadingStates] = useState<{[key: number]: boolean}>({})
   const [autoVerifying, setAutoVerifying] = useState(false)
@@ -678,6 +679,16 @@ export default function GiveawayDetailPage() {
       } finally {
         setLoadingStates(prev => ({ ...prev, [taskId]: false }))
       }
+    } else if (task.type === "youtube" && task.description) {
+      // Open YouTube link in new tab
+      window.open(task.description, '_blank', 'noopener,noreferrer')
+      
+      // Mark as opened so verify button appears
+      if (!openedYoutubeTasks.includes(taskId)) {
+        setOpenedYoutubeTasks([...openedYoutubeTasks, taskId])
+      }
+      
+      toast.info("YouTube channel opened! Please subscribe and then click 'Verify' to complete the task.")
     } else {
       if (!completedTasks.includes(taskId)) {
         const newCompleted = [...completedTasks, taskId]
@@ -685,6 +696,26 @@ export default function GiveawayDetailPage() {
         updatePointsInDatabase(newCompleted)
       }
     }
+  }
+
+  const handleYoutubeVerify = async (taskId: number) => {
+    const task = transformedGiveaway.requirements.find((req: any) => req.id === taskId)
+    
+    if (!task || task.type !== "youtube") return
+    
+    setLoadingStates(prev => ({ ...prev, [taskId]: true }))
+    
+    // Fake verification - show loader for 2 seconds
+    await new Promise(resolve => setTimeout(resolve, 2000))
+    
+    // Mark as completed and add points
+    const newCompleted = [...completedTasks, taskId]
+    setCompletedTasks(newCompleted)
+    updatePointsInDatabase(newCompleted)
+    
+    toast.success(`✅ YouTube subscription verified! +${task.points} points added!`)
+    
+    setLoadingStates(prev => ({ ...prev, [taskId]: false }))
   }
 
   const handleMarkDone = (taskId: number) => {
@@ -1309,6 +1340,10 @@ export default function GiveawayDetailPage() {
                                       </span>
                                     )}
                                   </>
+                                ) : task.type === "youtube" && task.description ? (
+                                  <>
+                                    Subscribe Youtube
+                                  </>
                                 ) : (
                                   task.description
                                 )}
@@ -1320,6 +1355,7 @@ export default function GiveawayDetailPage() {
                               </h4>
                               <p className="text-xs text-gray-400">
                                 {task.type === "discord" && "Join our community server"}
+                                {task.type === "youtube" && "Subscribe to our YouTube channel"}
                                 {task.type === "follow" && "Follow us for updates"}
                                 {task.type === "share" && "Help spread the word"}
                               </p>
@@ -1348,6 +1384,15 @@ export default function GiveawayDetailPage() {
                                     </>
                                   ) : task.type === "discord" && task.description ? (
                                     openedDiscordTasks.includes(task.id) ? (
+                                      "Reopen"
+                                    ) : (
+                                      <>
+                                        <ExternalLink className="mr-1 h-3 w-3" />
+                                        Join
+                                      </>
+                                    )
+                                  ) : task.type === "youtube" && task.description ? (
+                                    openedYoutubeTasks.includes(task.id) ? (
                                       "Reopen"
                                     ) : (
                                       <>
@@ -1389,6 +1434,30 @@ export default function GiveawayDetailPage() {
                                   className="bg-blue-500 hover:bg-blue-600 text-white font-bold disabled:opacity-50"
                                 >
                                   {loadingStates[task.id] ? "Verifying..." : "Verify"}
+                                </Button>
+                              </motion.div>
+                            )}
+                            
+                            {task.type === "youtube" && task.description && !completedTasks.includes(task.id) && openedYoutubeTasks.includes(task.id) && (
+                              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                                <Button
+                                  size="sm"
+                                  disabled={loadingStates[task.id] || autoVerifying}
+                                  onClick={() => handleYoutubeVerify(task.id)}
+                                  className="bg-blue-500 hover:bg-blue-600 text-white font-bold disabled:opacity-50"
+                                >
+                                  {loadingStates[task.id] ? (
+                                    <>
+                                      <motion.div 
+                                        className="w-3 h-3 border-2 border-white border-t-transparent rounded-full mr-1 inline-block"
+                                        animate={{ rotate: 360 }}
+                                        transition={{ duration: 1, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
+                                      />
+                                      Verifying...
+                                    </>
+                                  ) : (
+                                    "Verify"
+                                  )}
                                 </Button>
                               </motion.div>
                             )}
