@@ -8,6 +8,7 @@ import {
   useMotionValueEvent,
 } from "motion/react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 import React, { useRef, useState } from "react";
 
@@ -31,6 +32,7 @@ interface NavItemsProps {
   }[];
   className?: string;
   onItemClick?: () => void;
+  currentPath?: string;
 }
 
 interface MobileNavProps {
@@ -149,7 +151,7 @@ export const NavBody = ({ children, className, visible }: NavBodyProps) => {
         boxShadow: visible
           ? "0 0 24px rgba(34, 42, 53, 0.06), 0 1px 1px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(34, 42, 53, 0.04), 0 0 4px rgba(34, 42, 53, 0.08), 0 16px 68px rgba(47, 48, 55, 0.05), 0 1px 0 rgba(255, 255, 255, 0.1) inset"
           : "none",
-        width: visible ? "40%" : "100%",
+        width: visible ? "30%" : "100%",
         y: visible ? 20 : 0,
       }}
       transition={{
@@ -157,22 +159,28 @@ export const NavBody = ({ children, className, visible }: NavBodyProps) => {
         stiffness: 200,
         damping: 50,
       }}
-      style={{
-        minWidth: "800px",
-      }}
       className={cn(
-        "relative z-[60] mx-auto hidden w-full max-w-7xl flex-row items-center justify-between self-start rounded-full bg-transparent px-4 py-2 gap-4 lg:flex dark:bg-transparent",
-        visible && "bg-white/80 dark:bg-neutral-950/80",
+        "relative z-[60] mx-auto hidden w-auto flex-row items-center justify-center self-start rounded-lg bg-transparent px-4 py-2 gap-4 lg:flex dark:bg-transparent",
+        visible && "bg-white/80 dark:bg-neutral-800",
+        !visible && "justify-between",
         className,
       )}
     >
-      {children}
+      {React.Children.map(children, (child, index) => {
+        // When visible (compact mode), only show NavItems (middle child, index 1)
+        if (visible && index !== 1) {
+          return null;
+        }
+        return child;
+      })}
     </motion.div>
   );
 };
 
-export const NavItems = ({ items, className, onItemClick, textColorClassName }: NavItemsProps & { textColorClassName?: string }) => {
+export const NavItems = ({ items, className, onItemClick, textColorClassName, currentPath }: NavItemsProps & { textColorClassName?: string }) => {
   const [hovered, setHovered] = useState<number | null>(null);
+  const pathname = usePathname();
+  const activePath = currentPath || pathname;
   
   // Default text colors if not provided
   const defaultTextColor = "text-zinc-600 dark:text-neutral-300"
@@ -181,50 +189,52 @@ export const NavItems = ({ items, className, onItemClick, textColorClassName }: 
     ? (textColorClassName.includes("text-white") ? "hover:text-gray-200" : "hover:text-zinc-800 dark:hover:text-neutral-100")
     : "hover:text-zinc-800 dark:hover:text-neutral-100"
 
+  const isActive = (link: string) => {
+    if (link === "/") {
+      return activePath === "/";
+    }
+    return activePath?.startsWith(link);
+  };
+
   return (
     <motion.div
       onMouseLeave={() => setHovered(null)}
       className={cn(
-        "absolute left-1/2 -translate-x-1/2 hidden flex-row items-center justify-center space-x-1 text-sm font-medium transition duration-200 lg:flex lg:space-x-2 px-4 py-2 bg-neutral-900/95 border-b border-neutral-700/50 rounded-lg",
+        "hidden flex-1 flex-row items-center justify-center space-x-1 text-sm font-medium transition duration-200 lg:flex lg:space-x-2 px-2",
         textColor,
         hoverTextColor,
         className,
       )}
     >
-      {items.map((item, idx) => (
-        <Link
-          onMouseEnter={() => setHovered(idx)}
-          onClick={onItemClick}
-          className={cn("relative px-2 py-2 whitespace-nowrap flex flex-row items-center gap-2", textColor)}
-          key={`link-${idx}`}
-          href={item.link}
-        >
-          {hovered === idx && (
-            <>
+      {items.map((item, idx) => {
+        const active = isActive(item.link);
+        return (
+          <Link
+            onMouseEnter={() => setHovered(idx)}
+            onClick={onItemClick}
+            className={cn("relative px-2 py-2 whitespace-nowrap flex flex-row items-center gap-2", textColor)}
+            key={`link-${idx}`}
+            href={item.link}
+          >
+            {hovered === idx && (
               <motion.div
                 layoutId="hovered"
-                className="absolute inset-0 h-full w-full rounded-full bg-gray-100 dark:bg-neutral-800 flex flex-row items-center justify-center"
+                className="absolute inset-0 h-full w-full rounded-lg bg-gray-100 dark:bg-neutral-400"
               />
+            )}
+            {active && (
               <motion.div
-                layoutId="underline"
+                layoutId="active-underline"
                 className="absolute bottom-0 left-0 right-0 h-0.5 bg-white z-30"
-                initial={{ scaleX: 0 }}
-                animate={{ scaleX: 1 }}
-                transition={{ 
-                  type: "spring",
-                  stiffness: 400,
-                  damping: 35,
-                  mass: 0.5
-                }}
               />
-            </>
-          )}
-          {item.icon && (
-            <span className="relative z-20">{item.icon}</span>
-          )}
-          <span className="relative z-20">{item.name}</span>
-        </Link>
-      ))}
+            )}
+            {item.icon && (
+              <span className="relative z-20">{item.icon}</span>
+            )}
+            <span className="relative z-20">{item.name}</span>
+          </Link>
+        );
+      })}
     </motion.div>
   );
 };
