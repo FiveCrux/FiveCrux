@@ -5,13 +5,14 @@ import {
   pendingGiveaways, approvedGiveaways, rejectedGiveaways, 
   giveawayEntries, 
   giveawayRequirements, giveawayPrizes, pendingAds, approvedAds, rejectedAds,
-  userAdSlots,
+  userAdSlots, featuredScripts,
+  userFeaturedScriptSlots,
   type Script, type Giveaway 
 } from './db/schema';
 import type { 
   NewUser, NewScript, NewGiveaway, NewGiveawayEntry, 
   NewAd, 
-  NewGiveawayRequirement, NewGiveawayPrize 
+  NewGiveawayRequirement, NewGiveawayPrize, NewFeaturedScript
 } from './db/schema';
 import { validateFrameworks, isValidFramework } from './constants';
 
@@ -411,7 +412,7 @@ export async function checkAndDeactivateExpiredSlots(): Promise<{ checked: numbe
       and(
         eq(approvedAds.status, 'active'),
         sql`${approvedAds.endDate} IS NOT NULL`,
-        sql`${approvedAds.endDate} < CURRENT_TIMESTAMP`
+        sql`${approvedAds.endDate} < ${now}`
       )
     );
   
@@ -2412,5 +2413,364 @@ export async function getRelatedGiveaways(currentGiveawayId: number, limit: numb
   } catch (error) {
     console.error('Error fetching related giveaways:', error);
     return [];
+  }
+}
+
+// Featured Scripts Functions - Similar to ads but for featuring user scripts
+
+// Generate unique slot ID for featured scripts
+function generateFeaturedScriptSlotUniqueId(): string {
+  const timestamp = Date.now().toString(36);
+  const random = Math.random().toString(36).substring(2, 9);
+  return `featured_script_slot_${timestamp}_${random}`;
+}
+
+// Get the next available slot number for a user's featured script slots
+async function getNextFeaturedScriptSlotNumber(userId: string): Promise<number> {
+  const allSlots = await db
+    .select()
+    .from(userFeaturedScriptSlots)
+    .where(eq(userFeaturedScriptSlots.featuredUserId, userId));
+
+  if (allSlots.length === 0) {
+    return 1; // First slot
+  }
+
+  let maxSlotNumber = 0;
+  for (const slot of allSlots) {
+    const slotNumbers = (slot.featuredSlotNumber || []) as number[];
+    if (slotNumbers.length > 0) {
+      const maxInSlot = Math.max(...slotNumbers);
+      if (maxInSlot > maxSlotNumber) {
+        maxSlotNumber = maxInSlot;
+      }
+    }
+  }
+
+  return maxSlotNumber + 1;
+}
+
+// Get count of active featured script slots for a user
+export async function getUserActiveFeaturedScriptSlots(userId: string): Promise<number> {
+  try {
+    const activeSlots = await db
+      .select()
+      .from(userFeaturedScriptSlots)
+      .where(
+        and(
+          eq(userFeaturedScriptSlots.featuredUserId, userId),
+          eq(userFeaturedScriptSlots.featuredSlotStatus, 'active')
+        )
+      );
+    
+    let totalSlots = 0;
+    for (const slot of activeSlots) {
+      const slotNumbers = (slot.featuredSlotNumber || []) as number[];
+      totalSlots += slotNumbers.length;
+    }
+    
+    return totalSlots;
+  } catch (error) {
+    console.error('Error in getUserActiveFeaturedScriptSlots:', error);
+    return 0;
+  }
+}
+
+// Create featured script slots with proper slot numbers and unique IDs
+export async function createFeaturedScriptSlots(
+  userId: string,
+  slotsToAdd: number,
+  paypalOrderIds: string[],
+  packageId: string,
+  durationMonths: number,
+  durationWeeks?: number // Optional: if provided, use weeks instead of months
+): Promise<{ id: number; slotNumber: number[]; slotUniqueIds: string[] }> {
+  if (paypalOrderIds.length !== slotsToAdd) {
+    throw new Error('PayPal order IDs count must match slots to add');
+  }
+
+  if (!['starter', 'premium', 'executive'].includes(packageId)) {
+    throw new Error('Invalid package ID. Must be starter, premium, or executive');
+  }
+
+  // If durationWeeks is provided, validate it; otherwise validate months
+  if (durationWeeks !== undefined) {
+    if (![1, 2, 4, 8].includes(durationWeeks)) {
+      throw new Error('Invalid duration. Must be 1, 2, 4, or 8 weeks');
+    }
+  } else {
+    if (![1, 3, 6, 12].includes(durationMonths)) {
+      throw new Error('Invalid duration. Must be 1, 3, 6, or 12 months');
+    }
+  }
+
+  const now = new Date();
+  const endDate = new Date(now);
+  
+  // If weeks are provided, calculate endDate based on weeks (days)
+  if (durationWeeks !== undefined) {
+    endDate.setDate(endDate.getDate() + (durationWeeks * 7));
+  } else {
+    // Otherwise use months
+    endDate.setMonth(endDate.getMonth() + durationMonths);
+  }
+
+  const startingSlotNumber = await getNextFeaturedScriptSlotNumber(userId);
+
+  const slotNumbers: number[] = [];
+  for (let i = 0; i < slotsToAdd; i++) {
+    slotNumbers.push(startingSlotNumber + i);
+  }
+
+  const slotUniqueIds: string[] = [];
+  for (let i = 0; i < slotsToAdd; i++) {
+    slotUniqueIds.push(generateFeaturedScriptSlotUniqueId());
+  }
+
+  const timestamp = Math.floor(Date.now() / 1000);
+  const randomSuffix = Math.floor(Math.random() * 10000);
+  const id = timestamp + randomSuffix;
+
+  const paypalOrderId = paypalOrderIds[0] || null;
+
+  // Store weeks if provided, otherwise store months (for backward compatibility)
+  const storedDurationWeeks = durationWeeks !== undefined ? durationWeeks : null;
+
+  const result = await db
+    .insert(userFeaturedScriptSlots)
+    .values({
+      id: id,
+      featuredUserId: userId,
+      featuredSlotNumber: slotNumbers,
+      featuredSlotUniqueIds: slotUniqueIds,
+      featuredPurchaseDate: now,
+      featuredSlotEndDate: endDate,
+      featuredPackageId: packageId,
+      featuredDurationWeeks: storedDurationWeeks,
+      featuredPaypalOrderId: paypalOrderId,
+      featuredSlotStatus: 'active' as const,
+    } as any)
+    .returning({ 
+      id: userFeaturedScriptSlots.id,
+      slotNumber: userFeaturedScriptSlots.featuredSlotNumber,
+      slotUniqueIds: userFeaturedScriptSlots.featuredSlotUniqueIds
+    });
+
+  if (!result[0]) {
+    throw new Error('Failed to create featured script slots');
+  }
+
+  return {
+    id: result[0].id,
+    slotNumber: (result[0].slotNumber || []) as number[],
+    slotUniqueIds: (result[0].slotUniqueIds || []) as string[]
+  };
+}
+
+// Get all featured script slots for a user
+export async function getUserFeaturedScriptSlots(userId: string) {
+  return await db
+    .select()
+    .from(userFeaturedScriptSlots)
+    .where(eq(userFeaturedScriptSlots.featuredUserId, userId))
+    .orderBy(desc(userFeaturedScriptSlots.featuredPurchaseDate));
+}
+
+// Get slot by slotUniqueId
+export async function getFeaturedScriptSlotByUniqueId(slotUniqueId: string) {
+  const allSlots = await db
+    .select()
+    .from(userFeaturedScriptSlots);
+  
+  const slot = allSlots.find(s => {
+    const uniqueIds = (s.featuredSlotUniqueIds || []) as string[];
+    return uniqueIds.includes(slotUniqueId);
+  });
+  
+  return slot || null;
+}
+
+// Create featured script (no approval needed - users can only feature approved scripts)
+export async function createFeaturedScript(featuredScriptData: NewFeaturedScript) {
+  const timestamp = Math.floor(Date.now() / 1000);
+  const randomSuffix = Math.floor(Math.random() * 10000);
+  const id = timestamp + randomSuffix;
+
+  const slotUniqueId = (featuredScriptData as any).slotUniqueId ?? (featuredScriptData as any).slot_unique_id ?? null;
+  
+  let featuredScriptEndDate = (featuredScriptData as any).endDate ?? (featuredScriptData as any).end_date ?? null;
+  if (slotUniqueId) {
+    const slot = await getFeaturedScriptSlotByUniqueId(slotUniqueId);
+    if (slot && slot.featuredSlotEndDate) {
+      featuredScriptEndDate = slot.featuredSlotEndDate;
+    }
+  }
+
+  const mapped = {
+    id: id,
+    scriptId: (featuredScriptData as any).scriptId ?? (featuredScriptData as any).script_id,
+    featuredSlotUniqueId: slotUniqueId,
+    featuredStartDate: (featuredScriptData as any).startDate ?? (featuredScriptData as any).start_date ?? new Date(),
+    featuredEndDate: featuredScriptEndDate || null,
+    featuredCreatedBy: (featuredScriptData as any).createdBy ?? (featuredScriptData as any).created_by,
+    featuredStatus: 'active' as any,
+  };
+
+  const result = await db.insert(featuredScripts).values(mapped as any).returning({ id: featuredScripts.id });
+  return result[0]?.id;
+}
+
+// Get featured scripts
+export async function getFeaturedScripts(filters?: {
+  status?: string;
+  limit?: number;
+}) {
+  try {
+    const conditions: any[] = [];
+    if (filters?.status) conditions.push(eq(featuredScripts.featuredStatus, filters.status as any));
+    
+    const limitVal = filters?.limit || 50;
+    
+    const query = conditions.length
+      ? db.select().from(featuredScripts).where(and(...conditions))
+      : db.select().from(featuredScripts);
+    
+    const results = await query
+      .orderBy(desc(featuredScripts.featuredCreatedAt))
+      .limit(limitVal) as any[];
+    
+    return results;
+      
+  } catch (error: any) {
+    console.error('Error fetching featured scripts:', error);
+    throw error;
+  }
+}
+
+// Get featured script by ID
+export async function getFeaturedScriptById(id: number) {
+  try {
+    const result = await db.select().from(featuredScripts).where(eq(featuredScripts.id, id)).limit(1);
+    return result[0] || null;
+  } catch (error) {
+    console.error('Error fetching featured script:', error);
+    return null;
+  }
+}
+
+// Get user's featured scripts
+export async function getUserFeaturedScripts(userId: string, limit?: number) {
+  try {
+    const limitVal = limit || 100;
+    
+    const results = await db
+      .select({
+        // Featured script fields
+        id: featuredScripts.id,
+        scriptId: featuredScripts.scriptId,
+        featuredSlotUniqueId: featuredScripts.featuredSlotUniqueId,
+        featuredSlotStatus: featuredScripts.featuredSlotStatus,
+        featuredStartDate: featuredScripts.featuredStartDate,
+        featuredEndDate: featuredScripts.featuredEndDate,
+        featuredCreatedBy: featuredScripts.featuredCreatedBy,
+        featuredStatus: featuredScripts.featuredStatus,
+        featuredClickCount: featuredScripts.featuredClickCount,
+        featuredViewCount: featuredScripts.featuredViewCount,
+        featuredCreatedAt: featuredScripts.featuredCreatedAt,
+        featuredUpdatedAt: featuredScripts.featuredUpdatedAt,
+        // Script fields
+        scriptTitle: approvedScripts.title,
+        scriptDescription: approvedScripts.description,
+        scriptCoverImage: approvedScripts.coverImage,
+      })
+      .from(featuredScripts)
+      .leftJoin(approvedScripts, eq(featuredScripts.scriptId, approvedScripts.id))
+      .where(eq(featuredScripts.featuredCreatedBy, userId))
+      .orderBy(desc(featuredScripts.featuredCreatedAt))
+      .limit(limitVal);
+
+    return results;
+  } catch (error) {
+    console.error('Error fetching user featured scripts:', error);
+    return [];
+  }
+}
+
+// Update featured script
+export async function updateFeaturedScript(id: number, updateData: any) {
+  try {
+    // Map update data to new column names
+    const mappedUpdate: any = { featuredUpdatedAt: new Date() };
+    if (updateData.status !== undefined) mappedUpdate.featuredStatus = updateData.status;
+    if (updateData.endDate !== undefined) mappedUpdate.featuredEndDate = updateData.endDate;
+    
+    const result = await db.update(featuredScripts)
+      .set(mappedUpdate)
+      .where(eq(featuredScripts.id, id))
+      .returning();
+    
+    return result[0] || null;
+  } catch (error) {
+    console.error('Error updating featured script:', error);
+    return null;
+  }
+}
+
+// Delete featured script
+export async function deleteFeaturedScript(id: number) {
+  try {
+    const result = await db.delete(featuredScripts).where(eq(featuredScripts.id, id)).returning();
+    return result.length > 0;
+  } catch (error) {
+    console.error('Error deleting featured script:', error);
+    return false;
+  }
+}
+
+// Increment click count for featured script
+export async function incrementFeaturedScriptClickCount(featuredScriptId: number): Promise<boolean> {
+  try {
+    const result = await db
+      .update(featuredScripts)
+      .set({ 
+        featuredClickCount: sql`${featuredScripts.featuredClickCount} + 1`,
+        featuredUpdatedAt: new Date() 
+      })
+      .where(eq(featuredScripts.id, featuredScriptId))
+      .returning();
+    
+    if (result.length === 0) {
+      console.error(`[incrementFeaturedScriptClickCount] No featured script found with id: ${featuredScriptId}`);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error(`[incrementFeaturedScriptClickCount] Error incrementing click count:`, error);
+    return false;
+  }
+}
+
+// Increment view count for featured script
+export async function incrementFeaturedScriptViewCount(featuredScriptId: number): Promise<boolean> {
+  try {
+    const result = await db
+      .update(featuredScripts)
+      .set({ 
+        featuredViewCount: sql`${featuredScripts.featuredViewCount} + 1`,
+        featuredUpdatedAt: new Date() 
+      })
+      .where(eq(featuredScripts.id, featuredScriptId))
+      .returning();
+    
+    if (result.length === 0) {
+      console.error(`[incrementFeaturedScriptViewCount] No featured script found with id: ${featuredScriptId}`);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error(`[incrementFeaturedScriptViewCount] Error incrementing view count:`, error);
+    return false;
   }
 }

@@ -215,15 +215,53 @@ export const userAdSlots = pgTable('user_ad_slots', {
   status: text('status').default('active').notNull(), // 'active' | 'inactive'
 });
 
+// Featured scripts table (no approval needed - users can only feature approved scripts)
+export const featuredScripts = pgTable('featured_scripts', {
+  id: integer('id').primaryKey().notNull(),
+  scriptId: integer('script_id').notNull(), // Reference to the script being featured
+  featuredSlotUniqueId: text('featured_slot_unique_id'), // Unique ID to identify which featured script slot this belongs to
+  featuredSlotStatus: text('featured_slot_status').default('active').notNull(), // 'active' when endDate > current date, 'inactive' when current date passes endDate
+  featuredStartDate: timestamp('featured_start_date').defaultNow(),
+  featuredEndDate: timestamp('featured_end_date'),
+  featuredCreatedBy: text('featured_created_by').notNull(),
+  featuredStatus: text('featured_status').default('active').notNull(), // 'active' | 'inactive'
+  featuredClickCount: integer('featured_click_count').default(0).notNull(), // Track number of clicks on the featured script
+  featuredViewCount: integer('featured_view_count').default(0).notNull(), // Track number of times featured script was viewed/displayed
+  featuredCreatedAt: timestamp('featured_created_at').defaultNow(),
+  featuredUpdatedAt: timestamp('featured_updated_at').defaultNow(),
+});
+
+// User Featured Script Slots table (one-time purchase, not subscription)
+export const userFeaturedScriptSlots = pgTable('user_featured_script_slots', {
+  id: integer('id').primaryKey().notNull(),
+  featuredUserId: text('featured_user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  featuredSlotNumber: integer('featured_slot_number').array().notNull(), // Array of sequential slot numbers [1, 2, 3, ...]
+  featuredSlotUniqueIds: text('featured_slot_unique_ids').array().default([]), // Array of unique IDs for each slot
+  featuredPurchaseDate: timestamp('featured_purchase_date').defaultNow().notNull(),
+  featuredSlotEndDate: timestamp('featured_slot_end_date'), // When this slot expires (calculated as purchaseDate + durationWeeks: 1, 2, 4, or 8 weeks)
+  featuredPackageId: text('featured_package_id'), // Package type: 'starter', 'premium', or 'executive'
+  featuredDurationWeeks: integer('featured_duration_weeks'), // Duration in weeks: 1, 2, 4, or 8 weeks
+  featuredPaypalOrderId: text('featured_paypal_order_id'), // PayPal order ID for one-time payment
+  featuredSlotStatus: text('featured_slot_status').default('active').notNull(), // 'active' | 'inactive'
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   giveawayEntries: many(giveawayEntries),
   adSlots: many(userAdSlots),
+  featuredScriptSlots: many(userFeaturedScriptSlots),
 }));
 
 export const userAdSlotsRelations = relations(userAdSlots, ({ one }) => ({
   user: one(users, {
     fields: [userAdSlots.userId],
+    references: [users.id],
+  }),
+}));
+
+export const userFeaturedScriptSlotsRelations = relations(userFeaturedScriptSlots, ({ one }) => ({
+  user: one(users, {
+    fields: [userFeaturedScriptSlots.featuredUserId],
     references: [users.id],
   }),
 }));
@@ -281,3 +319,7 @@ export type PendingAd = typeof pendingAds.$inferSelect;
 export type NewPendingAd = typeof pendingAds.$inferInsert;
 export type UserAdSlot = typeof userAdSlots.$inferSelect;
 export type NewUserAdSlot = typeof userAdSlots.$inferInsert;
+export type FeaturedScript = typeof featuredScripts.$inferSelect;
+export type NewFeaturedScript = typeof featuredScripts.$inferInsert;
+export type UserFeaturedScriptSlot = typeof userFeaturedScriptSlots.$inferSelect;
+export type NewUserFeaturedScriptSlot = typeof userFeaturedScriptSlots.$inferInsert;
