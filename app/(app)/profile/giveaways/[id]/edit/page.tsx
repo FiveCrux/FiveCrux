@@ -229,13 +229,7 @@ export default function EditGiveawayPage() {
 
   const requirementTypes = [
     { value: "discord", label: "Join Discord", icon: "💬" },
-    { value: "follow", label: "Follow Social Media", icon: "👥" },
-    { value: "share", label: "Share Post", icon: "📤" },
-    { value: "tag", label: "Tag Friends", icon: "🏷️" },
-    { value: "purchase", label: "Make Purchase", icon: "🛒" },
-    { value: "review", label: "Leave Review", icon: "⭐" },
-    { value: "subscribe", label: "Subscribe Newsletter", icon: "📧" },
-    { value: "custom", label: "Custom Task", icon: "✨" },
+    { value: "youtube", label: "Subscribe Youtube", icon: "🎥" }
   ]
 
   const addRequirement = () => {
@@ -248,6 +242,17 @@ export default function EditGiveawayPage() {
   }
 
   const updateRequirement = (id: number, field: string, value: any) => {
+    if (field === "description") {
+      const requirement = requirements.find((r) => r.id === id)
+      // If type is youtube, validate that it's a YouTube URL
+      if (requirement?.type === "youtube" && value) {
+        const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+/
+        if (!youtubeRegex.test(value)) {
+          toast.error("Please enter a valid YouTube URL (e.g., https://youtube.com/@channel or https://youtu.be/...)")
+          return
+        }
+      }
+    }
     setRequirements(requirements.map((r) => (r.id === id ? { ...r, [field]: value } : r)))
   }
 
@@ -269,6 +274,17 @@ export default function EditGiveawayPage() {
     setSaving(true);
 
     try {
+      // Validate YouTube requirements have valid YouTube URLs
+      const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+/
+      for (const requirement of requirements) {
+        if (requirement.type === "youtube" && requirement.description) {
+          if (!youtubeRegex.test(requirement.description)) {
+            toast.error(`Please enter a valid YouTube URL for the "${requirementTypes.find(t => t.value === requirement.type)?.label}" requirement`)
+            setSaving(false)
+            return
+          }
+        }
+      }
       // Process media - combine existing URLs with newly uploaded files
       const finalImages: string[] = []
       const finalVideos: string[] = []
@@ -743,14 +759,21 @@ export default function EditGiveawayPage() {
 
                         <div className="mt-4">
                           <Label className="text-white text-sm">
-                            {requirement.type === "discord" ? "Discord Server Link" : "Description"}
+                            {requirement.type === "discord" 
+                              ? "Discord Server Link" 
+                              : requirement.type === "youtube"
+                              ? "YouTube Channel Link"
+                              : "Description"}
                           </Label>
                           <Input
+                            type={requirement.type === "youtube" ? "url" : "text"}
                             value={requirement.description}
                             onChange={(e) => updateRequirement(requirement.id, "description", e.target.value)}
                             placeholder={
                               requirement.type === "discord" 
                                 ? "https://discord.gg/your-server" 
+                                : requirement.type === "youtube"
+                                ? "https://youtube.com/@channel or https://youtu.be/..."
                                 : "Describe what users need to do..."
                             }
                             className="mt-1 bg-gray-900/50 border-gray-600 text-white placeholder-gray-400"
@@ -758,6 +781,11 @@ export default function EditGiveawayPage() {
                           {requirement.type === "discord" && (
                             <p className="text-xs text-gray-400 mt-1">
                               Enter your Discord server invite link (e.g., https://discord.gg/abc123)
+                            </p>
+                          )}
+                          {requirement.type === "youtube" && (
+                            <p className="text-xs text-gray-400 mt-1">
+                              Enter your YouTube channel URL (e.g., https://youtube.com/@channel or https://youtu.be/videoId)
                             </p>
                           )}
                         </div>
