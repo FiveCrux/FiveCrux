@@ -372,40 +372,58 @@ export default function ScriptDetailPage() {
       `}} />
       <Navbar />
       <div className="min-h-screen bg-neutral-900 text-white">
-        {/* Back Button */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-4">
-          <Button
-            onClick={() => router.push("/scripts")}
-            variant="ghost"
-            className="text-gray-400 hover:text-white hover:bg-neutral-800"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Scripts
-          </Button>
-        </div>
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
-          {/* Two Column Layout */}
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-            {/* Left Column - Media Carousel */}
-            <div className="lg:col-span-3">
-              {allMedia.length > 0 ? (
-                <MediaCarousel
-                  images={script.images || []}
-                  screenshots={script.screenshots || []}
-                  videos={script.videos || []}
-                  title={script.title}
-                  coverImage={script.cover_image}
-                />
-              ) : (
-                <div className="aspect-video bg-black rounded-lg flex items-center justify-center border border-orange-500/30">
-                  <Package className="h-16 w-16 text-gray-600" />
-                </div>
-              )}
+        {/* Hero Section with Background Image */}
+        <div 
+          className="relative text-white"
+          style={{
+            backgroundImage: `${script.cover_image ? `url(${script.cover_image})` : 'none'}`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+          }}
+        >
+          {/* Overlay to reduce background image opacity */}
+          <div className="absolute inset-0 bg-black/60 pointer-events-none" />
+          
+          {/* Gradient fade at bottom */}
+          <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-b from-transparent to-neutral-900 pointer-events-none z-[1]" />
+          
+          {/* Content */}
+          <div className="relative z-10">
+            {/* Back Button */}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-4">
+              <Button
+                onClick={() => router.push("/scripts")}
+                variant="ghost"
+                className="text-gray-400 hover:text-white hover:bg-neutral-800"
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Scripts
+              </Button>
             </div>
 
-            {/* Right Column - Information */}
-            <div className="lg:col-span-2 space-y-6">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+              {/* Two Column Layout */}
+              <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+                {/* Left Column - Media Carousel */}
+                <div className="lg:col-span-3">
+                  {allMedia.length > 0 ? (
+                    <MediaCarousel
+                      images={script.images || []}
+                      screenshots={script.screenshots || []}
+                      videos={script.videos || []}
+                      title={script.title}
+                      coverImage={script.cover_image}
+                    />
+                  ) : (
+                    <div className="aspect-video bg-black rounded-lg flex items-center justify-center border border-orange-500/30">
+                      <Package className="h-16 w-16 text-gray-600" />
+                    </div>
+                  )}
+                </div>
+
+                {/* Right Column - Information */}
+                <div className="lg:col-span-2 space-y-6">
               {/* Header & Badges */}
               <div>
                 <div className="flex flex-wrap items-center gap-2 mb-4">
@@ -512,8 +530,12 @@ export default function ScriptDetailPage() {
               </Card>
             </div>
           </div>
+            </div>
+          </div>
+        </div>
 
-          {/* Tabs Section */}
+        {/* Tabs Section */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
           <div className="mt-8">
             <Card className="bg-neutral-800 border border-neutral-700">
               <Tabs defaultValue="details" className="w-full">
