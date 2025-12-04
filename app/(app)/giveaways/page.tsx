@@ -1049,12 +1049,12 @@ export default function GiveawaysPage() {
                                       ) ? (
                                         <>
                                           <Trophy className="mr-2 h-4 w-4" />
-                                          Entered!
+                                          Registered!
                                         </>
                                       ) : (
                                         <>
                                           <Gift className="mr-2 h-4 w-4" />
-                                          Enter Now
+                                          View Details
                                         </>
                                       )}
                                     </Button>

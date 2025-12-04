@@ -802,32 +802,36 @@ export default function GiveawayDetailPage() {
       <div className="relative z-50">
         <Navbar />
       </div>
-      <div className="min-h-screen bg-black text-white relative overflow-hidden py-16 z-10">
+      <div className="min-h-screen bg-neutral-900 text-white">
         <AnimatedParticles />
 
-        {/* Enhanced animated background with grid */}
-        <div className="fixed inset-0 -z-10">
-          <motion.div
-            className="absolute inset-0"
-            style={{
-              background: `
-                radial-gradient(circle at 20% 50%, rgba(251, 191, 36, 0.05) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(249, 115, 22, 0.05) 0%, transparent 50%),
-                linear-gradient(180deg, #000000 0%, #0a0a0a 100%)
-              `,
-            }}
-          />
-        </div>
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-50">
-          {/* ENHANCED HERO SECTION - New Gaming Layout */}
-          <motion.section
-            ref={heroRef}
-            className="mb-12"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-          >
+        {/* Hero Section with Background Image */}
+        <div 
+          className="relative text-white"
+          style={{
+            backgroundImage: transformedGiveaway.cover_image ? `url("${transformedGiveaway.cover_image}")` : 'none',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+          }}
+        >
+          {/* Overlay to reduce background image opacity */}
+          <div className="absolute inset-0 bg-black/60 pointer-events-none" />
+          
+          {/* Gradient fade at bottom */}
+          <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-b from-transparent to-neutral-900 pointer-events-none z-[1]" />
+          
+          {/* Content */}
+          <div className="relative z-10">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+              {/* ENHANCED HERO SECTION - New Gaming Layout */}
+              <motion.section
+                ref={heroRef}
+                className="mb-12"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8 }}
+              >
             {/* Top Header Bar - Gaming Style */}
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
@@ -1149,8 +1153,12 @@ export default function GiveawayDetailPage() {
               </div>
             </div>
           </motion.section>
+            </div>
+          </div>
+        </div>
 
-          {/* TASKS & PRIZES SECTION - Enhanced Tabs */}
+        {/* TASKS & PRIZES SECTION - Enhanced Tabs */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <motion.section
             ref={detailsRef}
             className="mb-16"
