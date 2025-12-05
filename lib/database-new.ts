@@ -412,7 +412,7 @@ export async function checkAndDeactivateExpiredSlots(): Promise<{ checked: numbe
       and(
         eq(approvedAds.status, 'active'),
         sql`${approvedAds.endDate} IS NOT NULL`,
-        sql`${approvedAds.endDate} < ${now}`
+        lt(approvedAds.endDate, now)  // Changed from: sql`${approvedAds.endDate} < ${now}`
       )
     );
   
