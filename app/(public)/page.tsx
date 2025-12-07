@@ -37,6 +37,7 @@ import { StarsBackground } from "@/components/animate-ui/components/backgrounds/
 import { cn } from "@/lib/utils";
 import Footer from "@/componentss/shared/footer";
 import Image from "next/image";
+import { InfiniteMovingCards } from "@/componentss/ui/infinite-moving-cards";
 interface Stats {
   totalScripts: number;
   totalUsers: number;
@@ -46,15 +47,26 @@ interface Stats {
   categoryCounts: Record<string, number>;
 }
 
+interface Script {
+  id: number;
+  title: string;
+  description: string;
+  cover_image?: string;
+  framework?: string[];
+  price: number;
+  original_price?: number;
+}
+
 export default function HomePage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [featuredScripts, setFeaturedScripts] = useState<Script[]>([]);
+  const [scriptsLoading, setScriptsLoading] = useState(true);
   const { status } = useSession();
   const { resolvedTheme } = useTheme();
   const heroRef = useRef(null);
   const featuresRef = useRef(null);
   const statsRef = useRef(null);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const { scrollYProgress } = useScroll();
   const heroInView = useInView(heroRef, { once: true });
@@ -85,6 +97,38 @@ export default function HomePage() {
     fetchData();
   }, []);
 
+  // Fetch featured scripts
+  useEffect(() => {
+    const fetchFeaturedScripts = async () => {
+      try {
+        setScriptsLoading(true);
+        const response = await fetch("/api/scripts?featured=true&limit=6", { cache: "no-store" });
+
+        if (response.ok) {
+          const data = await response.json();
+          const scripts = data.scripts || [];
+          // Map API response to match the expected format
+          const mappedScripts: Script[] = scripts.map((script: any) => ({
+            id: script.id,
+            title: script.title,
+            description: script.description || "",
+            cover_image: script.cover_image || script.coverImage || "/placeholder.jpg",
+            framework: Array.isArray(script.framework) ? script.framework : script.framework ? [script.framework] : [],
+            price: script.price || script.original_price || 0,
+            original_price: script.original_price || script.price,
+          }));
+          setFeaturedScripts(mappedScripts);
+        }
+      } catch (error) {
+        console.error("Error fetching featured scripts:", error);
+      } finally {
+        setScriptsLoading(false);
+      }
+    };
+
+    fetchFeaturedScripts();
+  }, []);
+
   const platformFeatures = [
     {
       title: "Lightning Fast",
@@ -113,77 +157,6 @@ export default function HomePage() {
     },
   ];
 
-  const script = [
-    {
-      id: "script-101",
-      title: "Modern SaaS Landing Page",
-      description:
-        "A sleek, responsive SaaS landing page built with Next.js and Tailwind CSS. Includes pricing, testimonials, and hero animations.",
-      image: "/images/saas-landing.jpg",
-      framework: ["Next.js", "Tailwind", "Framer Motion"],
-      price: 29,
-    },
-    {
-      id: "script-102",
-      title: "Restaurant Ordering App UI",
-      description:
-        "A beautiful mobile-first UI for food ordering with category filters, cart system, and product details.",
-      image: "/images/food-app.jpg",
-      framework: ["React", "Redux", "Tailwind"],
-      price: 19,
-    },
-    {
-      id: "script-103",
-      title: "AI Chatbot Starter Kit",
-      description:
-        "A complete AI chat interface with streaming responses, markdown support, and message persistence.",
-      image: "/images/ai-chatbot.jpg",
-      framework: ["Next.js", "OpenAI", "TypeScript"],
-      price: 39,
-    },
-    {
-      id: "script-104",
-      title: "E-commerce Admin Dashboard",
-      description:
-        "Feature-rich dashboard with charts, product management, order tracking, and dark/light mode support.",
-      image: "/images/ecommerce-dashboard.jpg",
-      framework: ["Next.js", "ShadCN UI", "Recharts"],
-      price: 49,
-    },
-    {
-      id: "script-105",
-      title: "Portfolio Website Template",
-      description:
-        "A clean and minimal portfolio with animations, a blog section, and integrated contact form.",
-      image: "/images/portfolio-template.jpg",
-      framework: ["Next.js", "Tailwind", "MDX"],
-      price: 15,
-    },
-  ];
-
-  // Auto-scroll for script cards
-  useEffect(() => {
-    if (script.length <= 3 || !scrollContainerRef.current) return;
-
-    const container = scrollContainerRef.current;
-    let scrollPosition = 0;
-    const scrollSpeed = 0.5; // pixels per frame
-
-    const autoScroll = () => {
-      scrollPosition += scrollSpeed;
-      const maxScroll = container.scrollWidth - container.clientWidth;
-
-      if (scrollPosition >= maxScroll) {
-        scrollPosition = 0; // Reset to start for infinite loop
-      }
-
-      container.scrollLeft = scrollPosition;
-    };
-
-    const interval = setInterval(autoScroll, 16); // ~60fps
-
-    return () => clearInterval(interval);
-  }, [script.length]);
 
   return (
     <>
@@ -333,7 +306,7 @@ export default function HomePage() {
               <Badge className="bg-gradient-to-r from-orange-500/20 to-yellow-400/20 text-orange-400 border-orange-500/30 mb-6 px-4 py-2 text-sm font-semibold">
                 Featured Scripts
               </Badge>
-              <h2 className="text-4xl md:text-5xl font-bold text-white mb-4 flex items-center gap-3 justify-center">
+              <h2 className="text-4xl md:text-5xl font-bold text-white mb-4 flex items-center gap-0 justify-center sm:gap-3">
                 <Zap className="h-10 w-10 text-orange-500" />
                 Featured Scripts
               </h2>
@@ -342,104 +315,38 @@ export default function HomePage() {
               </p>
             </motion.div>
 
-            {script.length > 3 ? (
-              <div className="relative">
-                <div
-                  ref={scrollContainerRef}
-                  className="overflow-x-auto scrollbar-hide pb-4 snap-x snap-mandatory"
-                  style={{ scrollBehavior: "smooth" }}
-                >
-                  <div className="flex gap-6">
-                    {script.map((item, index) => (
-                      <div
-                        key={item.id}
-                        className="group flex-shrink-0 snap-start"
-                        style={{
-                          width: "calc((100vw - 8rem) / 3)",
-                          minWidth: "320px",
-                          maxWidth: "400px",
-                        }}
-                      >
-                        <Link href={`/script/${item.id}`}>
-                          <Card className="bg-neutral-900 border-2 border-neutral-700/50 hover:border-orange-500 cursor-pointer h-full backdrop-blur-sm relative overflow-hidden shadow-2xl rounded-xl w-full">
-                            {/* Image Section */}
-                            <CardHeader className="p-0 overflow-hidden rounded-t-xl">
-                              <Image
-                                src={item.image || "/placeholder.jpg"}
-                                alt={item.title}
-                                width={400}
-                                height={256}
-                                className="object-cover w-full h-52"
-                              />
-                            </CardHeader>
-
-                            {/* Content Section */}
-                            <div className="flex flex-col flex-1">
-                              <CardContent className="p-3 flex-1 space-y-2">
-                                {/* Title */}
-                                <CardTitle className="text-base font-bold text-white leading-tight line-clamp-2">
-                                  {item.title}
-                                </CardTitle>
-
-                                {/* Description */}
-                                <CardDescription className="text-neutral-400 text-xs leading-snug line-clamp-2">
-                                  {item.description}
-                                </CardDescription>
-
-                                {/* Framework Badges */}
-                                {item.framework &&
-                                  item.framework.length > 0 && (
-                                    <motion.div
-                                      className="flex flex-wrap gap-1"
-                                      initial={{ scale: 0, rotate: 180 }}
-                                      animate={{ scale: 1, rotate: 0 }}
-                                      transition={{
-                                        delay: index * 0.05 + 0.1,
-                                        type: "spring",
-                                      }}
-                                    >
-                                      {item.framework.map((fw, idx) => (
-                                        <motion.div
-                                          key={idx}
-                                          whileHover={{
-                                            scale: 1.1,
-                                            y: -2,
-                                          }}
-                                        >
-                                          <Badge className="bg-neutral-800/95 text-white backdrop-blur-sm text-[10px] font-bold border border-neutral-600/50 rounded px-1.5 py-0.5 uppercase tracking-wide shadow-lg">
-                                            <span className="mr-1 text-xs">
-                                              •
-                                            </span>
-                                            {fw}
-                                          </Badge>
-                                        </motion.div>
-                                      ))}
-                                    </motion.div>
-                                  )}
-
-                                {/* Price */}
-                                <CardDescription className="text-orange-500 text-xl font-bold pt-1">
-                                  ${item.price}
-                                </CardDescription>
-                              </CardContent>
-                            </div>
-                          </Card>
-                        </Link>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ) : (
+            {scriptsLoading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {script.map((item, index) => (
-                  <div key={item.id} className="group">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="bg-neutral-900 border-2 border-neutral-700/50 rounded-xl h-96 animate-pulse" />
+                ))}
+              </div>
+            ) : featuredScripts.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-gray-400">No featured scripts available at the moment.</p>
+              </div>
+            ) : featuredScripts.length > 3 ? (
+              <InfiniteMovingCards
+                items={featuredScripts}
+                direction="left"
+                speed="normal"
+                pauseOnHover={true}
+                className="max-w-7xl"
+                renderItem={(item, index) => (
+                  <div
+                    className="group"
+                    style={{
+                      width: "calc((100vw - 8rem) / 3)",
+                      minWidth: "320px",
+                      maxWidth: "400px",
+                    }}
+                  >
                     <Link href={`/script/${item.id}`}>
-                      <Card className="bg-neutral-900 border-2 border-neutral-700/50 hover:border-orange-500 cursor-pointer h-full backdrop-blur-sm relative overflow-hidden shadow-2xl rounded-xl">
+                      <Card className="bg-neutral-900 border-2 border-neutral-700/50 hover:border-orange-500 cursor-pointer h-full backdrop-blur-sm relative overflow-hidden shadow-2xl rounded-xl w-full">
                         {/* Image Section */}
                         <CardHeader className="p-0 overflow-hidden rounded-t-xl">
                           <Image
-                            src={item.image || "/placeholder.jpg"}
+                            src={item.cover_image || "/placeholder.jpg"}
                             alt={item.title}
                             width={400}
                             height={256}
@@ -461,53 +368,127 @@ export default function HomePage() {
                             </CardDescription>
 
                             {/* Framework Badges */}
-                            {item.framework && item.framework.length > 0 && (
-                              <motion.div
-                                className="flex flex-wrap gap-1"
-                                initial={{ scale: 0, rotate: 180 }}
-                                animate={{ scale: 1, rotate: 0 }}
-                                transition={{
-                                  delay: index * 0.05 + 0.1,
-                                  type: "spring",
-                                }}
-                              >
-                                {item.framework.map((fw, idx) => (
-                                  <motion.div
-                                    key={idx}
-                                    whileHover={{
-                                      scale: 1.1,
-                                      y: -2,
-                                    }}
-                                  >
-                                    <Badge className="bg-neutral-800/95 text-white backdrop-blur-sm text-[10px] font-bold border border-neutral-600/50 rounded px-1.5 py-0.5 uppercase tracking-wide shadow-lg">
-                                      <span className="mr-1 text-xs">•</span>
-                                      {fw}
-                                    </Badge>
-                                  </motion.div>
-                                ))}
-                              </motion.div>
-                            )}
+                            {item.framework &&
+                              item.framework.length > 0 && (
+                                <motion.div
+                                  className="flex flex-wrap gap-1"
+                                  initial={{ scale: 0, rotate: 180 }}
+                                  animate={{ scale: 1, rotate: 0 }}
+                                  transition={{
+                                    delay: index * 0.05 + 0.1,
+                                    type: "spring",
+                                  }}
+                                >
+                                  {item.framework.map((fw: string, idx: number) => (
+                                    <motion.div
+                                      key={idx}
+                                      whileHover={{
+                                        scale: 1.1,
+                                        y: -2,
+                                      }}
+                                    >
+                                      <Badge className="bg-neutral-800/95 text-white backdrop-blur-sm text-[10px] font-bold border border-neutral-600/50 rounded px-1.5 py-0.5 uppercase tracking-wide shadow-lg hover:bg-neutral-800/95 hover:text-white">
+                                        <span className="mr-1 text-xs">
+                                          •
+                                        </span>
+                                        {fw}
+                                      </Badge>
+                                    </motion.div>
+                                  ))}
+                                </motion.div>
+                              )}
 
                             {/* Price */}
                             <CardDescription className="text-orange-500 text-xl font-bold pt-1">
                               ${item.price}
                             </CardDescription>
                           </CardContent>
-
-                          {/* Button Section */}
-                          <div className="flex justify-center px-3 pb-3">
-                            <Button
-                              variant="outline"
-                              className="w-full bg-white text-black hover:bg-orange-600 hover:text-white transition-colors duration-200 font-semibold text-xs py-1.5 h-auto"
-                            >
-                              View Details
-                            </Button>
-                          </div>
                         </div>
                       </Card>
                     </Link>
                   </div>
-                ))}
+                )}
+              />
+            ) : (
+              <div className="overflow-x-auto -mx-4 sm:-mx-6 px-4 sm:px-6 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                <div className="flex md:grid md:grid-cols-2 xl:grid-cols-3 gap-6 md:gap-6 min-w-max md:min-w-0">
+                  {featuredScripts.map((item, index) => (
+                    <div key={item.id} className="group flex-shrink-0 w-[320px] md:w-auto">
+                      <Link href={`/script/${item.id}`}>
+                        <Card className="bg-neutral-900 border-2 border-neutral-700/50 hover:border-orange-500 cursor-pointer h-full backdrop-blur-sm relative overflow-hidden shadow-2xl rounded-xl">
+                          {/* Image Section */}
+                          <CardHeader className="p-0 overflow-hidden rounded-t-xl">
+                            <Image
+                              src={item.cover_image || "/placeholder.jpg"}
+                              alt={item.title}
+                              width={400}
+                              height={256}
+                              className="object-cover w-full h-52"
+                            />
+                          </CardHeader>
+
+                          {/* Content Section */}
+                          <div className="flex flex-col flex-1">
+                            <CardContent className="p-3 flex-1 space-y-2">
+                              {/* Title */}
+                              <CardTitle className="text-base font-bold text-white leading-tight line-clamp-2">
+                                {item.title}
+                              </CardTitle>
+
+                              {/* Description */}
+                              <CardDescription className="text-neutral-400 text-xs leading-snug line-clamp-2">
+                                {item.description}
+                              </CardDescription>
+
+                              {/* Framework Badges */}
+                              {item.framework && item.framework.length > 0 && (
+                                <motion.div
+                                  className="flex flex-wrap gap-1"
+                                  initial={{ scale: 0, rotate: 180 }}
+                                  animate={{ scale: 1, rotate: 0 }}
+                                  transition={{
+                                    delay: index * 0.05 + 0.1,
+                                    type: "spring",
+                                  }}
+                                >
+                                  {item.framework.map((fw: string, idx: number) => (
+                                    <motion.div
+                                      key={idx}
+                                      whileHover={{
+                                        scale: 1.1,
+                                        y: -2,
+                                      }}
+                                    >
+                                      <Badge className="bg-neutral-800/95 text-white backdrop-blur-sm text-[10px] font-bold border border-neutral-600/50 rounded px-1.5 py-0.5 uppercase tracking-wide shadow-lg">
+                                        <span className="mr-1 text-xs">•</span>
+                                        {fw}
+                                      </Badge>
+                                    </motion.div>
+                                  ))}
+                                </motion.div>
+                              )}
+
+                              {/* Price */}
+                              <CardDescription className="text-orange-500 text-xl font-bold pt-1">
+                                ${item.price}
+                              </CardDescription>
+                            </CardContent>
+
+                            {/* Button Section */}
+                            <div className="flex justify-center px-3 pb-3">
+                              <Button
+                                variant="outline"
+                                className="w-full bg-white text-black hover:bg-orange-600 hover:text-white transition-colors duration-200 font-semibold text-xs py-1.5 h-auto"
+                              >
+                                View Details
+                              </Button>
+                            </div>
+                          </div>
+                        </Card>
+                      </Link>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>

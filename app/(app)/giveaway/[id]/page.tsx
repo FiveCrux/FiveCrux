@@ -261,6 +261,8 @@ export default function GiveawayDetailPage() {
 
   const heroRef = useRef(null)
   const detailsRef = useRef(null)
+  const mediaCarouselRef = useRef<HTMLDivElement>(null)
+  const [bgHeight, setBgHeight] = useState<number | null>(null)
 
   const heroInView = useInView(heroRef, { once: true })
   const detailsInView = useInView(detailsRef, { once: true })
@@ -286,6 +288,30 @@ export default function GiveawayDetailPage() {
     related: false,
     entry: false
   })
+  
+  // Calculate background height based on media carousel position
+  useEffect(() => {
+    if (loading) return
+    
+    const updateBgHeight = () => {
+      if (mediaCarouselRef.current && heroRef.current) {
+        const mediaRect = mediaCarouselRef.current.getBoundingClientRect()
+        const heroRect = (heroRef.current as HTMLElement).getBoundingClientRect()
+        // Calculate height from top of hero section to bottom of media carousel
+        const height = mediaRect.bottom - heroRect.top + 32 // Add padding
+        setBgHeight(height)
+      }
+    }
+    
+    // Use setTimeout to ensure DOM is rendered
+    const timer = setTimeout(updateBgHeight, 100)
+    window.addEventListener('resize', updateBgHeight)
+    
+    return () => {
+      clearTimeout(timer)
+      window.removeEventListener('resize', updateBgHeight)
+    }
+  }, [loading])
   
   // [Previous useEffects remain the same - keeping all the data fetching logic]
   useEffect(() => {
@@ -805,21 +831,26 @@ export default function GiveawayDetailPage() {
       <div className="min-h-screen bg-neutral-900 text-white">
         <AnimatedParticles />
 
-        {/* Hero Section with Background Image */}
-        <div 
-          className="relative text-white"
-          style={{
-            backgroundImage: transformedGiveaway.cover_image ? `url("${transformedGiveaway.cover_image}")` : 'none',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat',
-          }}
-        >
-          {/* Overlay to reduce background image opacity */}
-          <div className="absolute inset-0 bg-black/60 pointer-events-none" />
-          
-          {/* Gradient fade at bottom */}
-          <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-b from-transparent to-neutral-900 pointer-events-none z-[1]" />
+        {/* Hero Section with Background Image - Limited to Media Carousel */}
+        <div className="relative">
+          {/* Background Image Container - Only covers up to media carousel */}
+          <div 
+            className="absolute inset-x-0 top-0 text-white overflow-hidden"
+            style={{
+              backgroundImage: transformedGiveaway.cover_image ? `url("${transformedGiveaway.cover_image}")` : 'none',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center 70%',
+              backgroundRepeat: 'no-repeat',
+              height: bgHeight ? `${bgHeight}px` : 'auto',
+              minHeight: bgHeight ? undefined : '100vh',
+            }}
+          >
+            {/* Overlay to reduce background image opacity */}
+            <div className="absolute inset-0 bg-black/60 pointer-events-none" />
+            
+            {/* Gradient fade at bottom */}
+            <div className="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-b from-transparent to-neutral-900 pointer-events-none z-[1]" />
+          </div>
           
           {/* Content */}
           <div className="relative z-10">
@@ -832,103 +863,104 @@ export default function GiveawayDetailPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8 }}
               >
-            {/* Top Header Bar - Gaming Style */}
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <motion.div
-                  animate={{ rotate: [0, 360] }}
-                  transition={{ duration: 20, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
-                >
-                  <Sparkles className="h-5 w-5 text-yellow-400" />
-                </motion.div>
-                <div>
-                  <Badge className="bg-gradient-to-r from-yellow-500 to-orange-500 text-black font-bold mb-2">
-                    {transformedGiveaway.category}
-                  </Badge>
-                  {transformedGiveaway.featured && (
-                    <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold ml-2">
-                      <Star className="h-3 w-3 mr-1" />
-                      Featured
-                    </Badge>
-                  )}
-                </div>
-              </div>
-              
-              {/* Quick Stats Bar */}
-              <div className="flex items-center gap-4 text-xs">
-                <div className="flex items-center gap-1.5 text-orange-400">
-                  <TrendingUp className="h-3.5 w-3.5" />
-                  <span className="font-semibold">{transformedGiveaway.entries.toLocaleString()} Entries</span>
-                </div>
-                <div className="flex items-center gap-1.5 text-yellow-400">
-                  <Clock className="h-3.5 w-3.5" />
-                  <span className="font-semibold">{transformedGiveaway.timeLeft}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Main Title with Glow Effect */}
-            <motion.h1 
-              className="text-3xl md:text-4xl font-black mb-4 bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 bg-clip-text text-transparent"
-              initial={{ opacity: 0, x: -50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 }}
-              style={{
-                textShadow: '0 0 40px rgba(251, 191, 36, 0.3)',
-              }}
-            >
-              {transformedGiveaway.title}
-            </motion.h1>
-
-            {/* Ended Banner - Enhanced */}
-            {isGiveawayEnded && (
-              <motion.div
-                className="bg-gradient-to-r from-red-600/20 via-orange-600/20 to-red-600/20 border-2 border-red-500 rounded-2xl p-6 mb-8 relative overflow-hidden"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                whileHover={{ scale: 1.02 }}
-                transition={{ duration: 0.5 }}
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-red-500/5 to-orange-500/5"></div>
-                <div className="relative flex items-center justify-center gap-3">
-                  <Trophy className="h-5 w-5 text-red-400 animate-pulse" />
-                  <div className="text-center">
-                    <span className="text-xl font-black text-red-400 block mb-1">GIVEAWAY ENDED</span>
-                    <p className="text-gray-300 text-sm">
-                      Ended on {new Date(transformedGiveaway.endDate).toLocaleDateString('en-US', { 
-                        month: 'long', 
-                        day: 'numeric', 
-                        year: 'numeric' 
-                      })}
-                    </p>
+                {/* Top Header Bar - Gaming Style */}
+                <div className="flex items-center justify-between mb-6 py-6">
+                  <div className="flex items-center gap-3">
+                    <motion.div
+                      animate={{ rotate: [0, 360] }}
+                      transition={{ duration: 20, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
+                    >
+                      <Sparkles className="h-5 w-5 text-yellow-400" />
+                    </motion.div>
+                    <div>
+                      <Badge className="bg-gradient-to-r from-yellow-500 to-orange-500 text-black font-bold mb-2">
+                        {transformedGiveaway.category}
+                      </Badge>
+                      {transformedGiveaway.featured && (
+                        <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold ml-2">
+                          <Star className="h-3 w-3 mr-1" />
+                          Featured
+                        </Badge>
+                      )}
+                    </div>
                   </div>
-                  <Trophy className="h-5 w-5 text-red-400 animate-pulse" />
+                  
+                  {/* Quick Stats Bar */}
+                  <div className="flex items-center gap-4 text-xs">
+                    <div className="flex items-center gap-1.5 text-orange-400">
+                      <TrendingUp className="h-3.5 w-3.5" />
+                      <span className="font-semibold">{transformedGiveaway.entries.toLocaleString()} Entries</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-yellow-400">
+                      <Clock className="h-3.5 w-3.5" />
+                      <span className="font-semibold">{transformedGiveaway.timeLeft}</span>
+                    </div>
+                  </div>
                 </div>
-              </motion.div>
-            )}
 
-            {/* Two Column Layout - Enhanced */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* LEFT COLUMN - Media & Description (2/3 width) */}
-              <div className="lg:col-span-2 space-y-6">
-                {/* Media Gallery with Gaming Border */}
-                {((transformedGiveaway.images && transformedGiveaway.images.length > 0) || 
-                  (transformedGiveaway.videos && transformedGiveaway.videos.length > 0) || 
-                  transformedGiveaway.cover_image) && (
+                {/* Main Title with Glow Effect */}
+                <motion.h1 
+                  className="text-3xl md:text-4xl font-black mb-4 bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 bg-clip-text text-transparent"
+                  initial={{ opacity: 0, x: -50 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.2 }}
+                  style={{
+                    textShadow: '0 0 40px rgba(251, 191, 36, 0.3)',
+                  }}
+                >
+                  {transformedGiveaway.title}
+                </motion.h1>
+
+                {/* Ended Banner - Enhanced */}
+                {isGiveawayEnded && (
                   <motion.div
-                    initial={{ opacity: 0, x: -30 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.3 }}
+                    className="bg-gradient-to-r from-red-600/20 via-orange-600/20 to-red-600/20 border-2 border-red-500 rounded-2xl p-6 mb-8 relative overflow-hidden"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    whileHover={{ scale: 1.02 }}
+                    transition={{ duration: 0.5 }}
                   >
-                    <MediaSlider 
-                      images={transformedGiveaway.images || []}
-                      screenshots={[]}
-                      videos={transformedGiveaway.videos || []}
-                      title={transformedGiveaway.title}
-                      coverImage={transformedGiveaway.cover_image}
-                    />
+                    <div className="absolute inset-0 bg-gradient-to-r from-red-500/5 to-orange-500/5"></div>
+                    <div className="relative flex items-center justify-center gap-3">
+                      <Trophy className="h-5 w-5 text-red-400 animate-pulse" />
+                      <div className="text-center">
+                        <span className="text-xl font-black text-red-400 block mb-1">GIVEAWAY ENDED</span>
+                        <p className="text-gray-300 text-sm">
+                          Ended on {new Date(transformedGiveaway.endDate).toLocaleDateString('en-US', { 
+                            month: 'long', 
+                            day: 'numeric', 
+                            year: 'numeric' 
+                          })}
+                        </p>
+                      </div>
+                      <Trophy className="h-5 w-5 text-red-400 animate-pulse" />
+                    </div>
                   </motion.div>
                 )}
+
+                {/* Two Column Layout - Enhanced */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                  {/* LEFT COLUMN - Media & Description (2/3 width) */}
+                  <div className="lg:col-span-2 space-y-6">
+                    {/* Media Gallery with Gaming Border */}
+                    {((transformedGiveaway.images && transformedGiveaway.images.length > 0) || 
+                      (transformedGiveaway.videos && transformedGiveaway.videos.length > 0) || 
+                      transformedGiveaway.cover_image) && (
+                      <motion.div
+                        ref={mediaCarouselRef}
+                        initial={{ opacity: 0, x: -30 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.3 }}
+                      >
+                        <MediaSlider 
+                          images={transformedGiveaway.images || []}
+                          screenshots={[]}
+                          videos={transformedGiveaway.videos || []}
+                          title={transformedGiveaway.title}
+                          coverImage={transformedGiveaway.cover_image}
+                        />
+                      </motion.div>
+                    )}
 
                 {/* Description Card - Gaming Style */}
                 <motion.div
@@ -1006,7 +1038,7 @@ export default function GiveawayDetailPage() {
                   transition={{ delay: 0.6 }}
                 >
                   {/* Prize Value Card - Eye-catching */}
-                  <div className="bg-gradient-to-br from-yellow-500 via-orange-500 to-red-500 rounded-2xl p-1 shadow-2xl shadow-yellow-500/50">
+                  <div className="bg-gradient-to-br rounded-2xl p-1 shadow-2xl shadow-yellow-500/50">
                     <div className="bg-black rounded-xl p-4 text-center">
                       <p className="text-xs text-gray-400 mb-1.5 font-semibold uppercase tracking-wider">Total Prize Value</p>
                       <motion.div
@@ -1077,7 +1109,7 @@ export default function GiveawayDetailPage() {
                             ? "bg-gray-700 cursor-not-allowed"
                             : isEntered
                             ? "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 shadow-green-500/50"
-                            : "bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 hover:from-yellow-300 hover:via-orange-400 hover:to-red-400 shadow-yellow-500/50 animate-pulse"
+                            : "bg-white text-black hover:bg-gradient-to-r hover:from-yellow-300 hover:via-orange-400 hover:to-red-400 hover:text-white shadow-yellow-500/50"
                         }`}
                       >
                         {isGiveawayEnded ? (
@@ -1653,15 +1685,15 @@ export default function GiveawayDetailPage() {
               </h2>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {relatedLoading ? (
                 Array.from({ length: 3 }).map((_, index) => (
-                  <div key={index} className="bg-gray-900/30 border-2 border-gray-700/50 rounded-2xl p-4 animate-pulse">
-                    <div className="w-full h-48 bg-gray-800 rounded-xl mb-4"></div>
-                    <div className="h-4 bg-gray-800 rounded mb-2"></div>
+                  <div key={index} className="bg-gray-900/30 border-2 border-gray-700/50 rounded-xl p-3 animate-pulse">
+                    <div className="w-full h-32 bg-gray-800 rounded-lg mb-3"></div>
+                    <div className="h-3 bg-gray-800 rounded mb-2"></div>
                     <div className="flex justify-between">
-                      <div className="h-3 bg-gray-800 rounded w-20"></div>
-                      <div className="h-3 bg-gray-800 rounded w-16"></div>
+                      <div className="h-2.5 bg-gray-800 rounded w-16"></div>
+                      <div className="h-2.5 bg-gray-800 rounded w-12"></div>
                     </div>
                   </div>
                 ))
@@ -1672,37 +1704,37 @@ export default function GiveawayDetailPage() {
                   initial={{ opacity: 0, y: 30 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  whileHover={{ y: -10, scale: 1.03 }}
+                  whileHover={{ y: -8, scale: 1.02 }}
                   viewport={{ once: true }}
                 >
                   <Link href={`/giveaway/${giveaway.id}`}>
-                    <div className="bg-gradient-to-br from-gray-900/50 to-black/50 border-2 border-gray-700/50 hover:border-yellow-500/50 rounded-2xl overflow-hidden cursor-pointer backdrop-blur-sm transition-all duration-300 group">
+                    <div className="bg-gradient-to-br from-gray-900/50 to-black/50 border-2 border-gray-700/50 hover:border-yellow-500/50 rounded-xl overflow-hidden cursor-pointer backdrop-blur-sm transition-all duration-300 group">
                       <div className="relative overflow-hidden">
                         <img
                           src={giveaway.coverImage || giveaway.image || "/placeholder.jpg"}
                           alt={giveaway.title}
-                          className="w-full h-48 object-cover transition-transform duration-500 group-hover:scale-110"
+                          className="w-full h-32 object-cover transition-transform duration-500 group-hover:scale-110"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
-                        <div className="absolute top-3 right-3">
-                          <Badge className="bg-gradient-to-r from-yellow-500 to-orange-500 text-black font-bold px-3 py-1">
+                        <div className="absolute top-2 right-2">
+                          <Badge className="bg-gradient-to-r from-yellow-500 to-orange-500 text-black font-bold px-2 py-0.5 text-xs">
                             ${giveaway.totalValue || '0'}
                           </Badge>
                         </div>
                       </div>
-                      <div className="p-5">
-                        <h3 className="text-white font-bold text-lg mb-3 hover:text-yellow-400 transition-colors line-clamp-2 group-hover:text-yellow-400">
+                      <div className="p-3">
+                        <h3 className="text-white font-bold text-sm mb-2 hover:text-yellow-400 transition-colors line-clamp-2 group-hover:text-yellow-400">
                           {giveaway.title}
                         </h3>
-                        <div className="flex items-center justify-between text-sm">
-                          <div className="flex items-center gap-2 text-orange-400">
-                            <Clock className="h-4 w-4" />
+                        <div className="flex items-center justify-between text-xs">
+                          <div className="flex items-center gap-1.5 text-orange-400">
+                            <Clock className="h-3.5 w-3.5" />
                             <span className="font-semibold">
                               {new Date(giveaway.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                             </span>
                           </div>
-                          <div className="flex items-center gap-2 text-blue-400">
-                            <Users className="h-4 w-4" />
+                          <div className="flex items-center gap-1.5 text-blue-400">
+                            <Users className="h-3.5 w-3.5" />
                             <span className="font-semibold">{giveaway.entriesCount || 0}</span>
                           </div>
                         </div>

@@ -412,7 +412,7 @@ export async function checkAndDeactivateExpiredSlots(): Promise<{ checked: numbe
       and(
         eq(approvedAds.status, 'active'),
         sql`${approvedAds.endDate} IS NOT NULL`,
-        sql`${approvedAds.endDate} < ${now}`
+        lt(approvedAds.endDate, now)  // Changed from: sql`${approvedAds.endDate} < ${now}`
       )
     );
   
@@ -2644,6 +2644,56 @@ export async function getFeaturedScripts(filters?: {
   } catch (error: any) {
     console.error('Error fetching featured scripts:', error);
     throw error;
+  }
+}
+
+// Get all featured scripts with script details (for public display)
+export async function getFeaturedScriptsWithDetails(filters?: {
+  status?: string;
+  limit?: number;
+}) {
+  try {
+    const conditions: any[] = [];
+    // Default to active status for public display
+    const statusFilter = filters?.status || 'active';
+    conditions.push(eq(featuredScripts.featuredStatus, statusFilter as any));
+    
+    const limitVal = filters?.limit || 50;
+    
+    const results = await db
+      .select({
+        // Featured script fields
+        id: featuredScripts.id,
+        scriptId: featuredScripts.scriptId,
+        featuredSlotUniqueId: featuredScripts.featuredSlotUniqueId,
+        featuredSlotStatus: featuredScripts.featuredSlotStatus,
+        featuredStartDate: featuredScripts.featuredStartDate,
+        featuredEndDate: featuredScripts.featuredEndDate,
+        featuredCreatedBy: featuredScripts.featuredCreatedBy,
+        featuredStatus: featuredScripts.featuredStatus,
+        featuredClickCount: featuredScripts.featuredClickCount,
+        featuredViewCount: featuredScripts.featuredViewCount,
+        featuredCreatedAt: featuredScripts.featuredCreatedAt,
+        featuredUpdatedAt: featuredScripts.featuredUpdatedAt,
+        // Script fields
+        scriptTitle: approvedScripts.title,
+        scriptDescription: approvedScripts.description,
+        scriptCoverImage: approvedScripts.coverImage,
+        scriptPrice: approvedScripts.price,
+        scriptCategory: approvedScripts.category,
+        scriptFramework: approvedScripts.framework,
+        scriptSellerName: approvedScripts.seller_name,
+      })
+      .from(featuredScripts)
+      .leftJoin(approvedScripts, eq(featuredScripts.scriptId, approvedScripts.id))
+      .where(and(...conditions))
+      .orderBy(desc(featuredScripts.featuredCreatedAt))
+      .limit(limitVal);
+
+    return results;
+  } catch (error) {
+    console.error('Error fetching featured scripts with details:', error);
+    return [];
   }
 }
 
