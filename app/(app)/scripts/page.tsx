@@ -535,7 +535,7 @@ export default function ScriptsPage() {
               {/* Filters Bar */}
               <motion.div
                 ref={filtersRef}
-                className="mb-6 relative z-30"
+                className="mb-6 relativescr"
                 initial={{ opacity: 0, y: -20 }}
                 animate={filtersInView ? { opacity: 1, y: 0 } : {}}
                 transition={{ duration: 0.8 }}
@@ -916,7 +916,7 @@ export default function ScriptsPage() {
                     </SelectContent>
                   </Select>
                 </motion.div>
-                <div className="flex border border-neutral-700/50 rounded-md backdrop-blur-sm">
+                <div className="hidden sm:flex border border-neutral-700/50 rounded-md backdrop-blur-sm">
                   <motion.div
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
@@ -1219,10 +1219,6 @@ export default function ScriptsPage() {
                                       {script.title}
                                     </CardTitle>
 
-                                    {/* Description */}
-                                    <CardDescription className="text-neutral-400 text-xs leading-snug line-clamp-2">
-                                      {script.description}
-                                    </CardDescription>
 
                                     {/* Framework Badges */}
                                     {script.framework &&
@@ -1231,10 +1227,6 @@ export default function ScriptsPage() {
                                           className="flex flex-wrap gap-1"
                                           initial={{ scale: 0, rotate: 180 }}
                                           animate={{ scale: 1, rotate: 0 }}
-                                          transition={{
-                                            delay: index * 0.05 + 0.1,
-                                            type: "spring",
-                                          }}
                                         >
                                           {script.framework.map((fw, idx) => (
                                             <motion.div
@@ -1244,7 +1236,7 @@ export default function ScriptsPage() {
                                                 y: -2,
                                               }}
                                             >
-                                              <Badge className="bg-neutral-800/95 text-white backdrop-blur-sm text-[10px] font-bold border border-neutral-600/50 rounded px-1.5 py-0.5 uppercase tracking-wide shadow-lg">
+                                              <Badge className="bg-neutral-800/95 text-white backdrop-blur-sm text-[10px] font-bold border border-neutral-600/50 rounded px-1.5 py-0.5 uppercase tracking-wide shadow-lg hover:bg-neutral-800/95 hover:text-white">
                                                 <span className="mr-1 text-xs">
                                                   •
                                                 </span>
@@ -1254,6 +1246,11 @@ export default function ScriptsPage() {
                                           ))}
                                         </motion.div>
                                       )}
+                                      
+                                    {/* Description */}
+                                    <CardDescription className="text-neutral-400 text-xs leading-snug line-clamp-2">
+                                       By {script.seller}
+                                    </CardDescription>
                                     {/* Price */}
                                     <CardDescription className="text-orange-500 text-xl font-bold pt-1">
                                       ${script.price}
