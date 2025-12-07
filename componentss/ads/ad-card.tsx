@@ -5,6 +5,7 @@ import { motion } from "framer-motion"
 import { ExternalLink, Megaphone } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/componentss/ui/card"
 import { Badge } from "@/componentss/ui/badge"
+import { Button } from "@/componentss/ui/button"
 
 interface Ad {
   id: number
@@ -98,7 +99,7 @@ export default function AdCard({ ad, className = "", variant = 'default' }: AdCa
     }
   }
 
-  // Script variant - matches script card style
+  // Script variant - compact and matches script card style
   if (variant === 'script') {
     return (
       <motion.div
@@ -109,28 +110,20 @@ export default function AdCard({ ad, className = "", variant = 'default' }: AdCa
         whileHover={{ y: -5, scale: 1.02 }}
         className={`group ${className}`}
       >
-        <Card
-          className="bg-gray-800/30 border-gray-700/50 hover:border-orange-500/50 transition-all duration-500 cursor-pointer h-full backdrop-blur-sm relative overflow-hidden"
-          onClick={handleClick}
-        >
-          {/* Animated background on hover */}
-          <motion.div
-            className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-yellow-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-            initial={false}
-          />
-
-          <CardHeader className="p-0 relative">
-            <div className="relative overflow-hidden">
+        <Card className="bg-neutral-900 border-2 border-neutral-700/50 hover:border-orange-500 cursor-pointer h-full backdrop-blur-sm relative overflow-hidden shadow-2xl rounded-lg transition-all duration-300 flex flex-col">
+          {/* Image Section */}
+          <CardHeader className="p-0 overflow-hidden rounded-t-lg">
+            <div className="relative">
               {ad.image_url && !imageError ? (
                 <motion.img
                   src={ad.image_url}
                   alt={ad.title}
-                  className="object-contain transition-transform duration-500 group-hover:scale-110 w-full h-48 rounded-t-lg bg-gray-800"
+                  className="object-cover w-full h-52 transition-transform duration-500 group-hover:scale-110"
                   loading="lazy"
                   onError={() => setImageError(true)}
                 />
               ) : (
-                <div className="w-full h-48 bg-gray-700/30 rounded-t-lg flex items-center justify-center">
+                <div className="w-full h-52 bg-gray-700/30 flex items-center justify-center">
                   <Megaphone className="h-16 w-16 text-gray-500" />
                 </div>
               )}
@@ -145,45 +138,64 @@ export default function AdCard({ ad, className = "", variant = 'default' }: AdCa
                 transition={{ delay: 0.1 }}
                 whileHover={{ scale: 1.1 }}
               >
-                <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30">
+                <Badge className="bg-orange-500/20 text-orange-400 border border-orange-500/30 text-[10px] font-bold px-1.5 py-0.5">
                   Advertisement
                 </Badge>
               </motion.div>
             </div>
           </CardHeader>
 
-          <CardContent className="p-4 relative z-10">
-            <CardTitle className="text-white text-lg mb-2 group-hover:text-orange-500 transition-colors duration-300">
-              {ad.title}
-            </CardTitle>
-            <CardDescription className="text-gray-400 text-sm mb-3 leading-relaxed line-clamp-3">
-              {ad.description}
-            </CardDescription>
-            
-            <div className="flex flex-wrap gap-1 mb-3">
-              <Badge
-                variant="secondary"
-                className="text-xs bg-gray-700/50 text-gray-300 backdrop-blur-sm"
+          {/* Content Section */}
+          <div className="flex flex-col flex-1">
+            <CardContent className="p-3 flex-1 space-y-2">
+              {/* Title */}
+              <CardTitle className="text-base font-bold text-white leading-tight line-clamp-2 group-hover:text-orange-500 transition-colors duration-300">
+                {ad.title}
+              </CardTitle>
+
+              {/* Description */}
+              <CardDescription className="text-neutral-400 text-xs leading-snug line-clamp-2">
+                {ad.description}
+              </CardDescription>
+
+              {/* Category Badge */}
+              <motion.div
+                className="flex flex-wrap gap-1"
+                initial={{ scale: 0, rotate: 180 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ delay: 0.1, type: "spring" }}
               >
-                {ad.category}
-              </Badge>
+                <motion.div whileHover={{ scale: 1.1, y: -2 }}>
+                  <Badge className="bg-neutral-800/95 text-white backdrop-blur-sm text-[10px] font-bold border border-neutral-600/50 rounded px-1.5 py-0.5 uppercase tracking-wide shadow-lg">
+                    <span className="mr-1 text-xs">•</span>
+                    {ad.category}
+                  </Badge>
+                </motion.div>
+              </motion.div>
+
+              {/* Sponsored Text */}
+              <CardDescription className="text-orange-500/70 text-[10px] font-semibold pt-1 uppercase tracking-wider">
+                Sponsored Content
+              </CardDescription>
+            </CardContent>
+
+            {/* Button Section */}
+            <div className="px-3 pb-3 mt-auto">
+              <Button 
+                variant="outline" 
+                className="w-full bg-white text-black hover:bg-orange-600 hover:text-white transition-colors duration-200 font-semibold text-xs py-1.5 h-auto"
+                onClick={handleClick}
+              >
+                {ad.link_url ? 'Learn More' : 'View Details'}
+              </Button>
             </div>
-            
-            <div className="flex items-center justify-between mt-4">
-              <div className="text-xs text-gray-500">Sponsored Content</div>
-              {ad.link_url && (
-                <span className="text-sm text-orange-400 group-hover:text-orange-300 transition-colors">
-                  Learn more →
-                </span>
-              )}
-            </div>
-          </CardContent>
+          </div>
         </Card>
       </motion.div>
     )
   }
 
-  // Giveaway variant - matches giveaway card style
+  // Giveaway variant - compact style
   if (variant === 'giveaway') {
     return (
       <motion.div
@@ -191,31 +203,23 @@ export default function AdCard({ ad, className = "", variant = 'default' }: AdCa
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
-        whileHover={{ y: -10, scale: 1.02 }}
+        whileHover={{ y: -5, scale: 1.02 }}
         className={`group ${className}`}
       >
-        <Card 
-          className="bg-gradient-to-br from-gray-800/40 to-gray-900/40 border-gray-700/50 hover:border-yellow-400/50 transition-all duration-500 backdrop-blur-sm relative overflow-hidden h-full"
-          onClick={handleClick}
-        >
-          {/* Animated background on hover */}
-          <motion.div
-            className="absolute inset-0 bg-gradient-to-br from-yellow-400/5 to-orange-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-            initial={false}
-          />
-
-          <CardHeader className="p-0 relative">
-            <div className="relative overflow-hidden">
+        <Card className="bg-neutral-900 border-2 border-neutral-700/50 hover:border-yellow-400 cursor-pointer h-full backdrop-blur-sm relative overflow-hidden shadow-2xl rounded-lg transition-all duration-300 flex flex-col">
+          {/* Image Section */}
+          <CardHeader className="p-0 overflow-hidden rounded-t-lg">
+            <div className="relative">
               {ad.image_url && !imageError ? (
                 <motion.img
                   src={ad.image_url}
                   alt={ad.title}
-                  className="object-contain transition-transform duration-500 group-hover:scale-110 w-full h-48 rounded-t-lg bg-gray-800"
+                  className="object-cover w-full h-52 transition-transform duration-500 group-hover:scale-110"
                   loading="lazy"
                   onError={() => setImageError(true)}
                 />
               ) : (
-                <div className="w-full h-48 bg-gray-700/30 rounded-t-lg flex items-center justify-center">
+                <div className="w-full h-52 bg-gray-700/30 flex items-center justify-center">
                   <Megaphone className="h-16 w-16 text-gray-500" />
                 </div>
               )}
@@ -230,38 +234,64 @@ export default function AdCard({ ad, className = "", variant = 'default' }: AdCa
                 transition={{ delay: 0.1 }}
                 whileHover={{ scale: 1.1 }}
               >
-                <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
+                <Badge className="bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 text-[10px] font-bold px-1.5 py-0.5">
                   Advertisement
                 </Badge>
               </motion.div>
             </div>
           </CardHeader>
 
-          <CardContent className="p-6 relative z-10">
-            <CardTitle className="text-white text-xl mb-3 group-hover:text-yellow-400 transition-colors duration-300">
-              {ad.title}
-            </CardTitle>
-            <CardDescription className="text-gray-400 mb-4 leading-relaxed line-clamp-3">
-              {ad.description}
-            </CardDescription>
+          {/* Content Section */}
+          <div className="flex flex-col flex-1">
+            <CardContent className="p-3 flex-1 space-y-2">
+              {/* Title */}
+              <CardTitle className="text-base font-bold text-white leading-tight line-clamp-2 group-hover:text-yellow-400 transition-colors duration-300">
+                {ad.title}
+              </CardTitle>
 
-            <div className="flex items-center justify-between">
-              <Badge variant="secondary" className="bg-gray-700/50 text-gray-300">
-                {ad.category}
-              </Badge>
-              {ad.link_url && (
-                <span className="text-sm text-yellow-400 group-hover:text-yellow-300 transition-colors">
-                  Learn more →
-                </span>
-              )}
+              {/* Description */}
+              <CardDescription className="text-neutral-400 text-xs leading-snug line-clamp-2">
+                {ad.description}
+              </CardDescription>
+
+              {/* Category Badge */}
+              <motion.div
+                className="flex flex-wrap gap-1"
+                initial={{ scale: 0, rotate: 180 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ delay: 0.1, type: "spring" }}
+              >
+                <motion.div whileHover={{ scale: 1.1, y: -2 }}>
+                  <Badge className="bg-neutral-800/95 text-white backdrop-blur-sm text-[10px] font-bold border border-neutral-600/50 rounded px-1.5 py-0.5 uppercase tracking-wide shadow-lg">
+                    <span className="mr-1 text-xs">•</span>
+                    {ad.category}
+                  </Badge>
+                </motion.div>
+              </motion.div>
+
+              {/* Sponsored Text */}
+              <CardDescription className="text-yellow-500/70 text-[10px] font-semibold pt-1 uppercase tracking-wider">
+                Sponsored Content
+              </CardDescription>
+            </CardContent>
+
+            {/* Button Section */}
+            <div className="px-3 pb-3 mt-auto">
+              <Button 
+                variant="outline" 
+                className="w-full bg-white text-black hover:bg-yellow-600 hover:text-white transition-colors duration-200 font-semibold text-xs py-1.5 h-auto"
+                onClick={handleClick}
+              >
+                {ad.link_url ? 'Learn More' : 'View Details'}
+              </Button>
             </div>
-          </CardContent>
+          </div>
         </Card>
       </motion.div>
     )
   }
 
-  // Default variant - original style
+  // Default variant - compact style
   return (
     <motion.div
       ref={cardRef}
@@ -270,61 +300,69 @@ export default function AdCard({ ad, className = "", variant = 'default' }: AdCa
       transition={{ duration: 0.3 }}
       className={`w-full max-w-sm mx-auto ${className}`}
     >
-      <Card 
-        className={`h-80 bg-gradient-to-br from-orange-500/10 to-yellow-400/10 border-orange-500/20 hover:border-orange-500/40 transition-all duration-300 cursor-pointer group flex flex-col ${ad.link_url ? 'hover:shadow-lg hover:shadow-orange-500/20' : ''}`}
-        onClick={handleClick}
-      >
-        <CardHeader className="pb-3 flex-shrink-0">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Megaphone className="h-5 w-5 text-orange-400" />
-              <Badge variant="secondary" className="bg-orange-500/20 text-orange-400 border-orange-500/30">
+      <Card className="bg-neutral-900 border-2 border-neutral-700/50 hover:border-orange-500 cursor-pointer h-full backdrop-blur-sm relative overflow-hidden shadow-2xl rounded-lg transition-all duration-300 flex flex-col">
+        {/* Image Section */}
+        <CardHeader className="p-0 overflow-hidden rounded-t-lg">
+          <div className="relative">
+            {ad.image_url && !imageError ? (
+              <img
+                src={ad.image_url}
+                alt={ad.title}
+                className="object-cover w-full h-52"
+                loading="lazy"
+                onError={() => setImageError(true)}
+              />
+            ) : (
+              <div className="w-full h-52 bg-gray-700/30 flex items-center justify-center">
+                <Megaphone className="h-16 w-16 text-gray-500" />
+              </div>
+            )}
+            <div className="absolute top-2 right-2">
+              <Badge className="bg-orange-500/20 text-orange-400 border border-orange-500/30 text-[10px] font-bold px-1.5 py-0.5">
                 Advertisement
               </Badge>
             </div>
-            {ad.link_url && (
-              <ExternalLink className="h-4 w-4 text-gray-400 group-hover:text-orange-400 transition-colors" />
-            )}
           </div>
-          <CardTitle className="text-white text-lg group-hover:text-orange-400 transition-colors line-clamp-2">
-            {ad.title}
-          </CardTitle>
         </CardHeader>
-        
-        <CardContent className="flex-1 flex flex-col">
-          <CardDescription className="text-gray-300 mb-4 line-clamp-3 flex-shrink-0">
-            {ad.description}
-          </CardDescription>
-          
-          <div className="flex-1 flex items-center justify-center mb-4">
-            {ad.image_url && !imageError ? (
-              <div className="w-full h-32 rounded-lg overflow-hidden">
-                <img
-                  src={ad.image_url}
-                  alt={ad.title}
-                  className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300 bg-gray-800"
-                  loading="lazy"
-                  onError={() => setImageError(true)}
-                />
-              </div>
-            ) : (
-              <div className="w-full h-32 bg-gray-700/30 rounded-lg flex items-center justify-center">
-                <Megaphone className="h-12 w-12 text-gray-500" />
-              </div>
-            )}
+
+        {/* Content Section */}
+        <div className="flex flex-col flex-1">
+          <CardContent className="p-3 flex-1 space-y-2">
+            {/* Title */}
+            <CardTitle className="text-base font-bold text-white leading-tight line-clamp-2">
+              {ad.title}
+            </CardTitle>
+
+            {/* Description */}
+            <CardDescription className="text-neutral-400 text-xs leading-snug line-clamp-2">
+              {ad.description}
+            </CardDescription>
+
+            {/* Category Badge */}
+            <div className="flex flex-wrap gap-1">
+              <Badge className="bg-neutral-800/95 text-white backdrop-blur-sm text-[10px] font-bold border border-neutral-600/50 rounded px-1.5 py-0.5 uppercase tracking-wide shadow-lg">
+                <span className="mr-1 text-xs">•</span>
+                {ad.category}
+              </Badge>
+            </div>
+
+            {/* Sponsored Text */}
+            <CardDescription className="text-orange-500/70 text-[10px] font-semibold pt-1 uppercase tracking-wider">
+              Sponsored Content
+            </CardDescription>
+          </CardContent>
+
+          {/* Button Section */}
+          <div className="px-3 pb-3 mt-auto">
+            <Button 
+              variant="outline" 
+              className="w-full bg-white text-black hover:bg-orange-600 hover:text-white transition-colors duration-200 font-semibold text-xs py-1.5 h-auto"
+              onClick={handleClick}
+            >
+              {ad.link_url ? 'Learn More' : 'View Details'}
+            </Button>
           </div>
-          
-          <div className="flex items-center justify-between mt-auto">
-            <Badge variant="secondary" className="bg-gray-700/50 text-gray-300">
-              {ad.category}
-            </Badge>
-            {ad.link_url && (
-              <span className="text-sm text-orange-400 group-hover:text-orange-300 transition-colors">
-                Click to learn more →
-              </span>
-            )}
-          </div>
-        </CardContent>
+        </div>
       </Card>
     </motion.div>
   )
@@ -354,4 +392,3 @@ export function useRandomAds(ads: Ad[], count: number = 1) {
 
   return randomAds
 }
-

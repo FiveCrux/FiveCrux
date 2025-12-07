@@ -63,7 +63,7 @@ interface Script {
   updated_at: string;
 }
 
-// Enhanced Media Carousel with Fullscreen
+// Xbox-Themed Media Carousel with Minimal Animations
 const MediaCarousel = ({
   images,
   screenshots,
@@ -80,7 +80,6 @@ const MediaCarousel = ({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  // Combine all media, prioritize cover image first
   let allMedia = [...images, ...screenshots, ...videos];
 
   if (coverImage) {
@@ -115,13 +114,13 @@ const MediaCarousel = ({
           src={media}
           controls
           preload="metadata"
-          className={`w-full h-full object-contain bg-neutral-900 ${className}`}
+          className={`w-full h-full object-contain bg-black ${className}`}
         />
       ) : (
         <img
           src={media}
           alt={`${title} - Media ${index + 1}`}
-          className={`w-full h-full object-contain bg-neutral-900 ${className}`}
+          className={`w-full h-full object-contain bg-black ${className}`}
           loading="lazy"
         />
       )}
@@ -132,66 +131,51 @@ const MediaCarousel = ({
     <>
       {/* Main Carousel */}
       <div className="sticky top-24">
-        <div className="relative bg-gradient-to-br from-neutral-900 to-neutral-800 rounded-2xl overflow-hidden border-2 border-neutral-700 shadow-2xl">
+        <div className="relative bg-black rounded-lg overflow-hidden border border-orange-500/30 shadow-xl">
           {/* Main Display */}
-          <div className="relative aspect-video ">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={currentIndex}
-                initial={{ opacity: 0, x: 100 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -100 }}
-                transition={{ duration: 0.3 }}
-                className="absolute inset-0"
-              >
-                <MediaContent
-                  media={allMedia[currentIndex]}
-                  index={currentIndex}
-                />
-              </motion.div>
-            </AnimatePresence>
+          <div className="relative aspect-video">
+            <div className="absolute inset-0">
+              <MediaContent
+                media={allMedia[currentIndex]}
+                index={currentIndex}
+              />
+            </div>
 
             {/* Navigation Arrows */}
             {allMedia.length > 1 && (
               <>
-                <motion.button
+                <button
                   onClick={prevSlide}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/70 hover:bg-teal-400/80 text-white p-3 rounded-full transition-all z-10 backdrop-blur-sm"
+                  className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/80 hover:bg-orange-500 text-white p-3 rounded transition-colors z-10"
                 >
                   <ChevronLeft className="h-6 w-6" />
-                </motion.button>
-                <motion.button
+                </button>
+                <button
                   onClick={nextSlide}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/70 hover:bg-teal-400/80 text-white p-3 rounded-full transition-all z-10 backdrop-blur-sm"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/80 hover:bg-orange-500 text-white p-3 rounded transition-colors z-10"
                 >
                   <ChevronRight className="h-6 w-6" />
-                </motion.button>
+                </button>
               </>
             )}
 
             {/* Fullscreen Button */}
-            <motion.button
+            <button
               onClick={() => setIsFullscreen(true)}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              className="absolute top-4 right-4 bg-black/70 hover:bg-teal-400/80 text-white p-2 rounded-lg transition-all z-10 backdrop-blur-sm"
+              className="absolute top-4 right-4 bg-black/80 hover:bg-orange-500 text-white p-2 rounded transition-colors z-10"
             >
               <Maximize2 className="h-5 w-5" />
-            </motion.button>
+            </button>
 
             {/* Counter */}
-            <div className="absolute bottom-4 right-4 bg-black/70 text-white px-4 py-2 rounded-full text-sm font-semibold backdrop-blur-sm">
+            <div className="absolute bottom-4 right-4 bg-black/80 text-white px-4 py-2 rounded text-sm font-semibold">
               {currentIndex + 1} / {allMedia.length}
             </div>
           </div>
 
           {/* Thumbnail Navigation */}
           {allMedia.length > 1 && (
-            <div className="p-4 bg-neutral-800/50 border-t border-neutral-700">
+            <div className="p-4 bg-neutral-900 border-t border-orange-500/30">
               <div 
                 className="thumbnail-scrollbar flex gap-3 overflow-x-auto pb-2"
                 style={{
@@ -199,20 +183,18 @@ const MediaCarousel = ({
                 }}
               >
                 {allMedia.map((media, index) => (
-                  <motion.button
+                  <button
                     key={index}
                     onClick={() => setCurrentIndex(index)}
-                    whileHover={{ scale: 1.05, y: -5 }}
-                    whileTap={{ scale: 0.95 }}
-                    className={`flex-shrink-0 w-24 h-16 rounded-lg overflow-hidden border-2 transition-all ${
+                    className={`flex-shrink-0 w-24 h-16 rounded overflow-hidden border-2 transition-colors ${
                       index === currentIndex
-                        ? "border-teal-400 ring-2 ring-teal-400/40"
-                        : "border-gray-600 hover:border-teal-400/70"
+                        ? "border-orange-500"
+                        : "border-neutral-700 hover:border-orange-500/50"
                     }`}
                   >
                     {isVideo(media) ? (
                       <div className="relative w-full h-full bg-neutral-800 flex items-center justify-center">
-                        <Play className="h-5 w-5 text-teal-400" />
+                        <Play className="h-5 w-5 text-orange-500" />
                       </div>
                     ) : (
                       <img
@@ -221,7 +203,7 @@ const MediaCarousel = ({
                         className="w-full h-full object-cover"
                       />
                     )}
-                  </motion.button>
+                  </button>
                 ))}
               </div>
             </div>
@@ -230,73 +212,59 @@ const MediaCarousel = ({
       </div>
 
       {/* Fullscreen Modal */}
-      <AnimatePresence>
-        {isFullscreen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4"
+      {isFullscreen && (
+        <div
+          className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4"
+          onClick={() => setIsFullscreen(false)}
+        >
+          <button
             onClick={() => setIsFullscreen(false)}
+            className="absolute top-4 right-4 bg-black/80 hover:bg-orange-500 text-white p-3 rounded transition-colors z-10"
           >
-            <motion.button
-              onClick={() => setIsFullscreen(false)}
-              whileHover={{ scale: 1.1, rotate: 90 }}
-              whileTap={{ scale: 0.9 }}
-              className="absolute top-4 right-4 bg-white/10 hover:bg-teal-400/80 text-white p-3 rounded-full transition-all backdrop-blur-sm z-10"
-            >
-              <X className="h-6 w-6" />
-            </motion.button>
+            <X className="h-6 w-6" />
+          </button>
 
-            {allMedia.length > 1 && (
-              <>
-                <motion.button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    prevSlide();
-                  }}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-teal-400/80 text-white p-4 rounded-full transition-all z-10 backdrop-blur-sm"
-                >
-                  <ChevronLeft className="h-8 w-8" />
-                </motion.button>
-                <motion.button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    nextSlide();
-                  }}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-teal-400/80 text-white p-4 rounded-full transition-all z-10 backdrop-blur-sm"
-                >
-                  <ChevronRight className="h-8 w-8" />
-                </motion.button>
-              </>
-            )}
+          {allMedia.length > 1 && (
+            <>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  prevSlide();
+                }}
+                className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/80 hover:bg-orange-500 text-white p-4 rounded transition-colors z-10"
+              >
+                <ChevronLeft className="h-8 w-8" />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  nextSlide();
+                }}
+                className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/80 hover:bg-orange-500 text-white p-4 rounded transition-colors z-10"
+              >
+                <ChevronRight className="h-8 w-8" />
+              </button>
+            </>
+          )}
 
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/70 text-white px-6 py-3 rounded-full text-sm font-semibold backdrop-blur-sm">
-              {currentIndex + 1} / {allMedia.length}
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/80 text-white px-6 py-3 rounded text-sm font-semibold">
+            {currentIndex + 1} / {allMedia.length}
+          </div>
+
+          <div
+            className="w-full h-full flex items-center justify-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="max-w-7xl max-h-full">
+              <MediaContent
+                media={allMedia[currentIndex]}
+                index={currentIndex}
+                className="max-h-[90vh]"
+              />
             </div>
-
-            <motion.div
-              initial={{ scale: 0.9 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.9 }}
-              className="w-full h-full flex items-center justify-center"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="max-w-7xl max-h-full">
-                <MediaContent
-                  media={allMedia[currentIndex]}
-                  index={currentIndex}
-                  className="max-h-[90vh]"
-                />
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
+        </div>
+      )}
     </>
   );
 };
@@ -326,11 +294,6 @@ export default function ScriptDetailPage() {
         }
 
         const data = await response.json();
-        console.log("Script detail data:", data);
-        console.log("Script images:", data.images);
-        console.log("Script cover_image:", data.cover_image);
-        console.log("Script videos:", data.videos);
-        console.log("Script screenshots:", data.screenshots);
         setScript(data);
       } catch (err) {
         setError("Failed to load script");
@@ -351,7 +314,6 @@ export default function ScriptDetailPage() {
         <Navbar />
         <div className="min-h-screen bg-neutral-900 text-white flex items-center justify-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-orange-500"></div>
-          
         </div>
       </>
     );
@@ -369,7 +331,7 @@ export default function ScriptDetailPage() {
             </p>
             <Button
               onClick={() => router.push("/scripts")}
-              className="bg-teal-400/80 hover:bg-teal-500/80"
+              className="bg-orange-500 hover:bg-orange-600"
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Scripts
@@ -390,11 +352,6 @@ export default function ScriptDetailPage() {
     ...(script.videos || []),
     ...(script.screenshots || []),
   ];
-  const coverImage =
-    script.cover_image ||
-    (script.images && script.images[0]) ||
-    (script.screenshots && script.screenshots[0]) ||
-    (allMedia.length > 0 ? allMedia[0] : null);
 
   return (
     <>
@@ -414,64 +371,72 @@ export default function ScriptDetailPage() {
         }
       `}} />
       <Navbar />
-        <div className="min-h-screen bg-neutral-900 text-white">
-        {/* Back Button */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-4">
-          <Button
-            onClick={() => router.push("/scripts")}
-            variant="ghost"
-            className="text-gray-400 hover:text-white hover:bg-neutral-800"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Scripts
-          </Button>
-        </div>
+      <div className="min-h-screen bg-neutral-900 text-white">
+        {/* Hero Section with Background Image */}
+        <div 
+          className="relative text-white"
+          style={{
+            backgroundImage: `${script.cover_image ? `url(${script.cover_image})` : 'none'}`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+          }}
+        >
+          {/* Overlay to reduce background image opacity */}
+          <div className="absolute inset-0 bg-black/60 pointer-events-none" />
+          
+          {/* Gradient fade at bottom */}
+          <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-b from-transparent to-neutral-900 pointer-events-none z-[1]" />
+          
+          {/* Content */}
+          <div className="relative z-10">
+            {/* Back Button */}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-4">
+              <Button
+                onClick={() => router.push("/scripts")}
+                variant="ghost"
+                className="text-gray-400 hover:text-white hover:bg-neutral-800"
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Scripts
+              </Button>
+            </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
-          {/* Two Column Layout */}
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-            {/* Left Column - Media Carousel (Sticky) */}
-            <motion.div
-              className="lg:col-span-3"
-              initial={{ opacity: 0, x: -50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6 }}
-            >
-              {allMedia.length > 0 ? (
-                <MediaCarousel
-                  images={script.images || []}
-                  screenshots={script.screenshots || []}
-                  videos={script.videos || []}
-                  title={script.title}
-                  coverImage={script.cover_image}
-                />
-              ) : (
-                <div className="aspect-video bg-neutral-900 rounded-2xl flex items-center justify-center border-2 border-neutral-700">
-                  <Package className="h-16 w-16 text-gray-600" />
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+              {/* Two Column Layout */}
+              <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+                {/* Left Column - Media Carousel */}
+                <div className="lg:col-span-3">
+                  {allMedia.length > 0 ? (
+                    <MediaCarousel
+                      images={script.images || []}
+                      screenshots={script.screenshots || []}
+                      videos={script.videos || []}
+                      title={script.title}
+                      coverImage={script.cover_image}
+                    />
+                  ) : (
+                    <div className="aspect-video bg-black rounded-lg flex items-center justify-center border border-orange-500/30">
+                      <Package className="h-16 w-16 text-gray-600" />
+                    </div>
+                  )}
                 </div>
-              )}
-            </motion.div>
 
-            {/* Right Column - All Information */}
-            <motion.div
-              className="lg:col-span-2 space-y-6"
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-            >
+                {/* Right Column - Information */}
+                <div className="lg:col-span-2 space-y-6">
               {/* Header & Badges */}
               <div>
                 <div className="flex flex-wrap items-center gap-2 mb-4">
-                  <Badge className="bg-teal-500/15 text-teal-400/90 border-teal-500/30 font-semibold px-3 py-1">
+                  <Badge className="bg-orange-500/20 text-orange-500 border-orange-500/30 font-semibold px-3 py-1">
                     {script.category}
                   </Badge>
                   {script.framework && (
-                    <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/40 font-semibold  px-3 py-1">
+                    <Badge className="bg-neutral-800 text-gray-300 border-neutral-700 font-semibold px-3 py-1">
                       {script.framework.map((fw) => fw).join(", ")}
                     </Badge>
                   )}
                   {discount > 0 && (
-                    <Badge className="bg-gradient-to-r from-red-600 to-red-500 text-white font-bold px-3 py-1">
+                    <Badge className="bg-red-600 text-white font-bold px-3 py-1">
                       -{discount}% OFF
                     </Badge>
                   )}
@@ -486,14 +451,14 @@ export default function ScriptDetailPage() {
                 </p>
 
                 {/* Seller Card */}
-                <Card className="bg-gradient-to-br from-neutral-900 to-neutral-800 border-2 border-neutral-700 mb-6">
+                <Card className="bg-neutral-800 border border-neutral-700 mb-6">
                   <CardContent className="p-4">
                     <div className="flex items-center gap-4">
-                      <Avatar className="h-14 w-14 ring-2 ring-teal-400/40">
+                      <Avatar className="h-14 w-14 ring-2 ring-orange-500/40">
                         <AvatarImage
                           src={script.seller_image || "/placeholder-user.jpg"}
                         />
-                        <AvatarFallback className="bg-gradient-to-r from-teal-400 to-teal-500 text-white font-bold text-lg">
+                        <AvatarFallback className="bg-orange-500 text-white font-bold text-lg">
                           {script.seller_name ? script.seller_name[0] : "?"}
                         </AvatarFallback>
                       </Avatar>
@@ -502,11 +467,11 @@ export default function ScriptDetailPage() {
                           <h3 className="text-white font-bold text-lg">
                             {script.seller_name}
                           </h3>
-                          <CheckCircle className="h-5 w-5 text-teal-400" />
+                          <CheckCircle className="h-5 w-5 text-orange-500" />
                         </div>
                         <div className="flex items-center gap-4 text-sm text-gray-400">
                           <span className="flex items-center gap-1">
-                            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                            <span className="w-2 h-2 bg-green-500 rounded-full" />
                             Verified Seller
                           </span>
                         </div>
@@ -517,12 +482,12 @@ export default function ScriptDetailPage() {
               </div>
 
               {/* Pricing Card */}
-              <Card className="bg-gradient-to-br from-neutral-900 to-neutral-800 border-2 border-teal-500/20 shadow-xl shadow-teal-500/5">
+              <Card className="bg-neutral-800 border border-orange-500/30 shadow-xl">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between mb-6">
                     <div>
                       <div className="flex items-baseline gap-3 mb-2">
-                        <span className="text-3xl font-black bg-gradient-to-r from-teal-400 to-teal-300 bg-clip-text text-transparent">
+                        <span className="text-3xl font-black text-orange-500">
                           ${script.price}
                         </span>
                         {script.original_price && (
@@ -532,7 +497,7 @@ export default function ScriptDetailPage() {
                         )}
                       </div>
                       {discount > 0 && (
-                        <div className="inline-flex bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold">
+                        <div className="inline-flex bg-red-500 text-white px-3 py-1 rounded text-sm font-bold">
                           Save $
                           {(script.original_price! - script.price).toFixed(2)}
                         </div>
@@ -541,7 +506,7 @@ export default function ScriptDetailPage() {
                   </div>
 
                   <Button
-                    className="w-full bg-gradient-to-r from-teal-400 to-teal-500 hover:from-teal-500 hover:to-teal-600 text-white font-bold py-6 text-lg shadow-lg shadow-teal-500/20"
+                    className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-6 text-lg shadow-lg"
                     onClick={() => {
                       if (script.link) {
                         window.open(
@@ -563,40 +528,39 @@ export default function ScriptDetailPage() {
                   )}
                 </CardContent>
               </Card>
-            </motion.div>
+            </div>
           </div>
+            </div>
+          </div>
+        </div>
 
-          {/* Tabs Section - Full Width Below Gallery */}
-          <motion.div
-            className="mt-8"
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-          >
-            <Card className="bg-gradient-to-br from-neutral-900 to-neutral-800 border-2 border-neutral-700">
+        {/* Tabs Section */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+          <div className="mt-8">
+            <Card className="bg-neutral-800 border border-neutral-700">
               <Tabs defaultValue="details" className="w-full">
-                <TabsList className="grid w-full grid-cols-4 bg-neutral-800/50 rounded-t-lg rounded-b-none p-0 h-auto gap-0">
+                <TabsList className="grid w-full grid-cols-4 bg-neutral-900 p-0 h-auto gap-0">
                   <TabsTrigger
                     value="details"
-                    className="data-[state=active]:bg-teal-400/80 data-[state=active]:text-white data-[state=active]:rounded-tl-lg rounded-tr-none rounded-bl-none rounded-br-none bg-neutral-800/50 text-white py-3 px-4 font-medium transition-all"
+                    className="data-[state=active]:bg-orange-500 data-[state=active]:text-white bg-neutral-900 text-white py-3 px-4 font-medium transition-colors"
                   >
                     Details
                   </TabsTrigger>
                   <TabsTrigger
                     value="features"
-                    className="data-[state=active]:bg-teal-400/80 data-[state=active]:text-white rounded-none bg-neutral-800/50 text-white py-3 px-4 font-medium transition-all"
+                    className="data-[state=active]:bg-orange-500 data-[state=active]:text-white bg-neutral-900 text-white py-3 px-4 font-medium transition-colors"
                   >
                     Features
                   </TabsTrigger>
                   <TabsTrigger
                     value="requirements"
-                    className="data-[state=active]:bg-teal-400/80 data-[state=active]:text-white rounded-none bg-neutral-800/50 text-white py-3 px-4 font-medium transition-all"
+                    className="data-[state=active]:bg-orange-500 data-[state=active]:text-white bg-neutral-900 text-white py-3 px-4 font-medium transition-colors"
                   >
                     Requirements
                   </TabsTrigger>
                   <TabsTrigger
                     value="support"
-                    className="data-[state=active]:bg-teal-500 data-[state=active]:text-white data-[state=active]:rounded-tr-lg rounded-tl-none rounded-bl-none rounded-br-none bg-neutral-800/50 text-white py-3 px-4 font-medium transition-all"
+                    className="data-[state=active]:bg-orange-500 data-[state=active]:text-white bg-neutral-900 text-white py-3 px-4 font-medium transition-colors"
                   >
                     Support
                   </TabsTrigger>
@@ -606,19 +570,19 @@ export default function ScriptDetailPage() {
                 <TabsContent value="details" className="mt-0">
                   <CardContent className="p-6">
                     <div className="flex items-center gap-2 mb-6">
-                      <div className="h-6 w-6 rounded-full bg-teal-400/80 flex items-center justify-center">
+                      <div className="h-6 w-6 rounded bg-orange-500 flex items-center justify-center">
                         <Info className="h-4 w-4 text-white" />
                       </div>
                       <h3 className="text-white text-xl font-bold">Script Details</h3>
                     </div>
                     <div className="space-y-3">
-                      <div className="flex justify-between items-center p-3 bg-neutral-800/50 rounded-lg">
+                      <div className="flex justify-between items-center p-3 bg-neutral-900 rounded">
                         <span className="text-gray-400 font-medium">Version</span>
                         <span className="text-white font-bold">
                           {script.version}
                         </span>
                       </div>
-                      <div className="flex justify-between items-center p-3 bg-neutral-800/50 rounded-lg">
+                      <div className="flex justify-between items-center p-3 bg-neutral-900 rounded">
                         <span className="text-gray-400 font-medium">
                           Last Updated
                         </span>
@@ -627,7 +591,7 @@ export default function ScriptDetailPage() {
                         </span>
                       </div>
                       {script.framework && (
-                        <div className="flex justify-between items-center p-3 bg-neutral-800/50 rounded-lg">
+                        <div className="flex justify-between items-center p-3 bg-neutral-900 rounded">
                           <span className="text-gray-400 font-medium">
                             Framework
                           </span>
@@ -638,13 +602,13 @@ export default function ScriptDetailPage() {
                           </span>
                         </div>
                       )}
-                      <div className="flex justify-between items-center p-3 bg-neutral-800/50 rounded-lg">
+                      <div className="flex justify-between items-center p-3 bg-neutral-900 rounded">
                         <span className="text-gray-400 font-medium">Downloads</span>
                         <span className="text-white font-bold">
                           {script.downloads || 0}
                         </span>
                       </div>
-                      <div className="flex justify-between items-center p-3 bg-neutral-800/50 rounded-lg">
+                      <div className="flex justify-between items-center p-3 bg-neutral-900 rounded">
                         <span className="text-gray-400 font-medium">Rating</span>
                         <span className="text-white font-bold flex items-center gap-1">
                           {script.rating > 0
@@ -660,24 +624,21 @@ export default function ScriptDetailPage() {
                 <TabsContent value="features" className="mt-0">
                   <CardContent className="p-6">
                     <div className="flex items-center gap-2 mb-6">
-                      <Package className="h-6 w-6 text-teal-400" />
+                      <Package className="h-6 w-6 text-orange-500" />
                       <h3 className="text-white text-xl font-bold">Features & Capabilities</h3>
                     </div>
                     {script.features && script.features.length > 0 ? (
                       <div className="space-y-3">
                         {script.features.map((feature, index) => (
-                          <motion.div
+                          <div
                             key={index}
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: index * 0.05 }}
-                            className="flex items-start gap-3 p-4 rounded-lg bg-neutral-800/50 hover:bg-neutral-800/70 transition-colors border border-neutral-700/50"
+                            className="flex items-start gap-3 p-4 rounded bg-neutral-900 border border-neutral-700"
                           >
                             <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
                             <span className="text-gray-300 leading-relaxed">
                               {feature}
                             </span>
-                          </motion.div>
+                          </div>
                         ))}
                       </div>
                     ) : (
@@ -690,24 +651,21 @@ export default function ScriptDetailPage() {
                 <TabsContent value="requirements" className="mt-0">
                   <CardContent className="p-6">
                     <div className="flex items-center gap-2 mb-6">
-                      <AlertCircle className="h-6 w-6 text-teal-400" />
+                      <AlertCircle className="h-6 w-6 text-orange-500" />
                       <h3 className="text-white text-xl font-bold">System Requirements</h3>
                     </div>
                     {script.requirements && script.requirements.length > 0 ? (
                       <div className="space-y-3">
                         {script.requirements.map((requirement, index) => (
-                          <motion.div
+                          <div
                             key={index}
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: index * 0.05 }}
-                            className="flex items-center gap-3 p-4 rounded-lg bg-neutral-800/50 border border-neutral-700/50"
+                            className="flex items-center gap-3 p-4 rounded bg-neutral-900 border border-neutral-700"
                           >
                             <Package className="h-5 w-5 text-blue-500 flex-shrink-0" />
                             <span className="text-gray-300 leading-relaxed">
                               {requirement}
                             </span>
-                          </motion.div>
+                          </div>
                         ))}
                       </div>
                     ) : (
@@ -720,11 +678,11 @@ export default function ScriptDetailPage() {
                 <TabsContent value="support" className="mt-0">
                   <CardContent className="p-6">
                     <div className="flex items-center gap-2 mb-6">
-                      <Info className="h-6 w-6 text-teal-400" />
+                      <Info className="h-6 w-6 text-orange-500" />
                       <h3 className="text-white text-xl font-bold">Support & Documentation</h3>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="flex items-start gap-3 p-4 rounded-lg bg-neutral-800/50 border border-neutral-700/50">
+                      <div className="flex items-start gap-3 p-4 rounded bg-neutral-900 border border-neutral-700">
                         <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
                         <div>
                           <h4 className="text-white font-semibold mb-1">
@@ -735,7 +693,7 @@ export default function ScriptDetailPage() {
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-start gap-3 p-4 rounded-lg bg-neutral-800/50 border border-neutral-700/50">
+                      <div className="flex items-start gap-3 p-4 rounded bg-neutral-900 border border-neutral-700">
                         <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
                         <div>
                           <h4 className="text-white font-semibold mb-1">
@@ -751,7 +709,7 @@ export default function ScriptDetailPage() {
                 </TabsContent>
               </Tabs>
             </Card>
-          </motion.div>
+          </div>
         </div>
       </div>
       <Footer />

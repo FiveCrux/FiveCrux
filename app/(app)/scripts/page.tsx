@@ -46,7 +46,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import Navbar from "@/componentss/shared/navbar";
 import Footer from "@/componentss/shared/footer";
 import AdCard, { useRandomAds } from "@/componentss/ads/ad-card";
-
+import Image from "next/image";
 // Animated background particles - Client only to avoid hydration issues
 const AnimatedParticles = () => {
   const [mounted, setMounted] = useState(false);
@@ -430,7 +430,7 @@ export default function ScriptsPage() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-neutral-900 text-white relative overflow-hidden">
+      <div className="min-h-screen bg-black text-white relative overflow-hidden">
         <AnimatedParticles />
 
         {/* Animated background */}
@@ -1172,292 +1172,107 @@ export default function ScriptsPage() {
                         // If it's an ad, render AdCard
                         if ("isAd" in item && item.isAd) {
                           return (
-                            <AdCard key={`ad-${item.id}`} ad={item as any} variant="script" />
+                            <AdCard
+                              key={`ad-${item.id}`}
+                              ad={item as any}
+                              variant="script"
+                            />
                           );
                         }
 
                         // Otherwise render script
                         const script = item as UIScript;
                         return (
-                          <motion.div
-                            key={script.id}
-                            initial={{ opacity: 0, y: 50 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.5, delay: index * 0.05 }}
-                            whileHover={{ y: -8, scale: 1.03 }}
-                            className="group"
-                          >
+                          <div key={script.id} className="group">
                             <Link href={`/script/${script.id}`}>
                               <Card
-                                className={`bg-neutral-900 border-2 border-neutral-700/50 hover:border-orange-500 transition-all duration-500 cursor-pointer h-full backdrop-blur-sm relative overflow-hidden shadow-2xl rounded-3xl ${
-                                  viewMode === "list" ? "flex" : ""
+                                className={`bg-neutral-900 border-2 border-neutral-700/50 hover:border-orange-500 cursor-pointer h-full backdrop-blur-sm relative overflow-hidden shadow-2xl rounded-lg transition-all duration-300 ${
+                                  viewMode === "list"
+                                    ? "flex flex-row"
+                                    : "flex flex-col"
                                 }`}
                               >
-                                {/* Animated background on hover */}
-                                <motion.div
-                                  className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-yellow-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                                  initial={false}
-                                />
-
-                                {/* Corner accent */}
-                                {/* <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-orange-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-tl-xl" /> */}
-
+                                {/* Image Section */}
                                 <CardHeader
-                                  className={`p-0 relative ${
+                                  className={`p-0 overflow-hidden ${
                                     viewMode === "list"
-                                      ? "w-48 flex-shrink-0 rounded-l-3xl overflow-hidden"
-                                      : "rounded-t-3xl overflow-hidden"
+                                      ? "w-56 flex-shrink-0 rounded-l-lg"
+                                      : "rounded-t-lg"
                                   }`}
                                 >
-                                  <motion.div 
-                                    className="relative overflow-hidden w-full h-full"
-                                    animate={{ y: 0 }}
-                                    whileHover={{ y: 8 }}
-                                    transition={{ duration: 0.3 }}
-                                  >
-                                    <motion.img
-                                      src={script.image || "/placeholder.jpg"}
-                                      alt={script.title}
-                                      className={`object-cover w-full p-4 rounded-3xl ${
-                                        viewMode === "list" ? "h-auto" : "h-64"
-                                      }`}
-                                      style={{ 
-                                        transformOrigin: 'center',
-                                        willChange: 'transform'
-                                      }}
-                                      whileHover={{ scale: 1.1 }}
-                                      transition={{ 
-                                        duration: 0.7, 
-                                        ease: "easeOut"
-                                      }}
-                                      loading="lazy"
-                                      onError={(e) => {
-                                        const target =
-                                          e.target as HTMLImageElement;
-                                        target.src = "/placeholder.jpg";
-                                      }}
-                                    />
-                                    {/* Hover overlay */}
-                                    {/* <motion.div
-                                      className="absolute inset-0 bg-gradient-to-t from-orange-500/40 via-orange-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                                      initial={false}
-                                    /> */}
-
-                                    {/* Category badges and info */}
-                                    <div
-                                      //  className="flex flex-wrap items-center gap-2 mb-4"
-                                      className="absolute flex flex-row gap-2 bottom-6 left-2 right-0 px-4 pt-4 z-10"
-                                    >
-                                      <motion.div
-                                        initial={{ opacity: 0, scale: 0.8 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        transition={{ delay: index * 0.05 }}
-                                        whileHover={{ scale: 1.05 }}
-                                      >
-                                        <Badge
-                                          variant="secondary"
-                                          className="text-xs bg-orange-500/20 text-orange-400 border border-orange-500/40 backdrop-blur-sm font-semibold px-2.5 py-0.5"
-                                        >
-                                          {script.categoryName}
-                                        </Badge>
-                                      </motion.div>
-                                      <motion.div
-                                        initial={{ opacity: 0, scale: 0.8 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        transition={{
-                                          delay: index * 0.05 + 0.05,
-                                        }}
-                                        whileHover={{ scale: 1.05 }}
-                                      >
-                                        <Badge
-                                          variant="secondary"
-                                          className="text-xs bg-gray-700/70 text-gray-300 border border-neutral-600/50 backdrop-blur-sm font-medium px-2.5 py-0.5"
-                                        >
-                                          {script.priceCategory}
-                                        </Badge>
-                                      </motion.div>
-                                    </div>
-                                  </motion.div>
+                                  <Image
+                                    src={script.image || "/placeholder.jpg"}
+                                    alt={script.title}
+                                    width={400}
+                                    height={256}
+                                    className={`object-cover w-full ${
+                                      viewMode === "list" ? "h-full" : "h-52"
+                                    }`}
+                                  />
                                 </CardHeader>
 
-                                <CardContent
-                                  className={`p-5 relative z-10 ${
-                                    viewMode === "list" ? "flex-1" : ""
-                                  }`}
-                                >
-                                  <div
-                                    className={
-                                      viewMode === "list"
-                                        ? "flex justify-between h-full"
-                                        : ""
-                                    }
-                                  >
-                                    <div
-                                      className={
-                                        viewMode === "list" ? "flex-1 pr-4" : ""
-                                      }
-                                    >
-                                      {/* Discount badge*/}
-                                      {script.discount > 0 && (
+                                {/* Content Section */}
+                                <div className="flex flex-col flex-1">
+                                  <CardContent className="p-3 flex-1 space-y-2">
+                                    {/* Title */}
+                                    <CardTitle className="text-base font-bold text-white leading-tight line-clamp-2">
+                                      {script.title}
+                                    </CardTitle>
+
+                                    {/* Description */}
+                                    <CardDescription className="text-neutral-400 text-xs leading-snug line-clamp-2">
+                                      {script.description}
+                                    </CardDescription>
+
+                                    {/* Framework Badges */}
+                                    {script.framework &&
+                                      script.framework.length > 0 && (
                                         <motion.div
-                                          className="absolute top-3 left-3 z-10"
-                                          initial={{ scale: 0, rotate: -180 }}
+                                          className="flex flex-wrap gap-1"
+                                          initial={{ scale: 0, rotate: 180 }}
                                           animate={{ scale: 1, rotate: 0 }}
                                           transition={{
-                                            delay: index * 0.05,
+                                            delay: index * 0.05 + 0.1,
                                             type: "spring",
                                           }}
-                                          whileHover={{ scale: 1.1, rotate: 5 }}
                                         >
-                                          <Badge className="bg-gradient-to-r from-red-600 to-red-500 text-white font-bold text-sm px-3 py-1.5 shadow-lg border border-red-400/50">
-                                            -{script.discount}%
-                                          </Badge>
+                                          {script.framework.map((fw, idx) => (
+                                            <motion.div
+                                              key={idx}
+                                              whileHover={{
+                                                scale: 1.1,
+                                                y: -2,
+                                              }}
+                                            >
+                                              <Badge className="bg-neutral-800/95 text-white backdrop-blur-sm text-[10px] font-bold border border-neutral-600/50 rounded px-1.5 py-0.5 uppercase tracking-wide shadow-lg">
+                                                <span className="mr-1 text-xs">
+                                                  •
+                                                </span>
+                                                {fw}
+                                              </Badge>
+                                            </motion.div>
+                                          ))}
                                         </motion.div>
                                       )}
-                                      {/* Price Display*/}
-                                      <div className="flex flex-wrap items-center gap-2 mb-4">
-                                        <div className="flex items-end justify-between">
-                                          <motion.div
-                                            className="flex items-baseline gap-2"
-                                            whileHover={{ scale: 1.05 }}
-                                          >
-                                            <div className="flex items-center">
-                                              <DollarSign className="h-5 w-5 text-orange-500" />
-                                              <span className="text-2xl font-black text-white">
-                                                {script.price.toFixed(0)}
-                                              </span>
-                                              <span className="text- text-gray-400 ml-1">
-                                                .
-                                                {(script.price % 1)
-                                                  .toFixed(2)
-                                                  .substring(2)}
-                                              </span>
-                                              {/* <span className="text-gray-400 text-sm line-through mb-1">Save ${script.originalPrice - script.price}</span> */}
-                                            </div>
-                                            {script.originalPrice && (
-                                              <span className="text-gray-400 text-sm line-through mb-1">
-                                                $
-                                                {script.originalPrice.toFixed(
-                                                  2
-                                                )}
-                                                {/* <span className="text-gray-400 text-sm line-through mb-1">Save ${script.originalPrice - script.price}</span> */}
-                                              </span>
-                                            )}
-                                            {script.originalPrice && (
-                                              <span className="text-gray-400 text-sm line-through mb-1">
-                                                ${script.discount.toFixed(2)}
-                                              </span>
-                                            )}
-                                          </motion.div>
+                                    {/* Price */}
+                                    <CardDescription className="text-orange-500 text-xl font-bold pt-1">
+                                      ${script.price}
+                                    </CardDescription>
+                                  </CardContent>
 
-                                          {/* Rating Badge */}
-                                          {script.rating > 0 && (
-                                            <motion.div
-                                              className="flex items-center gap-1 bg-black/70 backdrop-blur-sm border border-orange-500/30 rounded-lg px-2 py-1"
-                                              whileHover={{ scale: 1.05 }}
-                                            >
-                                              <Star className="h-3 w-3 fill-orange-500 text-orange-500" />
-                                              <span className="text-sm text-white font-bold">
-                                                {script.rating.toFixed(1)}
-                                              </span>
-                                            </motion.div>
-                                          )}
-                                        </div>
-                                      </div>
-
-                                      <CardTitle className="text-white text-xl font-bold mb-4 pr-20 group-hover:text-orange-500 transition-colors duration-300 leading-tight">
-                                        {script.title}
-                                      </CardTitle>
-                                      {/* Framework badges - top right corner */}
-                                      {script.framework &&
-                                        script.framework.length > 0 && (
-                                          <motion.div
-                                            className="mb-4 justify-items-start"
-                                            initial={{ scale: 0, rotate: 180 }}
-                                            animate={{ scale: 1, rotate: 0 }}
-                                            transition={{
-                                              delay: index * 0.05 + 0.1,
-                                              type: "spring",
-                                            }}
-                                          >
-                                            <div className="flex flex-wrap gap-1.5 justify-end">
-                                              {script.framework.map(
-                                                (fw, idx) => (
-                                                  <motion.div
-                                                    key={idx}
-                                                    whileHover={{
-                                                      scale: 1.1,
-                                                      y: -2,
-                                                    }}
-                                                  >
-                                                    <Badge className="bg-neutral-800/95 text-white backdrop-blur-sm text-xs font-bold border border-neutral-600/50 rounded-md px-2 py-0.5 uppercase tracking-wide shadow-lg">
-                                                      <span className="mr-1.5 text-lg font-bold">
-                                                        •
-                                                      </span>
-                                                      {fw}
-                                                    </Badge>
-                                                  </motion.div>
-                                                )
-                                              )}
-                                            </div>
-                                          </motion.div>
-                                        )}
-                                      {/* <CardDescription className="text-gray-400 text-sm mb-4 leading-relaxed line-clamp-2">
-                                        {script.description}
-                                      </CardDescription> */}
-                                      <div className="h-px bg-gradient-to-r from-transparent via-neutral-700 to-transparent my-4" />
-                                      {/* Seller info and stats */}
-                                      <div className="flex items-center justify-between text-xs mb-4">
-                                        <div className="flex items-center gap-2 text-gray-500">
-                                          <span className="text-gray-400">
-                                            by
-                                          </span>
-                                          <span className="text-gray-300 font-semibold">
-                                            {script.seller}
-                                          </span>
-                                        </div>
-                                        {/* {script.reviews > 0 && (
-                                          <div className="flex items-center gap-1 text-gray-400">
-                                            <Eye className="h-3 w-3" />
-                                            <span>
-                                              {script.reviews} reviews
-                                            </span>
-                                          </div>
-                                        )} */}
-                                      </div>
-                                      <div className="h-px bg-gradient-to-r from-transparent via-neutral-700 to-transparent my-4" />
-                                    </div>
-
-                                    <div
-                                      className={`${
-                                        viewMode === "list"
-                                          ? "flex flex-col justify-between items-end"
-                                          : "w-full"
-                                      }`}
+                                  {/* Button Section */}
+                                  <div className="px-3 pb-3 mt-auto">
+                                    <Button
+                                      variant="outline"
+                                      className="w-full bg-white text-black hover:bg-orange-600 hover:text-white transition-colors duration-200 font-semibold text-xs py-1.5 h-auto"
                                     >
-                                      <motion.div
-                                        whileHover={{ scale: 1.05 }}
-                                        whileTap={{ scale: 0.95 }}
-                                        className={
-                                          viewMode === "list" ? "" : "w-full"
-                                        }
-                                      >
-                                        <Button
-                                          size="lg"
-                                          className={`${
-                                            viewMode === "list" ? "" : "w-full"
-                                          } rounded-xl bg-gradient-to-r from-yellow-600 to-orange-500 hover:from-yellow-600 hover:to-orange-700 text-white font-bold shadow-lg shadow-orange-500/30 border border-orange-400/50 transition-all duration-300`}
-                                        >
-                                          <Eye className="mr-2 h-5 w-5" />
-                                          View Details
-                                        </Button>
-                                      </motion.div>
-                                    </div>
+                                      View Details
+                                    </Button>
                                   </div>
-                                </CardContent>
+                                </div>
                               </Card>
                             </Link>
-                          </motion.div>
+                          </div>
                         );
                       });
                     })()}
