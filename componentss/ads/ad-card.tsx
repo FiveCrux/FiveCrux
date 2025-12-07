@@ -161,9 +161,9 @@ export default function AdCard({ ad, className = "", variant = 'default' }: AdCa
               {/* Category Badge */}
               <motion.div
                 className="flex flex-wrap gap-1"
-                initial={{ scale: 0, rotate: 180 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ delay: 0.1, type: "spring" }}
+                // initial={{ scale: 0, rotate: 180 }}
+                // animate={{ scale: 1, rotate: 0 }}
+                // transition={{ delay: 0.1, type: "spring" }}
               >
                 <motion.div whileHover={{ scale: 1.1, y: -2 }}>
                   <Badge className="bg-neutral-800/95 text-white backdrop-blur-sm text-[10px] font-bold border border-neutral-600/50 rounded px-1.5 py-0.5 uppercase tracking-wide shadow-lg">
