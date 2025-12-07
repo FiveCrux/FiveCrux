@@ -378,7 +378,7 @@ export default function ScriptDetailPage() {
           style={{
             backgroundImage: `${script.cover_image ? `url(${script.cover_image})` : 'none'}`,
             backgroundSize: 'cover',
-            backgroundPosition: 'center',
+            backgroundPosition: 'center 70%',
             backgroundRepeat: 'no-repeat',
           }}
         >

@@ -79,7 +79,7 @@ export default function NavbarComponent() {
             <CustomLogo />
           </div>
           <NavItems items={navItems} />
-          <div className="flex items-center gap-2 flex-shrink-0 relative z-10">
+          <div className="flex items-center gap-3 flex-shrink-0 relative z-10">
             {status === "authenticated" ? (
               <>
                 <Link href="/profile" className="block">
@@ -137,9 +137,7 @@ export default function NavbarComponent() {
                 className="relative text-neutral-600 dark:text-neutral-300"
               >
                 <span className="block">{item.name}</span>
-                {item.icon && (
-                  <span className="block ml-2 bg-white">{item.icon}</span>
-                )}
+              
               </Link>
             ))}
             

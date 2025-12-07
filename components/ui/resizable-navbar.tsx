@@ -151,7 +151,7 @@ export const NavBody = ({ children, className, visible }: NavBodyProps) => {
         boxShadow: visible
           ? "0 0 24px rgba(34, 42, 53, 0.06), 0 1px 1px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(34, 42, 53, 0.04), 0 0 4px rgba(34, 42, 53, 0.08), 0 16px 68px rgba(47, 48, 55, 0.05), 0 1px 0 rgba(255, 255, 255, 0.1) inset"
           : "none",
-        width: visible ? "30%" : "100%",
+        width: visible ? "fit-content" : "100%",
         y: visible ? 20 : 0,
       }}
       transition={{
@@ -160,8 +160,8 @@ export const NavBody = ({ children, className, visible }: NavBodyProps) => {
         damping: 50,
       }}
       className={cn(
-        "relative z-[60] mx-auto hidden w-auto flex-row items-center justify-center self-start rounded-lg bg-transparent px-4 py-2 gap-4 lg:flex dark:bg-transparent",
-        visible && "bg-white/80 dark:bg-neutral-800",
+        "relative z-[60] mx-auto hidden w-fit flex-row items-center justify-center self-start rounded-lg bg-transparent px-4 py-2 gap-4 lg:flex dark:bg-transparent",
+        visible && "bg-white/80 max-w-full dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700",
         !visible && "justify-between",
         className,
       )}
@@ -219,17 +219,17 @@ export const NavItems = ({ items, className, onItemClick, textColorClassName, cu
             {hovered === idx && (
               <motion.div
                 layoutId="hovered"
-                className="absolute inset-0 h-full w-full rounded-lg bg-gray-100 dark:bg-neutral-400"
+                className="absolute inset-0 h-full w-full rounded-lg bg-gray-100 dark:bg-neutral-900"
               />
             )}
             {active && (
               <motion.div
                 layoutId="active-underline"
-                className="absolute bottom-0 left-0 right-0 h-0.5 bg-white z-30"
+                className="absolute bottom-0 left-1/2 -translate-x-1/2 right-0 h-0.5 w-4 align-middle bg-white z-30"
               />
             )}
             {item.icon && (
-              <span className="relative z-20">{item.icon}</span>
+              <span className="relative z-20 hidden lg:block">{item.icon}</span>
             )}
             <span className="relative z-20">{item.name}</span>
           </Link>
