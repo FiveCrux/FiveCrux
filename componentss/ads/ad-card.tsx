@@ -133,9 +133,9 @@ export default function AdCard({ ad, className = "", variant = 'default' }: AdCa
               />
               <motion.div
                 className="absolute top-2 right-2"
-                initial={{ scale: 0, rotate: 180 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ delay: 0.1 }}
+                // initial={{ scale: 0, rotate: 180 }}
+                // animate={{ scale: 1, rotate: 0 }}
+                // transition={{ delay: 0.1 }}
                 whileHover={{ scale: 1.1 }}
               >
                 <Badge className="bg-orange-500/20 text-orange-400 border border-orange-500/30 text-[10px] font-bold px-1.5 py-0.5">
