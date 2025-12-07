@@ -20,15 +20,17 @@ export default function Footer() {
     />
     <div className="max-w-7xl mx-auto relative z-10 py-12 px-4 sm:px-6 lg:px-8">
       <motion.div
-        className="grid grid-cols-1 md:grid-cols-4 gap-8"
+        className="grid grid-cols-1 md:grid-cols-4 gap-8 text-center md:text-left items-center md:items-start"
         initial={{ opacity: 0, y: 30 }}
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 1, staggerChildren: 0.1 }}
+        
       >
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
+          className="text-center md:text-left"
         >
           <h3 className="text-2xl font-bold mb-4">
             <span className="text-orange-500">Five</span>
@@ -73,9 +75,10 @@ export default function Footer() {
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: sectionIndex * 0.1 }}
+            className="text-center md:text-left"
           >
             <h4 className="text-white font-semibold mb-4">{section.title}</h4>
-            <ul className="space-y-2">
+            <ul className="space-y-2 flex flex-col items-center md:items-start">
               {section.links.map((link, linkIndex) => (
                 <motion.li
                   key={link.name}
