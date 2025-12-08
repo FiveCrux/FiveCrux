@@ -31,6 +31,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/componentss/ui/avatar";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/componentss/ui/tabs";
 import Navbar from "@/componentss/shared/navbar";
 import Footer from "@/componentss/shared/footer";
+import { VerifiedIcon } from "@/componentss/shared/verified-icon";
+import { isVerifiedCreator } from "@/lib/utils";
 import Loading from "./loading";
 
 interface Script {
@@ -45,6 +47,7 @@ interface Script {
   seller_email: string;
   seller_id?: string;
   seller_image?: string;
+  seller_roles?: string[] | null;
   features: string[];
   requirements: string[];
   link?: string;
@@ -467,14 +470,18 @@ export default function ScriptDetailPage() {
                           <h3 className="text-white font-bold text-lg">
                             {script.seller_name}
                           </h3>
-                          <CheckCircle className="h-5 w-5 text-orange-500" />
+                          {isVerifiedCreator(script.seller_roles) && (
+                            <VerifiedIcon size="md" />
+                          )}
                         </div>
-                        <div className="flex items-center gap-4 text-sm text-gray-400">
-                          <span className="flex items-center gap-1">
-                            <span className="w-2 h-2 bg-green-500 rounded-full" />
-                            Verified Seller
-                          </span>
-                        </div>
+                        {isVerifiedCreator(script.seller_roles) && (
+                          <div className="flex items-center gap-4 text-sm text-gray-400">
+                            <span className="flex items-center gap-1">
+                              <span className="w-2 h-2 bg-green-500 rounded-full" />
+                              Verified Creator
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </CardContent>

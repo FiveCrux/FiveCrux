@@ -1,5 +1,5 @@
 import { db } from './db/client';
-import { eq, and, or, like, gte, lte, sql, desc, asc, getTableColumns, ne, lt } from 'drizzle-orm';
+import { eq, and, or, like, gte, lte, sql, desc, asc, getTableColumns, ne, lt, inArray } from 'drizzle-orm';
 import { 
   users, pendingScripts, approvedScripts, rejectedScripts, 
   pendingGiveaways, approvedGiveaways, rejectedGiveaways, 
@@ -525,6 +525,25 @@ export async function getScripts(filters?: ScriptFilters) {
       .orderBy(desc(approvedScripts.createdAt))
       .limit(limit)
       .offset(offset);
+    
+    // Fetch seller roles for all scripts with sellerId
+    const sellerIds = results
+      .map(s => s.sellerId)
+      .filter((id): id is string => !!id);
+    
+    const sellerRolesMap = new Map<string, string[] | null>();
+    if (sellerIds.length > 0) {
+      // Fetch all sellers in one query
+      const uniqueSellerIds = [...new Set(sellerIds)];
+      const sellers = await db
+        .select({ id: users.id, roles: users.roles })
+        .from(users)
+        .where(inArray(users.id, uniqueSellerIds));
+      
+      sellers.forEach(seller => {
+        sellerRolesMap.set(seller.id, seller.roles);
+      });
+    }
       
     // Map database fields to API-expected field names
     return results.map(script => ({
@@ -533,6 +552,7 @@ export async function getScripts(filters?: ScriptFilters) {
       original_price: script.originalPrice,
       seller_name: script.seller_name,
       seller_email: script.seller_email,
+      seller_roles: script.sellerId ? sellerRolesMap.get(script.sellerId) || null : null,
       other_links: script.otherLinks || [],
       created_at: script.createdAt,
       updated_at: script.updatedAt,
@@ -558,10 +578,12 @@ export async function getScriptById(id: number) {
       
       // Fetch seller's profile picture with priority: profile_picture first, then Discord image
       let sellerImage = null;
+      let sellerRoles = null;
       if (script.sellerId) {
         const sellerResult = await db.select().from(users).where(eq(users.id, script.sellerId));
         if (sellerResult.length > 0) {
           sellerImage = getUserProfilePicture(sellerResult[0]);
+          sellerRoles = sellerResult[0].roles;
         }
       }
       
@@ -569,6 +591,7 @@ export async function getScriptById(id: number) {
         ...script, 
         status: 'approved' as const,
         seller_image: sellerImage,
+        seller_roles: sellerRoles,
         cover_image: script.coverImage,
         original_price: script.originalPrice,
         seller_name: script.seller_name,
@@ -591,10 +614,12 @@ export async function getScriptById(id: number) {
       
       // Fetch seller's profile picture with priority: profile_picture first, then Discord image
       let sellerImage = null;
+      let sellerRoles = null;
       if (script.sellerId) {
         const sellerResult = await db.select().from(users).where(eq(users.id, script.sellerId));
         if (sellerResult.length > 0) {
           sellerImage = getUserProfilePicture(sellerResult[0]);
+          sellerRoles = sellerResult[0].roles;
         }
       }
       
@@ -602,6 +627,7 @@ export async function getScriptById(id: number) {
         ...script, 
         status: 'pending' as const,
         seller_image: sellerImage,
+        seller_roles: sellerRoles,
         cover_image: script.coverImage,
         original_price: script.originalPrice,
         seller_name: script.seller_name,
@@ -624,10 +650,12 @@ export async function getScriptById(id: number) {
       
       // Fetch seller's profile picture with priority: profile_picture first, then Discord image
       let sellerImage = null;
+      let sellerRoles = null;
       if (script.sellerId) {
         const sellerResult = await db.select().from(users).where(eq(users.id, script.sellerId));
         if (sellerResult.length > 0) {
           sellerImage = getUserProfilePicture(sellerResult[0]);
+          sellerRoles = sellerResult[0].roles;
         }
       }
       
@@ -635,6 +663,7 @@ export async function getScriptById(id: number) {
         ...script, 
         status: 'rejected' as const,
         seller_image: sellerImage,
+        seller_roles: sellerRoles,
         cover_image: script.coverImage,
         original_price: script.originalPrice,
         seller_name: script.seller_name,
@@ -1144,19 +1173,22 @@ export async function getGiveaways(filters?: {
   const offseted = filters?.offset ? limited.offset(filters.offset) : limited;
   const giveaways = await (offseted as any);
   
-  // Fetch creator images for each giveaway with priority: profile_picture first, then Discord image
+  // Fetch creator images and roles for each giveaway with priority: profile_picture first, then Discord image
   const giveawaysWithImages = await Promise.all(
     giveaways.map(async (giveaway: any) => {
       let creatorImage = null;
+      let creatorRoles = null;
       if (giveaway.creatorId) {
         const creatorResult = await db.select().from(users).where(eq(users.id, giveaway.creatorId));
         if (creatorResult.length > 0) {
           creatorImage = getUserProfilePicture(creatorResult[0]);
+          creatorRoles = creatorResult[0].roles;
         }
       }
       return {
         ...giveaway,
         creatorImage,
+        creatorRoles,
       };
     })
   );
