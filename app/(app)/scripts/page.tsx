@@ -46,6 +46,8 @@ import { useSearchParams, useRouter } from "next/navigation";
 import Navbar from "@/componentss/shared/navbar";
 import Footer from "@/componentss/shared/footer";
 import AdCard, { useRandomAds } from "@/componentss/ads/ad-card";
+import { VerifiedIcon } from "@/componentss/shared/verified-icon";
+import { isVerifiedCreator } from "@/lib/utils";
 import Image from "next/image";
 // Animated background particles - Client only to avoid hydration issues
 const AnimatedParticles = () => {
@@ -127,6 +129,7 @@ export default function ScriptsPage() {
     category: string;
     categoryName: string;
     seller: string;
+    seller_roles?: string[] | null;
     discount: number;
     framework?: string[];
     priceCategory: string;
@@ -182,6 +185,7 @@ export default function ScriptsPage() {
               category: s.category,
               categoryName: s.category,
               seller: s.seller_name,
+              seller_roles: s.seller_roles || null,
               discount: s.original_price
                 ? Math.max(
                     0,
@@ -1248,8 +1252,11 @@ export default function ScriptsPage() {
                                       )}
                                       
                                     {/* Description */}
-                                    <CardDescription className="text-neutral-400 text-xs leading-snug line-clamp-2">
-                                       By {script.seller}
+                                    <CardDescription className="text-neutral-400 text-xs leading-snug line-clamp-2 flex items-center gap-1.5">
+                                      <span>By {script.seller}</span>
+                                      {isVerifiedCreator(script.seller_roles) && (
+                                        <VerifiedIcon size="sm" />
+                                      )}
                                     </CardDescription>
                                     {/* Price */}
                                     <CardDescription className="text-orange-500 text-xl font-bold pt-1">
