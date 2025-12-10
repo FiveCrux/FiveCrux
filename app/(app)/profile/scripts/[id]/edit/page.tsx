@@ -224,8 +224,18 @@ export default function EditScriptPage() {
       })
 
       if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || "Upload failed")
+        // Read response as text first (can only read once)
+        const textError = await response.text()
+        let errorMessage = "Upload failed"
+        try {
+          // Try to parse as JSON
+          const error = JSON.parse(textError)
+          errorMessage = error.error || errorMessage
+        } catch {
+          // If JSON parsing fails, use the text as error message
+          errorMessage = textError || errorMessage
+        }
+        throw new Error(errorMessage)
       }
 
       const result = await response.json()
