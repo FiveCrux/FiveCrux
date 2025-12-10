@@ -284,8 +284,17 @@ export default function SubmitScriptPage() {
       })
 
       if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || "Upload failed")
+        // Try to parse as JSON, but handle plain text errors
+        let errorMessage = "Upload failed"
+        try {
+          const error = await response.json()
+          errorMessage = error.error || errorMessage
+        } catch {
+          // If JSON parsing fails, read as text
+          const textError = await response.text()
+          errorMessage = textError || errorMessage
+        }
+        throw new Error(errorMessage)
       }
 
       const result = await response.json()

@@ -11,8 +11,8 @@ const SIZE_LIMITS = {
   thumbnail: 2 * 1024 * 1024,   // 2MB (before optimization)
   
   // Video limits (uploaded as-is)
-  demoVideo: 50 * 1024 * 1024,  // 50MB
-  trailerVideo: 50 * 1024 * 1024, // 50MB
+  demoVideo: 4.5 * 1024 * 1024,  // 4.5MB
+  trailerVideo: 4.5 * 1024 * 1024, // 4.5MB
 }
 
 // Dimension limits
