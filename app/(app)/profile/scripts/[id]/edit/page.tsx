@@ -897,7 +897,7 @@ export default function EditScriptPage() {
                     >
                       <Video className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                       <p className="text-gray-400">Upload demo videos</p>
-                      <p className="text-sm text-gray-500 mt-2">MP4, MOV up to 50MB each</p>
+                      <p className="text-sm text-gray-500 mt-2">MP4, MOV up to 4.5 mb each</p>
                     </label>
                     
                     {/* Display uploaded videos */}
