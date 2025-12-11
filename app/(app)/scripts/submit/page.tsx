@@ -740,17 +740,6 @@ export default function SubmitScriptPage() {
                         </div>
                       </div>
                     )}
-
-                    <div className="flex items-center space-x-2">
-                      <Switch
-                        id="featured"
-                        checked={formData.featured}
-                        onCheckedChange={(checked) => setFormData({ ...formData, featured: checked })}
-                      />
-                      <Label htmlFor="featured" className="text-white">
-                        Request Featured Listing (+$20 review fee)
-                      </Label>
-                    </div>
                   </CardContent>
                 </Card>
                 {/* Link */}
