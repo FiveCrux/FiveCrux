@@ -845,7 +845,7 @@ export default function CreateGiveawayPage() {
                       >
                         <Video className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                         <p className="text-gray-400">Upload videos</p>
-                        <p className="text-sm text-gray-500 mt-2">MP4, WebM up to 50MB each (max 5 videos)</p>
+                        <p className="text-sm text-gray-500 mt-2">MP4, WebM up to 4.5 mb each (max 5 videos)</p>
                       </label>
                       
                       {/* Display uploaded videos */}
