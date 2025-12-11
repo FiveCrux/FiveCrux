@@ -510,21 +510,6 @@ export default function CreateGiveawayPage() {
                         />
                       </div>
                     </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <Switch
-                          id="featured"
-                          checked={formData.featured}
-                          onCheckedChange={(checked) => setFormData({ ...formData, featured: checked })}
-                        />
-                        <Label htmlFor="featured" className="text-white">
-                          Featured Giveaway (+$10)
-                        </Label>
-                      </div>
-
-                      {/* Auto-announce is always enabled; toggle removed */}
-                    </div>
                   </CardContent>
                 </Card>
 
