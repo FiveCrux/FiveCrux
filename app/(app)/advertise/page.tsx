@@ -377,19 +377,8 @@ export default function AdvertisePage() {
   // State for selected tab (ad slots or featured script slots)
   const [activeTab, setActiveTab] = useState<"ads" | "featured-scripts">("ads")
   
-  // State for selected duration per package (ad slots)
-  const [selectedDurations, setSelectedDurations] = useState<Record<string, number>>({
-    starter: 0,
-    premium: 0,
-    executive: 0
-  })
-  
-  // State for selected duration per package (featured script slots)
-  const [selectedFeaturedDurations, setSelectedFeaturedDurations] = useState<Record<string, number>>({
-    starter: 0,
-    premium: 0,
-    executive: 0
-  })
+  // State for selected duration index (shared across all packages)
+  const [selectedDurationIndex, setSelectedDurationIndex] = useState<number>(0)
 
   // State for PayPal client ID
   const [paypalClientId, setPaypalClientId] = useState<string | null>(null)
@@ -433,13 +422,6 @@ export default function AdvertisePage() {
   const pricingInView = useInView(pricingRef, { once: true })
   const benefitsInView = useInView(benefitsRef, { once: true })
   
-  const handleDurationChange = (packageId: string, durationIndex: number) => {
-    setSelectedDurations(prev => ({
-      ...prev,
-      [packageId]: durationIndex
-    }))
-  }
-  
   const handlePurchaseSuccess = () => {
     // Refresh the page or update UI as needed
     router.refresh()
@@ -448,6 +430,9 @@ export default function AdvertisePage() {
   const handlePurchaseError = (error: string) => {
     toast.error(error)
   }
+
+  // Get current packages based on active tab
+  const currentPackages = activeTab === "ads" ? pricingPackages : featuredScriptPackages
 
   return (
     <div className="min-h-screen bg-neutral-950 text-white overflow-hidden">
@@ -628,7 +613,10 @@ export default function AdvertisePage() {
             </p>
             
             {/* Tabs for Ad Slots vs Featured Script Slots */}
-            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "ads" | "featured-scripts")} className="w-full max-w-2xl mx-auto mb-8">
+            <Tabs value={activeTab} onValueChange={(value) => {
+              setActiveTab(value as "ads" | "featured-scripts")
+              setSelectedDurationIndex(0) // Reset duration when switching tabs
+            }} className="w-full max-w-2xl mx-auto mb-8">
               <TabsList className="grid w-full grid-cols-2 bg-neutral-800/50 border border-gray-700/50">
                 <TabsTrigger 
                   value="ads" 
@@ -646,14 +634,39 @@ export default function AdvertisePage() {
                 </TabsTrigger>
               </TabsList>
             </Tabs>
+
+            {/* Duration Selection - Now at the top */}
+            <div className="mb-12">
+              <Tabs 
+                value={selectedDurationIndex.toString()}
+                onValueChange={(value) => setSelectedDurationIndex(parseInt(value))}
+                className="w-full max-w-2xl mx-auto"
+              >
+                <TabsList className="grid w-full grid-cols-4 bg-neutral-800/50 border border-gray-700/50">
+                  {currentPackages[0].durations.map((duration, durIndex) => (
+                    <TabsTrigger
+                      key={durIndex}
+                      value={durIndex.toString()}
+                      className={cn(
+                        "text-sm data-[state=active]:font-bold",
+                        activeTab === "ads" 
+                          ? "data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-yellow-400 data-[state=active]:text-black"
+                          : "data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white"
+                      )}
+                    >
+                      {duration.label}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </Tabs>
+            </div>
           </motion.div>
 
-          {/* Ad Slots Packages */}
-          {activeTab === "ads" && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-10">
-            {pricingPackages.map((pkg, index) => {
+          {/* Pricing Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-10">
+            {currentPackages.map((pkg, index) => {
               const Icon = pkg.icon
-              const selectedDuration = pkg.durations[selectedDurations[pkg.packageId] || 0]
+              const selectedDuration = pkg.durations[selectedDurationIndex]
               const discount = Math.round(((selectedDuration.originalPrice - selectedDuration.price) / selectedDuration.originalPrice) * 100)
               
               return (
@@ -676,7 +689,12 @@ export default function AdvertisePage() {
                         repeat: Number.POSITIVE_INFINITY,
                       }}
                     >
-                      <Badge className="bg-gradient-to-r from-orange-500 to-yellow-400 text-black font-bold px-4 py-1 text-sm flex items-center gap-1">
+                      <Badge className={cn(
+                        "font-bold px-4 py-1 text-sm flex items-center gap-1",
+                        activeTab === "ads"
+                          ? "bg-gradient-to-r from-orange-500 to-yellow-400 text-black"
+                          : "bg-gradient-to-r from-purple-500 to-pink-500 text-white"
+                      )}>
                         <Star className="h-3 w-3 fill-current" />
                         Most Popular
                       </Badge>
@@ -685,8 +703,12 @@ export default function AdvertisePage() {
                   <Card className={cn(
                     "bg-neutral-900/60 border-gray-700/50 backdrop-blur-sm h-full relative overflow-hidden transition-all duration-500",
                     pkg.popular 
-                      ? "border-2 border-orange-500/50 shadow-2xl shadow-orange-500/20" 
-                      : "hover:border-orange-500/50"
+                      ? activeTab === "ads"
+                        ? "border-2 border-orange-500/50 shadow-2xl shadow-orange-500/20"
+                        : "border-2 border-purple-500/50 shadow-2xl shadow-purple-500/20"
+                      : activeTab === "ads"
+                        ? "hover:border-orange-500/50"
+                        : "hover:border-purple-500/50"
                   )}>
                     <CardHeader className="p-8 pb-4 relative z-10">
                       <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br ${pkg.gradient} mb-6`}>
@@ -699,8 +721,13 @@ export default function AdvertisePage() {
                         {pkg.description}
                       </CardDescription>
                       <div className="flex items-center gap-2 mb-4 flex-wrap">
-                        <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30">
-                          {pkg.slotsPerMonth} Slot{pkg.slotsPerMonth > 1 ? 's' : ''} per Month
+                        <Badge className={cn(
+                          "border-opacity-30",
+                          activeTab === "ads"
+                            ? "bg-orange-500/20 text-orange-400 border-orange-500/30"
+                            : "bg-purple-500/20 text-purple-400 border-purple-500/30"
+                        )}>
+                          {pkg.slotsPerMonth} Slot{pkg.slotsPerMonth > 1 ? 's' : ''}{activeTab === "ads" ? " per Month" : ""}
                         </Badge>
                         <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
                           One-Time Payment
@@ -708,27 +735,6 @@ export default function AdvertisePage() {
                       </div>
                     </CardHeader>
                     <CardContent className="p-8 pt-4 relative z-10">
-                      {/* Duration Selection */}
-                      <div className="mb-6">
-                        <Tabs 
-                          value={selectedDurations[pkg.packageId]?.toString() || "0"}
-                          onValueChange={(value) => handleDurationChange(pkg.packageId, parseInt(value))}
-                          className="w-full"
-                        >
-                          <TabsList className="grid w-full grid-cols-4 bg-neutral-800/50 border border-gray-700/50">
-                            {pkg.durations.map((duration, durIndex) => (
-                              <TabsTrigger
-                                key={durIndex}
-                                value={durIndex.toString()}
-                                className="text-xs data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-yellow-400 data-[state=active]:text-black data-[state=active]:font-bold"
-                              >
-                                {duration.label.split(' ')[0]}
-                              </TabsTrigger>
-                            ))}
-                          </TabsList>
-                        </Tabs>
-                      </div>
-
                       {/* Pricing Display */}
                       <div className="mb-6">
                         <div className="flex items-baseline gap-2 mb-2">
@@ -752,8 +758,15 @@ export default function AdvertisePage() {
                         <div className="text-gray-400 text-sm mt-2">
                           One-time payment • No recurring charges
                         </div>
-                        <div className="text-orange-400 text-sm font-semibold mt-1">
-                          Get {pkg.slotsPerMonth * selectedDuration.months} slot{pkg.slotsPerMonth * selectedDuration.months > 1 ? 's' : ''} immediately ({pkg.slotsPerMonth} slot{pkg.slotsPerMonth > 1 ? 's' : ''} × {selectedDuration.months} month{selectedDuration.months > 1 ? 's' : ''})
+                        <div className={cn(
+                          "text-sm font-semibold mt-1",
+                          activeTab === "ads" ? "text-orange-400" : "text-purple-400"
+                        )}>
+                          {activeTab === "ads" ? (
+                            <>Get {pkg.slotsPerMonth * selectedDuration.months} slot{pkg.slotsPerMonth * selectedDuration.months > 1 ? 's' : ''} immediately ({pkg.slotsPerMonth} slot{pkg.slotsPerMonth > 1 ? 's' : ''} × {selectedDuration.months} month{selectedDuration.months > 1 ? 's' : ''})</>
+                          ) : (
+                            <>Get {pkg.slotsPerMonth} slot{pkg.slotsPerMonth > 1 ? 's' : ''} for {selectedDuration.weeks || Math.round(selectedDuration.months * 4)} week{selectedDuration.weeks !== 1 ? 's' : ''}</>
+                          )}
                         </div>
                       </div>
 
@@ -769,7 +782,11 @@ export default function AdvertisePage() {
                             <Check className="h-3 w-3 text-white" />
                           </div>
                           <span className="text-gray-300 text-sm leading-relaxed">
-                            {pkg.slotsPerMonth * selectedDuration.months} ad slot{pkg.slotsPerMonth * selectedDuration.months > 1 ? 's' : ''} (all slots unlocked immediately)
+                            {activeTab === "ads" ? (
+                              <>{pkg.slotsPerMonth * selectedDuration.months} ad slot{pkg.slotsPerMonth * selectedDuration.months > 1 ? 's' : ''} (all slots unlocked immediately)</>
+                            ) : (
+                              <>{pkg.slotsPerMonth} featured script slot{pkg.slotsPerMonth > 1 ? 's' : ''} (all slots unlocked immediately)</>
+                            )}
                           </span>
                         </motion.li>
                         <motion.li
@@ -782,7 +799,7 @@ export default function AdvertisePage() {
                             <Check className="h-3 w-3 text-white" />
                           </div>
                           <span className="text-gray-300 text-sm leading-relaxed">
-                            Featured placement in marketplace
+                            {activeTab === "ads" ? "Featured placement in marketplace" : "Featured placement on homepage"}
                           </span>
                         </motion.li>
                         <motion.li
@@ -816,7 +833,10 @@ export default function AdvertisePage() {
                       <div className="w-full">
                         {isLoadingPaypal ? (
                           <div className="flex items-center justify-center py-6">
-                            <Loader2 className="h-6 w-6 animate-spin text-orange-500" />
+                            <Loader2 className={cn(
+                              "h-6 w-6 animate-spin",
+                              activeTab === "ads" ? "text-orange-500" : "text-purple-500"
+                            )} />
                           </div>
                         ) : paypalClientId ? (
                           <PayPalScriptProvider
@@ -826,12 +846,21 @@ export default function AdvertisePage() {
                               intent: "capture",
                             }}
                           >
-                            <PayPalButtonWrapper
-                              pkg={pkg}
-                              durationIndex={selectedDurations[pkg.packageId] || 0}
-                              onSuccess={handlePurchaseSuccess}
-                              onError={handlePurchaseError}
-                            />
+                            {activeTab === "ads" ? (
+                              <PayPalButtonWrapper
+                                pkg={pkg}
+                                durationIndex={selectedDurationIndex}
+                                onSuccess={handlePurchaseSuccess}
+                                onError={handlePurchaseError}
+                              />
+                            ) : (
+                              <FeaturedScriptPayPalButtonWrapper
+                                pkg={pkg}
+                                durationIndex={selectedDurationIndex}
+                                onSuccess={handlePurchaseSuccess}
+                                onError={handlePurchaseError}
+                              />
+                            )}
                           </PayPalScriptProvider>
                         ) : (
                           <motion.div
@@ -844,8 +873,11 @@ export default function AdvertisePage() {
                               className={cn(
                                 "w-full py-6 text-lg font-bold rounded-full transition-all duration-300",
                                 pkg.popular
-                                  ? "bg-gradient-to-r from-orange-500 via-yellow-400 to-orange-500 hover:from-orange-600 hover:via-yellow-500 hover:to-orange-600 text-black shadow-2xl shadow-orange-500/30"
-                                  : "bg-neutral-800 hover:bg-neutral-700 text-white border border-gray-700 hover:border-orange-500/50"
+                                  ? activeTab === "ads"
+                                    ? "bg-gradient-to-r from-orange-500 via-yellow-400 to-orange-500 hover:from-orange-600 hover:via-yellow-500 hover:to-orange-600 text-black shadow-2xl shadow-orange-500/30"
+                                    : "bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500 hover:from-purple-600 hover:via-pink-600 hover:to-purple-600 text-white shadow-2xl shadow-purple-500/30"
+                                  : "bg-neutral-800 hover:bg-neutral-700 text-white border border-gray-700",
+                                activeTab === "ads" ? "hover:border-orange-500/50" : "hover:border-purple-500/50"
                               )}
                             >
                               PayPal Not Configured
@@ -859,220 +891,6 @@ export default function AdvertisePage() {
               )
             })}
           </div>
-          )}
-
-          {/* Featured Script Slots Packages */}
-          {activeTab === "featured-scripts" && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-10">
-            {featuredScriptPackages.map((pkg, index) => {
-              const Icon = pkg.icon
-              const selectedDuration = pkg.durations[selectedFeaturedDurations[pkg.packageId] || 0]
-              const discount = Math.round(((selectedDuration.originalPrice - selectedDuration.price) / selectedDuration.originalPrice) * 100)
-              
-              return (
-                <motion.div
-                  key={pkg.packageId}
-                  initial={{ opacity: 0, y: 50 }}
-                  animate={pricingInView ? { opacity: 1, y: 0 } : {}}
-                  transition={{ duration: 0.8, delay: index * 0.15 }}
-                  whileHover={{ scale: 1.02, y: -5 }}
-                  className="relative"
-                >
-                  {pkg.popular && (
-                    <motion.div
-                      className="absolute -top-4 left-1/2 -translate-x-1/2 z-20"
-                      animate={{
-                        scale: [1, 1.05, 1],
-                      }}
-                      transition={{
-                        duration: 2,
-                        repeat: Number.POSITIVE_INFINITY,
-                      }}
-                    >
-                      <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold px-4 py-1 text-sm flex items-center gap-1">
-                        <Star className="h-3 w-3 fill-current" />
-                        Most Popular
-                      </Badge>
-                    </motion.div>
-                  )}
-                  <Card className={cn(
-                    "bg-neutral-900/60 border-gray-700/50 backdrop-blur-sm h-full relative overflow-hidden transition-all duration-500",
-                    pkg.popular 
-                      ? "border-2 border-purple-500/50 shadow-2xl shadow-purple-500/20" 
-                      : "hover:border-purple-500/50"
-                  )}>
-                    <CardHeader className="p-8 pb-4 relative z-10">
-                      <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br ${pkg.gradient} mb-6`}>
-                        <Icon className="h-8 w-8 text-white" />
-                      </div>
-                      <CardTitle className="text-2xl font-bold text-white mb-2">
-                        {pkg.name}
-                      </CardTitle>
-                      <CardDescription className="text-gray-400 text-base mb-4">
-                        {pkg.description}
-                      </CardDescription>
-                      <div className="flex items-center gap-2 mb-4 flex-wrap">
-                        <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">
-                          {pkg.slotsPerMonth} Slot{pkg.slotsPerMonth > 1 ? 's' : ''}
-                        </Badge>
-                        <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
-                          One-Time Payment
-                        </Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="p-8 pt-4 relative z-10">
-                      {/* Duration Selection */}
-                      <div className="mb-6">
-                        <Tabs 
-                          value={selectedFeaturedDurations[pkg.packageId]?.toString() || "0"}
-                          onValueChange={(value) => setSelectedFeaturedDurations(prev => ({ ...prev, [pkg.packageId]: parseInt(value) }))}
-                          className="w-full"
-                        >
-                          <TabsList className="grid w-full grid-cols-4 bg-neutral-800/50 border border-gray-700/50">
-                            {pkg.durations.map((duration, durIndex) => (
-                              <TabsTrigger
-                                key={durIndex}
-                                value={durIndex.toString()}
-                                className="text-xs data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white data-[state=active]:font-bold"
-                              >
-                                {duration.label.split(' ')[0]}
-                              </TabsTrigger>
-                            ))}
-                          </TabsList>
-                        </Tabs>
-                      </div>
-
-                      {/* Pricing Display */}
-                      <div className="mb-6">
-                        <div className="flex items-baseline gap-2 mb-2">
-                          <motion.span
-                            className="text-5xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent"
-                            animate={pricingInView ? { scale: [1, 1.1, 1] } : {}}
-                            transition={{ delay: index * 0.15 + 0.3, duration: 0.5 }}
-                            key={selectedDuration.price}
-                          >
-                            €{selectedDuration.price}
-                          </motion.span>
-                        </div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="text-gray-400 text-sm line-through">
-                            €{selectedDuration.originalPrice}
-                          </span>
-                          <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-xs">
-                            Save {discount}%
-                          </Badge>
-                        </div>
-                        <div className="text-gray-400 text-sm mt-2">
-                          One-time payment • No recurring charges
-                        </div>
-                        <div className="text-purple-400 text-sm font-semibold mt-1">
-                          Get {pkg.slotsPerMonth} slot{pkg.slotsPerMonth > 1 ? 's' : ''} for {selectedDuration.weeks || Math.round(selectedDuration.months * 4)} week{selectedDuration.weeks !== 1 ? 's' : ''}
-                        </div>
-                      </div>
-
-                      {/* Features */}
-                      <ul className="space-y-3 mb-6">
-                        <motion.li
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={pricingInView ? { opacity: 1, x: 0 } : {}}
-                          transition={{ delay: index * 0.15 }}
-                          className="flex items-start gap-3"
-                        >
-                          <div className={`flex-shrink-0 w-5 h-5 rounded-full bg-gradient-to-br ${pkg.gradient} flex items-center justify-center mt-0.5`}>
-                            <Check className="h-3 w-3 text-white" />
-                          </div>
-                          <span className="text-gray-300 text-sm leading-relaxed">
-                            {pkg.slotsPerMonth} featured script slot{pkg.slotsPerMonth > 1 ? 's' : ''} (all slots unlocked immediately)
-                          </span>
-                        </motion.li>
-                        <motion.li
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={pricingInView ? { opacity: 1, x: 0 } : {}}
-                          transition={{ delay: index * 0.15 + 0.1 }}
-                          className="flex items-start gap-3"
-                        >
-                          <div className={`flex-shrink-0 w-5 h-5 rounded-full bg-gradient-to-br ${pkg.gradient} flex items-center justify-center mt-0.5`}>
-                            <Check className="h-3 w-3 text-white" />
-                          </div>
-                          <span className="text-gray-300 text-sm leading-relaxed">
-                            Featured placement on homepage
-                          </span>
-                        </motion.li>
-                        <motion.li
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={pricingInView ? { opacity: 1, x: 0 } : {}}
-                          transition={{ delay: index * 0.15 + 0.2 }}
-                          className="flex items-start gap-3"
-                        >
-                          <div className={`flex-shrink-0 w-5 h-5 rounded-full bg-gradient-to-br ${pkg.gradient} flex items-center justify-center mt-0.5`}>
-                            <Check className="h-3 w-3 text-white" />
-                          </div>
-                          <span className="text-gray-300 text-sm leading-relaxed">
-                            Analytics dashboard
-                          </span>
-                        </motion.li>
-                        <motion.li
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={pricingInView ? { opacity: 1, x: 0 } : {}}
-                          transition={{ delay: index * 0.15 + 0.3 }}
-                          className="flex items-start gap-3"
-                        >
-                          <div className={`flex-shrink-0 w-5 h-5 rounded-full bg-gradient-to-br ${pkg.gradient} flex items-center justify-center mt-0.5`}>
-                            <Check className="h-3 w-3 text-white" />
-                          </div>
-                          <span className="text-gray-300 text-sm leading-relaxed">
-                            Email support
-                          </span>
-                        </motion.li>
-                      </ul>
-
-                      <div className="w-full">
-                        {isLoadingPaypal ? (
-                          <div className="flex items-center justify-center py-6">
-                            <Loader2 className="h-6 w-6 animate-spin text-purple-500" />
-                          </div>
-                        ) : paypalClientId ? (
-                          <PayPalScriptProvider
-                            options={{
-                              clientId: paypalClientId,
-                              currency: "EUR",
-                              intent: "capture",
-                            }}
-                          >
-                            <FeaturedScriptPayPalButtonWrapper
-                              pkg={pkg}
-                              durationIndex={selectedFeaturedDurations[pkg.packageId] || 0}
-                              onSuccess={handlePurchaseSuccess}
-                              onError={handlePurchaseError}
-                            />
-                          </PayPalScriptProvider>
-                        ) : (
-                          <motion.div
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            className="w-full"
-                          >
-                            <Button
-                              disabled
-                              className={cn(
-                                "w-full py-6 text-lg font-bold rounded-full transition-all duration-300",
-                                pkg.popular
-                                  ? "bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500 hover:from-purple-600 hover:via-pink-600 hover:to-purple-600 text-white shadow-2xl shadow-purple-500/30"
-                                  : "bg-neutral-800 hover:bg-neutral-700 text-white border border-gray-700 hover:border-purple-500/50"
-                              )}
-                            >
-                              PayPal Not Configured
-                            </Button>
-                          </motion.div>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              )
-            })}
-          </div>
-          )}
 
           {/* Additional Info */}
           <motion.div

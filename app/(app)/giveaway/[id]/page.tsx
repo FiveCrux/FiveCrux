@@ -36,6 +36,8 @@ import Link from "next/link"
 import { useParams } from "next/navigation"
 import Navbar from "@/componentss/shared/navbar"
 import Footer from "@/componentss/shared/footer"
+import { VerifiedIcon } from "@/componentss/shared/verified-icon"
+import { isVerifiedCreator } from "@/lib/utils"
 import { toast } from "sonner"
 
 // Add CSS for spin animation
@@ -383,6 +385,11 @@ export default function GiveawayDetailPage() {
         
         if (response.ok) {
           const data = await response.json()
+          console.log('Giveaway data:', { 
+            creator_roles: data.creator_roles, 
+            creatorRoles: data.creatorRoles,
+            creator_id: data.creator_id || data.creatorId 
+          })
           setGiveaway(data)
         } else {
           setError('Failed to load giveaway')
@@ -463,6 +470,18 @@ export default function GiveawayDetailPage() {
     return end.getTime() <= now.getTime()
   }, [giveaway?.endDate])
 
+  const creatorRoles = giveaway?.creator_roles || giveaway?.creatorRoles || null
+  const isCreatorVerified = isVerifiedCreator(creatorRoles)
+  
+  // Debug log
+  if (giveaway) {
+    console.log('Transforming giveaway:', {
+      creator_roles: creatorRoles,
+      isVerified: isCreatorVerified,
+      creator_id: giveaway?.creator_id || giveaway?.creatorId
+    })
+  }
+
   const transformedGiveaway = {
     id: giveaway?.id || 1,
     title: giveaway?.title || "Test Giveaway",
@@ -481,7 +500,7 @@ export default function GiveawayDetailPage() {
       email: giveaway?.creator_email || giveaway?.creatorEmail || "",
       id: giveaway?.creator_id || giveaway?.creatorId || "",
       avatar: giveaway?.creator_image || "/placeholder-user.jpg",
-      verified: giveaway?.creator_roles?.includes('verified_creator') || false,
+      verified: isCreatorVerified,
     },
     prizes: giveaway?.prizes || [
       { position: 1, name: "First Prize", description: "Amazing first prize", value: "$300", winner: null },
@@ -848,8 +867,8 @@ export default function GiveawayDetailPage() {
             {/* Overlay to reduce background image opacity */}
             <div className="absolute inset-0 bg-black/60 pointer-events-none" />
             
-            {/* Gradient fade at bottom */}
-            <div className="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-b from-transparent to-neutral-900 pointer-events-none z-[1]" />
+            {/* Gradient fade from middle to bottom - completely dark */}
+            <div className="absolute inset-x-0 top-1/3 bottom-0 bg-gradient-to-b from-transparent via-neutral-900 to-neutral-900 pointer-events-none z-[1]" />
           </div>
           
           {/* Content */}
@@ -1008,9 +1027,10 @@ export default function GiveawayDetailPage() {
                             initial={{ scale: 0, rotate: -180 }} 
                             animate={{ scale: 1, rotate: 0 }} 
                             transition={{ delay: 0.7, type: "spring" }}
+                            className="flex items-center"
                             title="Verified Creator"
                           >
-                            <CircleCheckBig className="h-4 w-4 text-blue-400" />
+                            <VerifiedIcon size="sm" />
                           </motion.div>
                         )}
                         <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30 text-xs">

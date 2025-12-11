@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
 import { uploadToS3, generateS3Key } from "@/lib/s3"
 
+// Configure route for larger body sizes (Vercel has 4.5MB default limit)
+export const runtime = 'nodejs'
+export const maxDuration = 30
+
 // Size limits in bytes (before optimization)
 // Note: Images are automatically resized and converted to WebP by Sharp
 // Final uploaded files will be smaller than these limits
@@ -11,8 +15,8 @@ const SIZE_LIMITS = {
   thumbnail: 2 * 1024 * 1024,   // 2MB (before optimization)
   
   // Video limits (uploaded as-is)
-  demoVideo: 50 * 1024 * 1024,  // 50MB
-  trailerVideo: 50 * 1024 * 1024, // 50MB
+  demoVideo: 4.5 * 1024 * 1024,  // 4.5MB
+  trailerVideo: 4.5 * 1024 * 1024, // 4.5MB
 }
 
 // Dimension limits
@@ -26,6 +30,11 @@ const DIMENSION_LIMITS = {
 
 export async function POST(request: NextRequest) {
   try {
+    // Log request details for debugging
+    const contentType = request.headers.get("content-type")
+    const contentLength = request.headers.get("content-length")
+    console.log(`Upload request - Content-Type: ${contentType}, Content-Length: ${contentLength}`)
+
     const formData = await request.formData()
     const file = formData.get("file") as File
     const type = formData.get("type") as string // "image" or "video"
@@ -122,6 +131,26 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error("Upload error:", error)
+    
+    // Handle specific error types
+    if (error instanceof Error) {
+      // Check if it's a body size limit error
+      if (error.message.includes('body') || error.message.includes('size') || error.message.includes('limit')) {
+        return NextResponse.json({ 
+          error: "File too large. Maximum size is 4.5MB for videos and 5MB for images.",
+          details: error.message
+        }, { status: 413 })
+      }
+      
+      // Check if it's a network/request error
+      if (error.message.includes('fetch') || error.message.includes('network')) {
+        return NextResponse.json({ 
+          error: "Network error. Please check your connection and try again.",
+          details: error.message
+        }, { status: 503 })
+      }
+    }
+    
     return NextResponse.json({ 
       error: "Failed to upload file",
       details: error instanceof Error ? error.message : "Unknown error"

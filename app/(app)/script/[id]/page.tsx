@@ -4,6 +4,12 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useParams, useRouter } from "next/navigation";
 import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/componentss/ui/accordion";
+import {
   Package,
   CheckCircle,
   AlertCircle,
@@ -28,9 +34,16 @@ import {
 } from "@/componentss/ui/card";
 import { Badge } from "@/componentss/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/componentss/ui/avatar";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/componentss/ui/tabs";
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from "@/componentss/ui/tabs";
 import Navbar from "@/componentss/shared/navbar";
 import Footer from "@/componentss/shared/footer";
+import { VerifiedIcon } from "@/componentss/shared/verified-icon";
+import { isVerifiedCreator } from "@/lib/utils";
 import Loading from "./loading";
 
 interface Script {
@@ -45,6 +58,7 @@ interface Script {
   seller_email: string;
   seller_id?: string;
   seller_image?: string;
+  seller_roles?: string[] | null;
   features: string[];
   requirements: string[];
   link?: string;
@@ -176,10 +190,10 @@ const MediaCarousel = ({
           {/* Thumbnail Navigation */}
           {allMedia.length > 1 && (
             <div className="p-4 bg-neutral-900 border-t border-orange-500/30">
-              <div 
+              <div
                 className="thumbnail-scrollbar flex gap-3 overflow-x-auto pb-2"
                 style={{
-                  scrollbarWidth: 'thin',
+                  scrollbarWidth: "thin",
                 }}
               >
                 {allMedia.map((media, index) => (
@@ -355,7 +369,9 @@ export default function ScriptDetailPage() {
 
   return (
     <>
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
         .thumbnail-scrollbar::-webkit-scrollbar {
           height: 4px;
         }
@@ -369,25 +385,29 @@ export default function ScriptDetailPage() {
         .thumbnail-scrollbar::-webkit-scrollbar-thumb:hover {
           background: rgba(249, 115, 22, 1);
         }
-      `}} />
+      `,
+        }}
+      />
       <Navbar />
       <div className="min-h-screen bg-neutral-900 text-white">
         {/* Hero Section with Background Image */}
-        <div 
+        <div
           className="relative text-white"
           style={{
-            backgroundImage: `${script.cover_image ? `url(${script.cover_image})` : 'none'}`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center 70%',
-            backgroundRepeat: 'no-repeat',
+            backgroundImage: `${
+              script.cover_image ? `url(${script.cover_image})` : "none"
+            }`,
+            backgroundSize: "cover",
+            backgroundPosition: "center 70%",
+            backgroundRepeat: "no-repeat",
           }}
         >
           {/* Overlay to reduce background image opacity */}
           <div className="absolute inset-0 bg-black/60 pointer-events-none" />
-          
-          {/* Gradient fade at bottom */}
-          <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-b from-transparent to-neutral-900 pointer-events-none z-[1]" />
-          
+
+          {/* Gradient fade from middle to bottom - completely dark */}
+          <div className="absolute inset-x-0 top-1/3 bottom-0 bg-gradient-to-b from-transparent via-neutral-900 to-neutral-900 pointer-events-none z-[1]" />
+
           {/* Content */}
           <div className="relative z-10">
             {/* Back Button */}
@@ -424,112 +444,120 @@ export default function ScriptDetailPage() {
 
                 {/* Right Column - Information */}
                 <div className="lg:col-span-2 space-y-6">
-              {/* Header & Badges */}
-              <div>
-                <div className="flex flex-wrap items-center gap-2 mb-4">
-                  <Badge className="bg-orange-500/20 text-orange-500 border-orange-500/30 font-semibold px-3 py-1">
-                    {script.category}
-                  </Badge>
-                  {script.framework && (
-                    <Badge className="bg-neutral-800 text-gray-300 border-neutral-700 font-semibold px-3 py-1">
-                      {script.framework.map((fw) => fw).join(", ")}
-                    </Badge>
-                  )}
-                  {discount > 0 && (
-                    <Badge className="bg-red-600 text-white font-bold px-3 py-1">
-                      -{discount}% OFF
-                    </Badge>
-                  )}
-                </div>
-
-                <h1 className="text-4xl lg:text-5xl font-black text-white mb-4 leading-tight">
-                  {script.title}
-                </h1>
-
-                <p className="text-gray-300 text-lg leading-relaxed mb-6">
-                  {script.description}
-                </p>
-
-                {/* Seller Card */}
-                <Card className="bg-neutral-800 border border-neutral-700 mb-6">
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-4">
-                      <Avatar className="h-14 w-14 ring-2 ring-orange-500/40">
-                        <AvatarImage
-                          src={script.seller_image || "/placeholder-user.jpg"}
-                        />
-                        <AvatarFallback className="bg-orange-500 text-white font-bold text-lg">
-                          {script.seller_name ? script.seller_name[0] : "?"}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="text-white font-bold text-lg">
-                            {script.seller_name}
-                          </h3>
-                          <CheckCircle className="h-5 w-5 text-orange-500" />
-                        </div>
-                        <div className="flex items-center gap-4 text-sm text-gray-400">
-                          <span className="flex items-center gap-1">
-                            <span className="w-2 h-2 bg-green-500 rounded-full" />
-                            Verified Seller
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Pricing Card */}
-              <Card className="bg-neutral-800 border border-orange-500/30 shadow-xl">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <div>
-                      <div className="flex items-baseline gap-3 mb-2">
-                        <span className="text-3xl font-black text-orange-500">
-                          ${script.price}
-                        </span>
-                        {script.original_price && (
-                          <span className="text-2xl text-gray-500 line-through">
-                            ${script.original_price}
-                          </span>
-                        )}
-                      </div>
+                  {/* Header & Badges */}
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2 mb-4">
+                      <Badge className="bg-orange-500/20 text-orange-500 border-orange-500/30 font-semibold px-3 py-1">
+                        {script.category}
+                      </Badge>
+                      {script.framework && (
+                        <Badge className="bg-neutral-800 text-gray-300 border-neutral-700 font-semibold px-3 py-1">
+                          {script.framework.map((fw) => fw).join(", ")}
+                        </Badge>
+                      )}
                       {discount > 0 && (
-                        <div className="inline-flex bg-red-500 text-white px-3 py-1 rounded text-sm font-bold">
-                          Save $
-                          {(script.original_price! - script.price).toFixed(2)}
-                        </div>
+                        <Badge className="bg-red-600 text-white font-bold px-3 py-1">
+                          -{discount}% OFF
+                        </Badge>
                       )}
                     </div>
+
+                    <h1 className="text-4xl lg:text-5xl font-black text-white mb-4 leading-tight">
+                      {script.title}
+                    </h1>
+
+                    <p className="text-gray-300 text-lg leading-relaxed mb-6">
+                      {script.description}
+                    </p>
+
+                    {/* Seller Card */}
+                    <Card className="bg-neutral-800 border border-neutral-700 mb-6">
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-4">
+                          <Avatar className="h-14 w-14 ring-2 ring-orange-500/40">
+                            <AvatarImage
+                              src={
+                                script.seller_image || "/placeholder-user.jpg"
+                              }
+                            />
+                            <AvatarFallback className="bg-orange-500 text-white font-bold text-lg">
+                              {script.seller_name ? script.seller_name[0] : "?"}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h3 className="text-white font-bold text-lg">
+                                {script.seller_name}
+                              </h3>
+                              {isVerifiedCreator(script.seller_roles) && (
+                                <VerifiedIcon size="md" />
+                              )}
+                            </div>
+                            {isVerifiedCreator(script.seller_roles) && (
+                              <div className="flex items-center gap-4 text-sm text-gray-400">
+                                <span className="flex items-center gap-1">
+                                  <span className="w-2 h-2 bg-green-500 rounded-full" />
+                                  Verified Creator
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
                   </div>
 
-                  <Button
-                    className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-6 text-lg shadow-lg"
-                    onClick={() => {
-                      if (script.link) {
-                        window.open(
-                          script.link,
-                          "_blank",
-                          "noopener,noreferrer"
-                        );
-                      }
-                    }}
-                    disabled={!script.link}
-                  >
-                    <ShoppingCart className="mr-2 h-6 w-6" />
-                    Buy Now
-                  </Button>
-                  {!script.link && (
-                    <p className="text-sm text-gray-400 text-center mt-2">
-                      No purchase link available
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          </div>
+                  {/* Pricing Card */}
+                  <Card className="bg-neutral-800 border border-orange-500/30 shadow-xl">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between mb-6">
+                        <div>
+                          <div className="flex items-baseline gap-3 mb-2">
+                            <span className="text-3xl font-black text-orange-500">
+                              ${script.price}
+                            </span>
+                            {script.original_price && (
+                              <span className="text-2xl text-gray-500 line-through">
+                                ${script.original_price}
+                              </span>
+                            )}
+                          </div>
+                          {discount > 0 && (
+                            <div className="inline-flex bg-red-500 text-white px-3 py-1 rounded text-sm font-bold">
+                              Save $
+                              {(script.original_price! - script.price).toFixed(
+                                2
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <Button
+                        className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-6 text-lg shadow-lg"
+                        onClick={() => {
+                          if (script.link) {
+                            window.open(
+                              script.link,
+                              "_blank",
+                              "noopener,noreferrer"
+                            );
+                          }
+                        }}
+                        disabled={!script.link}
+                      >
+                        <ShoppingCart className="mr-2 h-6 w-6" />
+                        Buy Now
+                      </Button>
+                      {!script.link && (
+                        <p className="text-sm text-gray-400 text-center mt-2">
+                          No purchase link available
+                        </p>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -573,11 +601,15 @@ export default function ScriptDetailPage() {
                       <div className="h-6 w-6 rounded bg-orange-500 flex items-center justify-center">
                         <Info className="h-4 w-4 text-white" />
                       </div>
-                      <h3 className="text-white text-xl font-bold">Script Details</h3>
+                      <h3 className="text-white text-xl font-bold">
+                        Script Details
+                      </h3>
                     </div>
                     <div className="space-y-3">
                       <div className="flex justify-between items-center p-3 bg-neutral-900 rounded">
-                        <span className="text-gray-400 font-medium">Version</span>
+                        <span className="text-gray-400 font-medium">
+                          Version
+                        </span>
                         <span className="text-white font-bold">
                           {script.version}
                         </span>
@@ -603,13 +635,17 @@ export default function ScriptDetailPage() {
                         </div>
                       )}
                       <div className="flex justify-between items-center p-3 bg-neutral-900 rounded">
-                        <span className="text-gray-400 font-medium">Downloads</span>
+                        <span className="text-gray-400 font-medium">
+                          Downloads
+                        </span>
                         <span className="text-white font-bold">
                           {script.downloads || 0}
                         </span>
                       </div>
                       <div className="flex justify-between items-center p-3 bg-neutral-900 rounded">
-                        <span className="text-gray-400 font-medium">Rating</span>
+                        <span className="text-gray-400 font-medium">
+                          Rating
+                        </span>
                         <span className="text-white font-bold flex items-center gap-1">
                           {script.rating > 0
                             ? `${script.rating.toFixed(1)} ⭐`
@@ -625,7 +661,9 @@ export default function ScriptDetailPage() {
                   <CardContent className="p-6">
                     <div className="flex items-center gap-2 mb-6">
                       <Package className="h-6 w-6 text-orange-500" />
-                      <h3 className="text-white text-xl font-bold">Features & Capabilities</h3>
+                      <h3 className="text-white text-xl font-bold">
+                        Features & Capabilities
+                      </h3>
                     </div>
                     {script.features && script.features.length > 0 ? (
                       <div className="space-y-3">
@@ -652,7 +690,9 @@ export default function ScriptDetailPage() {
                   <CardContent className="p-6">
                     <div className="flex items-center gap-2 mb-6">
                       <AlertCircle className="h-6 w-6 text-orange-500" />
-                      <h3 className="text-white text-xl font-bold">System Requirements</h3>
+                      <h3 className="text-white text-xl font-bold">
+                        System Requirements
+                      </h3>
                     </div>
                     {script.requirements && script.requirements.length > 0 ? (
                       <div className="space-y-3">
@@ -679,7 +719,9 @@ export default function ScriptDetailPage() {
                   <CardContent className="p-6">
                     <div className="flex items-center gap-2 mb-6">
                       <Info className="h-6 w-6 text-orange-500" />
-                      <h3 className="text-white text-xl font-bold">Support & Documentation</h3>
+                      <h3 className="text-white text-xl font-bold">
+                        Support & Documentation
+                      </h3>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="flex items-start gap-3 p-4 rounded bg-neutral-900 border border-neutral-700">
@@ -710,6 +752,38 @@ export default function ScriptDetailPage() {
               </Tabs>
             </Card>
           </div>
+        </div>
+
+        {/* FAQs Section */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20 align-middle justify-center">
+          <h2 className="text-4xl font-bold mb-8">FAQs</h2>
+        <Accordion type="single" collapsible>
+          <AccordionItem value="item-1">
+            <AccordionTrigger className="text-2xl">Where can I Download this Script?</AccordionTrigger>
+            <AccordionContent>
+            After your purchase, your package will appear on the Keymaster. You can download the package or transfer your license.
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem value="item-2">
+            <AccordionTrigger className="text-2xl">How does this system work?</AccordionTrigger>
+            <AccordionContent>
+            All resources are encrypted by Cfx.re and linked to your personal Cfx.re account. This process is automated and instant. Purchases are tied to your Cfx.re account, not a specific license key. If you buy a package, it will work for all of your keys. If another Cfx.re account needs access, you need to transfer your license on the Keymaster.
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem value="item-3">
+            <AccordionTrigger className="text-2xl">Can I resell this Script?</AccordionTrigger>
+            <AccordionContent>
+            No. Tebex Limited is the only authorized reseller of CRUX assets. Any external offers or websites claiming to sell our products are unauthorized and violate copyright laws. If you find CRUX assets outside our store, they are likely scams and could pose security risks. To guarantee authenticity and protection, all our assets are delivered exclusively through the Cfx Escrow system.
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem value="item-4">
+            <AccordionTrigger className="text-2xl">Where can I get support?</AccordionTrigger>
+            <AccordionContent>
+            Our official support is available through our Discord server, where our team is ready to assist you with technical issues and questions 24/7.
+            </AccordionContent>
+          </AccordionItem>
+          
+        </Accordion>
         </div>
       </div>
       <Footer />
