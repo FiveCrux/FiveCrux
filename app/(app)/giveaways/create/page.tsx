@@ -257,8 +257,18 @@ export default function CreateGiveawayPage() {
       })
 
       if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || "Upload failed")
+        // Read response as text first (can only read once)
+        const textError = await response.text()
+        let errorMessage = "Upload failed"
+        try {
+          // Try to parse as JSON
+          const error = JSON.parse(textError)
+          errorMessage = error.error || errorMessage
+        } catch {
+          // If JSON parsing fails, use the text as error message
+          errorMessage = textError || errorMessage
+        }
+        throw new Error(errorMessage)
       }
 
       const result = await response.json()
@@ -499,21 +509,6 @@ export default function CreateGiveawayPage() {
                           id="endDate"
                         />
                       </div>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <Switch
-                          id="featured"
-                          checked={formData.featured}
-                          onCheckedChange={(checked) => setFormData({ ...formData, featured: checked })}
-                        />
-                        <Label htmlFor="featured" className="text-white">
-                          Featured Giveaway (+$10)
-                        </Label>
-                      </div>
-
-                      {/* Auto-announce is always enabled; toggle removed */}
                     </div>
                   </CardContent>
                 </Card>
@@ -850,7 +845,7 @@ export default function CreateGiveawayPage() {
                       >
                         <Video className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                         <p className="text-gray-400">Upload videos</p>
-                        <p className="text-sm text-gray-500 mt-2">MP4, WebM up to 50MB each (max 5 videos)</p>
+                        <p className="text-sm text-gray-500 mt-2">MP4, WebM up to 4.5 mb each (max 5 videos)</p>
                       </label>
                       
                       {/* Display uploaded videos */}

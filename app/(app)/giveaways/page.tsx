@@ -56,6 +56,8 @@ import {
 } from "@/componentss/ui/select";
 import Navbar from "@/componentss/shared/navbar";
 import Footer from "@/componentss/shared/footer";
+import { VerifiedIcon } from "@/componentss/shared/verified-icon";
+import { isVerifiedCreator } from "@/lib/utils";
 import Link from "next/link";
 import AdCard, { useRandomAds } from "@/componentss/ads/ad-card";
 import {
@@ -164,6 +166,8 @@ export default function GiveawaysPage() {
     featured: boolean;
     trending: boolean;
     creator: string;
+    creatorImage?: string;
+    creator_roles?: string[] | null;
     tags: string[];
   };
 
@@ -211,6 +215,7 @@ export default function GiveawaysPage() {
               trending: false,
               creator: g.creator_name,
               creatorImage: g.creator_image,
+              creator_roles: g.creator_roles || null,
               tags: g.tags || [],
             }))
           );
@@ -896,8 +901,11 @@ export default function GiveawaysPage() {
                                         {giveaway.creator?.[0] || "U"}
                                       </div>
                                     )}
-                                    <span className="text-xs font-medium">
+                                    <span className="text-xs font-medium flex items-center gap-1">
                                       {giveaway.creator || "Unknown Creator"}
+                                      {isVerifiedCreator(giveaway.creator_roles) && (
+                                        <VerifiedIcon size="sm" />
+                                      )}
                                     </span>
                                   </div>
                                 </div>

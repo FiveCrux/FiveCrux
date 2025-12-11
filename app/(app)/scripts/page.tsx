@@ -46,6 +46,8 @@ import { useSearchParams, useRouter } from "next/navigation";
 import Navbar from "@/componentss/shared/navbar";
 import Footer from "@/componentss/shared/footer";
 import AdCard, { useRandomAds } from "@/componentss/ads/ad-card";
+import { VerifiedIcon } from "@/componentss/shared/verified-icon";
+import { isVerifiedCreator } from "@/lib/utils";
 import Image from "next/image";
 // Animated background particles - Client only to avoid hydration issues
 const AnimatedParticles = () => {
@@ -127,6 +129,7 @@ export default function ScriptsPage() {
     category: string;
     categoryName: string;
     seller: string;
+    seller_roles?: string[] | null;
     discount: number;
     framework?: string[];
     priceCategory: string;
@@ -182,6 +185,7 @@ export default function ScriptsPage() {
               category: s.category,
               categoryName: s.category,
               seller: s.seller_name,
+              seller_roles: s.seller_roles || null,
               discount: s.original_price
                 ? Math.max(
                     0,
@@ -535,12 +539,12 @@ export default function ScriptsPage() {
               {/* Filters Bar */}
               <motion.div
                 ref={filtersRef}
-                className="mb-6 relativescr"
+                className="mb-6 relative z-50"
                 initial={{ opacity: 0, y: -20 }}
                 animate={filtersInView ? { opacity: 1, y: 0 } : {}}
                 transition={{ duration: 0.8 }}
               >
-                <Card className="bg-neutral-800/30 border-neutral-700/50 backdrop-blur-xl">
+                <Card className="bg-neutral-800/30 border-neutral-700/50 backdrop-blur-xl relative z-50">
                   <CardContent className="p-4">
                     <div className="flex flex-col gap-4">
                       {/* Filter Header */}
@@ -585,7 +589,7 @@ export default function ScriptsPage() {
                       {/* Horizontal Filters */}
                       <div
                         ref={filterContainerRef}
-                        className="flex flex-wrap gap-3 items-start"
+                        className="flex flex-wrap gap-3 items-start relative z-50"
                       >
                         {/* Categories Filter */}
                         <Collapsible
@@ -594,7 +598,7 @@ export default function ScriptsPage() {
                             setOpenFilter(open ? "categories" : null)
                           }
                         >
-                          <div className="relative z-30">
+                          <div className="relative z-50">
                             <CollapsibleTrigger asChild>
                               <motion.div
                                 whileHover={{ scale: 1.05, y: -2 }}
@@ -668,7 +672,7 @@ export default function ScriptsPage() {
                             setOpenFilter(open ? "framework" : null)
                           }
                         >
-                          <div className="relative z-30">
+                          <div className="relative z-50">
                             <CollapsibleTrigger asChild>
                               <motion.div
                                 whileHover={{ scale: 1.05 }}
@@ -736,7 +740,7 @@ export default function ScriptsPage() {
                             setOpenFilter(open ? "price" : null)
                           }
                         >
-                          <div className="relative z-30">
+                          <div className="relative z-50">
                             <CollapsibleTrigger asChild>
                               <motion.div
                                 whileHover={{ scale: 1.05 }}
@@ -1248,8 +1252,11 @@ export default function ScriptsPage() {
                                       )}
                                       
                                     {/* Description */}
-                                    <CardDescription className="text-neutral-400 text-xs leading-snug line-clamp-2">
-                                       By {script.seller}
+                                    <CardDescription className="text-neutral-400 text-xs leading-snug line-clamp-2 flex items-center gap-1.5">
+                                      <span>By {script.seller}</span>
+                                      {isVerifiedCreator(script.seller_roles) && (
+                                        <VerifiedIcon size="sm" />
+                                      )}
                                     </CardDescription>
                                     {/* Price */}
                                     <CardDescription className="text-orange-500 text-xl font-bold pt-1">
