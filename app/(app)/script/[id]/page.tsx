@@ -52,6 +52,8 @@ interface Script {
   description: string;
   price: number;
   original_price?: number;
+  currency?: string;
+  currency_symbol?: string;
   category: string;
   framework?: string[];
   seller_name: string;
@@ -514,17 +516,17 @@ export default function ScriptDetailPage() {
                         <div>
                           <div className="flex items-baseline gap-3 mb-2">
                             <span className="text-3xl font-black text-orange-500">
-                              ${script.price}
+                              {script.currency_symbol || "$"}{script.price}
                             </span>
                             {script.original_price && (
                               <span className="text-2xl text-gray-500 line-through">
-                                ${script.original_price}
+                                {script.currency_symbol || "$"}{script.original_price}
                               </span>
                             )}
                           </div>
                           {discount > 0 && (
                             <div className="inline-flex bg-red-500 text-white px-3 py-1 rounded text-sm font-bold">
-                              Save $
+                              Save {script.currency_symbol || "$"}
                               {(script.original_price! - script.price).toFixed(
                                 2
                               )}

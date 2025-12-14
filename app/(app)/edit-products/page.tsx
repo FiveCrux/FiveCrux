@@ -121,7 +121,7 @@ export default function EditProductsPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="text-lg font-semibold">{script.title}</div>
-                      <div className="text-gray-400">${script.price} | v{script.version} | {script.category}</div>
+                      <div className="text-gray-400">{script.currency_symbol || "$"}{script.price} | v{script.version} | {script.category}</div>
                     </div>
                     <Button onClick={() => handleEdit("script", script)}>Edit</Button>
                   </div>

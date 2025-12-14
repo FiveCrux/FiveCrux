@@ -21,6 +21,8 @@ interface Script {
   description: string
   price: number
   original_price?: number
+  currency?: string
+  currency_symbol?: string
   category: string
   framework?: string | string[]
   status: string

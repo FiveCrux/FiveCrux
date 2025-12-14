@@ -22,6 +22,8 @@ const baseScriptFields = {
   description: text('description').notNull(),
   price: numeric('price').notNull(),
   originalPrice: numeric('original_price'),
+  currency: text('currency'),
+  currencySymbol: text('currency_symbol'),
   category: text('category').notNull(),
   framework: text('framework').array().default([]),
   sellerId: text('seller_id').references(() => users.id, { onDelete: 'set null' }),

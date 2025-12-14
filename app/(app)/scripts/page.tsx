@@ -95,9 +95,10 @@ export default function ScriptsPage() {
 
   const filtersInView = useInView(filtersRef, { once: true });
   const scriptsInView = useInView(scriptsRef, { once: true });
+  const priceRangeInitialized = useRef(false);
 
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [priceRange, setPriceRange] = useState<number[]>([0, 100]);
+  const [priceRange, setPriceRange] = useState<number[]>([0, 1000]);
   const [sortBy, setSortBy] = useState("popular");
   const categoryParam = searchParams.get("category") ?? "";
 
@@ -123,6 +124,8 @@ export default function ScriptsPage() {
     description: string;
     price: number;
     originalPrice?: number;
+    currency?: string;
+    currency_symbol?: string;
     rating: number;
     reviews: number;
     image: string;
@@ -179,6 +182,8 @@ export default function ScriptsPage() {
               originalPrice: s.original_price
                 ? Number(s.original_price)
                 : undefined,
+              currency: s.currency,
+              currency_symbol: s.currency_symbol,
               rating: s.rating || 0,
               reviews: s.review_count || 0,
               image: image,
@@ -247,6 +252,27 @@ export default function ScriptsPage() {
   ];
   const priceCategories = ["Budget", "Standard", "Premium"];
 
+  // Calculate min and max prices from scripts for dynamic slider range
+  const priceBounds = useMemo(() => {
+    if (allScripts.length === 0) return { min: 0, max: 1000 };
+    const prices = allScripts.map((s) => s.price).filter((p) => p > 0);
+    if (prices.length === 0) return { min: 0, max: 1000 };
+    const min = Math.floor(Math.min(...prices));
+    const max = Math.ceil(Math.max(...prices));
+    // Round to nice numbers
+    const roundedMin = Math.floor(min / 10) * 10; // Round down to nearest 10
+    const roundedMax = Math.ceil(max / 10) * 10; // Round up to nearest 10
+    return { min: roundedMin, max: roundedMax };
+  }, [allScripts]);
+
+  // Initialize price range when scripts are loaded (only once)
+  useEffect(() => {
+    if (allScripts.length > 0 && !priceRangeInitialized.current && priceBounds.max > 0) {
+      setPriceRange([priceBounds.min, priceBounds.max]);
+      priceRangeInitialized.current = true;
+    }
+  }, [allScripts.length, priceBounds.min, priceBounds.max]);
+
   // Real-time filtering logic
   const filteredScripts = useMemo(() => {
     return allScripts.filter((script) => {
@@ -279,16 +305,15 @@ export default function ScriptsPage() {
         if (!hasMatch) return false;
       }
 
-      if (
-        selectedPriceCategories.length > 0 &&
-        !selectedPriceCategories.includes(script.priceCategory)
-      ) {
-        return false;
-      }
-
+      // Only apply price filter if range is not at full bounds
       if (priceRange && priceRange.length === 2) {
-        if (script.price < priceRange[0] || script.price > priceRange[1]) {
-          return false;
+        const isAtFullRange = 
+          priceRange[0] === priceBounds.min && 
+          priceRange[1] === priceBounds.max;
+        if (!isAtFullRange) {
+          if (script.price < priceRange[0] || script.price > priceRange[1]) {
+            return false;
+          }
         }
       }
 
@@ -303,8 +328,8 @@ export default function ScriptsPage() {
     searchQuery,
     selectedCategories,
     selectedFrameworks,
-    selectedPriceCategories,
     priceRange,
+    priceBounds,
     onSaleOnly,
   ]);
 
@@ -370,11 +395,11 @@ export default function ScriptsPage() {
     setSelectedCategories([]);
     setSelectedFrameworks([]);
     setSelectedPriceCategories([]);
-    setPriceRange([0, 100]);
+    setPriceRange([priceBounds.min, priceBounds.max]);
     setOnSaleOnly(false);
     setSearchQuery("");
     router.push("/scripts");
-  }, [router]);
+  }, [router, priceBounds]);
 
   const removeFilter = useCallback(
     (type: string, value: string | number) => {
@@ -397,12 +422,13 @@ export default function ScriptsPage() {
     () =>
       selectedCategories.length +
       selectedFrameworks.length +
-      selectedPriceCategories.length +
+      (priceRange[0] !== priceBounds.min || priceRange[1] !== priceBounds.max ? 1 : 0) +
       (onSaleOnly ? 1 : 0),
     [
       selectedCategories.length,
       selectedFrameworks.length,
-      selectedPriceCategories.length,
+      priceRange,
+      priceBounds,
       onSaleOnly,
     ]
   );
@@ -750,9 +776,8 @@ export default function ScriptsPage() {
                                   variant="outline"
                                   className={`bg-gradient-to-r from-gray-800/80 to-gray-900/80 border-2 text-white font-semibold px-4 py-2 rounded-lg shadow-lg transition-all duration-300 ${
                                     openFilter === "price" ||
-                                    selectedPriceCategories.length > 0 ||
-                                    priceRange[0] !== 0 ||
-                                    priceRange[1] !== 100
+                                    priceRange[0] !== priceBounds.min ||
+                                    priceRange[1] !== priceBounds.max
                                       ? "border-orange-500 bg-gradient-to-r from-orange-500/20 to-orange-600/20 shadow-orange-500/50"
                                       : "border-neutral-600/50 hover:border-orange-500/70 hover:from-gray-700/80 hover:to-gray-800/80"
                                   }`}
@@ -760,15 +785,10 @@ export default function ScriptsPage() {
                                   <span className="text-sm font-medium flex items-center gap-2">
                                     <DollarSign className="h-4 w-4" />
                                     Price
-                                    {(selectedPriceCategories.length > 0 ||
-                                      priceRange[0] !== 0 ||
-                                      priceRange[1] !== 100) && (
+                                    {(priceRange[0] !== priceBounds.min ||
+                                      priceRange[1] !== priceBounds.max) && (
                                       <span className="text-orange-400">
-                                        {selectedPriceCategories.length > 0 &&
-                                          ` (${selectedPriceCategories.length})`}
-                                        {(priceRange[0] !== 0 ||
-                                          priceRange[1] !== 100) &&
-                                          ` $${priceRange[0]}-${priceRange[1]}`}
+                                        {` ${priceRange[0]}-${priceRange[1]}`}
                                       </span>
                                     )}
                                   </span>
@@ -782,63 +802,22 @@ export default function ScriptsPage() {
                             </CollapsibleTrigger>
                             <CollapsibleContent className="absolute z-[100] mt-2 left-0 bg-neutral-900 border border-neutral-700/50 rounded-lg p-4 shadow-xl min-w-[250px]">
                               <div className="space-y-4">
-                                {/* Price Categories */}
+                                {/* Price Range */}
                                 <div>
                                   <h4 className="text-white font-semibold mb-3 text-sm">
-                                    Price Category
-                                  </h4>
-                                  <div className="space-y-3">
-                                    {priceCategories.map((category) => (
-                                      <motion.div
-                                        key={category}
-                                        className="flex items-center space-x-2"
-                                        whileHover={{ x: 5 }}
-                                      >
-                                        <Checkbox
-                                          id={`price-${category}`}
-                                          checked={selectedPriceCategories.includes(
-                                            category
-                                          )}
-                                          onCheckedChange={(checked) =>
-                                            handlePriceCategoryChange(
-                                              category,
-                                              checked as boolean
-                                            )
-                                          }
-                                        />
-                                        <label
-                                          htmlFor={`price-${category}`}
-                                          className="text-sm text-gray-300 hover:text-white transition-colors cursor-pointer"
-                                        >
-                                          {category}{" "}
-                                          {category === "Budget" && "($0-$15)"}
-                                          {category === "Standard" &&
-                                            "($15-$30)"}
-                                          {category === "Premium" && "($30+)"}
-                                        </label>
-                                      </motion.div>
-                                    ))}
-                                  </div>
-                                </div>
-
-                                {/* Divider */}
-                                <div className="border-t border-neutral-700/50"></div>
-
-                                {/* Custom Price Range */}
-                                <div>
-                                  <h4 className="text-white font-semibold mb-3 text-sm">
-                                    Custom Range
+                                    Price Range
                                   </h4>
                                   <Slider
                                     value={priceRange}
                                     onValueChange={setPriceRange}
-                                    max={100}
+                                    max={priceBounds.max}
+                                    min={priceBounds.min}
                                     step={1}
                                     className="w-full mb-2"
                                   />
                                   <div className="flex justify-between text-sm text-gray-400">
-                                    <span>${priceRange[0]}</span>
-                                    <span>${priceRange[1]}</span>
+                                    <span>{priceRange[0]}</span>
+                                    <span>{priceRange[1]}</span>
                                   </div>
                                 </div>
                               </div>
@@ -1031,24 +1010,20 @@ export default function ScriptsPage() {
                           </motion.div>
                         );
                       })}
-                      {selectedPriceCategories.map((category, index) => (
+                      {(priceRange[0] !== priceBounds.min || priceRange[1] !== priceBounds.max) && (
                         <motion.div
-                          key={category}
                           initial={{ opacity: 0, scale: 0.8 }}
                           animate={{ opacity: 1, scale: 1 }}
                           exit={{ opacity: 0, scale: 0.8 }}
-                          transition={{ delay: index * 0.05 }}
                           whileHover={{ scale: 1.05 }}
                         >
                           <Badge
                             variant="secondary"
                             className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 flex items-center gap-1 backdrop-blur-sm"
                           >
-                            {category}
+                            Price: {priceRange[0]}-{priceRange[1]}
                             <motion.button
-                              onClick={() =>
-                                removeFilter("priceCategory", category)
-                              }
+                              onClick={() => setPriceRange([priceBounds.min, priceBounds.max])}
                               className="hover:text-white transition-colors"
                               whileHover={{ scale: 1.2 }}
                               whileTap={{ scale: 0.8 }}
@@ -1057,7 +1032,7 @@ export default function ScriptsPage() {
                             </motion.button>
                           </Badge>
                         </motion.div>
-                      ))}
+                      )}
                       {onSaleOnly && (
                         <motion.div
                           initial={{ opacity: 0, scale: 0.8 }}
@@ -1260,7 +1235,7 @@ export default function ScriptsPage() {
                                     </CardDescription>
                                     {/* Price */}
                                     <CardDescription className="text-orange-500 text-xl font-bold pt-1">
-                                      ${script.price}
+                                      {script.currency_symbol || "$"}{script.price}
                                     </CardDescription>
                                   </CardContent>
 
