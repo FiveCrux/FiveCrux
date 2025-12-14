@@ -21,6 +21,8 @@ interface Script {
   description: string
   price: number
   originalPrice?: number
+  currency?: string
+  currency_symbol?: string
   category: string
   framework?: string[]
   seller_name: string
@@ -440,9 +442,9 @@ export default function CategoryPage() {
                       
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <span className="text-xl font-bold text-orange-500">${script.price}</span>
+                          <span className="text-xl font-bold text-orange-500">{script.currency_symbol || "$"}</span> <span className="text-xl font-bold text-white">{script.price}</span>
                           {script.originalPrice && (
-                            <span className="text-sm text-gray-500 line-through">${script.originalPrice}</span>
+                            <span className="text-sm text-gray-500 line-through">{script.currency_symbol || "$"} {script.originalPrice}</span>
                           )}
                         </div>
                         <Link href={`/script/${script.id}`}>

@@ -39,6 +39,8 @@ import { cn } from "@/lib/utils"
 import Navbar from "@/componentss/shared/navbar"
 import Footer from "@/componentss/shared/footer"
 import { toast } from "sonner"
+import { CurrencySelect, type Currency } from "@/componentss/currency-select"
+import * as countryData from "country-data-list"
 
 // Animated background particles
 const AnimatedParticles = () => {
@@ -98,7 +100,11 @@ export default function SubmitScriptPage() {
     sellerName: session?.user?.name || "",
     sellerEmail: session?.user?.email || "",
     featured: false,
+    currency: "",
+    currencySymbol: "",
   })
+
+  const [selectedCurrency, setSelectedCurrency] = useState<Currency | null>(null)
 
   const [features, setFeatures] = useState([{ id: 1, text: "" }])
   const [requirements, setRequirements] = useState([{ id: 1, text: "" }])
@@ -152,7 +158,21 @@ export default function SubmitScriptPage() {
               sellerName: script.seller_name || "",
               sellerEmail: script.seller_email || "",
               featured: script.featured || false,
+              currency: script.currency || "",
+              currencySymbol: script.currency_symbol || "",
             })
+            
+            // Set selected currency if it exists
+            if (script.currency) {
+              const currency = countryData.currencies.all.find((c: any) => c.code === script.currency)
+              if (currency) {
+                setSelectedCurrency({
+                  code: currency.code || "",
+                  name: currency.name || "",
+                  symbol: (currency as any).symbol || currency.code || "",
+                })
+              }
+            }
             
             // Set features
             if (script.features && script.features.length > 0) {
@@ -398,6 +418,8 @@ export default function SubmitScriptPage() {
         ...formData,
         price: Number.parseFloat(formData.price),
         original_price: formData.originalPrice ? Number.parseFloat(formData.originalPrice) : null,
+        currency: formData.currency || null,
+        currency_symbol: formData.currencySymbol || null,
         seller_name: formData.sellerName,
         seller_email: formData.sellerEmail,
         features: features.filter((f) => f.text.trim()).map((f) => f.text.trim()),
@@ -693,40 +715,89 @@ export default function SubmitScriptPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-4">
                       <div>
-                        <Label htmlFor="price" className="text-white font-medium">
-                          Price (USD) *
+                        <Label className="text-white font-medium">
+                          Currency *
                         </Label>
-                        <Input
-                          id="price"
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          value={formData.price}
-                          onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                          placeholder="25.99"
-                          className="mt-2 bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-orange-500"
-                          required
-                        />
+                        <div className="mt-2">
+                          <CurrencySelect
+                            value={formData.currency}
+                            onValueChange={(value) => {
+                              const currency = countryData.currencies.all.find((c: any) => c.code === value)
+                              setFormData({ 
+                                ...formData, 
+                                currency: value,
+                                currencySymbol: (currency as any)?.symbol || currency?.code || ""
+                              })
+                            }}
+                            onCurrencySelect={(currency) => {
+                              setSelectedCurrency(currency)
+                              setFormData({ 
+                                ...formData, 
+                                currency: currency.code,
+                                currencySymbol: currency.symbol
+                              })
+                            }}
+                            placeholder="Select currency"
+                            disabled={false}
+                            currencies="all"
+                            variant="default"
+                            className="bg-gray-900/50 border-gray-700 text-white"
+                          />
+                        </div>
                       </div>
 
-                      <div>
-                        <Label htmlFor="originalPrice" className="text-white font-medium">
-                          Original Price (Optional)
-                        </Label>
-                        <Input
-                          id="originalPrice"
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          value={formData.originalPrice}
-                          onChange={(e) => setFormData({ ...formData, originalPrice: e.target.value })}
-                          placeholder="35.99"
-                          className="mt-2 bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-orange-500"
-                        />
-                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="price" className="text-white font-medium">
+                            Price *
+                          </Label>
+                          <div className="relative mt-2">
+                            <Input
+                              id="price"
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={formData.price}
+                              onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                              placeholder="25.99"
+                              className="pr-10 bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-orange-500"
+                              required
+                              disabled={!selectedCurrency}
+                            />
+                            {selectedCurrency && (
+                              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">
+                                {selectedCurrency.symbol}
+                              </span>
+                            )}
+                          </div>
+                        </div>
 
+                        <div>
+                          <Label htmlFor="originalPrice" className="text-white font-medium">
+                            Original Price (Optional)
+                          </Label>
+                          <div className="relative mt-2">
+                            <Input
+                              id="originalPrice"
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={formData.originalPrice}
+                              onChange={(e) => setFormData({ ...formData, originalPrice: e.target.value })}
+                              placeholder="35.99"
+                              className="pr-10 bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-orange-500"
+                              disabled={!selectedCurrency}
+                            />
+                            {selectedCurrency && (
+                              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">
+                                {selectedCurrency.symbol}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
                     </div>
 
                     {discount > 0 && (
@@ -734,7 +805,7 @@ export default function SubmitScriptPage() {
                         <div className="flex items-center gap-2">
                           <CheckCircle className="h-5 w-5 text-green-500" />
                           <span className="text-green-400 font-semibold">
-                            {discount}% Discount - Save $
+                            {discount}% Discount - Save {selectedCurrency?.symbol || "$"}
                             {(Number.parseFloat(formData.originalPrice) - Number.parseFloat(formData.price)).toFixed(2)}
                           </span>
                         </div>
@@ -1137,9 +1208,9 @@ export default function SubmitScriptPage() {
 
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <span className="text-orange-500 font-bold text-xl">${formData.price || "0.00"}</span>
+                          <span className="text-orange-500 font-bold text-xl">{selectedCurrency?.symbol || "$"}{formData.price || "0.00"}</span>
                           {formData.originalPrice && (
-                            <span className="text-gray-500 line-through text-sm">${formData.originalPrice}</span>
+                            <span className="text-gray-500 line-through text-sm">{selectedCurrency?.symbol || "$"}{formData.originalPrice}</span>
                           )}
                         </div>
                         {discount > 0 && <Badge className="bg-red-500 text-white">-{discount}%</Badge>}

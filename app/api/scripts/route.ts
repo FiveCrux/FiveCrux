@@ -34,6 +34,8 @@ export async function POST(request: NextRequest) {
       description: body.description,
       price: body.price,
       originalPrice: body.original_price || null,
+      currency: body.currency || null,
+      currencySymbol: body.currency_symbol || null,
       category: body.category,
       // Accept both single string and array; normalized in DB layer
       framework: body.framework,

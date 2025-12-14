@@ -550,6 +550,8 @@ export async function getScripts(filters?: ScriptFilters) {
       ...script,
       cover_image: script.coverImage,
       original_price: script.originalPrice,
+      currency: script.currency,
+      currency_symbol: script.currencySymbol,
       seller_name: script.seller_name,
       seller_email: script.seller_email,
       seller_roles: script.sellerId ? sellerRolesMap.get(script.sellerId) || null : null,
@@ -594,6 +596,8 @@ export async function getScriptById(id: number) {
         seller_roles: sellerRoles,
         cover_image: script.coverImage,
         original_price: script.originalPrice,
+        currency: script.currency,
+        currency_symbol: script.currencySymbol,
         seller_name: script.seller_name,
         seller_email: script.seller_email,
         other_links: script.otherLinks || [],
@@ -630,6 +634,8 @@ export async function getScriptById(id: number) {
         seller_roles: sellerRoles,
         cover_image: script.coverImage,
         original_price: script.originalPrice,
+        currency: script.currency,
+        currency_symbol: script.currencySymbol,
         seller_name: script.seller_name,
         seller_email: script.seller_email,
         other_links: script.otherLinks || [],
@@ -666,6 +672,8 @@ export async function getScriptById(id: number) {
         seller_roles: sellerRoles,
         cover_image: script.coverImage,
         original_price: script.originalPrice,
+        currency: script.currency,
+        currency_symbol: script.currencySymbol,
         seller_name: script.seller_name,
         seller_email: script.seller_email,
         other_links: script.otherLinks || [],
@@ -841,6 +849,9 @@ export async function updateScriptForReapproval(id: number, updateData: any) {
     if (updateData.originalPrice !== undefined) assignIfDefined('originalPrice', updateData.originalPrice === null ? null : Number(updateData.originalPrice));
     // Accept snake_case aliases
     if (updateData.original_price !== undefined) assignIfDefined('originalPrice', updateData.original_price === null ? null : Number(updateData.original_price));
+    assignIfDefined('currency', updateData.currency);
+    if (updateData.currencySymbol !== undefined) assignIfDefined('currencySymbol', updateData.currencySymbol);
+    if (updateData.currency_symbol !== undefined) assignIfDefined('currencySymbol', updateData.currency_symbol);
     assignIfDefined('category', updateData.category);
     // Frameworks: accept string or array and validate
     if (updateData.framework !== undefined) {
@@ -906,6 +917,9 @@ export async function updatePendingScript(id: number, updateData: any) {
     if (updateData.price !== undefined) assignIfDefined('price', Number(updateData.price));
     if (updateData.originalPrice !== undefined) assignIfDefined('originalPrice', updateData.originalPrice === null ? null : Number(updateData.originalPrice));
     if (updateData.original_price !== undefined) assignIfDefined('originalPrice', updateData.original_price === null ? null : Number(updateData.original_price));
+    assignIfDefined('currency', updateData.currency);
+    if (updateData.currencySymbol !== undefined) assignIfDefined('currencySymbol', updateData.currencySymbol);
+    if (updateData.currency_symbol !== undefined) assignIfDefined('currencySymbol', updateData.currency_symbol);
     assignIfDefined('category', updateData.category);
     if (updateData.framework !== undefined) {
       const arrayValue = Array.isArray(updateData.framework) ? updateData.framework : (updateData.framework ? [updateData.framework] : []);
@@ -961,6 +975,9 @@ export async function updateRejectedScriptForReapproval(id: number, updateData: 
     if (updateData.price !== undefined) assignIfDefined('price', Number(updateData.price));
     if (updateData.originalPrice !== undefined) assignIfDefined('originalPrice', updateData.originalPrice === null ? null : Number(updateData.originalPrice));
     if (updateData.original_price !== undefined) assignIfDefined('originalPrice', updateData.original_price === null ? null : Number(updateData.original_price));
+    assignIfDefined('currency', updateData.currency);
+    if (updateData.currencySymbol !== undefined) assignIfDefined('currencySymbol', updateData.currencySymbol);
+    if (updateData.currency_symbol !== undefined) assignIfDefined('currencySymbol', updateData.currency_symbol);
     assignIfDefined('category', updateData.category);
     if (updateData.framework !== undefined) {
       const arrayValue = Array.isArray(updateData.framework) ? updateData.framework : (updateData.framework ? [updateData.framework] : []);
@@ -1020,6 +1037,9 @@ export async function updateScript(id: number, updateData: any) {
     if (updateData.originalPrice !== undefined) assignIfDefined('originalPrice', updateData.originalPrice === null ? null : Number(updateData.originalPrice));
     // Accept snake_case aliases
     if (updateData.original_price !== undefined) assignIfDefined('originalPrice', updateData.original_price === null ? null : Number(updateData.original_price));
+    assignIfDefined('currency', updateData.currency);
+    if (updateData.currencySymbol !== undefined) assignIfDefined('currencySymbol', updateData.currencySymbol);
+    if (updateData.currency_symbol !== undefined) assignIfDefined('currencySymbol', updateData.currency_symbol);
     assignIfDefined('category', updateData.category);
     // Frameworks: accept string or array and validate
     if (updateData.framework !== undefined) {

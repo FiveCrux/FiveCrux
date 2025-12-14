@@ -71,6 +71,8 @@ interface Script {
   description: string;
   price: number;
   original_price?: number;
+  currency?: string;
+  currency_symbol?: string;
   category: string;
   framework?: string;
   seller_name: string;
@@ -914,9 +916,8 @@ export default function ProfilePage() {
 
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2">
-                                <DollarSign className="h-4 w-4 text-orange-500" />
                                 <span className="font-bold">
-                                  ${script.price}
+                                  <span className="text-orange-500">{script.currency_symbol || "$"}</span> {script.price}
                                 </span>
                               </div>
                               <Badge className={getStatusColor(script.status)}>

@@ -114,6 +114,8 @@ interface Script {
   description: string;
   price: number;
   original_price?: number;
+  currency?: string;
+  currency_symbol?: string;
   category: string;
   framework?: string | string[];
   status: string;
@@ -269,7 +271,7 @@ export default function AdminPage() {
 
   // Flatten paginated data
   const users = usersData?.pages.flatMap((page) => page.users) || [];
-  const scripts = scriptsData?.pages.flatMap((page) => page.scripts) || [];
+  const scripts: Script[] = scriptsData?.pages.flatMap((page) => page.scripts) || [];
   const giveaways =
     giveawaysData?.pages.flatMap((page) => page.giveaways) || [];
   const ads = adsData?.pages.flatMap((page) => page.ads) || [];
@@ -1042,7 +1044,7 @@ export default function AdminPage() {
                               </div>
                               <div className="min-w-0">
                                 <span className="text-gray-400">Price:</span>
-                                <p className="text-white">${script.price}</p>
+                                <p className="text-white">{script.currency_symbol || "$"}{script.price}</p>
                               </div>
                               <div className="min-w-0">
                                 <span className="text-gray-400">
@@ -2114,7 +2116,7 @@ export default function AdminPage() {
                               Price:
                             </span>
                             <p className="text-white font-semibold">
-                              ${viewingScript.price}
+                              {viewingScript.currency_symbol || "$"}{viewingScript.price}
                             </p>
                           </div>
                           {viewingScript.original_price && (
@@ -2123,7 +2125,7 @@ export default function AdminPage() {
                                 Original Price:
                               </span>
                               <p className="text-white line-through">
-                                ${viewingScript.original_price}
+                                {viewingScript.currency_symbol || "$"}{viewingScript.original_price}
                               </p>
                             </div>
                           )}
