@@ -1310,31 +1310,31 @@ export default function GiveawayDetailPage() {
             ) : (
               // TASKS & PRIZES TABS - Enhanced Design
               <Tabs defaultValue="tasks" className="w-full">
-                <TabsList className="grid w-full grid-cols-4 bg-gray-900/50 border-2 border-gray-700/50 backdrop-blur-sm rounded-2xl p-1.5 mb-4">
+                <TabsList className="grid w-full grid-cols-4 bg-gray-900/50 border-2 border-gray-700/50 backdrop-blur-sm rounded-2xl mb-4 h-auto items-stretch p-1">
                   <TabsTrigger 
                     value="tasks" 
-                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-500 data-[state=active]:to-orange-500 data-[state=active]:text-black rounded-xl font-bold transition-all text-sm py-2"
+                    className="h-10 inline-flex items-center justify-center data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-500 data-[state=active]:to-orange-500 data-[state=active]:text-black data-[state=active]:shadow-none data-[state=active]:translate-y-0 rounded-xl font-bold transition-all text-sm py-2"
                   >
                     <Target className="h-3.5 w-3.5 mr-1.5" />
                     Tasks
                   </TabsTrigger>
                   <TabsTrigger
                     value="prizes"
-                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-500 data-[state=active]:to-orange-500 data-[state=active]:text-black rounded-xl font-bold transition-all text-sm py-2"
+                    className="h-10 inline-flex items-center justify-center data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-500 data-[state=active]:to-orange-500 data-[state=active]:text-black data-[state=active]:shadow-none data-[state=active]:translate-y-0 rounded-xl font-bold transition-all text-sm py-2"
                   >
                     <Trophy className="h-3.5 w-3.5 mr-1.5" />
                     Prizes
                   </TabsTrigger>
                   <TabsTrigger 
                     value="rules" 
-                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-500 data-[state=active]:to-orange-500 data-[state=active]:text-black rounded-xl font-bold transition-all text-sm py-2"
+                    className="h-10 inline-flex items-center justify-center data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-500 data-[state=active]:to-orange-500 data-[state=active]:text-black data-[state=active]:shadow-none data-[state=active]:translate-y-0 rounded-xl font-bold transition-all text-sm py-2"
                   >
                     <Flag className="h-3.5 w-3.5 mr-1.5" />
                     Rules
                   </TabsTrigger>
                   <TabsTrigger 
                     value="stats" 
-                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-500 data-[state=active]:to-orange-500 data-[state=active]:text-black rounded-xl font-bold transition-all text-sm py-2"
+                    className="h-10 inline-flex items-center justify-center data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-500 data-[state=active]:to-orange-500 data-[state=active]:text-black data-[state=active]:shadow-none data-[state=active]:translate-y-0 rounded-xl font-bold transition-all text-sm py-2"
                   >
                     <Zap className="h-3.5 w-3.5 mr-1.5" />
                     Stats
