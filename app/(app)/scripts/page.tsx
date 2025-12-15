@@ -565,12 +565,12 @@ export default function ScriptsPage() {
               {/* Filters Bar */}
               <motion.div
                 ref={filtersRef}
-                className="mb-6 relative z-50"
+                className="mb-6 relative"
                 initial={{ opacity: 0, y: -20 }}
                 animate={filtersInView ? { opacity: 1, y: 0 } : {}}
                 transition={{ duration: 0.8 }}
               >
-                <Card className="bg-neutral-800/30 border-neutral-700/50 backdrop-blur-xl relative z-50">
+                <Card className="bg-neutral-800/30 border-neutral-700/50 backdrop-blur-xl relative">
                   <CardContent className="p-4">
                     <div className="flex flex-col gap-4">
                       {/* Filter Header */}
