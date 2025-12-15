@@ -66,7 +66,9 @@ export async function GET(request: NextRequest) {
         cover_image: g.coverImage,
         auto_announce: g.autoAnnounce,
         created_at: g.createdAt || g.submittedAt,
-        updated_at: g.updatedAt
+        updated_at: g.updatedAt,
+        currency: g.currency,
+        currency_symbol: g.currencySymbol,
       })),
       ...userApproved.map(g => ({ 
         ...g, 
@@ -81,7 +83,9 @@ export async function GET(request: NextRequest) {
         cover_image: g.coverImage,
         auto_announce: g.autoAnnounce,
         created_at: g.createdAt || g.approvedAt,
-        updated_at: g.updatedAt
+        updated_at: g.updatedAt,
+        currency: g.currency,
+        currency_symbol: g.currencySymbol,
       })),
       ...userRejected.map(g => ({ 
         ...g, 
@@ -97,7 +101,9 @@ export async function GET(request: NextRequest) {
         auto_announce: g.autoAnnounce,
         created_at: g.createdAt || g.rejectedAt,
         updated_at: g.updatedAt,
-        rejection_reason: g.rejectionReason
+        rejection_reason: g.rejectionReason,
+        currency: g.currency,
+        currency_symbol: g.currencySymbol,
       }))
     ];
 

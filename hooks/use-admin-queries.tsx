@@ -76,6 +76,8 @@ interface Giveaway {
   approvedBy?: string
   rejectedBy?: string
   adminNotes?: string
+  currency?: string
+  currency_symbol?: string
 }
 
 interface Ad {
