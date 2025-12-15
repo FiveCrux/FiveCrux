@@ -34,6 +34,7 @@ import Navbar from "@/componentss/shared/navbar"
 import Footer from "@/componentss/shared/footer"
 import { toast } from "sonner"
 import FileUpload from "@/componentss/shared/file-upload"
+import { CurrencySelect } from "@/componentss/currency-select"
 
 // Animated background particles
 const AnimatedParticles = () => {
@@ -83,6 +84,8 @@ export default function EditGiveawayPage() {
     autoAnnounce: true,
     creatorName: session?.user?.name || "",
     creatorEmail: session?.user?.email || "",
+    currency: "USD",
+    currencySymbol: "$",
   })
 
   const [requirements, setRequirements] = useState([
@@ -141,6 +144,8 @@ export default function EditGiveawayPage() {
             autoAnnounce: giveaway.auto_announce || giveaway.autoAnnounce || true,
             creatorName: giveaway.creator_name || giveaway.creatorName || session?.user?.name || "",
             creatorEmail: giveaway.creator_email || giveaway.creatorEmail || session?.user?.email || "",
+            currency: giveaway.currency || "USD",
+            currencySymbol: giveaway.currency_symbol || giveaway.currencySymbol || "$",
           })
 
           // Prefill requirements
@@ -336,7 +341,9 @@ export default function EditGiveawayPage() {
         giveaway: {
           title: formData.title,
           description: formData.description,
-          total_value: formData.value,
+          total_value: formData.value, // Only numeric value
+          currency: formData.currency || "USD",
+          currency_symbol: formData.currencySymbol || "$",
           end_date: formData.endDate,
           featured: formData.featured,
           auto_announce: formData.autoAnnounce,
@@ -629,14 +636,36 @@ export default function EditGiveawayPage() {
                         <Label htmlFor="value" className="text-white font-medium">
                           Total Value *
                         </Label>
-                        <Input
-                          id="value"
-                          value={formData.value}
-                          onChange={(e) => setFormData({ ...formData, value: e.target.value })}
-                          placeholder="$150"
-                          className="mt-2 bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-yellow-500"
-                          required
-                        />
+                        <div className="mt-2 flex flex-col gap-2">
+                          <CurrencySelect
+                            value={formData.currency}
+                            onValueChange={(value) =>
+                              setFormData({ ...formData, currency: value })
+                            }
+                            onCurrencySelect={(currency) =>
+                              setFormData({
+                                ...formData,
+                                currency: currency.code,
+                                currencySymbol: currency.symbol,
+                              })
+                            }
+                            placeholder="Select currency"
+                            disabled={false}
+                            currencies="all"
+                            variant="default"
+                            className="bg-gray-900/50 border-gray-700 text-white"
+                          />
+                          <Input
+                            id="value"
+                            type="number"
+                            min="0"
+                            value={formData.value}
+                            onChange={(e) => setFormData({ ...formData, value: e.target.value })}
+                            placeholder="150"
+                            className="bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-yellow-500"
+                            required
+                          />
+                        </div>
                       </div>
 
                       <div>
