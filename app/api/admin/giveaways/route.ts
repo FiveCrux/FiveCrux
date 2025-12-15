@@ -81,7 +81,9 @@ export async function GET(request: NextRequest) {
           total_value: g.totalValue,
           created_at,
           requirements: requirementsMap.get(g.id) || [],
-          prizes: prizesMap.get(g.id) || []
+          prizes: prizesMap.get(g.id) || [],
+          currency: g.currency,
+          currency_symbol: g.currencySymbol,
         };
       });
     } else if (status === "pending") {
@@ -112,7 +114,9 @@ export async function GET(request: NextRequest) {
         total_value: g.totalValue,
         created_at: g.createdAt || g.submittedAt,
         requirements: requirementsMap.get(g.id) || [],
-        prizes: prizesMap.get(g.id) || []
+        prizes: prizesMap.get(g.id) || [],
+        currency: g.currency,
+        currency_symbol: g.currencySymbol,
       }));
     } else if (status === "approved") {
       const allGiveaways = await getApprovedGiveaways(limit + offset + 1);
@@ -142,7 +146,9 @@ export async function GET(request: NextRequest) {
         total_value: g.totalValue,
         created_at: g.createdAt || g.approvedAt,
         requirements: requirementsMap.get(g.id) || [],
-        prizes: prizesMap.get(g.id) || []
+        prizes: prizesMap.get(g.id) || [],
+        currency: g.currency,
+        currency_symbol: g.currencySymbol,
       }));
     } else if (status === "rejected") {
       const allGiveaways = await getRejectedGiveaways(limit + offset + 1);
@@ -172,7 +178,9 @@ export async function GET(request: NextRequest) {
         total_value: g.totalValue,
         created_at: g.createdAt || g.rejectedAt,
         requirements: requirementsMap.get(g.id) || [],
-        prizes: prizesMap.get(g.id) || []
+        prizes: prizesMap.get(g.id) || [],
+        currency: g.currency,
+        currency_symbol: g.currencySymbol,
       }));
     }
 

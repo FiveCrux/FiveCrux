@@ -1117,9 +1117,12 @@ export async function createGiveaway(giveawayData: NewGiveaway) {
     creatorId: giveawayData.creatorId || (giveawayData as any).creator_id || 'unknown',
     status: giveawayData.status || 'active',
     featured: giveawayData.featured ?? false,
-    autoAnnounce: giveawayData.autoAnnounce ?? (giveawayData as any).auto_announce ?? true, // ✅ ADD THIS LINE
+    autoAnnounce: giveawayData.autoAnnounce ?? (giveawayData as any).auto_announce ?? true,
     entriesCount: giveawayData.entriesCount || (giveawayData as any).entries_count || 0,
     maxEntries: giveawayData.maxEntries || (giveawayData as any).max_entries || null,
+    // Map currency fields
+    currency: giveawayData.currency || (giveawayData as any).currency || 'USD',
+    currencySymbol: giveawayData.currencySymbol || (giveawayData as any).currency_symbol || '$',
     // Map media fields
     images: giveawayData.images || (giveawayData as any).images || [],
     videos: giveawayData.videos || (giveawayData as any).videos || [],
@@ -1368,6 +1371,9 @@ export async function updateGiveawayForReapproval(id: number, updateData: any) {
     assignIfDefined('description', updateData.description);
     if (updateData.total_value !== undefined) assignIfDefined('totalValue', updateData.total_value);
     if (updateData.end_date !== undefined) assignIfDefined('endDate', updateData.end_date);
+    assignIfDefined('currency', updateData.currency);
+    if (updateData.currency_symbol !== undefined) assignIfDefined('currencySymbol', updateData.currency_symbol);
+    if (updateData.currencySymbol !== undefined) assignIfDefined('currencySymbol', updateData.currencySymbol);
     assignIfDefined('creator_name', updateData.creator_name);
     assignIfDefined('creator_email', updateData.creator_email);
     assignIfDefined('creator_id', updateData.creator_id);
@@ -1444,6 +1450,8 @@ export async function updateGiveaway(id: number, updateData: Partial<NewGiveaway
       totalValue: giveaway.totalValue,
       endDate: giveaway.endDate,
       maxEntries: giveaway.maxEntries,
+      currency: giveaway.currency || 'USD',
+      currencySymbol: giveaway.currencySymbol || '$',
       creatorName: giveaway.creatorName,
       creatorEmail: giveaway.creatorEmail,
       creatorId: giveaway.creatorId,

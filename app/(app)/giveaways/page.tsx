@@ -155,6 +155,7 @@ export default function GiveawaysPage() {
     title: string;
     description: string;
     totalValue: string;
+    currency_symbol?: string;
     entries: number;
     maxEntries: number;
     timeLeft: string;
@@ -197,6 +198,7 @@ export default function GiveawaysPage() {
               title: g.title,
               description: g.description,
               totalValue: g.total_value,
+              currency_symbol: g.currency_symbol,
               entries: g.entries_count || 0,
               maxEntries: g.max_entries || 0,
               timeLeft: "", // can be computed from end_date if needed
@@ -837,7 +839,10 @@ export default function GiveawaysPage() {
                                   whileHover={{ scale: 1.1 }}
                                 >
                                   <Badge className="bg-gradient-to-r from-green-400 to-emerald-500 text-black font-bold text-sm px-2 py-0.5">
-                                    ${giveaway.totalValue}
+                                    <span className="mr-0.5">
+                                      {giveaway.currency_symbol || "$"}
+                                    </span>
+                                    {giveaway.totalValue}
                                   </Badge>
                                 </motion.div>
 

@@ -126,6 +126,8 @@ interface Giveaway {
   created_at: string;
   updated_at: string;
   rejection_reason?: string;
+  currency?: string;
+  currency_symbol?: string;
 }
 
 interface Ad {
@@ -1065,9 +1067,8 @@ export default function ProfilePage() {
 
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2">
-                                <DollarSign className="h-4 w-4 text-green-500" />
                                 <span className="font-bold">
-                                  {giveaway.total_value}
+                                  <span className="text-green-500">{giveaway.currency_symbol || "$"}</span> {giveaway.total_value}
                                 </span>
                               </div>
                               <Badge

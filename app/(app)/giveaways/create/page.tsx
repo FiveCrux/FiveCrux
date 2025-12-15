@@ -30,6 +30,7 @@ import { Badge } from "@/componentss/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/componentss/ui/select"
 import { Switch } from "@/componentss/ui/switch"
 import { Label } from "@/componentss/ui/label"
+import { CurrencySelect } from "@/componentss/currency-select"
 import Navbar from "@/componentss/shared/navbar"
 import Footer from "@/componentss/shared/footer"
 import { toast } from "sonner"
@@ -82,6 +83,8 @@ export default function CreateGiveawayPage() {
     autoAnnounce: true,
     creatorName: session?.user?.name || "",
     creatorEmail: session?.user?.email || "",
+    currency: "USD",
+    currencySymbol: "$",
   })
 
   const [requirements, setRequirements] = useState([
@@ -184,7 +187,9 @@ export default function CreateGiveawayPage() {
         giveaway: {
           title: formData.title,
           description: formData.description,
-          total_value: formData.value,
+          total_value: formData.value, // Only numeric value
+          currency: formData.currency || "USD",
+          currency_symbol: formData.currencySymbol || "$",
           end_date: formData.endDate ? formData.endDate.toISOString() : "",
           featured: formData.featured,
           auto_announce: true,
@@ -220,6 +225,8 @@ export default function CreateGiveawayPage() {
           autoAnnounce: true,
           creatorName: session?.user?.name || "",
           creatorEmail: session?.user?.email || "",
+          currency: "USD",
+          currencySymbol: "$",
         })
         setMedia({
           images: [],
@@ -491,20 +498,46 @@ export default function CreateGiveawayPage() {
                         <Label htmlFor="value" className="text-white font-medium">
                           Total Value *
                         </Label>
-                        <Input
-                          id="value"
-                          value={formData.value}
-                          onChange={(e) => setFormData({ ...formData, value: e.target.value })}
-                          placeholder="$150"
-                          className="mt-2 bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-yellow-500"
-                          required
-                        />
+                        <div className="mt-2 flex flex-col gap-2">
+                          <CurrencySelect
+                            value={formData.currency}
+                            onValueChange={(value) =>
+                              setFormData({ ...formData, currency: value })
+                            }
+                            onCurrencySelect={(currency) =>
+                              setFormData({
+                                ...formData,
+                                currency: currency.code,
+                                currencySymbol: currency.symbol,
+                              })
+                            }
+                            placeholder="Select currency"
+                            disabled={false}
+                            currencies="all"
+                            variant="default"
+                            className="bg-gray-900/50 border-gray-700 text-white"
+                          />
+                          <Input
+                            id="value"
+                            type="number"
+                            min="0"
+                            value={formData.value}
+                            onChange={(e) =>
+                              setFormData({ ...formData, value: e.target.value })
+                            }
+                            placeholder="150"
+                            className="bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-yellow-500"
+                            required
+                          />
+                        </div>
                       </div>
 
                       <div>
-                        <DateTimePicker 
+                        <DateTimePicker
                           date={formData.endDate}
-                          onDateChange={(date) => setFormData({ ...formData, endDate: date })}
+                          onDateChange={(date) =>
+                            setFormData({ ...formData, endDate: date })
+                          }
                           label="End Date*"
                           id="endDate"
                         />
@@ -982,8 +1015,11 @@ export default function CreateGiveawayPage() {
                       </div>
 
                       <div className="flex items-center justify-between">
-                        <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
-                          {formData.value || "$0"} Value
+                        <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 flex items-center gap-1">
+                          <span className="text-yellow-400">
+                            {formData.currencySymbol || "$"}
+                          </span>
+                          <span>{formData.value || "0"} Value</span>
                         </Badge>
                       </div>
 
