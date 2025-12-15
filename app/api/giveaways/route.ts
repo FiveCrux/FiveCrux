@@ -129,6 +129,8 @@ export async function GET(request: NextRequest) {
       approved_at: giveaway.approvedAt,
       approved_by: giveaway.approvedBy,
       admin_notes: giveaway.adminNotes,
+      currency: giveaway.currency,
+      currency_symbol: giveaway.currencySymbol,
     }))
 
     return NextResponse.json(transformedGiveaways)

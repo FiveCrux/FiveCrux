@@ -149,6 +149,8 @@ interface Giveaway {
   status: string;
   creator_name: string;
   creator_email: string;
+  currency?: string;
+  currency_symbol?: string;
   creator_id?: string;
   end_date: string;
   maxEntries?: number;
@@ -1294,7 +1296,7 @@ export default function AdminPage() {
                                   Total Value:
                                 </span>
                                 <p className="text-white">
-                                  ${giveaway.total_value}
+                                  {giveaway.currency_symbol || "$"}{giveaway.total_value}
                                 </p>
                               </div>
                             </div>
@@ -2577,7 +2579,7 @@ export default function AdminPage() {
                               Total Value:
                             </span>
                             <p className="text-white font-semibold">
-                              ${viewingGiveaway.total_value}
+                              <span className="text-orange-500">{(viewingGiveaway as any).currency_symbol || "$"}</span>{viewingGiveaway.total_value}
                             </p>
                           </div>
                           <div>

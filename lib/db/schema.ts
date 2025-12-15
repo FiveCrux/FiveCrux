@@ -74,6 +74,8 @@ const baseGiveawayFields = {
   title: text('title').notNull(),
   description: text('description').notNull(),
   totalValue: text('total_value').notNull(),
+  currency: text('currency'),
+  currencySymbol: text('currency_symbol'),
   endDate: text('end_date').notNull(),
   maxEntries: integer('max_entries'),
   featured: boolean('featured').default(false),
