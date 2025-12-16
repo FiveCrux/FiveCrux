@@ -35,6 +35,7 @@ import Footer from "@/componentss/shared/footer"
 import { toast } from "sonner"
 import FileUpload from "@/componentss/shared/file-upload"
 import { CurrencySelect } from "@/componentss/currency-select"
+import { DateTimePicker } from "@/componentss/ui/date-time-picker"
 
 // Animated background particles
 const AnimatedParticles = () => {
@@ -79,7 +80,7 @@ export default function EditGiveawayPage() {
     title: "",
     description: "",
     value: "",
-    endDate: "",
+    endDate: undefined as Date | undefined,
     featured: false,
     autoAnnounce: true,
     creatorName: session?.user?.name || "",
@@ -92,7 +93,7 @@ export default function EditGiveawayPage() {
     { id: 1, type: "discord", description: "", points: 1, required: true },
   ])
 
-  const [prizes, setPrizes] = useState([{ id: 1, name: "", description: "", value: "", position: 1 }])
+  const [prizes, setPrizes] = useState([{ id: 1, name: "", description: "", value: "", position: 1, numberOfWinners: 1 }])
 
   const [media, setMedia] = useState({
     images: [] as (File | string)[],
@@ -135,11 +136,12 @@ export default function EditGiveawayPage() {
           console.log('Giveaway cover_image:', giveaway.cover_image)
           
           // Prefill form data
+          const endDateValue = giveaway.end_date || giveaway.endDate
           setFormData({
             title: giveaway.title || "",
             description: giveaway.description || "",
             value: giveaway.total_value || giveaway.totalValue || "",
-            endDate: giveaway.end_date || giveaway.endDate || "",
+            endDate: endDateValue ? new Date(endDateValue) : undefined,
             featured: giveaway.featured || false,
             autoAnnounce: giveaway.auto_announce || giveaway.autoAnnounce || true,
             creatorName: giveaway.creator_name || giveaway.creatorName || session?.user?.name || "",
@@ -167,6 +169,7 @@ export default function EditGiveawayPage() {
               description: prize.description || "",
               value: prize.value || "",
               position: prize.position || index + 1,
+              numberOfWinners: prize.numberOfWinners || prize.number_of_winners || 1,
             })))
           }
 
@@ -263,7 +266,7 @@ export default function EditGiveawayPage() {
 
   const addPrize = () => {
     const newId = Math.max(...prizes.map((p) => p.id)) + 1
-    setPrizes([...prizes, { id: newId, name: "", description: "", value: "", position: prizes.length + 1 }])
+    setPrizes([...prizes, { id: newId, name: "", description: "", value: "", position: prizes.length + 1, numberOfWinners: 1 }])
   }
 
   const removePrize = (id: number) => {
@@ -344,7 +347,7 @@ export default function EditGiveawayPage() {
           total_value: formData.value, // Only numeric value
           currency: formData.currency || "USD",
           currency_symbol: formData.currencySymbol || "$",
-          end_date: formData.endDate,
+          end_date: formData.endDate ? formData.endDate.toISOString() : "",
           featured: formData.featured,
           auto_announce: formData.autoAnnounce,
           creator_name: formData.creatorName,
@@ -669,16 +672,13 @@ export default function EditGiveawayPage() {
                       </div>
 
                       <div>
-                        <Label htmlFor="endDate" className="text-white font-medium">
-                          End Date *
-                        </Label>
-                        <Input
+                        <DateTimePicker
+                          date={formData.endDate}
+                          onDateChange={(date) =>
+                            setFormData({ ...formData, endDate: date })
+                          }
+                          label="End Date*"
                           id="endDate"
-                          type="datetime-local"
-                          value={formData.endDate}
-                          onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                          className="mt-2 bg-gray-900/50 border-gray-700 text-white focus:border-yellow-500"
-                          required
                         />
                       </div>
                     </div>
@@ -863,12 +863,12 @@ export default function EditGiveawayPage() {
                         <div className="flex items-center justify-between mb-4">
                           <h4 className="text-white font-medium">
                             {index === 0
-                              ? "🥇 1st Place"
+                              ? "1st"
                               : index === 1
-                                ? "🥈 2nd Place"
+                                ? "2nd"
                                 : index === 2
-                                  ? "🥉 3rd Place"
-                                  : `${index + 1}th Place`}
+                                  ? "3rd"
+                                  : `${index + 1}th`}
                           </h4>
                           {prizes.length > 1 && (
                             <Button
@@ -883,7 +883,7 @@ export default function EditGiveawayPage() {
                           )}
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                           <div>
                             <Label className="text-white text-sm">Prize Name</Label>
                             <Input
@@ -900,6 +900,18 @@ export default function EditGiveawayPage() {
                               value={prize.value}
                               onChange={(e) => updatePrize(prize.id, "value", e.target.value)}
                               placeholder="$50"
+                              className="mt-1 bg-gray-900/50 border-gray-600 text-white placeholder-gray-400"
+                            />
+                          </div>
+
+                          <div>
+                            <Label className="text-white text-sm">Number of Winners</Label>
+                            <Input
+                              type="number"
+                              min="1"
+                              value={prize.numberOfWinners || 1}
+                              onChange={(e) => updatePrize(prize.id, "numberOfWinners", parseInt(e.target.value) || 1)}
+                              placeholder="1"
                               className="mt-1 bg-gray-900/50 border-gray-600 text-white placeholder-gray-400"
                             />
                           </div>
@@ -1160,7 +1172,7 @@ export default function EditGiveawayPage() {
                           <Clock className="h-4 w-4" />
                           <span>
                             {formData.endDate
-                              ? `Ends ${new Date(formData.endDate).toLocaleDateString()}`
+                              ? `Ends ${formData.endDate.toLocaleDateString()} at ${formData.endDate.toLocaleTimeString()}`
                               : "End date not set"}
                           </span>
                         </div>
