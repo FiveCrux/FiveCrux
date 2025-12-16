@@ -4,7 +4,7 @@ import {
   users, pendingScripts, approvedScripts, rejectedScripts, 
   pendingGiveaways, approvedGiveaways, rejectedGiveaways, 
   giveawayEntries, 
-  giveawayRequirements, giveawayPrizes, pendingAds, approvedAds, rejectedAds,
+  giveawayRequirements, giveawayPrizes, giveawayPrizeWinners, pendingAds, approvedAds, rejectedAds,
   userAdSlots, featuredScripts,
   userFeaturedScriptSlots,
   type Script, type Giveaway 
@@ -1171,7 +1171,9 @@ export async function createGiveawayPrize(prizeData: NewGiveawayPrize) {
   const mappedData = {
     ...prizeData,
     id: id,
-    giveawayId: prizeData.giveawayId || (prizeData as any).giveaway_id
+    giveawayId: prizeData.giveawayId || (prizeData as any).giveaway_id,
+    numberOfWinners: prizeData.numberOfWinners || (prizeData as any).number_of_winners || 1,
+    position: prizeData.position || (prizeData as any).position || 1,
   };
   
   console.log('mappedData:', mappedData);
@@ -1228,6 +1230,20 @@ export async function getGiveawayById(id: number, session?: any) {
       const requirements = await db.select().from(giveawayRequirements).where(eq(giveawayRequirements.giveawayId, id));
       const prizes = await db.select().from(giveawayPrizes).where(eq(giveawayPrizes.giveawayId, id));
       
+      // Fetch winners for each prize
+      const prizesWithWinners = await Promise.all(prizes.map(async (prize) => {
+        const winners = await db.select().from(giveawayPrizeWinners).where(eq(giveawayPrizeWinners.prizeId, prize.id));
+        return {
+          ...prize,
+          winners: winners.map(w => ({
+            userId: w.userId,
+            userName: w.userName,
+            userEmail: w.userEmail,
+            claimed: w.claimed,
+          })),
+        };
+      }));
+      
       // Count actual entries from giveaway_entries table
       const actualEntries = await db.select({ count: sql<number>`count(*)` })
         .from(giveawayEntries)
@@ -1262,7 +1278,7 @@ export async function getGiveawayById(id: number, session?: any) {
         entriesCount: actualEntryCount, // Use actual count instead of stored count
         userEntry, // Include user's entry for points display
         requirements,
-        prizes,
+        prizes: prizesWithWinners,
         creator_image: creatorImage,
         creator_roles: creatorRoles,
         table_source: 'approved',
@@ -1275,6 +1291,20 @@ export async function getGiveawayById(id: number, session?: any) {
       const requirements = await db.select().from(giveawayRequirements).where(eq(giveawayRequirements.giveawayId, id));
       const prizes = await db.select().from(giveawayPrizes).where(eq(giveawayPrizes.giveawayId, id));
       
+      // Fetch winners for each prize
+      const prizesWithWinners = await Promise.all(prizes.map(async (prize) => {
+        const winners = await db.select().from(giveawayPrizeWinners).where(eq(giveawayPrizeWinners.prizeId, prize.id));
+        return {
+          ...prize,
+          winners: winners.map(w => ({
+            userId: w.userId,
+            userName: w.userName,
+            userEmail: w.userEmail,
+            claimed: w.claimed,
+          })),
+        };
+      }));
+      
       // Count actual entries from giveaway_entries table
       const actualEntries = await db.select({ count: sql<number>`count(*)` })
         .from(giveawayEntries)
@@ -1296,7 +1326,7 @@ export async function getGiveawayById(id: number, session?: any) {
         ...giveaway,
         entriesCount: actualEntryCount, // Use actual count instead of stored count
         requirements,
-        prizes,
+        prizes: prizesWithWinners,
         creator_image: creatorImage,
         creator_roles: creatorRoles,
         table_source: 'pending',
@@ -1309,6 +1339,20 @@ export async function getGiveawayById(id: number, session?: any) {
       const requirements = await db.select().from(giveawayRequirements).where(eq(giveawayRequirements.giveawayId, id));
       const prizes = await db.select().from(giveawayPrizes).where(eq(giveawayPrizes.giveawayId, id));
       
+      // Fetch winners for each prize
+      const prizesWithWinners = await Promise.all(prizes.map(async (prize) => {
+        const winners = await db.select().from(giveawayPrizeWinners).where(eq(giveawayPrizeWinners.prizeId, prize.id));
+        return {
+          ...prize,
+          winners: winners.map(w => ({
+            userId: w.userId,
+            userName: w.userName,
+            userEmail: w.userEmail,
+            claimed: w.claimed,
+          })),
+        };
+      }));
+      
       // Count actual entries from giveaway_entries table
       const actualEntries = await db.select({ count: sql<number>`count(*)` })
         .from(giveawayEntries)
@@ -1330,7 +1374,7 @@ export async function getGiveawayById(id: number, session?: any) {
         ...giveaway,
         entriesCount: actualEntryCount, // Use actual count instead of stored count
         requirements,
-        prizes,
+        prizes: prizesWithWinners,
         creator_image: creatorImage,
         creator_roles: creatorRoles,
         table_source: 'rejected',
@@ -1422,7 +1466,7 @@ export async function updateGiveawayForReapproval(id: number, updateData: any) {
   }
 }
 
-export async function updateGiveaway(id: number, updateData: Partial<NewGiveaway>) {
+export async function updateGiveaway(id: number, updateData: Partial<NewGiveaway> | any) {
   try {
     const fields = Object.keys(updateData);
     if (fields.length === 0) return null;
@@ -1468,11 +1512,42 @@ export async function updateGiveaway(id: number, updateData: Partial<NewGiveaway
       adminNotes: giveaway.adminNotes
     };
     
+    // Map snake_case fields to camelCase schema fields
     const updateObject: any = { 
-      ...updateData, 
       updatedAt: new Date(),
       submittedAt: new Date()
     };
+    
+    // Cast updateData to any to allow both snake_case and camelCase
+    const data = updateData as any;
+    
+    // Map fields from updateData
+    if (data.title !== undefined) updateObject.title = data.title;
+    if (data.description !== undefined) updateObject.description = data.description;
+    if (data.total_value !== undefined) updateObject.totalValue = data.total_value;
+    if (data.totalValue !== undefined) updateObject.totalValue = data.totalValue;
+    if (data.end_date !== undefined) updateObject.endDate = data.end_date;
+    if (data.endDate !== undefined) updateObject.endDate = data.endDate;
+    if (data.currency !== undefined) updateObject.currency = data.currency;
+    if (data.currency_symbol !== undefined) updateObject.currencySymbol = data.currency_symbol;
+    if (data.currencySymbol !== undefined) updateObject.currencySymbol = data.currencySymbol;
+    if (data.creator_name !== undefined) updateObject.creatorName = data.creator_name;
+    if (data.creatorName !== undefined) updateObject.creatorName = data.creatorName;
+    if (data.creator_email !== undefined) updateObject.creatorEmail = data.creator_email;
+    if (data.creatorEmail !== undefined) updateObject.creatorEmail = data.creatorEmail;
+    if (data.creator_id !== undefined) updateObject.creatorId = data.creator_id;
+    if (data.creatorId !== undefined) updateObject.creatorId = data.creatorId;
+    if (data.images !== undefined) updateObject.images = data.images;
+    if (data.videos !== undefined) updateObject.videos = data.videos;
+    if (data.cover_image !== undefined) updateObject.coverImage = data.cover_image;
+    if (data.coverImage !== undefined) updateObject.coverImage = data.coverImage;
+    if (data.tags !== undefined) updateObject.tags = data.tags;
+    if (data.rules !== undefined) updateObject.rules = data.rules;
+    if (data.featured !== undefined) updateObject.featured = Boolean(data.featured);
+    if (data.auto_announce !== undefined) updateObject.autoAnnounce = Boolean(data.auto_announce);
+    if (data.autoAnnounce !== undefined) updateObject.autoAnnounce = Boolean(data.autoAnnounce);
+    if (data.maxEntries !== undefined) updateObject.maxEntries = data.maxEntries;
+    if (data.max_entries !== undefined) updateObject.maxEntries = data.max_entries;
     
     // Always move to pending_giveaways for any edit
     const result = await db.transaction(async (tx) => {

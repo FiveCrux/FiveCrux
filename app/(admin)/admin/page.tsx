@@ -2587,9 +2587,24 @@ export default function AdminPage() {
                               End Date:
                             </span>
                             <p className="text-white">
-                              {new Date(
-                                viewingGiveaway.end_date
-                              ).toLocaleDateString()}
+                              {(() => {
+                                const endDateStr = (viewingGiveaway as any).endDate || viewingGiveaway.end_date;
+                                if (!endDateStr) return 'Not set';
+                                
+                                // Parse the ISO string to extract date and time components in UTC (as stored in DB)
+                                const date = new Date(endDateStr);
+                                const year = date.getUTCFullYear();
+                                const month = date.toLocaleString('en-US', { month: 'long', timeZone: 'UTC' });
+                                const day = date.getUTCDate();
+                                const hours = String(date.getUTCHours()).padStart(2, '0');
+                                const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+                                
+                                // Format as 12-hour time
+                                const hour12 = parseInt(hours) % 12 || 12;
+                                const ampm = parseInt(hours) >= 12 ? 'PM' : 'AM';
+                                
+                                return `${month} ${day}, ${year} at ${hour12}:${minutes} ${ampm} UTC`;
+                              })()}
                             </p>
                           </div>
                         </div>
@@ -2746,12 +2761,12 @@ export default function AdminPage() {
                                       <Star className="h-4 w-4 text-yellow-500" />
                                       <span className="text-white font-medium">
                                         {index === 0
-                                          ? "🥇 1st Place"
+                                          ? "1st"
                                           : index === 1
-                                          ? "🥈 2nd Place"
+                                          ? "2nd"
                                           : index === 2
-                                          ? "🥉 3rd Place"
-                                          : `${index + 1}th Place`}
+                                          ? "3rd"
+                                          : `${index + 1}th`}
                                       </span>
                                     </div>
                                     {prize.value && (

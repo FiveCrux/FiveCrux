@@ -664,7 +664,7 @@ export default function GiveawayDetailPage() {
     const triggerWinnerSelection = async () => {
       if (!giveaway || !isGiveawayEnded) return
       
-      const hasWinners = giveaway.prizes?.some((p: any) => p.winnerName)
+      const hasWinners = giveaway.prizes?.some((p: any) => (p.winners && p.winners.length > 0) || p.winnerName)
       if (hasWinners) return
       
       try {
@@ -1254,16 +1254,9 @@ export default function GiveawayDetailPage() {
                         
                         <div className="relative flex items-start justify-between mb-4">
                           <div className="flex items-center gap-4">
-                            <motion.div 
-                              className="text-4xl"
-                              animate={{ rotate: [0, -10, 10, 0] }}
-                              transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY, delay: index * 0.3 }}
-                            >
-                              {prize.position === 1 ? "🥇" : prize.position === 2 ? "🥈" : prize.position === 3 ? "🥉" : `#${prize.position}`}
-                            </motion.div>
                             <div>
                               <h3 className="text-white font-black text-xl mb-1.5">
-                                {prize.position === 1 ? "1st Place" : prize.position === 2 ? "2nd Place" : prize.position === 3 ? "3rd Place" : `${prize.position}th Place`}
+                                {prize.position === 1 ? "1st" : prize.position === 2 ? "2nd" : prize.position === 3 ? "3rd" : `${prize.position}th`}
                               </h3>
                               <p className="text-yellow-400 font-bold text-base mb-1">{prize.name}</p>
                               {prize.description && (
@@ -1282,7 +1275,27 @@ export default function GiveawayDetailPage() {
                           </motion.div>
                         </div>
                         
-                        {prize.winnerName ? (
+                        {prize.winners && prize.winners.length > 0 ? (
+                          <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 border-2 border-green-500/50 rounded-xl p-6">
+                            <div className="space-y-3">
+                              <div className="flex items-center gap-2 mb-2">
+                                <Award className="h-6 w-6 text-green-400" />
+                                <p className="text-green-400 font-semibold text-lg">
+                                  🎊 {prize.winners.length === 1 ? 'Winner' : `${prize.winners.length} Winners`}
+                                </p>
+                              </div>
+                              {prize.winners.map((winner: any, winnerIndex: number) => (
+                                <div key={winnerIndex} className="bg-green-500/10 rounded-lg p-3 border border-green-500/30">
+                                  <p className="text-white font-bold">{winner.userName || 'Unknown'}</p>
+                                  {winner.userEmail && (
+                                    <p className="text-gray-400 text-sm">{winner.userEmail}</p>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ) : prize.winnerName ? (
+                          // Fallback for backward compatibility with old single winner format
                           <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 border-2 border-green-500/50 rounded-xl p-6">
                             <div className="flex items-center gap-4">
                               <Award className="h-8 w-8 text-green-400" />
@@ -1548,13 +1561,6 @@ export default function GiveawayDetailPage() {
                       >
                         <div className="flex items-start justify-between mb-4">
                           <div className="flex items-center gap-4">
-                            <motion.div 
-                              className="text-5xl"
-                              animate={{ rotate: [0, -5, 5, 0] }}
-                              transition={{ duration: 3, repeat: Number.POSITIVE_INFINITY, delay: index * 0.5 }}
-                            >
-                              {prize.position === 1 ? "🥇" : prize.position === 2 ? "🥈" : "🥉"}
-                            </motion.div>
                             <div>
                               <h3 className="text-white font-black text-2xl mb-1">{prize.name}</h3>
                               <p className="text-gray-400 text-sm">{prize.description}</p>

@@ -23,12 +23,12 @@ export function DateTimePicker({ date, onDateChange, label = "Date & Time", id =
   const [open, setOpen] = React.useState(false)
   const [time, setTime] = React.useState("10:30:00")
 
-  // Update time from date when date changes
+  // Update time from date when date changes (using UTC to avoid timezone conversion)
   React.useEffect(() => {
     if (date) {
-      const hours = date.getHours().toString().padStart(2, '0')
-      const minutes = date.getMinutes().toString().padStart(2, '0')
-      const seconds = date.getSeconds().toString().padStart(2, '0')
+      const hours = date.getUTCHours().toString().padStart(2, '0')
+      const minutes = date.getUTCMinutes().toString().padStart(2, '0')
+      const seconds = date.getUTCSeconds().toString().padStart(2, '0')
       setTime(`${hours}:${minutes}:${seconds}`)
     }
   }, [date])
@@ -39,7 +39,8 @@ export function DateTimePicker({ date, onDateChange, label = "Date & Time", id =
     if (date) {
       const [hours, minutes, seconds] = newTime.split(':').map(Number)
       const newDate = new Date(date)
-      newDate.setHours(hours || 0, minutes || 0, seconds || 0)
+      // Use setUTCHours to set time in UTC, not local timezone
+      newDate.setUTCHours(hours || 0, minutes || 0, seconds || 0)
       onDateChange(newDate)
     }
   }
@@ -47,7 +48,8 @@ export function DateTimePicker({ date, onDateChange, label = "Date & Time", id =
   const handleDateSelect = (selectedDate: Date | undefined) => {
     if (selectedDate) {
       const [hours, minutes, seconds] = time.split(':').map(Number)
-      selectedDate.setHours(hours || 0, minutes || 0, seconds || 0)
+      // Use setUTCHours to set time in UTC, not local timezone
+      selectedDate.setUTCHours(hours || 0, minutes || 0, seconds || 0)
       onDateChange(selectedDate)
       setOpen(false)
     }

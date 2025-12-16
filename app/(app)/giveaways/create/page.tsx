@@ -91,7 +91,7 @@ export default function CreateGiveawayPage() {
     { id: 1, type: "discord", description: "", points: 1, required: true },
   ])
 
-  const [prizes, setPrizes] = useState([{ id: 1, name: "", description: "", value: "", position: 1 }])
+  const [prizes, setPrizes] = useState([{ id: 1, name: "", description: "", value: "", position: 1, numberOfWinners: 1 }])
 
   const [media, setMedia] = useState({
     images: [] as string[],
@@ -158,7 +158,7 @@ export default function CreateGiveawayPage() {
 
   const addPrize = () => {
     const newId = Math.max(...prizes.map((p) => p.id)) + 1
-    setPrizes([...prizes, { id: newId, name: "", description: "", value: "", position: prizes.length + 1 }])
+    setPrizes([...prizes, { id: newId, name: "", description: "", value: "", position: prizes.length + 1, numberOfWinners: 1 }])
   }
 
   const removePrize = (id: number) => {
@@ -239,7 +239,7 @@ export default function CreateGiveawayPage() {
           videos: [],
         })
         setRequirements([{ id: 1, type: "discord", description: "", points: 1, required: true }])
-        setPrizes([{ id: 1, name: "", description: "", value: "", position: 1 }])
+        setPrizes([{ id: 1, name: "", description: "", value: "", position: 1, numberOfWinners: 1 }])
       } else {
         const error = await res.json();
         toast.error('Error: ' + (error.error || 'Failed to create giveaway'));
@@ -700,12 +700,12 @@ export default function CreateGiveawayPage() {
                         <div className="flex items-center justify-between mb-4">
                           <h4 className="text-white font-medium">
                             {index === 0
-                              ? "🥇 1st Place"
+                              ? "1st"
                               : index === 1
-                                ? "🥈 2nd Place"
+                                ? "2nd"
                                 : index === 2
-                                  ? "🥉 3rd Place"
-                                  : `${index + 1}th Place`}
+                                  ? "3rd"
+                                  : `${index + 1}th`}
                           </h4>
                           {prizes.length > 1 && (
                             <Button
@@ -720,7 +720,7 @@ export default function CreateGiveawayPage() {
                           )}
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                           <div>
                             <Label className="text-white text-sm">Prize Name</Label>
                             <Input
@@ -737,6 +737,18 @@ export default function CreateGiveawayPage() {
                               value={prize.value}
                               onChange={(e) => updatePrize(prize.id, "value", e.target.value)}
                               placeholder="$50"
+                              className="mt-1 bg-gray-900/50 border-gray-600 text-white placeholder-gray-400"
+                            />
+                          </div>
+
+                          <div>
+                            <Label className="text-white text-sm">Number of Winners</Label>
+                            <Input
+                              type="number"
+                              min="1"
+                              value={prize.numberOfWinners || 1}
+                              onChange={(e) => updatePrize(prize.id, "numberOfWinners", parseInt(e.target.value) || 1)}
+                              placeholder="1"
                               className="mt-1 bg-gray-900/50 border-gray-600 text-white placeholder-gray-400"
                             />
                           </div>
