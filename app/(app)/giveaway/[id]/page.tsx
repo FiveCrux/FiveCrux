@@ -1072,7 +1072,7 @@ export default function GiveawayDetailPage() {
                         }}
                         transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
                       >
-                        ${transformedGiveaway.value}
+                        {giveaway?.currencySymbol || giveaway?.currency_symbol || "$"}{transformedGiveaway.value}
                       </motion.div>
                       <div className="flex items-center justify-center gap-3 text-xs">
                         <div className="flex items-center gap-1 text-orange-400">
@@ -1673,7 +1673,7 @@ export default function GiveawayDetailPage() {
                         <div className="flex justify-between items-center">
                           <span className="text-gray-400">Prize Value:</span>
                           <span className="text-yellow-400 font-black text-xl">
-                            ${transformedGiveaway.value}
+                            {giveaway?.currencySymbol || giveaway?.currency_symbol || "$"}{transformedGiveaway.value}
                           </span>
                         </div>
                       </div>
