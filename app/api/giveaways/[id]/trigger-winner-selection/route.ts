@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db/client'
-import { approvedGiveaways, giveawayPrizes, giveawayEntries } from '@/lib/db/schema'
+import { approvedGiveaways, giveawayPrizes, giveawayEntries, giveawayPrizeWinners } from '@/lib/db/schema'
 import { eq, and, asc } from 'drizzle-orm'
 import { announceGiveawayWinners } from '@/lib/discord'
 
@@ -60,8 +60,13 @@ export async function POST(
     }
 
     // Check if winners already assigned
-    const hasWinners = prizes.some((p) => p.winnerName)
-    if (hasWinners) {
+    const existingWinners = await db
+      .select()
+      .from(giveawayPrizeWinners)
+      .where(eq(giveawayPrizeWinners.prizeId, prizes[0].id))
+      .limit(1)
+    
+    if (existingWinners.length > 0) {
       return NextResponse.json({ 
         message: 'Winners already selected',
         alreadyProcessed: true 
@@ -113,29 +118,52 @@ export async function POST(
     }> = []
 
     for (const prize of prizes) {
-      const winner = ranked.find((e) => !assignedUserIds.has(e.userId))
-      if (!winner) break
-      assignedUserIds.add(winner.userId)
+      const numberOfWinners = prize.numberOfWinners ?? 1
+      const prizeWinners: typeof winnersForPrizes = []
 
-      winnersForPrizes.push({
-        prizeId: prize.id,
-        position: prize.position,
-        userId: winner.userId,
-        userName: winner.userName ?? null,
-        userEmail: winner.userEmail ?? null,
-        prizeName: prize.name,
-        prizeValue: prize.value,
-      })
+      // Select multiple winners for this prize
+      for (let i = 0; i < numberOfWinners; i++) {
+        const winner = ranked.find((e) => !assignedUserIds.has(e.userId))
+        if (!winner) break // No more available winners
+        
+        assignedUserIds.add(winner.userId)
+        
+        const winnerData = {
+          prizeId: prize.id,
+          position: prize.position,
+          userId: winner.userId,
+          userName: winner.userName ?? null,
+          userEmail: winner.userEmail ?? null,
+          prizeName: prize.name,
+          prizeValue: prize.value,
+        }
+        
+        prizeWinners.push(winnerData)
+        winnersForPrizes.push(winnerData)
 
-      // Update prize with winner
-      await db
-        .update(giveawayPrizes)
-        .set({
-          winnerName: winner.userName ?? 'Unknown',
-          winnerEmail: winner.userEmail ?? '',
+        // Insert winner into giveawayPrizeWinners table
+        // Generate a unique ID for the winner entry
+        const winnerId = Math.floor(Date.now() / 10000) + Math.floor(Math.random() * 1000) + i
+        await db.insert(giveawayPrizeWinners).values({
+          id: winnerId,
+          prizeId: prize.id,
+          userId: winner.userId,
+          userName: winner.userName ?? null,
+          userEmail: winner.userEmail ?? null,
           claimed: false,
         })
-        .where(eq(giveawayPrizes.id, prize.id))
+      }
+
+      // Update prize with first winner for backward compatibility (deprecated fields)
+      if (prizeWinners.length > 0) {
+        await db
+          .update(giveawayPrizes)
+          .set({
+            winnerName: prizeWinners[0].userName ?? 'Unknown',
+            winnerEmail: prizeWinners[0].userEmail ?? '',
+          })
+          .where(eq(giveawayPrizes.id, prize.id))
+      }
     }
 
     if (winnersForPrizes.length === 0) {

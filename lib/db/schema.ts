@@ -139,9 +139,21 @@ export const giveawayPrizes = pgTable('giveaway_prizes', {
   name: text('name').notNull(),
   description: text('description'),
   value: text('value').notNull(),
-  winnerName: text('winner_name'),
-  winnerEmail: text('winner_email'),
+  numberOfWinners: integer('number_of_winners').default(1).notNull(),
+  winnerName: text('winner_name'), // Deprecated - kept for backward compatibility
+  winnerEmail: text('winner_email'), // Deprecated - kept for backward compatibility
   claimed: boolean('claimed').default(false),
+});
+
+// Giveaway prize winners table (stores multiple winners per prize)
+export const giveawayPrizeWinners = pgTable('giveaway_prize_winners', {
+  id: integer('id').primaryKey().notNull(),
+  prizeId: integer('prize_id').notNull(),
+  userId: text('user_id').notNull(),
+  userName: text('user_name'),
+  userEmail: text('user_email'),
+  claimed: boolean('claimed').default(false),
+  createdAt: timestamp('created_at').defaultNow(),
 });
 
 // Giveaway entries table
@@ -300,7 +312,12 @@ export const giveawayRequirementsRelations = relations(giveawayRequirements, ({ 
   // No direct foreign key relation - handled by application logic
 }));
 
-export const giveawayPrizesRelations = relations(giveawayPrizes, ({ one }) => ({
+export const giveawayPrizesRelations = relations(giveawayPrizes, ({ one, many }) => ({
+  // No direct foreign key relation - handled by application logic
+  winners: many(giveawayPrizeWinners),
+}));
+
+export const giveawayPrizeWinnersRelations = relations(giveawayPrizeWinners, ({ one }) => ({
   // No direct foreign key relation - handled by application logic
 }));
 
@@ -315,6 +332,8 @@ export type GiveawayRequirement = typeof giveawayRequirements.$inferSelect;
 export type NewGiveawayRequirement = typeof giveawayRequirements.$inferInsert;
 export type GiveawayPrize = typeof giveawayPrizes.$inferSelect;
 export type NewGiveawayPrize = typeof giveawayPrizes.$inferInsert;
+export type GiveawayPrizeWinner = typeof giveawayPrizeWinners.$inferSelect;
+export type NewGiveawayPrizeWinner = typeof giveawayPrizeWinners.$inferInsert;
 export type GiveawayEntry = typeof giveawayEntries.$inferSelect;
 export type NewGiveawayEntry = typeof giveawayEntries.$inferInsert;
 export type Ad = typeof approvedAds.$inferSelect;
