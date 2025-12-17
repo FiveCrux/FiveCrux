@@ -21,7 +21,17 @@ interface DateTimePickerProps {
 
 export function DateTimePicker({ date, onDateChange, label = "Date & Time", id = "date-time-picker" }: DateTimePickerProps) {
   const [open, setOpen] = React.useState(false)
-  const [time, setTime] = React.useState("10:30:00")
+  
+  // Initialize time with current UTC time
+  const getCurrentUTCTime = () => {
+    const now = new Date()
+    const hours = now.getUTCHours().toString().padStart(2, '0')
+    const minutes = now.getUTCMinutes().toString().padStart(2, '0')
+    const seconds = now.getUTCSeconds().toString().padStart(2, '0')
+    return `${hours}:${minutes}:${seconds}`
+  }
+  
+  const [time, setTime] = React.useState(getCurrentUTCTime())
 
   // Update time from date when date changes (using UTC to avoid timezone conversion)
   React.useEffect(() => {
