@@ -392,7 +392,7 @@ export default function CreateGiveawayPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
-          <div className="max-w-7xl mx-auto text-center">
+          <div className="max-w-7xl mx-auto text-center py-12">
             <motion.h1
               className="text-4xl md:text-5xl font-bold mb-4"
               initial={{ opacity: 0, y: 20 }}
@@ -538,7 +538,8 @@ export default function CreateGiveawayPage() {
                           onDateChange={(date) =>
                             setFormData({ ...formData, endDate: date })
                           }
-                          label="End Date*"
+                      
+                          label="End Date*(UTC)"
                           id="endDate"
                         />
                       </div>
@@ -890,7 +891,7 @@ export default function CreateGiveawayPage() {
                       >
                         <Video className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                         <p className="text-gray-400">Upload videos</p>
-                        <p className="text-sm text-gray-500 mt-2">MP4, WebM up to 4.5 mb each (max 5 videos)</p>
+                        <p className="text-sm text-gray-500 mt-2">MP4, WebM up to 50MB each (max 5 videos)</p>
                       </label>
                       
                       {/* Display uploaded videos */}

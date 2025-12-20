@@ -144,10 +144,12 @@ export default function ScriptsPage() {
 
   const [allScripts, setAllScripts] = useState<UIScript[]>([]);
   const [ads, setAds] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const load = async () => {
       try {
+        setLoading(true);
         console.log("Loading scripts...");
         const [scriptsRes, adsRes] = await Promise.all([
           fetch(`/api/scripts`, { cache: "no-store" }),
@@ -226,6 +228,8 @@ export default function ScriptsPage() {
         }
       } catch (error) {
         console.error("Error loading data:", error);
+      } finally {
+        setLoading(false);
       }
     };
     load();
@@ -532,10 +536,12 @@ export default function ScriptsPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
             >
-              <div className="text-sm text-gray-500 flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-orange-500" />
-                {sortedScripts.length} scripts found
-              </div>
+              {!loading && (
+                <div className="text-sm text-gray-500 flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-orange-500" />
+                  {sortedScripts.length} scripts found
+                </div>
+              )}
               {activeFiltersCount > 0 && (
                 <motion.div
                   initial={{ scale: 0 }}
@@ -1062,26 +1068,79 @@ export default function ScriptsPage() {
               </AnimatePresence>
 
               {/* Results Count */}
-              <motion.div
-                className="mb-6"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-              >
-                <p className="text-gray-400 flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-orange-500" />
-                  Showing {sortedScripts.length} of {allScripts.length} scripts
-                  {searchQuery && (
-                    <span className="text-orange-500">
-                      for <span className="font-semibold">{searchQuery}</span>
-                    </span>
-                  )}
-                </p>
-              </motion.div>
+              {!loading && (
+                <motion.div
+                  className="mb-6"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <p className="text-gray-400 flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-orange-500" />
+                    Showing {sortedScripts.length} of {allScripts.length} scripts
+                    {searchQuery && (
+                      <span className="text-orange-500">
+                        for <span className="font-semibold">{searchQuery}</span>
+                      </span>
+                    )}
+                  </p>
+                </motion.div>
+              )}
 
               {/* Scripts Grid/List */}
               <AnimatePresence mode="wait">
-                {sortedScripts.length === 0 ? (
+                {loading ? (
+                  <motion.div
+                    className={
+                      viewMode === "grid"
+                        ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
+                        : "space-y-4"
+                    }
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.5, staggerChildren: 0.1 }}
+                  >
+                    {Array.from({ length: 6 }).map((_, index) => (
+                      <motion.div
+                        key={index}
+                        className={`bg-neutral-900 border-2 border-neutral-700/50 backdrop-blur-sm rounded-lg overflow-hidden ${
+                          viewMode === "list"
+                            ? "flex flex-row"
+                            : "flex flex-col"
+                        }`}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                      >
+                        {/* Image Skeleton */}
+                        <div
+                          className={`bg-neutral-800/50 animate-pulse ${
+                            viewMode === "list"
+                              ? "w-56 flex-shrink-0 h-full"
+                              : "w-full h-52"
+                          }`}
+                        />
+                        {/* Content Skeleton */}
+                        <div className="flex flex-col flex-1 p-3 space-y-3">
+                          <div className="space-y-2">
+                            <div className="h-5 bg-neutral-800/50 rounded animate-pulse w-3/4" />
+                            <div className="h-4 bg-neutral-800/50 rounded animate-pulse w-1/2" />
+                          </div>
+                          <div className="flex gap-2">
+                            <div className="h-5 w-16 bg-neutral-800/50 rounded animate-pulse" />
+                            <div className="h-5 w-16 bg-neutral-800/50 rounded animate-pulse" />
+                          </div>
+                          <div className="h-4 bg-neutral-800/50 rounded animate-pulse w-2/3" />
+                          <div className="h-6 bg-neutral-800/50 rounded animate-pulse w-20" />
+                          <div className="mt-auto pt-2">
+                            <div className="h-8 bg-neutral-800/50 rounded animate-pulse w-full" />
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                ) : sortedScripts.length === 0 ? (
                   <motion.div
                     className="text-center py-20"
                     initial={{ opacity: 0, scale: 0.9 }}

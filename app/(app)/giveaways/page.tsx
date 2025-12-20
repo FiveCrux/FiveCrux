@@ -175,6 +175,7 @@ export default function GiveawaysPage() {
   type GridItem = UIGiveaway | (any & { isAd: boolean });
 
   const [activeGiveaways, setActiveGiveaways] = useState<UIGiveaway[]>([]);
+  const [loading, setLoading] = useState(true);
 
   // Get random ads for giveaways page
   const randomAds = useRandomAds(ads, 2);
@@ -182,6 +183,7 @@ export default function GiveawaysPage() {
   useEffect(() => {
     const load = async () => {
       try {
+        setLoading(true);
         const [giveawaysRes, adsRes, entriesRes] = await Promise.all([
           fetch(`/api/giveaways`, { cache: "no-store" }),
           fetch(`/api/promotions/giveaways`, { cache: "no-store" }),
@@ -245,6 +247,8 @@ export default function GiveawaysPage() {
         }
       } catch (error) {
         console.error("Error loading giveaways:", error);
+      } finally {
+        setLoading(false);
       }
     };
     load();
@@ -658,7 +662,57 @@ export default function GiveawaysPage() {
                 animate={giveawaysInView ? { opacity: 1 } : {}}
                 transition={{ duration: 0.8, staggerChildren: 0.1 }}
               >
-                {(() => {
+                {loading ? (
+                  // Skeleton loaders
+                  Array.from({ length: 6 }).map((_, index) => (
+                    <motion.div
+                      key={index}
+                      className="bg-transparent border-gray-700/50 backdrop-blur-sm rounded-xl overflow-hidden h-full"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                    >
+                      {/* Image Skeleton */}
+                      <div className="w-full h-32 bg-gray-800/50 animate-pulse rounded-t-xl" />
+                      
+                      {/* Content Skeleton */}
+                      <div className="p-3 space-y-3">
+                        <div className="space-y-2">
+                          <div className="h-4 bg-gray-800/50 rounded animate-pulse w-3/4" />
+                          <div className="h-3 bg-gray-800/50 rounded animate-pulse w-full" />
+                          <div className="h-3 bg-gray-800/50 rounded animate-pulse w-2/3" />
+                        </div>
+                        
+                        {/* Badges Skeleton */}
+                        <div className="flex gap-2">
+                          <div className="h-5 w-16 bg-gray-800/50 rounded animate-pulse" />
+                          <div className="h-5 w-20 bg-gray-800/50 rounded animate-pulse" />
+                        </div>
+                        
+                        {/* Stats Skeleton */}
+                        <div className="flex items-center justify-between">
+                          <div className="h-4 w-20 bg-gray-800/50 rounded animate-pulse" />
+                          <div className="h-4 w-16 bg-gray-800/50 rounded animate-pulse" />
+                        </div>
+                        
+                        {/* Tags Skeleton */}
+                        <div className="flex gap-1">
+                          <div className="h-5 w-16 bg-gray-800/50 rounded animate-pulse" />
+                          <div className="h-5 w-20 bg-gray-800/50 rounded animate-pulse" />
+                        </div>
+                        
+                        {/* Requirements Skeleton */}
+                        <div className="space-y-1">
+                          <div className="h-3 w-24 bg-gray-800/50 rounded animate-pulse" />
+                          <div className="h-3 w-full bg-gray-800/50 rounded animate-pulse" />
+                        </div>
+                        
+                        {/* Button Skeleton */}
+                        <div className="h-8 bg-gray-800/50 rounded animate-pulse w-full" />
+                      </div>
+                    </motion.div>
+                  ))
+                ) : (() => {
                   const items: GridItem[] = [...filteredGiveaways];
 
                   // Show message if no giveaways
@@ -1004,6 +1058,7 @@ export default function GiveawaysPage() {
                     );
                   });
                 })()}
+                )
               </motion.div>
             </TabsContent>
 
