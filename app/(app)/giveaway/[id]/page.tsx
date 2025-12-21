@@ -933,18 +933,20 @@ export default function GiveawayDetailPage() {
                 {/* Ended Banner - Enhanced */}
                 {isGiveawayEnded && (
                   <motion.div
-                    className="bg-gradient-to-r from-red-600/20 via-orange-600/20 to-red-600/20 border-2 border-red-500 rounded-2xl p-6 mb-8 relative overflow-hidden"
+                    className="bg-gradient-to-br from-gray-900/50 to-black/50 border-2 border-red-500/30 rounded-2xl p-6 mb-8 relative overflow-hidden backdrop-blur-sm"
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    whileHover={{ scale: 1.02 }}
+                    whileHover={{ borderColor: 'rgba(239, 68, 68, 0.5)' }}
                     transition={{ duration: 0.5 }}
                   >
-                    <div className="absolute inset-0 bg-gradient-to-r from-red-500/5 to-orange-500/5"></div>
-                    <div className="relative flex items-center justify-center gap-3">
-                      <Trophy className="h-5 w-5 text-red-400 animate-pulse" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-red-500/10 to-orange-500/10"></div>
+                    <div className="relative flex items-center justify-center gap-3 z-10">
+                      <Trophy className="h-4 w-4 text-red-400/80" />
                       <div className="text-center">
-                        <span className="text-xl font-black text-red-400 block mb-1">GIVEAWAY ENDED</span>
-                        <p className="text-gray-300 text-sm">
+                        <span className="text-lg font-bold text-red-400/90 block mb-1">
+                          GIVEAWAY ENDED
+                        </span>
+                        <p className="text-gray-400 text-sm">
                           Ended on {new Date(transformedGiveaway.endDate).toLocaleDateString('en-US', { 
                             month: 'long', 
                             day: 'numeric', 
@@ -952,7 +954,7 @@ export default function GiveawayDetailPage() {
                           })}
                         </p>
                       </div>
-                      <Trophy className="h-5 w-5 text-red-400 animate-pulse" />
+                      <Trophy className="h-4 w-4 text-red-400/80" />
                     </div>
                   </motion.div>
                 )}
@@ -1058,7 +1060,7 @@ export default function GiveawayDetailPage() {
                   transition={{ delay: 0.6 }}
                 >
                   {/* Prize Value Card - Eye-catching */}
-                  <div className="bg-gradient-to-br rounded-2xl p-1 shadow-2xl shadow-yellow-500/50">
+                  <div className="bg-gradient-to-br rounded-2xl p-1 border-2 border-yellow-500/20">
                     <div className="bg-black rounded-xl p-4 text-center">
                       <p className="text-xs text-gray-400 mb-1.5 font-semibold uppercase tracking-wider">Total Prize Value</p>
                       <motion.div
@@ -1323,31 +1325,31 @@ export default function GiveawayDetailPage() {
             ) : (
               // TASKS & PRIZES TABS - Enhanced Design
               <Tabs defaultValue="tasks" className="w-full">
-                <TabsList className="grid w-full grid-cols-4 bg-gray-900/50 border-2 border-gray-700/50 backdrop-blur-sm rounded-2xl p-1.5 mb-4">
+                <TabsList className="grid w-full grid-cols-4 bg-gray-900/50 border-2 border-gray-700/50 backdrop-blur-sm rounded-2xl mb-4 h-auto items-stretch p-1">
                   <TabsTrigger 
                     value="tasks" 
-                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-500 data-[state=active]:to-orange-500 data-[state=active]:text-black rounded-xl font-bold transition-all text-sm py-2"
+                    className="h-10 inline-flex items-center justify-center data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-500 data-[state=active]:to-orange-500 data-[state=active]:text-black data-[state=active]:shadow-none data-[state=active]:translate-y-0 rounded-xl font-bold transition-all text-sm py-2"
                   >
                     <Target className="h-3.5 w-3.5 mr-1.5" />
                     Tasks
                   </TabsTrigger>
                   <TabsTrigger
                     value="prizes"
-                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-500 data-[state=active]:to-orange-500 data-[state=active]:text-black rounded-xl font-bold transition-all text-sm py-2"
+                    className="h-10 inline-flex items-center justify-center data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-500 data-[state=active]:to-orange-500 data-[state=active]:text-black data-[state=active]:shadow-none data-[state=active]:translate-y-0 rounded-xl font-bold transition-all text-sm py-2"
                   >
                     <Trophy className="h-3.5 w-3.5 mr-1.5" />
                     Prizes
                   </TabsTrigger>
                   <TabsTrigger 
                     value="rules" 
-                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-500 data-[state=active]:to-orange-500 data-[state=active]:text-black rounded-xl font-bold transition-all text-sm py-2"
+                    className="h-10 inline-flex items-center justify-center data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-500 data-[state=active]:to-orange-500 data-[state=active]:text-black data-[state=active]:shadow-none data-[state=active]:translate-y-0 rounded-xl font-bold transition-all text-sm py-2"
                   >
                     <Flag className="h-3.5 w-3.5 mr-1.5" />
                     Rules
                   </TabsTrigger>
                   <TabsTrigger 
                     value="stats" 
-                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-500 data-[state=active]:to-orange-500 data-[state=active]:text-black rounded-xl font-bold transition-all text-sm py-2"
+                    className="h-10 inline-flex items-center justify-center data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-500 data-[state=active]:to-orange-500 data-[state=active]:text-black data-[state=active]:shadow-none data-[state=active]:translate-y-0 rounded-xl font-bold transition-all text-sm py-2"
                   >
                     <Zap className="h-3.5 w-3.5 mr-1.5" />
                     Stats

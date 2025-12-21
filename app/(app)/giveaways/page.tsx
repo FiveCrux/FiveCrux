@@ -175,6 +175,7 @@ export default function GiveawaysPage() {
   type GridItem = UIGiveaway | (any & { isAd: boolean });
 
   const [activeGiveaways, setActiveGiveaways] = useState<UIGiveaway[]>([]);
+  const [loading, setLoading] = useState(true);
 
   // Get random ads for giveaways page
   const randomAds = useRandomAds(ads, 2);
@@ -182,6 +183,7 @@ export default function GiveawaysPage() {
   useEffect(() => {
     const load = async () => {
       try {
+        setLoading(true);
         const [giveawaysRes, adsRes, entriesRes] = await Promise.all([
           fetch(`/api/giveaways`, { cache: "no-store" }),
           fetch(`/api/promotions/giveaways`, { cache: "no-store" }),
@@ -245,6 +247,8 @@ export default function GiveawaysPage() {
         }
       } catch (error) {
         console.error("Error loading giveaways:", error);
+      } finally {
+        setLoading(false);
       }
     };
     load();
@@ -381,46 +385,6 @@ export default function GiveawaysPage() {
     <>
       <Navbar />
       <div className="min-h-screen bg-black text-white relative overflow-hidden">
-        <AnimatedParticles />
-
-        {/* Floating 3D Elements */}
-        {[...Array(8)].map((_, i) => (
-          <FloatingElement
-            key={i}
-            delay={i * 2}
-            size={30 + Math.random() * 40}
-            icon={
-              [Gift, Trophy, Star, Crown, Sparkles, Zap][
-                Math.floor(Math.random() * 6)
-              ]
-            }
-            color={
-              ["text-yellow-400", "text-orange-500", "text-red-400"][
-                Math.floor(Math.random() * 3)
-              ]
-            }
-          />
-        ))}
-
-        {/* Animated background */}
-        <div className="fixed inset-0 -z-10">
-          <motion.div
-            className="absolute inset-0 bg-gradient-to-br from-black via-gray-900 to-black"
-            animate={{
-              background: [
-                "radial-gradient(circle at 20% 50%, rgba(234, 179, 8, 0.08) 0%, transparent 50%)",
-                "radial-gradient(circle at 80% 20%, rgba(249, 115, 22, 0.08) 0%, transparent 50%)",
-                "radial-gradient(circle at 40% 80%, rgba(234, 179, 8, 0.08) 0%, transparent 50%)",
-              ],
-            }}
-            transition={{
-              duration: 12,
-              repeat: Number.POSITIVE_INFINITY,
-              repeatType: "reverse",
-            }}
-          />
-        </div>
-
         {/* Hero Section */}
         <motion.section
           ref={heroRef}
@@ -672,24 +636,18 @@ export default function GiveawaysPage() {
           </motion.div>
 
           <Tabs defaultValue="active" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 bg-gray-800/30 border border-gray-700/50 backdrop-blur-sm">
+            <TabsList className="grid w-full grid-cols-2 bg-gray-800/30 border border-gray-700/50 backdrop-blur-sm rounded-2xl h-auto items-stretch p-1">
               <TabsTrigger
                 value="active"
-                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-400 data-[state=active]:to-orange-500 data-[state=active]:text-black"
+                className="h-10 inline-flex items-center justify-center rounded-xl font-bold text-sm py-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-400 data-[state=active]:to-orange-500 data-[state=active]:text-black data-[state=active]:shadow-none data-[state=active]:translate-y-0"
               >
                 <Gift className="mr-2 h-4 w-4" />
                 Active Giveaways
               </TabsTrigger>
-              <TabsTrigger
-                value="winners"
-                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-400 data-[state=active]:to-orange-500 data-[state=active]:text-black"
-              >
-                <Trophy className="mr-2 h-4 w-4" />
-                Recent Winners
-              </TabsTrigger>
+              
               <TabsTrigger
                 value="rules"
-                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-400 data-[state=active]:to-orange-500 data-[state=active]:text-black"
+                className="h-10 inline-flex items-center justify-center rounded-xl font-bold text-sm py-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-400 data-[state=active]:to-orange-500 data-[state=active]:text-black data-[state=active]:shadow-none data-[state=active]:translate-y-0"
               >
                 <Star className="mr-2 h-4 w-4" />
                 Rules & Info
@@ -704,7 +662,57 @@ export default function GiveawaysPage() {
                 animate={giveawaysInView ? { opacity: 1 } : {}}
                 transition={{ duration: 0.8, staggerChildren: 0.1 }}
               >
-                {(() => {
+                {loading ? (
+                  // Skeleton loaders
+                  Array.from({ length: 6 }).map((_, index) => (
+                    <motion.div
+                      key={index}
+                      className="bg-transparent border-gray-700/50 backdrop-blur-sm rounded-xl overflow-hidden h-full"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                    >
+                      {/* Image Skeleton */}
+                      <div className="w-full h-32 bg-gray-800/50 animate-pulse rounded-t-xl" />
+                      
+                      {/* Content Skeleton */}
+                      <div className="p-3 space-y-3">
+                        <div className="space-y-2">
+                          <div className="h-4 bg-gray-800/50 rounded animate-pulse w-3/4" />
+                          <div className="h-3 bg-gray-800/50 rounded animate-pulse w-full" />
+                          <div className="h-3 bg-gray-800/50 rounded animate-pulse w-2/3" />
+                        </div>
+                        
+                        {/* Badges Skeleton */}
+                        <div className="flex gap-2">
+                          <div className="h-5 w-16 bg-gray-800/50 rounded animate-pulse" />
+                          <div className="h-5 w-20 bg-gray-800/50 rounded animate-pulse" />
+                        </div>
+                        
+                        {/* Stats Skeleton */}
+                        <div className="flex items-center justify-between">
+                          <div className="h-4 w-20 bg-gray-800/50 rounded animate-pulse" />
+                          <div className="h-4 w-16 bg-gray-800/50 rounded animate-pulse" />
+                        </div>
+                        
+                        {/* Tags Skeleton */}
+                        <div className="flex gap-1">
+                          <div className="h-5 w-16 bg-gray-800/50 rounded animate-pulse" />
+                          <div className="h-5 w-20 bg-gray-800/50 rounded animate-pulse" />
+                        </div>
+                        
+                        {/* Requirements Skeleton */}
+                        <div className="space-y-1">
+                          <div className="h-3 w-24 bg-gray-800/50 rounded animate-pulse" />
+                          <div className="h-3 w-full bg-gray-800/50 rounded animate-pulse" />
+                        </div>
+                        
+                        {/* Button Skeleton */}
+                        <div className="h-8 bg-gray-800/50 rounded animate-pulse w-full" />
+                      </div>
+                    </motion.div>
+                  ))
+                ) : (() => {
                   const items: GridItem[] = [...filteredGiveaways];
 
                   // Show message if no giveaways
@@ -799,7 +807,7 @@ export default function GiveawaysPage() {
                                 <img
                                   src="/ended.png"
                                   alt="Ended"
-                                  className="w-full h-full object-cover opacity-90 p-12"
+                                  className="w-full h-full object-contain opacity-90 p-12"
                                 />
                               </div>
                             )}
@@ -1050,88 +1058,11 @@ export default function GiveawaysPage() {
                     );
                   });
                 })()}
+                )
               </motion.div>
             </TabsContent>
 
-            <TabsContent value="winners" className="mt-8">
-              <Card className="bg-gray-800/30 border-gray-700/50 backdrop-blur-sm">
-                <CardHeader>
-                  <CardTitle className="text-white flex items-center">
-                    <Trophy className="mr-2 h-5 w-5 text-yellow-400" />
-                    Recent Winners
-                  </CardTitle>
-                  <CardDescription className="text-gray-400">
-                    Congratulations to our recent giveaway winners!
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {recentWinners.map((winner, index) => (
-                      <motion.div
-                        key={winner.id}
-                        className="flex items-center justify-between p-4 bg-gray-900/50 rounded-lg backdrop-blur-sm border border-gray-700/30"
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                        whileHover={{ scale: 1.02, x: 5 }}
-                      >
-                        <div className="flex items-center space-x-4">
-                          <div className="relative">
-                            <Image
-                              src={winner.avatar || "/cat.jpg"}
-                              alt={winner.winner}
-                              width={40}
-                              height={40}
-                              className="w-12 h-12 rounded-full border-2 border-yellow-400/50"
-                            />
-                            {winner.verified && (
-                              <div className="absolute -top-1 -right-1 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
-                                <Award className="h-3 w-3 text-white" />
-                              </div>
-                            )}
-                          </div>
-                          <div>
-                            <h4 className="text-white font-semibold flex items-center gap-2">
-                              {winner.winner}
-                              {winner.verified && (
-                                <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-xs">
-                                  Verified
-                                </Badge>
-                              )}
-                            </h4>
-                            <p className="text-gray-400 text-sm">
-                              {winner.prize}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <motion.div
-                            className="text-yellow-400 font-bold text-lg"
-                            animate={{
-                              textShadow: [
-                                "0 0 0px currentColor",
-                                "0 0 10px currentColor",
-                                "0 0 0px currentColor",
-                              ],
-                            }}
-                            transition={{
-                              duration: 2,
-                              repeat: Number.POSITIVE_INFINITY,
-                              delay: index * 0.3,
-                            }}
-                          >
-                            {winner.value}
-                          </motion.div>
-                          <div className="text-gray-500 text-sm">
-                            {winner.date}
-                          </div>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
+       
 
             <TabsContent value="rules" className="mt-8">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

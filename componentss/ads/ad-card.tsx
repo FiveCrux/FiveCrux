@@ -159,7 +159,7 @@ export default function AdCard({ ad, className = "", variant = 'default' }: AdCa
               </CardDescription>
 
               {/* Category Badge */}
-              <motion.div
+              {/* <motion.div
                 className="flex flex-wrap gap-1"
                 // initial={{ scale: 0, rotate: 180 }}
                 // animate={{ scale: 1, rotate: 0 }}
@@ -171,7 +171,7 @@ export default function AdCard({ ad, className = "", variant = 'default' }: AdCa
                     {ad.category}
                   </Badge>
                 </motion.div>
-              </motion.div>
+              </motion.div> */}
 
               {/* Sponsored Text */}
               <CardDescription className="text-orange-500/70 text-[10px] font-semibold pt-1 uppercase tracking-wider">
@@ -255,7 +255,7 @@ export default function AdCard({ ad, className = "", variant = 'default' }: AdCa
               </CardDescription>
 
               {/* Category Badge */}
-              <motion.div
+              {/* <motion.div
                 className="flex flex-wrap gap-1"
                 initial={{ scale: 0, rotate: 180 }}
                 animate={{ scale: 1, rotate: 0 }}
@@ -267,7 +267,7 @@ export default function AdCard({ ad, className = "", variant = 'default' }: AdCa
                     {ad.category}
                   </Badge>
                 </motion.div>
-              </motion.div>
+              </motion.div> */}
 
               {/* Sponsored Text */}
               <CardDescription className="text-yellow-500/70 text-[10px] font-semibold pt-1 uppercase tracking-wider">
@@ -339,12 +339,12 @@ export default function AdCard({ ad, className = "", variant = 'default' }: AdCa
             </CardDescription>
 
             {/* Category Badge */}
-            <div className="flex flex-wrap gap-1">
+            {/* <div className="flex flex-wrap gap-1">
               <Badge className="bg-neutral-800/95 text-white backdrop-blur-sm text-[10px] font-bold border border-neutral-600/50 rounded px-1.5 py-0.5 uppercase tracking-wide shadow-lg">
                 <span className="mr-1 text-xs">•</span>
                 {ad.category}
               </Badge>
-            </div>
+            </div> */}
 
             {/* Sponsored Text */}
             <CardDescription className="text-orange-500/70 text-[10px] font-semibold pt-1 uppercase tracking-wider">
