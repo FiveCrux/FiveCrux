@@ -246,7 +246,7 @@ export default function AdsForm({ isOpen, onClose, onSuccess, editData, slotUniq
                 <SelectContent className="bg-gray-700 border-gray-600">
                   <SelectItem value="scripts" className="text-white hover:bg-gray-600">Scripts</SelectItem>
                   <SelectItem value="giveaways" className="text-white hover:bg-gray-600">Giveaways</SelectItem>
-                  <SelectItem value="both" className="text-white hover:bg-gray-600">Both</SelectItem>
+                  {/* <SelectItem value="both" className="text-white hover:bg-gray-600">Both</SelectItem> */}
                 </SelectContent>
               </Select>
             </div>
