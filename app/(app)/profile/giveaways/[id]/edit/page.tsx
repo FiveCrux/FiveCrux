@@ -683,7 +683,7 @@ export default function EditGiveawayPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between">
+                    {/* <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
                         <Switch
                           id="featured"
@@ -705,7 +705,7 @@ export default function EditGiveawayPage() {
                           Auto-announce winner
                         </Label>
                       </div>
-                    </div>
+                    </div> */}
                   </CardContent>
                 </Card>
 
