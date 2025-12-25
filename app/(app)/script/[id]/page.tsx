@@ -144,7 +144,7 @@ const MediaCarousel = ({
     <>
       {/* Main Carousel */}
       <div className="sticky top-24">
-        <div className="relative bg-black rounded-lg overflow-hidden border border-orange-500/30 shadow-xl">
+        <div className="relative bg-transparent rounded-lg overflow-hidden">
           {/* Main Display */}
           <div className="relative aspect-video">
             <div className="absolute inset-0">
@@ -188,11 +188,11 @@ const MediaCarousel = ({
 
           {/* Thumbnail Navigation */}
           {allMedia.length > 1 && (
-            <div className="p-4 bg-neutral-900 border-t border-orange-500/30">
+            <div className="p-4 bg-transparent ">
               <div
                 className="thumbnail-scrollbar flex gap-3 overflow-x-auto pb-2"
                 style={{
-                  scrollbarWidth: "thin",
+                  scrollbarWidth: "none",
                 }}
               >
                 {allMedia.map((media, index) => (
@@ -424,17 +424,11 @@ export default function ScriptDetailPage() {
         dangerouslySetInnerHTML={{
           __html: `
         .thumbnail-scrollbar::-webkit-scrollbar {
-          height: 4px;
+          display: none;
         }
-        .thumbnail-scrollbar::-webkit-scrollbar-track {
-          background: rgba(31, 41, 55, 0.5);
-        }
-        .thumbnail-scrollbar::-webkit-scrollbar-thumb {
-          background: rgba(249, 115, 22, 0.8);
-          border-radius: 2px;
-        }
-        .thumbnail-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: rgba(249, 115, 22, 1);
+        .thumbnail-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
         }
       `,
         }}
@@ -496,70 +490,47 @@ export default function ScriptDetailPage() {
                 {/* Right Column - Information */}
                 <div className="lg:col-span-2 space-y-6">
                   {/* Header & Badges */}
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2 mb-4">
-                      <Badge className="bg-orange-500/20 text-orange-500 border-orange-500/30 font-semibold px-3 py-1">
+                  <Badge className="bg-orange-500/20 text-orange-500 border-orange-500/30 font-semibold px-3 py-1">
                         {script.category}
                       </Badge>
-                      {script.framework && (
-                        <Badge className="bg-neutral-800 text-gray-300 border-neutral-700 font-semibold px-3 py-1">
-                          {script.framework.map((fw) => fw).join(", ")}
-                        </Badge>
-                      )}
-                      {/* {discount > 0 && (
-                        <Badge className="bg-red-600 text-white font-bold px-3 py-1">
-                          -{discount}% OFF
-                        </Badge>
-                      )} */}
-                    </div>
-
+                  <div>
                     <h1 className="text-4xl lg:text-5xl font-black text-white mb-4 leading-tight">
                       {script.title}
                     </h1>
-
+                    <div className="flex flex-wrap items-center gap-2 mb-4">
+                      
+                    {script.framework &&
+                                      script.framework.length > 0 && (
+                                        <motion.div
+                                          className="flex flex-wrap gap-1"
+                                          // initial={{ scale: 0, rotate: 180 }}
+                                          // animate={{ scale: 1, rotate: 0 }}
+                                        >
+                                          {script.framework.map((fw, idx) => (
+                                            <motion.div
+                                              key={idx}
+                                              
+                                            >
+                                              <Badge className="bg-neutral-800/95 text-white backdrop-blur-sm text-[10px] font-bold border border-neutral-600/50 rounded px-1.5 py-0.5 uppercase tracking-wide shadow-lg hover:bg-neutral-800/95 hover:text-white">
+                                                <span className="mr-1 text-xs">
+                                                  •
+                                                </span>
+                                                {fw}
+                                              </Badge>
+                                            </motion.div>
+                                          ))}
+                                        </motion.div>
+                                      )}
+                    </div>
                     <p className="text-gray-300 text-lg leading-relaxed mb-6">
                       {script.description}
                     </p>
 
-                    {/* Seller Card */}
-                    <Card className="bg-neutral-800 border border-neutral-700 mb-6">
-                      <CardContent className="p-4">
-                        <div className="flex items-center gap-4">
-                          <Avatar className="h-14 w-14 ring-2 ring-orange-500/40">
-                            <AvatarImage
-                              src={
-                                script.seller_image || "/placeholder-user.jpg"
-                              }
-                            />
-                            <AvatarFallback className="bg-orange-500 text-white font-bold text-lg">
-                              {script.seller_name ? script.seller_name[0] : "?"}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <h3 className="text-white font-bold text-lg">
-                                {script.seller_name}
-                              </h3>
-                              {isVerifiedCreator(script.seller_roles) && (
-                                <VerifiedIcon size="md" />
-                              )}
-                            </div>
-                            {isVerifiedCreator(script.seller_roles) && (
-                              <div className="flex items-center gap-4 text-sm text-gray-400">
-                                <span className="flex items-center gap-1">
-                                  <span className="w-2 h-2 bg-green-500 rounded-full" />
-                                  Verified Creator
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
+                  
                   </div>
 
                   {/* Pricing Card */}
-                  <Card className="bg-gradient-to-br from-neutral-800 to-neutral-900 border-2 border-orange-500/40 shadow-2xl rounded-xl overflow-hidden">
+                  <Card className="bg-gradient-to-br from-neutral-800 to-neutral-900 shadow-2xl rounded-xl overflow-hidden">
                     <CardContent className="p-6 space-y-6">
                       {/* Price Section */}
                       <div className="space-y-3">
@@ -619,6 +590,42 @@ export default function ScriptDetailPage() {
                       </div>
                     </CardContent>
                   </Card>
+
+                    {/* Seller Card */}
+                    <Card className="bg-neutral-800 border border-neutral-700 mb-6">
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-4">
+                          <Avatar className="h-14 w-14 ring-2 ring-orange-500/40">
+                            <AvatarImage
+                              src={
+                                script.seller_image || "/placeholder-user.jpg"
+                              }
+                            />
+                            <AvatarFallback className="bg-orange-500 text-white font-bold text-lg">
+                              {script.seller_name ? script.seller_name[0] : "?"}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h3 className="text-white font-bold text-lg">
+                                {script.seller_name}
+                              </h3>
+                              {isVerifiedCreator(script.seller_roles) && (
+                                <VerifiedIcon size="md" />
+                              )}
+                            </div>
+                            {isVerifiedCreator(script.seller_roles) && (
+                              <div className="flex items-center gap-4 text-sm text-gray-400">
+                                <span className="flex items-center gap-1">
+                                  <span className="w-2 h-2 bg-green-500 rounded-full" />
+                                  Verified Creator
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
                 </div>
               </div>
             </div>
