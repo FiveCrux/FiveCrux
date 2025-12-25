@@ -5,7 +5,6 @@ import { motion } from "framer-motion"
 import Link from "next/link"
 import { useSession, signIn, signOut } from "next-auth/react"
 import { Avatar, AvatarImage, AvatarFallback } from "@/componentss/ui/avatar"
-import { getSessionUserProfilePicture } from "@/lib/user-utils"
 import {
   Navbar,
   NavBody,
@@ -18,22 +17,15 @@ import {
   MobileNavMenu,
 } from "@/components/ui/resizable-navbar"
 
-import { Home, Package, Gift, Megaphone } from "lucide-react"
-
 export default function NavbarComponent() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const { data: session, status } = useSession()
 
-  // Check if user has admin access (admin, founder, or moderator roles)
-  const userRoles = (session?.user as any)?.roles || []
-  const hasAdminAccess = userRoles.includes('admin') || userRoles.includes('founder') || userRoles.includes('moderator')
-  const profilePictureUrl = getSessionUserProfilePicture(session)
-
   const navItems = [
-    { name: "Home", link: "/", icon: <Home className="w-4 h-4" /> },
-    { name: "Marketplace", link: "/scripts", icon: <Package className="w-4 h-4" /> },
-    { name: "Giveaways", link: "/giveaways", icon: <Gift className="w-4 h-4" /> },
-    { name: "Advertise", link: "/advertise", icon: <Megaphone className="w-4 h-4" /> },
+    { name: "Home", link: "/" },
+    { name: "Marketplace", link: "/scripts" },
+    { name: "Giveaways", link: "/giveaways" },
+    { name: "Advertise", link: "/advertise" },
   ]
 
   // Custom logo component
@@ -72,29 +64,25 @@ export default function NavbarComponent() {
 
   return (
     <div className="relative w-full">
-      <Navbar className="top-0 z-30 mt-2">
+      <Navbar className="top-0 z-50">
         {/* Desktop Navigation */}
         <NavBody>
-          <div className="flex-shrink-0 relative z-10">
-            <CustomLogo />
-          </div>
+          <CustomLogo />
           <NavItems items={navItems} />
-          <div className="flex items-center gap-3 flex-shrink-0 relative z-10">
+          <div className="flex items-center gap-2 ml-auto pl-6 flex-shrink-0">
             {status === "authenticated" ? (
               <>
                 <Link href="/profile" className="block">
                   <Avatar className="h-9 w-9 ring-1 ring-gray-700/60">
-                    <AvatarImage src={profilePictureUrl || ""} alt={String(session?.user?.name || "User")} />
+                    <AvatarImage src={String((session?.user as any)?.image || "")} alt={String(session?.user?.name || "User")} />
                     <AvatarFallback className="bg-gray-800 text-white text-sm">
                       {String(session?.user?.name || "U").charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                 </Link>
-                {hasAdminAccess && (
-                  <NavbarButton variant="secondary" href="/admin">
-                    Admin
-                  </NavbarButton>
-                )}
+                <NavbarButton variant="secondary" href="/admin">
+                  Admin
+                </NavbarButton>
                 <NavbarButton
                   variant="secondary"
                   as="button"
@@ -137,7 +125,6 @@ export default function NavbarComponent() {
                 className="relative text-neutral-600 dark:text-neutral-300"
               >
                 <span className="block">{item.name}</span>
-              
               </Link>
             ))}
             
@@ -145,7 +132,7 @@ export default function NavbarComponent() {
               <div className="flex w-full flex-col gap-4">
                 <div className="flex items-center space-x-3 pb-4 border-b border-gray-700">
                   <Avatar className="h-10 w-10 ring-1 ring-gray-700/60">
-                    <AvatarImage src={profilePictureUrl || ""} alt={String(session?.user?.name || "User")} />
+                    <AvatarImage src={String((session?.user as any)?.image || "")} alt={String(session?.user?.name || "User")} />
                     <AvatarFallback className="bg-gray-800 text-white text-sm">
                       {String(session?.user?.name || "U").charAt(0).toUpperCase()}
                     </AvatarFallback>
@@ -162,15 +149,13 @@ export default function NavbarComponent() {
                 >
                   <span className="block">Profile</span>
                 </Link>
-                {hasAdminAccess && (
-                  <Link
-                    href="/admin"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="relative text-neutral-600 dark:text-neutral-300"
-                  >
-                    <span className="block">Admin</span>
-                  </Link>
-                )}
+                <Link
+                  href="/admin"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="relative text-neutral-600 dark:text-neutral-300"
+                >
+                  <span className="block">Admin</span>
+                </Link>
                 <NavbarButton
                   onClick={() => {
                     signOut()

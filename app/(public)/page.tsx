@@ -17,6 +17,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/componentss/ui/card";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/componentss/ui/accordion";
 import { Badge } from "@/componentss/ui/badge";
 import Link from "next/link";
 import { useSession, signIn } from "next-auth/react";
@@ -431,103 +437,7 @@ export default function HomePage() {
           </div>
         </motion.section>
 
-        {/* Enhanced Stats Section */}
-        <motion.section
-          ref={statsRef}
-          className=" px-4 sm:px-6 lg:px-8 relative overflow-hidden"
-          initial={{ opacity: 0 }}
-          animate={statsInView ? { opacity: 1 } : {}}
-          transition={{ duration: 1 }}
-        >
-          {/* Background effects */}
-
-          <div className="max-w-7xl mx-auto relative z-10">
-            <motion.div
-              className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center"
-              initial={{ opacity: 0, y: 50 }}
-              animate={statsInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 1, staggerChildren: 0.1 }}
-            >
-              {[
-                {
-                  number: loading
-                    ? "..."
-                    : stats
-                    ? `${stats.totalScripts}+`
-                    : "0+",
-                  label: "Premium Scripts",
-                  icon: Package,
-                  gradient: "from-orange-500 to-orange-600",
-                },
-                {
-                  number: loading
-                    ? "..."
-                    : stats
-                    ? `${stats.totalDevelopers}+`
-                    : "0+",
-                  label: "Trusted Developers",
-                  icon: Code,
-                  gradient: "from-yellow-400 to-yellow-500",
-                },
-                {
-                  number: loading
-                    ? "..."
-                    : stats
-                    ? `${Math.round(stats.totalUsers / 1000)}K+`
-                    : "0+",
-                  label: "Happy Customers",
-                  icon: Users,
-                  gradient: "from-orange-500 to-red-500",
-                },
-                {
-                  number: loading
-                    ? "..."
-                    : stats && stats.totalGiveawayValue > 0
-                    ? `$${Math.round(stats.totalGiveawayValue / 1000)}K+`
-                    : "$0",
-                  label: "Active Giveaways",
-                  icon: TrendingUp,
-                  gradient: "from-yellow-400 to-orange-500",
-                },
-              ].map((stat, index) => {
-                const Icon = stat.icon;
-                return (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, y: 30, scale: 0.8 }}
-                    animate={statsInView ? { opacity: 1, y: 0, scale: 1 } : {}}
-                    transition={{ duration: 0.8, delay: index * 0.1 }}
-                    whileHover={{ scale: 1.05, y: -10 }}
-                    className="group"
-                  >
-                    <Card className="bg-neutral-900/40 border-gray-700/50 hover:border-orange-500/50 transition-all duration-500 backdrop-blur-sm h-full relative overflow-hidden">
-                      <CardContent className="p-8 relative z-10">
-                        <div
-                          className={`inline-flex items-center justify-center w-14 h-14 rounded-xl bg-gradient-to-br ${stat.gradient} mb-4 group-hover:scale-110 transition-transform duration-300`}
-                        >
-                          <Icon className="h-7 w-7 text-white" />
-                        </div>
-                        <motion.div
-                          className="text-5xl md:text-6xl font-bold mb-3 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent"
-                          animate={statsInView ? { scale: [1, 1.1, 1] } : {}}
-                          transition={{
-                            delay: index * 0.1 + 0.3,
-                            duration: 0.5,
-                          }}
-                        >
-                          {stat.number}
-                        </motion.div>
-                        <div className="text-gray-400 font-semibold text-sm group-hover:text-orange-400 transition-colors uppercase tracking-wider">
-                          {stat.label}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                );
-              })}
-            </motion.div>
-          </div>
-        </motion.section>
+      
 
         {/*Our Services Seciton*/}
         <motion.div>
@@ -651,69 +561,37 @@ export default function HomePage() {
           transition={{ duration: 1 }}
         >
           {/* Background effects */}
-
-          <div className="max-w-5xl mx-auto text-center relative z-10">
-            <motion.div
-              initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1 }}
-            >
-              <Badge className="bg-gradient-to-r from-orange-500/20 to-yellow-400/20 text-orange-400 border-orange-500/30 mb-6 px-4 py-2 text-sm font-semibold">
-                Get Started
-              </Badge>
-              <h2 className="text-5xl md:text-7xl font-bold text-white mb-8 leading-tight">
-                Ready to{" "}
-                <span className="bg-gradient-to-r from-orange-400 via-yellow-400 to-orange-400 bg-clip-text text-transparent">
-                  Transform
-                </span>
-                <br />
-                Your Server?
-              </h2>
-              <p className="text-xl md:text-2xl text-gray-300 mb-12 max-w-3xl mx-auto leading-relaxed">
-                Join thousands of server owners who trust{" "}
-                <span className="text-orange-400 font-semibold">FiveHub</span>{" "}
-                for their premium script needs. Start building your dream server
-                today!
-              </p>
-              <motion.div
-                className="flex flex-col sm:flex-row gap-6 justify-center items-center"
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 1, delay: 0.3 }}
-              >
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="group"
-                >
-                  <Link href="/scripts">
-                    <Button
-                      size="lg"
-                      className="bg-gradient-to-r from-orange-500 via-yellow-400 to-orange-500 hover:from-orange-600 hover:via-yellow-500 hover:to-orange-600 text-black font-bold px-12 py-6 text-xl rounded-full shadow-2xl transition-all duration-300 flex items-center gap-3 group-hover:shadow-orange-500/50"
-                    >
-                      <Package className="h-6 w-6" />
-                      Browse Scripts
-                      <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                    </Button>
-                  </Link>
-                </motion.div>
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <Link href="/scripts/submit">
-                    <Button
-                      size="lg"
-                      variant="outline"
-                      className="bg-transparent border-2 border-orange-500/50 text-orange-500 hover:bg-orange-500/10 hover:border-orange-500 px-12 py-6 text-xl rounded-full backdrop-blur-sm transition-all duration-300"
-                    >
-                      Sell Your Scripts
-                    </Button>
-                  </Link>
-                </motion.div>
-              </motion.div>
-            </motion.div>
-          </div>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20 align-middle justify-center">
+          <h2 className="text-4xl font-bold mb-8">FAQs</h2>
+        <Accordion type="single" collapsible>
+          <AccordionItem value="item-1">
+            <AccordionTrigger className="text-2xl">Where can I Download this Script?</AccordionTrigger>
+            <AccordionContent>
+            After your purchase, your package will appear on the Keymaster. You can download the package or transfer your license.
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem value="item-2">
+            <AccordionTrigger className="text-2xl">How does this system work?</AccordionTrigger>
+            <AccordionContent>
+            All resources are encrypted by Cfx.re and linked to your personal Cfx.re account. This process is automated and instant. Purchases are tied to your Cfx.re account, not a specific license key. If you buy a package, it will work for all of your keys. If another Cfx.re account needs access, you need to transfer your license on the Keymaster.
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem value="item-3">
+            <AccordionTrigger className="text-2xl">Can I resell this Script?</AccordionTrigger>
+            <AccordionContent>
+            No. Tebex Limited is the only authorized reseller of CRUX assets. Any external offers or websites claiming to sell our products are unauthorized and violate copyright laws. If you find CRUX assets outside our store, they are likely scams and could pose security risks. To guarantee authenticity and protection, all our assets are delivered exclusively through the Cfx Escrow system.
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem value="item-4">
+            <AccordionTrigger className="text-2xl">Where can I get support?</AccordionTrigger>
+            <AccordionContent>
+            Our official support is available through our Discord server, where our team is ready to assist you with technical issues and questions 24/7.
+            </AccordionContent>
+          </AccordionItem>
+          
+        </Accordion>
+        </div>
+          
         </motion.section>
         <Footer />
       </div>

@@ -1221,10 +1221,10 @@ export default function ScriptsPage() {
                         // Otherwise render script
                         const script = item as UIScript;
                         return (
-                          <div key={script.id} className="group">
+                          <motion.div key={script.id} className="group" whileHover={{ y: -5, scale: 1.02 }}>
                             <Link href={`/script/${script.id}`}>
                               <Card
-                                className={`bg-neutral-900 border-2 border-neutral-700/50 hover:border-orange-500 cursor-pointer h-full backdrop-blur-sm relative overflow-hidden shadow-2xl rounded-lg transition-all duration-300 ${
+                                className={`bg-neutral-900 border-2 border-neutral-700/50 cursor-pointer h-full backdrop-blur-sm relative overflow-hidden shadow-2xl rounded-lg transition-all duration-300 ${
                                   viewMode === "list"
                                     ? "flex flex-row"
                                     : "flex flex-col"
@@ -1269,10 +1269,7 @@ export default function ScriptsPage() {
                                           {script.framework.map((fw, idx) => (
                                             <motion.div
                                               key={idx}
-                                              whileHover={{
-                                                scale: 1.1,
-                                                y: -2,
-                                              }}
+                                              
                                             >
                                               <Badge className="bg-neutral-800/95 text-white backdrop-blur-sm text-[10px] font-bold border border-neutral-600/50 rounded px-1.5 py-0.5 uppercase tracking-wide shadow-lg hover:bg-neutral-800/95 hover:text-white">
                                                 <span className="mr-1 text-xs">
@@ -1302,7 +1299,7 @@ export default function ScriptsPage() {
                                   <div className="px-3 pb-3 mt-auto">
                                     <Button
                                       variant="outline"
-                                      className="w-full bg-white text-black hover:bg-orange-600 hover:text-white transition-colors duration-200 font-semibold text-xs py-1.5 h-auto"
+                                      className="w-full bg-white text-black hover:bg-gray-300 hover:border-gray-300 hover:text-black transition-colors duration-200 font-semibold text-xs py-1.5 h-auto"
                                     >
                                       View Details
                                     </Button>
@@ -1310,7 +1307,7 @@ export default function ScriptsPage() {
                                 </div>
                               </Card>
                             </Link>
-                          </div>
+                          </motion.div>
                         );
                       });
                     })()}

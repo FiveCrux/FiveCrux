@@ -399,207 +399,78 @@ export default function GiveawaysPage() {
     <>
       <Navbar />
       <div className="min-h-screen bg-black text-white relative overflow-hidden">
-        {/* Hero Section */}
-        <motion.section
-          ref={heroRef}
-          className="relative py-20 px-4 sm:px-6 lg:px-8 min-h-screen flex items-center"
-          initial={{ opacity: 0, y: 50 }}
-          animate={heroInView ? { opacity: 1, y: 0 } : {}}
+
+        {/* Header */}
+        <motion.div
+          className="bg-neutral-850 backdrop-blur-xl py-8 px-4 sm:px-6 lg:px-8 border-b border-neutral-800/50 mt-11"
+          initial={{ opacity: 0, y: -50 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
-          <div className="max-w-7xl mx-auto text-center relative z-10">
-            <AnimatePresence>
-              {heroInView && (
-                <>
-                  <motion.div
-                    initial={{ opacity: 0, y: 50 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 1, ease: "easeOut" }}
-                    className="mb-8"
-                  >
-                    <motion.h1
-                      className="text-5xl md:text-8xl font-bold mb-6 leading-tight"
-                      animate={{
-                        backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
-                      }}
-                      transition={{
-                        duration: 6,
-                        repeat: Number.POSITIVE_INFINITY,
-                      }}
-                      style={{
-                        background:
-                          "linear-gradient(45deg, #f59e0b, #f97316, #eab308, #f59e0b)",
-                        backgroundSize: "400% 400%",
-                        WebkitBackgroundClip: "text",
-                        WebkitTextFillColor: "transparent",
-                        backgroundClip: "text",
-                      }}
-                    >
-                      Epic Giveaways
-                    </motion.h1>
-                    <motion.div
-                      className="flex items-center justify-center gap-4 mb-6"
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.3, duration: 0.8 }}
-                    >
-                      <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black font-bold px-4 py-2 text-lg">
-                        <Flame className="mr-2 h-5 w-5" />$
-                        {activeGiveaways
-                          .reduce(
-                            (sum, g) =>
-                              sum +
-                              parseInt(
-                                g.totalValue?.replace(/[^0-9]/g, "") || "0"
-                              ),
-                            0
-                          )
-                          .toLocaleString()}
-                        + in Prizes
-                      </Badge>
-                      <Badge className="bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold px-4 py-2 text-lg">
-                        <Crown className="mr-2 h-5 w-5" />
-                        {activeGiveaways.length} Active
-                      </Badge>
-                    </motion.div>
-                  </motion.div>
-
-                  <motion.p
-                    initial={{ opacity: 0, y: 30 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 1, delay: 0.4 }}
-                    className="text-xl md:text-2xl text-gray-300 mb-12 max-w-4xl mx-auto leading-relaxed"
-                  >
-                    Enter incredible giveaways to win{" "}
-                    <motion.span
-                      className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500 font-bold"
-                      animate={{ scale: [1, 1.05, 1] }}
-                      transition={{
-                        duration: 2,
-                        repeat: Number.POSITIVE_INFINITY,
-                      }}
-                    >
-                      premium FiveM scripts
-                    </motion.span>
-                    , custom development services, and exclusive server
-                    packages!
-                  </motion.p>
-
-                  <motion.div
-                    initial={{ opacity: 0, y: 30 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 1, delay: 0.6 }}
-                    className="flex flex-col sm:flex-row gap-6 justify-center items-center"
-                  >
-                    <motion.div
-                      whileHover={{
-                        scale: 1.05,
-                        boxShadow: "0 25px 50px rgba(249, 115, 22, 0.4)",
-                      }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      <Button
-                        size="lg"
-                        className="bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 hover:from-yellow-500 hover:via-orange-600 hover:to-red-600 text-black font-bold px-10 py-4 text-xl rounded-full shadow-2xl transition-all duration-300"
-                      >
-                        <Gift className="mr-3 h-6 w-6" />
-                        Browse Giveaways
-                      </Button>
-                    </motion.div>
-
-                    <motion.div
-                      whileHover={{
-                        scale: 1.05,
-                        boxShadow: "0 25px 50px rgba(234, 179, 8, 0.3)",
-                      }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      <Link href="/giveaways/create">
-                        <Button
-                          size="lg"
-                          variant="outline"
-                          className="bg-transparent border-2 border-yellow-400/50 text-yellow-400 hover:bg-yellow-400/10 hover:border-yellow-400 px-10 py-4 text-xl rounded-full backdrop-blur-sm transition-all duration-300"
-                        >
-                          <Sparkles className="mr-3 h-6 w-6" />
-                          Create Giveaway
-                        </Button>
-                      </Link>
-                    </motion.div>
-                  </motion.div>
-                </>
-              )}
-            </AnimatePresence>
-          </div>
-
-          {/* Floating orbs */}
-          <motion.div
-            className="absolute top-1/4 left-1/4 w-40 h-40 bg-gradient-to-r from-yellow-400/20 to-orange-500/20 rounded-full blur-xl"
-            animate={{
-              scale: [1, 1.3, 1],
-              opacity: [0.3, 0.7, 0.3],
-            }}
-            transition={{ duration: 5, repeat: Number.POSITIVE_INFINITY }}
-          />
-          <motion.div
-            className="absolute bottom-1/4 right-1/4 w-32 h-32 bg-gradient-to-r from-orange-500/20 to-red-500/20 rounded-full blur-xl"
-            animate={{
-              scale: [1.3, 1, 1.3],
-              opacity: [0.7, 0.3, 0.7],
-            }}
-            transition={{ duration: 4, repeat: Number.POSITIVE_INFINITY }}
-          />
-        </motion.section>
-
-        {/* Stats Section */}
-        <motion.section
-          ref={statsRef}
-          className="py-16 px-4 sm:px-6 lg:px-8 relative"
-          initial={{ opacity: 0 }}
-          animate={statsInView ? { opacity: 1 } : {}}
-          transition={{ duration: 1 }}
-        >
           <div className="max-w-7xl mx-auto">
-            <motion.div
-              className="grid grid-cols-2 md:grid-cols-4 gap-8"
-              initial={{ opacity: 0, y: 50 }}
-              animate={statsInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 1, staggerChildren: 0.2 }}
+            <motion.nav
+              className="flex items-center space-x-2 text-sm text-gray-400 mb-4"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
             >
-              {stats.map((stat, index) => (
+              <Link
+                href="/"
+                className="hover:text-orange-500 transition-colors"
+              >
+                Home
+              </Link>
+              <span>/</span>
+              <span className="text-white">All Giveaways</span>
+            </motion.nav>
+
+            <motion.h1
+              className="text-4xl md:text-5xl font-bold mb-4"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              <span className="bg-gradient-to-r from-orange-500 to-yellow-400 bg-clip-text text-transparent">
+                All Giveaways
+              </span>
+            </motion.h1>
+
+            <motion.p
+              className="text-gray-400 mb-4 text-lg"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+            >
+              Browse our complete collection of premium FiveM giveaways
+            </motion.p>
+
+            <motion.div
+              className="flex items-center gap-4"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+            >
+              {/* {!loading && (
+                <div className="text-sm text-gray-500 flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-orange-500" />
+                  {sortedScripts.length} scripts found
+                </div>
+              )} */}
+              {/* {activeFiltersCount > 0 && (
                 <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 30, scale: 0.8 }}
-                  animate={statsInView ? { opacity: 1, y: 0, scale: 1 } : {}}
-                  transition={{ duration: 0.8, delay: index * 0.1 }}
-                  whileHover={{ scale: 1.1, y: -10 }}
-                  className="group text-center"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="flex items-center gap-2"
                 >
-                  <motion.div
-                    className={`text-5xl md:text-6xl font-bold ${stat.color} mb-2`}
-                    animate={{
-                      textShadow: [
-                        "0 0 10px currentColor",
-                        "0 0 30px currentColor",
-                        "0 0 10px currentColor",
-                      ],
-                    }}
-                    transition={{
-                      duration: 3,
-                      repeat: Number.POSITIVE_INFINITY,
-                      delay: index * 0.5,
-                    }}
-                  >
-                    {stat.value}
-                  </motion.div>
-                  <div className="text-gray-400 font-medium flex items-center justify-center gap-2 group-hover:text-white transition-colors">
-                    <stat.icon className="h-5 w-5" />
-                    {stat.label}
-                  </div>
+                  <Zap className="h-4 w-4 text-yellow-400" />
+                  <span className="text-sm text-yellow-400">
+                    {activeFiltersCount} filters active
+                  </span>
                 </motion.div>
-              ))}
+              )} */}
             </motion.div>
           </div>
-        </motion.section>
+        </motion.div>
 
         {/* Main Content */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -658,7 +529,7 @@ export default function GiveawaysPage() {
                 <Gift className="mr-2 h-4 w-4" />
                 Active Giveaways
               </TabsTrigger>
-              
+
               <TabsTrigger
                 value="ended"
                 className="h-10 inline-flex items-center justify-center rounded-xl font-bold text-sm py-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-400 data-[state=active]:to-orange-500 data-[state=active]:text-black data-[state=active]:shadow-none data-[state=active]:translate-y-0"
@@ -666,7 +537,7 @@ export default function GiveawaysPage() {
                 <Clock className="mr-2 h-4 w-4" />
                 Ended Giveaways
               </TabsTrigger>
-              
+
               <TabsTrigger
                 value="rules"
                 className="h-10 inline-flex items-center justify-center rounded-xl font-bold text-sm py-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-400 data-[state=active]:to-orange-500 data-[state=active]:text-black data-[state=active]:shadow-none data-[state=active]:translate-y-0"
@@ -696,7 +567,7 @@ export default function GiveawaysPage() {
                     >
                       {/* Image Skeleton */}
                       <div className="w-full h-32 bg-gray-800/50 animate-pulse rounded-t-xl" />
-                      
+
                       {/* Content Skeleton */}
                       <div className="p-3 space-y-3">
                         <div className="space-y-2">
@@ -704,31 +575,31 @@ export default function GiveawaysPage() {
                           <div className="h-3 bg-gray-800/50 rounded animate-pulse w-full" />
                           <div className="h-3 bg-gray-800/50 rounded animate-pulse w-2/3" />
                         </div>
-                        
+
                         {/* Badges Skeleton */}
                         <div className="flex gap-2">
                           <div className="h-5 w-16 bg-gray-800/50 rounded animate-pulse" />
                           <div className="h-5 w-20 bg-gray-800/50 rounded animate-pulse" />
                         </div>
-                        
+
                         {/* Stats Skeleton */}
                         <div className="flex items-center justify-between">
                           <div className="h-4 w-20 bg-gray-800/50 rounded animate-pulse" />
                           <div className="h-4 w-16 bg-gray-800/50 rounded animate-pulse" />
                         </div>
-                        
+
                         {/* Tags Skeleton */}
                         <div className="flex gap-1">
                           <div className="h-5 w-16 bg-gray-800/50 rounded animate-pulse" />
                           <div className="h-5 w-20 bg-gray-800/50 rounded animate-pulse" />
                         </div>
-                        
+
                         {/* Requirements Skeleton */}
                         <div className="space-y-1">
                           <div className="h-3 w-24 bg-gray-800/50 rounded animate-pulse" />
                           <div className="h-3 w-full bg-gray-800/50 rounded animate-pulse" />
                         </div>
-                        
+
                         {/* Button Skeleton */}
                         <div className="h-8 bg-gray-800/50 rounded animate-pulse w-full" />
                       </div>
@@ -809,278 +680,116 @@ export default function GiveawaysPage() {
                     return (
                       <motion.div
                         key={giveaway.id}
+                        className="group"
+                        whileHover={{ y: -5, scale: 1.02 }}
                         initial={{ opacity: 0, y: 50 }}
                         animate={giveawaysInView ? { opacity: 1, y: 0 } : {}}
                         transition={{ duration: 0.8, delay: index * 0.1 }}
-                        whileHover={{ y: -8, scale: 1.02 }}
-                        className="group"
                       >
                         <Link href={`/giveaway/${giveaway.id}`}>
-                          <Card className={`bg-transparent border-gray-700/50 hover:border-yellow-400/50 transition-all duration-500 backdrop-blur-sm relative overflow-hidden h-full cursor-pointer rounded-xl ${isEnded ? 'grayscale' : ''}`}>
-                            {/* Animated background on hover */}
-                            <motion.div
-                              className="absolute inset-0 bg-gradient-to-br from-yellow-400/5 to-orange-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                              initial={false}
-                            />
-
-                            {/* Ended Overlay */}
-                            {isEnded && (
-                              <div className="absolute inset-0 z-50 pointer-events-none rounded-xl overflow-hidden">
-                                <img
-                                  src="/ended.png"
-                                  alt="Ended"
-                                  className="w-full h-full object-contain opacity-90 p-12"
-                                />
-                              </div>
-                            )}
-
-                            <CardHeader className="p-0 relative rounded-t-xl overflow-hidden">
-                              <div className="relative overflow-hidden">
-                                <motion.img
-                                  src={giveaway.image || "/cat.jpg"}
-                                  alt={giveaway.title}
-                                  className={`w-full h-32 object-cover transition-transform duration-500 rounded-t-xl ${isEnded ? 'grayscale' : 'group-hover:scale-110'}`}
-                                  loading="lazy"
-                                />
-                                <motion.div
-                                  className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"
-                                  initial={false}
-                                />
-
-                                {/* Badges */}
-                                <div className="absolute top-2 left-2 flex gap-1.5">
-                                  {/* //TODO:change ended tag
-                                  {isEnded && (
-                                    <motion.div
-                                      initial={{ scale: 0, rotate: 180 }}
-                                      animate={{ scale: 1, rotate: 0 }}
-                                      transition={{ delay: index * 0.1 }}
-                                      whileHover={{ scale: 1.1 }}
-                                    >
-                                      <Badge className="bg-gradient-to-r from-red-500 to-red-700 text-white font-bold">
-                                        <Clock className="mr-1 h-3 w-3" />
-                                        ENDED
-                                      </Badge>
-                                    </motion.div>
-                                  )} */}
-                                  {!isEnded && (
-                                    <motion.div
-                                      initial={{ scale: 0, rotate: -180 }}
-                                      animate={{ scale: 1, rotate: 0 }}
-                                      transition={{ delay: index * 0.1 }}
-                                      whileHover={{ scale: 1.1, rotate: 5 }}
-                                    >
-                                      <Badge
-                                        className={`${getDifficultyColor(
-                                          giveaway.difficulty
-                                        )} text-xs px-1.5 py-0.5`}
-                                      >
-                                        {giveaway.difficulty}
-                                      </Badge>
-                                    </motion.div>
-                                  )}
-                                  {giveaway.featured && !isEnded && (
-                                    <motion.div
-                                      initial={{ scale: 0, rotate: 180 }}
-                                      animate={{ scale: 1, rotate: 0 }}
-                                      transition={{ delay: index * 0.1 + 0.1 }}
-                                      whileHover={{ scale: 1.1 }}
-                                    >
-                                      <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black font-bold text-xs px-1.5 py-0.5">
-                                        <Crown className="mr-1 h-2.5 w-2.5" />
-                                        Featured
-                                      </Badge>
-                                    </motion.div>
-                                  )}
-                                  {giveaway.trending && !isEnded && (
-                                    <motion.div
-                                      initial={{ scale: 0 }}
-                                      animate={{ scale: 1 }}
-                                      transition={{ delay: index * 0.1 + 0.2 }}
-                                      whileHover={{ scale: 1.1 }}
-                                    >
-                                      <Badge className="bg-gradient-to-r from-red-500 to-pink-500 text-white font-bold text-xs px-1.5 py-0.5">
-                                        <TrendingUp className="mr-1 h-2.5 w-2.5" />
-                                        Trending
-                                      </Badge>
-                                    </motion.div>
-                                  )}
+                          <Card
+                            className={`bg-neutral-900 border-2 hover:border-white cursor-pointer h-full backdrop-blur-sm relative overflow-hidden shadow-2xl rounded-lg transition-all duration-300 flex flex-col ${
+                              isEnded ? "grayscale opacity-60" : ""
+                            }`}
+                          >
+                            {/* Image Section */}
+                            <CardHeader className="p-0 overflow-hidden rounded-t-lg relative">
+                              <Image
+                                src={giveaway.image || "/cat.jpg"}
+                                alt={giveaway.title}
+                                width={400}
+                                height={256}
+                                className="object-cover w-full h-52"
+                              />
+                              {/* Ended Overlay */}
+                              {isEnded && (
+                                <div className="absolute inset-0 z-50 pointer-events-none rounded-t-lg overflow-hidden flex items-center justify-center bg-black/50">
+                                  <img
+                                    src="/ended.png"
+                                    alt="Ended"
+                                    className="w-24 h-24 object-contain opacity-90"
+                                  />
                                 </div>
-
-                                <motion.div
-                                  className="absolute top-2 right-2"
-                                  initial={{ scale: 0, rotate: 180 }}
-                                  animate={{ scale: 1, rotate: 0 }}
-                                  transition={{ delay: index * 0.1 + 0.3 }}
-                                  whileHover={{ scale: 1.1 }}
-                                >
-                                  <Badge className="bg-gradient-to-r from-green-400 to-emerald-500 text-black font-bold text-sm px-2 py-0.5">
-                                    <span className="mr-0.5">
-                                      {giveaway.currency_symbol || "$"}
-                                    </span>
-                                    {giveaway.totalValue}
-                                  </Badge>
-                                </motion.div>
-
-                                {/* Creator info overlay */}
-                                <div className="absolute bottom-2 left-2 right-2">
-                                  <div className="flex items-center gap-1.5 text-white/90">
-                                    {giveaway.creatorImage ? (
-                                      <img
-                                        src={giveaway.creatorImage}
-                                        alt={giveaway.creator || "Creator"}
-                                        className="w-6 h-6 rounded-full object-cover"
-                                      />
-                                    ) : (
-                                      <div className="w-6 h-6 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center text-black font-bold text-xs">
-                                        {giveaway.creator?.[0] || "U"}
-                                      </div>
-                                    )}
-                                    <span className="text-xs font-medium flex items-center gap-1">
-                                      {giveaway.creator || "Unknown Creator"}
-                                      {isVerifiedCreator(giveaway.creator_roles) && (
-                                        <VerifiedIcon size="sm" />
-                                      )}
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
+                              )}
                             </CardHeader>
 
-                            <CardContent className={`p-3 relative z-10 rounded-b-xl ${isEnded ? 'opacity-50' : ''}`}>
-                              <CardTitle className={`text-white text-sm mb-2 transition-colors duration-300 ${isEnded ? '' : 'group-hover:text-yellow-400'}`}>
-                                {giveaway.title}
-                              </CardTitle>
-                              <CardDescription className="text-gray-400 mb-3 leading-relaxed line-clamp-2 text-xs">
-                                {giveaway.description}
-                              </CardDescription>
-                              {/* Time and Stats */}
-                              <div className="flex items-center justify-between mb-3">
-                                <div className="flex items-center text-orange-500">
-                                  <Clock className="mr-1.5 h-3.5 w-3.5" />
-                                  <span className="font-semibold text-xs">
-                                    {giveaway.timeLeft}
-                                  </span>
-                                </div>
-                                <div className="flex items-center text-gray-400 text-xs">
-                                  <Users className="mr-1.5 h-3.5 w-3.5" /> 
-                                  <span>
-                                    {(giveaway.entries || 0).toLocaleString()}
-                                  </span>
-                                </div>
-                              </div>
+                            {/* Content Section */}
+                            <div className="flex flex-col flex-1">
+                              <CardContent className="p-3 flex-1 space-y-2">
+                                {/* Title */}
+                                <CardTitle className="text-base font-bold text-white leading-tight line-clamp-2">
+                                  {giveaway.title}
+                                </CardTitle>
 
-                              {/* Tags */}
-                              <div className="flex flex-wrap gap-1 mb-3">
-                                {giveaway.tags
-                                  .slice(0, 2)
-                                  .map((tag: string, tagIndex: number) => (
-                                    <motion.div
-                                      key={tagIndex}
-                                      initial={{ opacity: 0, scale: 0.8 }}
-                                      animate={{ opacity: 1, scale: 1 }}
-                                      transition={{
-                                        delay: index * 0.1 + tagIndex * 0.05,
-                                      }}
-                                      whileHover={{ scale: 1.05 }}
-                                    >
-                                      <Badge
-                                        variant="secondary"
-                                        className="text-[10px] bg-gray-700/50 text-gray-300 backdrop-blur-sm px-1.5 py-0.5"
-                                      >
-                                        {tag}
-                                      </Badge>
-                                    </motion.div>
-                                  ))}
-                              </div>
+                                {/* Category Badge */}
+                                {giveaway.category && (
+                                  <div className="flex flex-wrap gap-1">
+                                    <Badge className="bg-neutral-800/95 text-white backdrop-blur-sm text-[10px] font-bold border border-neutral-600/50 rounded px-1.5 py-0.5 uppercase tracking-wide shadow-lg">
+                                      <span className="mr-1 text-xs">•</span>
+                                      {giveaway.category}
+                                    </Badge>
+                                  </div>
+                                )}
 
-                              {/* Requirements Preview */}
-                              <div className="mb-3">
-                                <h4 className="text-xs font-semibold text-white mb-1.5 flex items-center">
-                                  <Target className="mr-1 h-3 w-3 text-yellow-400" />
-                                  Requirements:
-                                </h4>
-                                <ul className="space-y-0.5">
-                                  {giveaway.requirements
-                                    .slice(0, 1)
-                                    .map((req: string, reqIndex: number) => (
-                                      <li
-                                        key={reqIndex}
-                                        className="text-xs text-gray-400 flex items-center"
-                                      >
-                                        <motion.div
-                                          className="w-1 h-1 bg-yellow-400 rounded-full mr-1.5"
-                                          animate={{ scale: [1, 1.3, 1] }}
-                                          transition={{
-                                            duration: 2,
-                                            repeat: Number.POSITIVE_INFINITY,
-                                            delay: reqIndex * 0.3,
-                                          }}
-                                        />
-                                        {req}
-                                      </li>
-                                    ))}
-                                  {giveaway.requirements.length > 1 && (
-                                    <li className="text-xs text-gray-500">
-                                      +{giveaway.requirements.length - 1}{" "}
-                                      more...
-                                    </li>
+                                {/* Description */}
+                                <CardDescription className="text-neutral-400 text-xs leading-snug line-clamp-2 flex items-center gap-1.5">
+                                  <span>By {giveaway.creator || "Unknown Creator"}</span>
+                                  {isVerifiedCreator(giveaway.creator_roles) && (
+                                    <VerifiedIcon size="sm" />
                                   )}
-                                </ul>
-                              </div>
+                                </CardDescription>
 
-                              {/* Action Buttons */}
-                              <div
-                                className="flex gap-2"
-                                onClick={(e) => e.preventDefault()}
-                              >
-                                <motion.div
-                                  className="flex-1"
-                                  whileHover={{ scale: 1.02 }}
-                                  whileTap={{ scale: 0.98 }}
-                                >
-                                  {!isEnded && (
-                                    <Button
-                                      onClick={(e) => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        enterGiveaway(giveaway.id);
-                                      }}
-                                      disabled={enteredGiveaways.includes(
-                                        giveaway.id
-                                      )}
-                                      size="sm"
-                                      className={`w-full text-xs ${
-                                        enteredGiveaways.includes(giveaway.id)
-                                          ? "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
-                                          : "bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 hover:from-yellow-500 hover:via-orange-600 hover:to-red-600"
-                                      } text-black font-bold shadow-lg transition-all duration-300 py-1.5`}
-                                    >
-                                      {enteredGiveaways.includes(
-                                        giveaway.id
-                                      ) ? (
-                                        <>
-                                          <Trophy className="mr-1.5 h-3.5 w-3.5" />
-                                          Registered!
-                                        </>
-                                      ) : (
-                                        <>
-                                          <Gift className="mr-1.5 h-3.5 w-3.5" />
-                                          View Details
-                                        </>
-                                      )}
-                                    </Button>
-                                  )}
-                                </motion.div>
+                                {/* Value */}
+                                <CardDescription className="text-orange-500 text-xl font-bold pt-1">
+                                  {giveaway.currency_symbol || "$"}
+                                  {giveaway.totalValue}
+                                </CardDescription>
+                              </CardContent>
+
+                              {/* Button Section */}
+                              <div className="px-3 pb-3 mt-auto">
+                                {!isEnded ? (
+                                  <Button
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      enterGiveaway(giveaway.id);
+                                    }}
+                                    disabled={enteredGiveaways.includes(giveaway.id)}
+                                    variant="outline"
+                                    className={`w-full bg-white text-black hover:bg-gray-300 hover:border-gray-300 hover:text-black transition-colors duration-200 font-semibold text-xs py-1.5 h-auto ${
+                                      enteredGiveaways.includes(giveaway.id)
+                                        ? "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white"
+                                        : ""
+                                    }`}
+                                  >
+                                    {enteredGiveaways.includes(giveaway.id) ? (
+                                      <>
+                                        <Trophy className="mr-1.5 h-3.5 w-3.5" />
+                                        Registered!
+                                      </>
+                                    ) : (
+                                      "View Details"
+                                    )}
+                                  </Button>
+                                ) : (
+                                  <Button
+                                    variant="outline"
+                                    disabled
+                                    className="w-full bg-neutral-800 text-neutral-500 cursor-not-allowed font-semibold text-xs py-1.5 h-auto"
+                                  >
+                                    Ended
+                                  </Button>
+                                )}
                               </div>
-                            </CardContent>
+                            </div>
                           </Card>
                         </Link>
                       </motion.div>
                     );
                   });
                 })()}
-                )
+                
               </motion.div>
             </TabsContent>
 
@@ -1104,7 +813,7 @@ export default function GiveawaysPage() {
                     >
                       {/* Image Skeleton */}
                       <div className="w-full h-32 bg-gray-800/50 animate-pulse rounded-t-xl" />
-                      
+
                       {/* Content Skeleton */}
                       <div className="p-3 space-y-3">
                         <div className="space-y-2">
@@ -1112,31 +821,31 @@ export default function GiveawaysPage() {
                           <div className="h-3 bg-gray-800/50 rounded animate-pulse w-full" />
                           <div className="h-3 bg-gray-800/50 rounded animate-pulse w-2/3" />
                         </div>
-                        
+
                         {/* Badges Skeleton */}
                         <div className="flex gap-2">
                           <div className="h-5 w-16 bg-gray-800/50 rounded animate-pulse" />
                           <div className="h-5 w-20 bg-gray-800/50 rounded animate-pulse" />
                         </div>
-                        
+
                         {/* Stats Skeleton */}
                         <div className="flex items-center justify-between">
                           <div className="h-4 w-20 bg-gray-800/50 rounded animate-pulse" />
                           <div className="h-4 w-16 bg-gray-800/50 rounded animate-pulse" />
                         </div>
-                        
+
                         {/* Tags Skeleton */}
                         <div className="flex gap-1">
                           <div className="h-5 w-16 bg-gray-800/50 rounded animate-pulse" />
                           <div className="h-5 w-20 bg-gray-800/50 rounded animate-pulse" />
                         </div>
-                        
+
                         {/* Requirements Skeleton */}
                         <div className="space-y-1">
                           <div className="h-3 w-24 bg-gray-800/50 rounded animate-pulse" />
                           <div className="h-3 w-full bg-gray-800/50 rounded animate-pulse" />
                         </div>
-                        
+
                         {/* Button Skeleton */}
                         <div className="h-8 bg-gray-800/50 rounded animate-pulse w-full" />
                       </div>
@@ -1217,270 +926,109 @@ export default function GiveawaysPage() {
                     return (
                       <motion.div
                         key={giveaway.id}
+                        className="group"
+                        whileHover={{ y: -5, scale: 1.02 }}
                         initial={{ opacity: 0, y: 50 }}
                         animate={giveawaysInView ? { opacity: 1, y: 0 } : {}}
                         transition={{ duration: 0.8, delay: index * 0.1 }}
-                        whileHover={{ y: -8, scale: 1.02 }}
-                        className="group"
                       >
                         <Link href={`/giveaway/${giveaway.id}`}>
-                          <Card className={`bg-transparent border-gray-700/50 hover:border-yellow-400/50 transition-all duration-500 backdrop-blur-sm relative overflow-hidden h-full cursor-pointer rounded-xl ${isEnded ? 'grayscale' : ''}`}>
-                            {/* Animated background on hover */}
-                            <motion.div
-                              className="absolute inset-0 bg-gradient-to-br from-yellow-400/5 to-orange-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                              initial={false}
-                            />
-
-                            {/* Ended Overlay */}
-                            {isEnded && (
-                              <div className="absolute inset-0 z-50 pointer-events-none rounded-xl overflow-hidden">
-                                <img
-                                  src="/ended.png"
-                                  alt="Ended"
-                                  className="w-full h-full object-contain opacity-90 p-12"
-                                />
-                              </div>
-                            )}
-
-                            <CardHeader className="p-0 relative rounded-t-xl overflow-hidden">
-                              <div className="relative overflow-hidden">
-                                <motion.img
-                                  src={giveaway.image || "/cat.jpg"}
-                                  alt={giveaway.title}
-                                  className={`w-full h-32 object-cover transition-transform duration-500 rounded-t-xl ${isEnded ? 'grayscale' : 'group-hover:scale-110'}`}
-                                  loading="lazy"
-                                />
-                                <motion.div
-                                  className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"
-                                  initial={false}
-                                />
-
-                                {/* Badges */}
-                                <div className="absolute top-2 left-2 flex gap-1.5">
-                                  {isEnded && (
-                                    <motion.div
-                                      initial={{ scale: 0, rotate: 180 }}
-                                      animate={{ scale: 1, rotate: 0 }}
-                                      transition={{ delay: index * 0.1 }}
-                                      whileHover={{ scale: 1.1 }}
-                                    >
-                                      <Badge className="bg-gradient-to-r from-red-500 to-red-700 text-white font-bold">
-                                        <Clock className="mr-1 h-3 w-3" />
-                                        ENDED
-                                      </Badge>
-                                    </motion.div>
-                                  )}
-                                  {!isEnded && (
-                                    <motion.div
-                                      initial={{ scale: 0, rotate: -180 }}
-                                      animate={{ scale: 1, rotate: 0 }}
-                                      transition={{ delay: index * 0.1 }}
-                                      whileHover={{ scale: 1.1, rotate: 5 }}
-                                    >
-                                      <Badge
-                                        className={`${getDifficultyColor(
-                                          giveaway.difficulty
-                                        )} text-xs px-1.5 py-0.5`}
-                                      >
-                                        {giveaway.difficulty}
-                                      </Badge>
-                                    </motion.div>
-                                  )}
-                                  {giveaway.featured && !isEnded && (
-                                    <motion.div
-                                      initial={{ scale: 0, rotate: 180 }}
-                                      animate={{ scale: 1, rotate: 0 }}
-                                      transition={{ delay: index * 0.1 + 0.1 }}
-                                      whileHover={{ scale: 1.1 }}
-                                    >
-                                      <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black font-bold text-xs px-1.5 py-0.5">
-                                        <Crown className="mr-1 h-2.5 w-2.5" />
-                                        Featured
-                                      </Badge>
-                                    </motion.div>
-                                  )}
-                                  {giveaway.trending && !isEnded && (
-                                    <motion.div
-                                      initial={{ scale: 0 }}
-                                      animate={{ scale: 1 }}
-                                      transition={{ delay: index * 0.1 + 0.2 }}
-                                      whileHover={{ scale: 1.1 }}
-                                    >
-                                      <Badge className="bg-gradient-to-r from-red-500 to-pink-500 text-white font-bold text-xs px-1.5 py-0.5">
-                                        <TrendingUp className="mr-1 h-2.5 w-2.5" />
-                                        Trending
-                                      </Badge>
-                                    </motion.div>
-                                  )}
+                          <Card
+                            className={`bg-neutral-900 border-2 border-neutral-700/50 cursor-pointer h-full backdrop-blur-sm relative overflow-hidden shadow-2xl rounded-lg transition-all duration-300 flex flex-col ${
+                              isEnded ? "grayscale opacity-60" : ""
+                            }`}
+                          >
+                            {/* Image Section */}
+                            <CardHeader className="p-0 overflow-hidden rounded-t-lg relative">
+                              <Image
+                                src={giveaway.image || "/cat.jpg"}
+                                alt={giveaway.title}
+                                width={400}
+                                height={256}
+                                className="object-cover w-full h-52"
+                              />
+                              {/* Ended Overlay */}
+                              {isEnded && (
+                                <div className="absolute inset-0 z-50 pointer-events-none rounded-t-lg overflow-hidden flex items-center justify-center bg-black/50">
+                                  <img
+                                    src="/ended.png"
+                                    alt="Ended"
+                                    className="w-24 h-24 object-contain opacity-90"
+                                  />
                                 </div>
-
-                                <motion.div
-                                  className="absolute top-2 right-2"
-                                  initial={{ scale: 0, rotate: 180 }}
-                                  animate={{ scale: 1, rotate: 0 }}
-                                  transition={{ delay: index * 0.1 + 0.3 }}
-                                  whileHover={{ scale: 1.1 }}
-                                >
-                                  <Badge className="bg-gradient-to-r from-green-400 to-emerald-500 text-black font-bold text-sm px-2 py-0.5">
-                                    <span className="mr-0.5">
-                                      {giveaway.currency_symbol || "$"}
-                                    </span>
-                                    {giveaway.totalValue}
-                                  </Badge>
-                                </motion.div>
-
-                                {/* Creator info overlay */}
-                                <div className="absolute bottom-2 left-2 right-2">
-                                  <div className="flex items-center gap-1.5 text-white/90">
-                                    {giveaway.creatorImage ? (
-                                      <img
-                                        src={giveaway.creatorImage}
-                                        alt={giveaway.creator || "Creator"}
-                                        className="w-6 h-6 rounded-full object-cover"
-                                      />
-                                    ) : (
-                                      <div className="w-6 h-6 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center text-black font-bold text-xs">
-                                        {giveaway.creator?.[0] || "U"}
-                                      </div>
-                                    )}
-                                    <span className="text-xs font-medium flex items-center gap-1">
-                                      {giveaway.creator || "Unknown Creator"}
-                                      {isVerifiedCreator(giveaway.creator_roles) && (
-                                        <VerifiedIcon size="sm" />
-                                      )}
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
+                              )}
                             </CardHeader>
 
-                            <CardContent className={`p-3 relative z-10 rounded-b-xl ${isEnded ? 'opacity-50' : ''}`}>
-                              <CardTitle className={`text-white text-sm mb-2 transition-colors duration-300 ${isEnded ? '' : 'group-hover:text-yellow-400'}`}>
-                                {giveaway.title}
-                              </CardTitle>
-                              <CardDescription className="text-gray-400 mb-3 leading-relaxed line-clamp-2 text-xs">
-                                {giveaway.description}
-                              </CardDescription>
-                              {/* Time and Stats */}
-                              <div className="flex items-center justify-between mb-3">
-                                <div className="flex items-center text-orange-500">
-                                  <Clock className="mr-1.5 h-3.5 w-3.5" />
-                                  <span className="font-semibold text-xs">
-                                    {giveaway.timeLeft}
-                                  </span>
-                                </div>
-                                <div className="flex items-center text-gray-400 text-xs">
-                                  <Users className="mr-1.5 h-3.5 w-3.5" /> 
-                                  <span>
-                                    {(giveaway.entries || 0).toLocaleString()}
-                                  </span>
-                                </div>
-                              </div>
+                            {/* Content Section */}
+                            <div className="flex flex-col flex-1">
+                              <CardContent className="p-3 flex-1 space-y-2">
+                                {/* Title */}
+                                <CardTitle className="text-base font-bold text-white leading-tight line-clamp-2">
+                                  {giveaway.title}
+                                </CardTitle>
 
-                              {/* Tags */}
-                              <div className="flex flex-wrap gap-1 mb-3">
-                                {giveaway.tags
-                                  .slice(0, 2)
-                                  .map((tag: string, tagIndex: number) => (
-                                    <motion.div
-                                      key={tagIndex}
-                                      initial={{ opacity: 0, scale: 0.8 }}
-                                      animate={{ opacity: 1, scale: 1 }}
-                                      transition={{
-                                        delay: index * 0.1 + tagIndex * 0.05,
-                                      }}
-                                      whileHover={{ scale: 1.05 }}
-                                    >
-                                      <Badge
-                                        variant="secondary"
-                                        className="text-[10px] bg-gray-700/50 text-gray-300 backdrop-blur-sm px-1.5 py-0.5"
-                                      >
-                                        {tag}
-                                      </Badge>
-                                    </motion.div>
-                                  ))}
-                              </div>
+                                {/* Category Badge */}
+                                {giveaway.category && (
+                                  <div className="flex flex-wrap gap-1">
+                                    <Badge className="bg-neutral-800/95 text-white backdrop-blur-sm text-[10px] font-bold border border-neutral-600/50 rounded px-1.5 py-0.5 uppercase tracking-wide shadow-lg">
+                                      <span className="mr-1 text-xs">•</span>
+                                      {giveaway.category}
+                                    </Badge>
+                                  </div>
+                                )}
 
-                              {/* Requirements Preview */}
-                              <div className="mb-3">
-                                <h4 className="text-xs font-semibold text-white mb-1.5 flex items-center">
-                                  <Target className="mr-1 h-3 w-3 text-yellow-400" />
-                                  Requirements:
-                                </h4>
-                                <ul className="space-y-0.5">
-                                  {giveaway.requirements
-                                    .slice(0, 1)
-                                    .map((req: string, reqIndex: number) => (
-                                      <li
-                                        key={reqIndex}
-                                        className="text-xs text-gray-400 flex items-center"
-                                      >
-                                        <motion.div
-                                          className="w-1 h-1 bg-yellow-400 rounded-full mr-1.5"
-                                          animate={{ scale: [1, 1.3, 1] }}
-                                          transition={{
-                                            duration: 2,
-                                            repeat: Number.POSITIVE_INFINITY,
-                                            delay: reqIndex * 0.3,
-                                          }}
-                                        />
-                                        {req}
-                                      </li>
-                                    ))}
-                                  {giveaway.requirements.length > 1 && (
-                                    <li className="text-xs text-gray-500">
-                                      +{giveaway.requirements.length - 1}{" "}
-                                      more...
-                                    </li>
+                                {/* Description */}
+                                <CardDescription className="text-neutral-400 text-xs leading-snug line-clamp-2 flex items-center gap-1.5">
+                                  <span>By {giveaway.creator || "Unknown Creator"}</span>
+                                  {isVerifiedCreator(giveaway.creator_roles) && (
+                                    <VerifiedIcon size="sm" />
                                   )}
-                                </ul>
-                              </div>
+                                </CardDescription>
 
-                              {/* Action Buttons */}
-                              <div
-                                className="flex gap-2"
-                                onClick={(e) => e.preventDefault()}
-                              >
-                                <motion.div
-                                  className="flex-1"
-                                  whileHover={{ scale: 1.02 }}
-                                  whileTap={{ scale: 0.98 }}
-                                >
-                                  {!isEnded && (
-                                    <Button
-                                      onClick={(e) => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        enterGiveaway(giveaway.id);
-                                      }}
-                                      disabled={enteredGiveaways.includes(
-                                        giveaway.id
-                                      )}
-                                      size="sm"
-                                      className={`w-full text-xs ${
-                                        enteredGiveaways.includes(giveaway.id)
-                                          ? "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
-                                          : "bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 hover:from-yellow-500 hover:via-orange-600 hover:to-red-600"
-                                      } text-black font-bold shadow-lg transition-all duration-300 py-1.5`}
-                                    >
-                                      {enteredGiveaways.includes(
-                                        giveaway.id
-                                      ) ? (
-                                        <>
-                                          <Trophy className="mr-1.5 h-3.5 w-3.5" />
-                                          Registered!
-                                        </>
-                                      ) : (
-                                        <>
-                                          <Gift className="mr-1.5 h-3.5 w-3.5" />
-                                          View Details
-                                        </>
-                                      )}
-                                    </Button>
-                                  )}
-                                </motion.div>
+                                {/* Value */}
+                                <CardDescription className="text-orange-500 text-xl font-bold pt-1">
+                                  {giveaway.currency_symbol || "$"}
+                                  {giveaway.totalValue}
+                                </CardDescription>
+                              </CardContent>
+
+                              {/* Button Section */}
+                              <div className="px-3 pb-3 mt-auto">
+                                {!isEnded ? (
+                                  <Button
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      enterGiveaway(giveaway.id);
+                                    }}
+                                    disabled={enteredGiveaways.includes(giveaway.id)}
+                                    variant="outline"
+                                    className={`w-full bg-white text-black hover:bg-gray-300 hover:border-gray-300 hover:text-black transition-colors duration-200 font-semibold text-xs py-1.5 h-auto ${
+                                      enteredGiveaways.includes(giveaway.id)
+                                        ? "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white"
+                                        : ""
+                                    }`}
+                                  >
+                                    {enteredGiveaways.includes(giveaway.id) ? (
+                                      <>
+                                        <Trophy className="mr-1.5 h-3.5 w-3.5" />
+                                        Registered!
+                                      </>
+                                    ) : (
+                                      "View Details"
+                                    )}
+                                  </Button>
+                                ) : (
+                                  <Button
+                                    variant="outline"
+                                    disabled
+                                    className="w-full bg-neutral-800 text-neutral-500 cursor-not-allowed font-semibold text-xs py-1.5 h-auto"
+                                  >
+                                    Ended
+                                  </Button>
+                                )}
                               </div>
-                            </CardContent>
+                            </div>
                           </Card>
                         </Link>
                       </motion.div>
@@ -1491,7 +1039,7 @@ export default function GiveawaysPage() {
               </motion.div>
             </TabsContent>
 
-       
+
 
             <TabsContent value="rules" className="mt-8">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

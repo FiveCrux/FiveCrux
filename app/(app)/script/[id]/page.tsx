@@ -4,12 +4,6 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useParams, useRouter } from "next/navigation";
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/componentss/ui/accordion";
-import {
   Package,
   CheckCircle,
   AlertCircle,
@@ -29,6 +23,7 @@ import { Button } from "@/componentss/ui/button";
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/componentss/ui/card";
@@ -45,6 +40,8 @@ import Footer from "@/componentss/shared/footer";
 import { VerifiedIcon } from "@/componentss/shared/verified-icon";
 import { isVerifiedCreator } from "@/lib/utils";
 import Loading from "./loading";
+import Link from "next/link";
+import Image from "next/image";
 
 interface Script {
   id: number;
@@ -293,6 +290,8 @@ export default function ScriptDetailPage() {
   const [script, setScript] = useState<Script | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [otherScripts, setOtherScripts] = useState<any[]>([]);
+  const [loadingOtherScripts, setLoadingOtherScripts] = useState(true);
 
   useEffect(() => {
     const fetchScript = async () => {
@@ -321,6 +320,56 @@ export default function ScriptDetailPage() {
 
     if (scriptId) {
       fetchScript();
+    }
+  }, [scriptId]);
+
+  // Fetch other scripts (excluding current one)
+  useEffect(() => {
+    const fetchOtherScripts = async () => {
+      try {
+        setLoadingOtherScripts(true);
+        const response = await fetch(`/api/scripts?limit=8`, { cache: "no-store" });
+        
+        if (!response.ok) {
+          console.error("Failed to fetch other scripts");
+          return;
+        }
+
+        const data = await response.json();
+        // Filter out current script and map to UI format
+        const filteredScripts = (data.scripts || [])
+          .filter((s: any) => s.id !== Number(scriptId))
+          .slice(0, 6)
+          .map((s: any) => {
+            const image =
+              s.cover_image ||
+              (s.images && s.images[0]) ||
+              (s.screenshots && s.screenshots[0]) ||
+              "/placeholder.jpg";
+            
+            return {
+              id: s.id,
+              title: s.title,
+              description: s.description,
+              price: s.price,
+              currency_symbol: s.currency_symbol || "$",
+              image: image,
+              seller: s.seller_name || "Unknown",
+              seller_roles: s.seller_roles,
+              framework: Array.isArray(s.framework) ? s.framework : (s.framework ? [s.framework] : []),
+            };
+          });
+        
+        setOtherScripts(filteredScripts);
+      } catch (err) {
+        console.error("Error fetching other scripts:", err);
+      } finally {
+        setLoadingOtherScripts(false);
+      }
+    };
+
+    if (scriptId) {
+      fetchOtherScripts();
     }
   }, [scriptId]);
 
@@ -400,7 +449,7 @@ export default function ScriptDetailPage() {
               script.cover_image ? `url(${script.cover_image})` : "none"
             }`,
             backgroundSize: "cover",
-            backgroundPosition: "center 70%",
+            backgroundPosition: "center 80%",
             backgroundRepeat: "no-repeat",
           }}
         >
@@ -457,11 +506,11 @@ export default function ScriptDetailPage() {
                           {script.framework.map((fw) => fw).join(", ")}
                         </Badge>
                       )}
-                      {discount > 0 && (
+                      {/* {discount > 0 && (
                         <Badge className="bg-red-600 text-white font-bold px-3 py-1">
                           -{discount}% OFF
                         </Badge>
-                      )}
+                      )} */}
                     </div>
 
                     <h1 className="text-4xl lg:text-5xl font-black text-white mb-4 leading-tight">
@@ -510,52 +559,64 @@ export default function ScriptDetailPage() {
                   </div>
 
                   {/* Pricing Card */}
-                  <Card className="bg-neutral-800 border border-orange-500/30 shadow-xl">
-                    <CardContent className="p-6">
-                      <div className="flex items-center justify-between mb-6">
-                        <div>
-                          <div className="flex items-baseline gap-3 mb-2">
-                            <span className="text-3xl font-black text-orange-500">
+                  <Card className="bg-gradient-to-br from-neutral-800 to-neutral-900 border-2 border-orange-500/40 shadow-2xl rounded-xl overflow-hidden">
+                    <CardContent className="p-6 space-y-6">
+                      {/* Price Section */}
+                      <div className="space-y-3">
+                        <div className="flex items-end gap-3 flex-wrap">
+                          {script.original_price && (
+                            <span className="text-xl text-gray-500 line-through font-medium">
+                              {script.currency_symbol || "$"}{script.original_price}
+                            </span>
+                          )}
+                          <div className="flex items-center gap-2">
+                            <span className="text-4xl font-black text-orange-500 leading-none">
                               {script.currency_symbol || "$"}{script.price}
                             </span>
                             {script.original_price && (
-                              <span className="text-2xl text-gray-500 line-through">
-                                {script.currency_symbol || "$"}{script.original_price}
-                              </span>
+                              <Badge className="bg-gradient-to-r from-red-500 to-red-600 text-white px-2.5 py-1 rounded-md text-xs font-bold shadow-lg">
+                                -{discount}% OFF
+                              </Badge>
                             )}
                           </div>
-                          {discount > 0 && (
-                            <div className="inline-flex bg-red-500 text-white px-3 py-1 rounded text-sm font-bold">
-                              Save {script.currency_symbol || "$"}
-                              {(script.original_price! - script.price).toFixed(
-                                2
-                              )}
-                            </div>
-                          )}
                         </div>
+                        {script.original_price && (
+                          <p className="text-sm text-gray-400">
+                            Save {script.currency_symbol || "$"}{(script.original_price - script.price).toFixed(2)}
+                          </p>
+                        )}
                       </div>
 
-                      <Button
-                        className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-6 text-lg shadow-lg"
-                        onClick={() => {
-                          if (script.link) {
-                            window.open(
-                              script.link,
-                              "_blank",
-                              "noopener,noreferrer"
-                            );
-                          }
-                        }}
-                        disabled={!script.link}
-                      >
-                        <ShoppingCart className="mr-2 h-6 w-6" />
-                        Buy Now
-                      </Button>
-                      {!script.link && (
-                        <p className="text-sm text-gray-400 text-center mt-2">
-                          No purchase link available
-                        </p>
-                      )}
+                      {/* Divider */}
+                      <div className="h-px bg-gradient-to-r from-transparent via-orange-500/30 to-transparent" />
+
+                      {/* Button Section */}
+                      <div className="space-y-3">
+                        <Button
+                          className="w-full bg:white text-black hover:bg-gray-300 hover:border-gray-300 hover:text-black font-bold py-6 text-lg shadow-lg hover:shadow-xl transition-all duration-300 rounded-lg"
+                          onClick={() => {
+                            if (script.link) {
+                              window.open(
+                                script.link,
+                                "_blank",
+                                "noopener,noreferrer"
+                              );
+                            }
+                          }}
+                          disabled={!script.link}
+                        >
+                          <ShoppingCart className="mr-2 h-5 w-5" />
+                          Buy Now
+                        </Button>
+                        {!script.link && (
+                          <div className="text-center py-2">
+                            <p className="text-sm text-gray-400 flex items-center justify-center gap-2">
+                              <AlertCircle className="h-4 w-4" />
+                              No purchase link available
+                            </p>
+                          </div>
+                        )}
+                      </div>
                     </CardContent>
                   </Card>
                 </div>
@@ -756,36 +817,113 @@ export default function ScriptDetailPage() {
           </div>
         </div>
 
-        {/* FAQs Section */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20 align-middle justify-center">
-          <h2 className="text-4xl font-bold mb-8">FAQs</h2>
-        <Accordion type="single" collapsible>
-          <AccordionItem value="item-1">
-            <AccordionTrigger className="text-2xl">Where can I Download this Script?</AccordionTrigger>
-            <AccordionContent>
-            After your purchase, your package will appear on the Keymaster. You can download the package or transfer your license.
-            </AccordionContent>
-          </AccordionItem>
-          <AccordionItem value="item-2">
-            <AccordionTrigger className="text-2xl">How does this system work?</AccordionTrigger>
-            <AccordionContent>
-            All resources are encrypted by Cfx.re and linked to your personal Cfx.re account. This process is automated and instant. Purchases are tied to your Cfx.re account, not a specific license key. If you buy a package, it will work for all of your keys. If another Cfx.re account needs access, you need to transfer your license on the Keymaster.
-            </AccordionContent>
-          </AccordionItem>
-          <AccordionItem value="item-3">
-            <AccordionTrigger className="text-2xl">Can I resell this Script?</AccordionTrigger>
-            <AccordionContent>
-            No. Tebex Limited is the only authorized reseller of CRUX assets. Any external offers or websites claiming to sell our products are unauthorized and violate copyright laws. If you find CRUX assets outside our store, they are likely scams and could pose security risks. To guarantee authenticity and protection, all our assets are delivered exclusively through the Cfx Escrow system.
-            </AccordionContent>
-          </AccordionItem>
-          <AccordionItem value="item-4">
-            <AccordionTrigger className="text-2xl">Where can I get support?</AccordionTrigger>
-            <AccordionContent>
-            Our official support is available through our Discord server, where our team is ready to assist you with technical issues and questions 24/7.
-            </AccordionContent>
-          </AccordionItem>
-          
-        </Accordion>
+        {/* More Scripts Section */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+          <div className="mb-8">
+            <h2 className="text-4xl font-bold text-white mb-2">More Scripts</h2>
+            <p className="text-gray-400">Discover other premium FiveM scripts</p>
+          </div>
+
+          {loadingOtherScripts ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, i) => (
+                <Card key={i} className="bg-neutral-900 border-2 border-neutral-700/50 h-full">
+                  <CardHeader className="p-0">
+                    <div className="w-full h-52 bg-neutral-800 animate-pulse" />
+                  </CardHeader>
+                  <CardContent className="p-3 space-y-2">
+                    <div className="h-4 bg-neutral-800 rounded animate-pulse" />
+                    <div className="h-4 bg-neutral-800 rounded w-2/3 animate-pulse" />
+                    <div className="h-3 bg-neutral-800 rounded w-1/2 animate-pulse" />
+                    <div className="h-6 bg-neutral-800 rounded w-1/3 animate-pulse" />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : otherScripts.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {otherScripts.map((otherScript) => (
+                <motion.div
+                  key={otherScript.id}
+                  className="group"
+                  whileHover={{ y: -5, scale: 1.02 }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <Link href={`/script/${otherScript.id}`}>
+                    <Card className="bg-neutral-900 border-2 border-neutral-700/50 hover:border-orange-500 cursor-pointer h-full backdrop-blur-sm relative overflow-hidden shadow-2xl rounded-lg transition-all duration-300 flex flex-col">
+                      {/* Image Section */}
+                      <CardHeader className="p-0 overflow-hidden rounded-t-lg">
+                        <Image
+                          src={otherScript.image || "/placeholder.jpg"}
+                          alt={otherScript.title}
+                          width={400}
+                          height={256}
+                          className="object-cover w-full h-52"
+                        />
+                      </CardHeader>
+
+                      {/* Content Section */}
+                      <div className="flex flex-col flex-1">
+                        <CardContent className="p-3 flex-1 space-y-2">
+                          {/* Title */}
+                          <CardTitle className="text-base font-bold text-white leading-tight line-clamp-2">
+                            {otherScript.title}
+                          </CardTitle>
+
+                          {/* Framework Badges */}
+                          {otherScript.framework &&
+                            otherScript.framework.length > 0 && (
+                              <div className="flex flex-wrap gap-1">
+                                {otherScript.framework.map((fw: string, idx: number) => (
+                                  <Badge
+                                    key={idx}
+                                    className="bg-neutral-800/95 text-white backdrop-blur-sm text-[10px] font-bold border border-neutral-600/50 rounded px-1.5 py-0.5 uppercase tracking-wide shadow-lg"
+                                  >
+                                    <span className="mr-1 text-xs">•</span>
+                                    {fw}
+                                  </Badge>
+                                ))}
+                              </div>
+                            )}
+
+                          {/* Description */}
+                          <CardDescription className="text-neutral-400 text-xs leading-snug line-clamp-2 flex items-center gap-1.5">
+                            <span>By {otherScript.seller}</span>
+                            {isVerifiedCreator(otherScript.seller_roles) && (
+                              <VerifiedIcon size="sm" />
+                            )}
+                          </CardDescription>
+
+                          {/* Price */}
+                          <CardDescription className="text-orange-500 text-xl font-bold pt-1">
+                            {otherScript.currency_symbol || "$"}
+                            {otherScript.price}
+                          </CardDescription>
+                        </CardContent>
+
+                        {/* Button Section */}
+                        <div className="px-3 pb-3 mt-auto">
+                          <Button
+                            variant="outline"
+                            className="w-full bg-white text-black hover:bg-gray-300 hover:border-gray-300 hover:text-black transition-colors duration-200 font-semibold text-xs py-1.5 h-auto"
+                          >
+                            View Details
+                          </Button>
+                        </div>
+                      </div>
+                    </Card>
+                  </Link>
+                </motion.div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <Package className="h-16 w-16 text-gray-500 mx-auto mb-4" />
+              <p className="text-gray-400">No other scripts available at the moment.</p>
+            </div>
+          )}
         </div>
       </div>
       <Footer />
