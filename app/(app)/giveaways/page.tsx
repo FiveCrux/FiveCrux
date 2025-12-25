@@ -1035,7 +1035,6 @@ export default function GiveawaysPage() {
                     );
                   });
                 })()}
-                )
               </motion.div>
             </TabsContent>
 
