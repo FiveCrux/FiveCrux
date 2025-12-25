@@ -12,7 +12,7 @@ import { HexagonBackground } from "@/components/animate-ui/components/background
 import { 
   Zap, 
   TrendingUp, 
-  Target, 
+  TargetIcon,
   BarChart3, 
   Users, 
   Check, 
@@ -59,7 +59,7 @@ const pricingPackages: PricingPackage[] = [
     slotsPerMonth: 1,
     description: "Perfect for small businesses and individual creators. One-time payment, all slots unlocked immediately.",
     gradient: "from-gray-600 to-gray-700",
-    icon: Target,
+    icon: TargetIcon,
     durations: [
       { label: "1 Month", months: 1, price: 40, originalPrice: 70 },
       { label: "3 Months", months: 3, price: 110, originalPrice: 210 },
@@ -763,7 +763,7 @@ export default function AdvertisePage() {
                           activeTab === "ads" ? "text-orange-400" : "text-purple-400"
                         )}>
                           {activeTab === "ads" ? (
-                            <>Get {pkg.slotsPerMonth * selectedDuration.months} slot{pkg.slotsPerMonth * selectedDuration.months > 1 ? 's' : ''} immediately ({pkg.slotsPerMonth} slot{pkg.slotsPerMonth > 1 ? 's' : ''} × {selectedDuration.months} month{selectedDuration.months > 1 ? 's' : ''})</>
+                            <>Get {pkg.slotsPerMonth} slot{pkg.slotsPerMonth > 1 ? 's' : ''} immediately for {selectedDuration.months} month{selectedDuration.months > 1 ? 's' : ''}</>
                           ) : (
                             <>Get {pkg.slotsPerMonth} slot{pkg.slotsPerMonth > 1 ? 's' : ''} for {selectedDuration.weeks || Math.round(selectedDuration.months * 4)} week{selectedDuration.weeks !== 1 ? 's' : ''}</>
                           )}
@@ -783,7 +783,7 @@ export default function AdvertisePage() {
                           </div>
                           <span className="text-gray-300 text-sm leading-relaxed">
                             {activeTab === "ads" ? (
-                              <>{pkg.slotsPerMonth * selectedDuration.months} ad slot{pkg.slotsPerMonth * selectedDuration.months > 1 ? 's' : ''} (all slots unlocked immediately)</>
+                              <>{pkg.slotsPerMonth} ad slot{pkg.slotsPerMonth  > 1 ? 's' : ''} (all slots unlocked immediately)</>
                             ) : (
                               <>{pkg.slotsPerMonth} featured script slot{pkg.slotsPerMonth > 1 ? 's' : ''} (all slots unlocked immediately)</>
                             )}
