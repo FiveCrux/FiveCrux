@@ -141,7 +141,7 @@ const MediaCarousel = ({
   );
 
   return (
-    <>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       {/* Main Carousel */}
       <div className="sticky top-24">
         <div className="relative bg-transparent rounded-lg overflow-hidden">
@@ -278,7 +278,7 @@ const MediaCarousel = ({
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 };
 
@@ -377,7 +377,7 @@ export default function ScriptDetailPage() {
     return (
       <>
         <Navbar />
-        <div className="min-h-screen bg-neutral-900 text-white flex items-center justify-center">
+        <div className="min-h-screen text-white flex items-center justify-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-orange-500"></div>
         </div>
       </>
@@ -388,7 +388,7 @@ export default function ScriptDetailPage() {
     return (
       <>
         <Navbar />
-        <div className="min-h-screen bg-neutral-900 text-white flex items-center justify-center">
+        <div className="min-h-screen text-white flex items-center justify-center">
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-4">Script Not Found</h1>
             <p className="text-gray-400 mb-6">
@@ -434,7 +434,7 @@ export default function ScriptDetailPage() {
         }}
       />
       <Navbar />
-      <div className="min-h-screen bg-neutral-900 text-white">
+      <div className="min-h-screen text-white ">
         {/* Hero Section with Background Image */}
         <div
           className="relative text-white"
@@ -451,7 +451,7 @@ export default function ScriptDetailPage() {
           <div className="absolute inset-0 bg-black/60 pointer-events-none" />
 
           {/* Gradient fade from middle to bottom - completely dark */}
-          <div className="absolute inset-x-0 top-1/3 bottom-0 bg-gradient-to-b from-transparent via-neutral-900 to-neutral-900 pointer-events-none z-[1]" />
+          <div className="absolute inset-x-0 top-[15%] bottom-0 bg-gradient-to-b from-transparent via-neutral-900 to-neutral-900 pointer-events-none z-[1]" />
 
           {/* Content */}
           <div className="relative z-10">
@@ -530,7 +530,7 @@ export default function ScriptDetailPage() {
                   </div>
 
                   {/* Pricing Card */}
-                  <Card className="bg-gradient-to-br from-neutral-800 to-neutral-900 shadow-2xl rounded-xl overflow-hidden">
+                  <Card className="bg-transparent border-none">
                     <CardContent className="p-6 space-y-6">
                       {/* Price Section */}
                       <div className="space-y-3">
@@ -541,7 +541,7 @@ export default function ScriptDetailPage() {
                             </span>
                           )}
                           <div className="flex items-center gap-2">
-                            <span className="text-4xl font-black text-orange-500 leading-none">
+                            <span className="text-4xl font-black text-white leading-none">
                               {script.currency_symbol || "$"}{script.price}
                             </span>
                             {script.original_price && (
@@ -896,7 +896,7 @@ export default function ScriptDetailPage() {
                             )}
 
                           {/* Description */}
-                          <CardDescription className="text-neutral-400 text-xs leading-snug line-clamp-2 flex items-center gap-1.5">
+                          <CardDescription className="text-white text-xs leading-snug line-clamp-2 flex items-center gap-1.5">
                             <span>By {otherScript.seller}</span>
                             {isVerifiedCreator(otherScript.seller_roles) && (
                               <VerifiedIcon size="sm" />

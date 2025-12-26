@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/componentss/ui/badge"
 import { Tabs, TabsList, TabsTrigger } from "@/componentss/ui/tabs"
 import Navbar from "@/componentss/shared/navbar"
+import Footer from "@/componentss/shared/footer"
 import { StarsBackground } from "@/components/animate-ui/components/backgrounds/stars"
 import { HexagonBackground } from "@/components/animate-ui/components/backgrounds/hexagon"
 import { 
@@ -435,7 +436,7 @@ export default function AdvertisePage() {
   const currentPackages = activeTab === "ads" ? pricingPackages : featuredScriptPackages
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-white overflow-hidden">
+    <div className="min-h-screen text-white overflow-hidden">
       <Navbar />
 
       {/* Hero Section */}
@@ -971,6 +972,7 @@ export default function AdvertisePage() {
           </motion.div>
         </div>
       </motion.section>
+      <Footer />
     </div>
   )
 }
