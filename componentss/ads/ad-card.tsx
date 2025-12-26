@@ -110,7 +110,7 @@ export default function AdCard({ ad, className = "", variant = 'default' }: AdCa
         whileHover={{ y: -5, scale: 1.02 }}
         className={`group ${className}`}
       >
-        <Card className="bg-neutral-900 border-2 border-neutral-700/50 hover:border-white cursor-pointer h-full backdrop-blur-sm relative overflow-hidden shadow-2xl rounded-lg transition-all duration-300 flex flex-col">
+        <Card className="bg-neutral-900 border-neutral-700/50 hover:border-white cursor-pointer h-full backdrop-blur-sm relative overflow-hidden shadow-2xl rounded-lg transition-all duration-300 flex flex-col">
           {/* Image Section */}
           <CardHeader className="p-0 overflow-hidden rounded-t-lg">
             <div className="relative">
@@ -203,9 +203,9 @@ export default function AdCard({ ad, className = "", variant = 'default' }: AdCa
         whileHover={{ y: -5, scale: 1.02 }}
         className={`group ${className}`}
       >
-        <Card className="bg-neutral-900 border-2 hover:border-white cursor-pointer h-full backdrop-blur-sm relative overflow-hidden shadow-2xl rounded-lg transition-all duration-300 flex flex-col">
+        <Card className="bg-neutral-900 hover:border-white cursor-pointer h-full backdrop-blur-sm relative overflow-hidden shadow-2xl rounded-lg transition-all duration-300 flex flex-col">
           {/* Image Section */}
-          <CardHeader className="p-0 overflow-hidden rounded-t-lg">
+          <CardHeader className="p-0 overflow-hidden rounded-t-lg relative">
             <div className="relative">
               {ad.image_url && !imageError ? (
                 <motion.img
@@ -226,9 +226,6 @@ export default function AdCard({ ad, className = "", variant = 'default' }: AdCa
               />
               <motion.div
                 className="absolute top-2 right-2"
-                // initial={{ scale: 0, rotate: 180 }}
-                // animate={{ scale: 1, rotate: 0 }}
-                // transition={{ delay: 0.1 }}
                 whileHover={{ scale: 1.1 }}
               >
                 <Badge className="bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 text-[10px] font-bold px-1.5 py-0.5">
@@ -242,29 +239,24 @@ export default function AdCard({ ad, className = "", variant = 'default' }: AdCa
           <div className="flex flex-col flex-1">
             <CardContent className="p-3 flex-1 space-y-2">
               {/* Title */}
-              <CardTitle className="text-base font-bold text-white leading-tight line-clamp-2 group-hover:text-yellow-400 transition-colors duration-300">
+              <CardTitle className="text-base font-bold text-white leading-tight line-clamp-2">
                 {ad.title}
               </CardTitle>
+
+              {/* Category Badge */}
+              {ad.category && (
+                <div className="flex flex-wrap gap-1">
+                  <Badge className="bg-neutral-800/95 text-white backdrop-blur-sm text-[10px] font-bold border border-neutral-600/50 rounded px-1.5 py-0.5 uppercase tracking-wide shadow-lg">
+                    <span className="mr-1 text-xs">•</span>
+                    {ad.category}
+                  </Badge>
+                </div>
+              )}
 
               {/* Description */}
               <CardDescription className="text-neutral-400 text-xs leading-snug line-clamp-2">
                 {ad.description}
               </CardDescription>
-
-              {/* Category Badge */}
-              {/* <motion.div
-                className="flex flex-wrap gap-1"
-                initial={{ scale: 0, rotate: 180 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ delay: 0.1, type: "spring" }}
-              >
-                <motion.div whileHover={{ scale: 1.1, y: -2 }}>
-                  <Badge className="bg-neutral-800/95 text-white backdrop-blur-sm text-[10px] font-bold border border-neutral-600/50 rounded px-1.5 py-0.5 uppercase tracking-wide shadow-lg">
-                    <span className="mr-1 text-xs">•</span>
-                    {ad.category}
-                  </Badge>
-                </motion.div>
-              </motion.div> */}
 
               {/* Sponsored Text */}
               <CardDescription className="text-yellow-500/70 text-[10px] font-semibold pt-1 uppercase tracking-wider">

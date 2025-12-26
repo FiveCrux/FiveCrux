@@ -547,7 +547,7 @@ export default function AdminPage() {
     return (
       <>
         <Navbar />
-        <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="min-h-screen text-white flex items-center justify-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-orange-500"></div>
         </div>
         {/* <Footer /> */}
@@ -569,7 +569,7 @@ export default function AdminPage() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-black text-white">
+      <div className="min-h-screen text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           {/* Header */}
           <motion.div

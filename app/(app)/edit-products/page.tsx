@@ -95,7 +95,7 @@ export default function EditProductsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen text-white">
       <Navbar />
       <div className="max-w-4xl mx-auto py-12 px-4">
         <h1 className="text-3xl font-bold mb-8">Edit Your Products</h1>

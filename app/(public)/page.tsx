@@ -182,7 +182,7 @@ export default function HomePage() {
       `,
         }}
       />
-      <div className="min-h-screen bg-neutral-950 text-white overflow-hidden">
+      <div className="min-h-screen text-white overflow-hidden">
         <Navbar />
 
         {/* Enhanced Hero Section */}
@@ -196,7 +196,7 @@ export default function HomePage() {
             starColor={resolvedTheme === "dark" ? "#FFF" : "#000"}
             className={cn(
               "absolute inset-0 flex items-center justify-center rounded-xl",
-              "bg-neutral-950 dark:bg-neutral-950"
+              "bg-[#131313]"
             )}
           />
           <div className="max-w-7xl mx-auto text-center relative z-10">
@@ -305,7 +305,7 @@ export default function HomePage() {
 
         {/* Featured scripts Section */}
         <motion.section className="py-20 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-7xl mx-auto">
+          <div className="max-w-7xl mx-auto relative z-10">
             <motion.div
               initial={{ opacity: 0, y: 50 }}
               whileInView={{ opacity: 1, y: 0 }}

@@ -27,6 +27,7 @@ import {
   CardTitle,
 } from "@/componentss/ui/card";
 import { Badge } from "@/componentss/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/componentss/ui/avatar";
 import {
   Select,
   SelectContent,
@@ -132,6 +133,8 @@ export default function ScriptsPage() {
     category: string;
     categoryName: string;
     seller: string;
+    seller_id?: string;
+    seller_image?: string | null;
     seller_roles?: string[] | null;
     discount: number;
     framework?: string[];
@@ -192,6 +195,8 @@ export default function ScriptsPage() {
               category: s.category,
               categoryName: s.category,
               seller: s.seller_name,
+              seller_id: s.seller_id,
+              seller_image: s.seller_image || null,
               seller_roles: s.seller_roles || null,
               discount: s.original_price
                 ? Math.max(
@@ -464,7 +469,7 @@ export default function ScriptsPage() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-black text-white relative overflow-hidden">
+      <div className="min-h-screen text-white relative overflow-hidden">
         <AnimatedParticles />
 
         {/* Animated background */}
@@ -571,12 +576,12 @@ export default function ScriptsPage() {
               {/* Filters Bar */}
               <motion.div
                 ref={filtersRef}
-                className="mb-6 relative"
+                className="mb-6 relative z-50"
                 initial={{ opacity: 0, y: -20 }}
                 animate={filtersInView ? { opacity: 1, y: 0 } : {}}
                 transition={{ duration: 0.8 }}
               >
-                <Card className="bg-neutral-800/30 border-neutral-700/50 backdrop-blur-xl relative">
+                <Card className="bg-neutral-800/30 border-neutral-700/50 backdrop-blur-xl relative z-50">
                   <CardContent className="p-4">
                     <div className="flex flex-col gap-4">
                       {/* Filter Header */}
@@ -630,7 +635,7 @@ export default function ScriptsPage() {
                             setOpenFilter(open ? "categories" : null)
                           }
                         >
-                          <div className="relative z-50">
+                          <div className="relative z-[60]">
                             <CollapsibleTrigger asChild>
                               <motion.div
                                 whileHover={{ scale: 1.05, y: -2 }}
@@ -664,7 +669,7 @@ export default function ScriptsPage() {
                                 </Button>
                               </motion.div>
                             </CollapsibleTrigger>
-                            <CollapsibleContent className="absolute z-[100] mt-2 left-0 bg-neutral-900 border border-neutral-700/50 rounded-lg p-4 shadow-xl min-w-[200px]">
+                            <CollapsibleContent className="absolute z-[200] mt-2 left-0 bg-neutral-900 border border-neutral-700/50 rounded-lg p-4 shadow-xl min-w-[200px]">
                               <div className="space-y-2">
                                 {categories.map((category) => (
                                   <motion.div
@@ -704,7 +709,7 @@ export default function ScriptsPage() {
                             setOpenFilter(open ? "framework" : null)
                           }
                         >
-                          <div className="relative z-50">
+                          <div className="relative z-[60]">
                             <CollapsibleTrigger asChild>
                               <motion.div
                                 whileHover={{ scale: 1.05 }}
@@ -732,7 +737,7 @@ export default function ScriptsPage() {
                                 </Button>
                               </motion.div>
                             </CollapsibleTrigger>
-                            <CollapsibleContent className="absolute z-[100] mt-2 left-0 bg-neutral-900 border border-neutral-700/50 rounded-lg p-4 shadow-xl min-w-[200px]">
+                            <CollapsibleContent className="absolute z-[200] mt-2 left-0 bg-neutral-900 border border-neutral-700/50 rounded-lg p-4 shadow-xl min-w-[200px]">
                               <div className="space-y-2">
                                 {frameworks.map((framework) => (
                                   <motion.div
@@ -772,7 +777,7 @@ export default function ScriptsPage() {
                             setOpenFilter(open ? "price" : null)
                           }
                         >
-                          <div className="relative z-50">
+                          <div className="relative z-[60]">
                             <CollapsibleTrigger asChild>
                               <motion.div
                                 whileHover={{ scale: 1.05 }}
@@ -806,7 +811,7 @@ export default function ScriptsPage() {
                                 </Button>
                               </motion.div>
                             </CollapsibleTrigger>
-                            <CollapsibleContent className="absolute z-[100] mt-2 left-0 bg-neutral-900 border border-neutral-700/50 rounded-lg p-4 shadow-xl min-w-[250px]">
+                            <CollapsibleContent className="absolute z-[200] mt-2 left-0 bg-neutral-900 border border-neutral-700/50 rounded-lg p-4 shadow-xl min-w-[250px]">
                               <div className="space-y-4">
                                 {/* Price Range */}
                                 <div>
@@ -866,7 +871,7 @@ export default function ScriptsPage() {
               </motion.div>
               {/* Search and Sort Bar */}
               <motion.div
-                className="flex flex-col sm:flex-row gap-4 mb-6 relative z-0"
+                className="flex flex-col sm:flex-row gap-4 mb-6 relative z-10"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
@@ -905,7 +910,7 @@ export default function ScriptsPage() {
                     </SelectContent>
                   </Select>
                 </motion.div>
-                <div className="hidden sm:flex border border-neutral-700/50 rounded-md backdrop-blur-sm">
+                {/* <div className="hidden sm:flex border border-neutral-700/50 rounded-md backdrop-blur-sm">
                   <motion.div
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
@@ -940,7 +945,7 @@ export default function ScriptsPage() {
                       <List className="h-4 w-4" />
                     </Button>
                   </motion.div>
-                </div>
+                </div> */}
               </motion.div>
 
               {/* Active Filters */}
@@ -1224,7 +1229,7 @@ export default function ScriptsPage() {
                           <motion.div key={script.id} className="group" whileHover={{ y: -5, scale: 1.02 }}>
                             <Link href={`/script/${script.id}`}>
                               <Card
-                                className={`bg-neutral-900 border-2 border-neutral-700/50 cursor-pointer h-full backdrop-blur-sm relative overflow-hidden shadow-2xl rounded-lg transition-all duration-300 ${
+                                className={`bg-neutral-900 border-neutral-700/50 hover:border-white cursor-pointer h-full backdrop-blur-sm relative overflow-hidden shadow-2xl rounded-lg transition-all duration-300 ${
                                   viewMode === "list"
                                     ? "flex flex-row"
                                     : "flex flex-col"
@@ -1283,16 +1288,37 @@ export default function ScriptsPage() {
                                       )}
                                       
                                     {/* Description */}
-                                    <CardDescription className="text-neutral-400 text-xs leading-snug line-clamp-2 flex items-center gap-1.5">
-                                      <span>By {script.seller}</span>
+                                    <CardDescription className="text-neutral-400 text-xs leading-snug flex items-center gap-1.5 flex-row">
+                                      <Avatar className="h-4 w-4 flex-shrink-0">
+                                        <AvatarImage
+                                          src={script.seller_image || "/placeholder-user.jpg"}
+                                          alt={script.seller}
+                                        />
+                                        <AvatarFallback className="bg-orange-500 text-white text-[8px] font-bold">
+                                          {script.seller ? script.seller[0].toUpperCase() : "?"}
+                                        </AvatarFallback>
+                                      </Avatar>
+                                      <span className="whitespace-nowrap">By {script.seller}</span>
                                       {isVerifiedCreator(script.seller_roles) && (
-                                        <VerifiedIcon size="sm" />
+                                        <VerifiedIcon size="sm" className="flex-shrink-0" />
                                       )}
                                     </CardDescription>
                                     {/* Price */}
-                                    <CardDescription className="text-orange-500 text-xl font-bold pt-1">
-                                      {script.currency_symbol || "$"}{script.price}
-                                    </CardDescription>
+                                    <div className="flex items-center gap-2 pt-1 flex-wrap">
+                                      {script.discount > 0 && script.originalPrice ? (
+                                        <>
+                                          <span className="text-gray-500 text-sm line-through">
+                                            {script.currency_symbol || "$"}{script.originalPrice}
+                                          </span>
+                                          <Badge className="bg-red-500/20 text-red-400 border-red-500/30 text-xs font-semibold px-2 py-0.5">
+                                            -{script.discount}%
+                                          </Badge>
+                                        </>
+                                      ) : null}
+                                      <span className="text-orange-500 text-xl font-bold">
+                                        {script.currency_symbol || "$"}{script.price}
+                                      </span>
+                                    </div>
                                   </CardContent>
 
                                   {/* Button Section */}

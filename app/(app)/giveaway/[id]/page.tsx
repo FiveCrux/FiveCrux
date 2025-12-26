@@ -817,7 +817,7 @@ export default function GiveawayDetailPage() {
     return (
       <>
         <Navbar />
-        <div className="min-h-screen bg-black text-white flex items-center justify-center py-20">
+        <div className="min-h-screen text-white flex items-center justify-center py-20">
           <div className="text-center">
             <motion.div 
               className="w-32 h-32 mx-auto mb-4 relative"
@@ -847,7 +847,7 @@ export default function GiveawayDetailPage() {
       <div className="relative z-50">
         <Navbar />
       </div>
-      <div className="min-h-screen bg-neutral-900 text-white">
+      <div className="min-h-screen text-white">
         <AnimatedParticles />
 
         {/* Hero Section with Background Image - Limited to Media Carousel */}
@@ -1003,52 +1003,6 @@ export default function GiveawayDetailPage() {
                     </p>
                   </div>
                 </motion.div>
-
-                {/* Creator Info - Enhanced */}
-                <motion.div
-                  className="bg-gradient-to-br from-gray-900/80 to-black/80 border-2 border-purple-500/20 rounded-2xl p-4 backdrop-blur-sm relative overflow-hidden group"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5 }}
-                  whileHover={{ borderColor: 'rgba(168, 85, 247, 0.4)', scale: 1.02 }}
-                >
-                  <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-br from-purple-500/5 to-transparent rounded-full blur-3xl group-hover:opacity-100 opacity-50 transition-opacity"></div>
-                  
-                  <div className="relative flex items-center gap-3">
-                    <Avatar className="h-12 w-12 border-2 border-yellow-500/30 shadow-lg shadow-yellow-500/20">
-                      <AvatarImage src={transformedGiveaway.creator.avatar} />
-                      <AvatarFallback className="bg-gradient-to-br from-yellow-400 to-orange-500 text-black font-bold text-base">
-                        {transformedGiveaway.creator.name[0]}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="text-white font-bold text-base">{transformedGiveaway.creator.name}</h3>
-                        {transformedGiveaway.creator.verified && (
-                          <motion.div 
-                            initial={{ scale: 0, rotate: -180 }} 
-                            animate={{ scale: 1, rotate: 0 }} 
-                            transition={{ delay: 0.7, type: "spring" }}
-                            className="flex items-center"
-                            title="Verified Creator"
-                          >
-                            <VerifiedIcon size="sm" />
-                          </motion.div>
-                        )}
-                        <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30 text-xs">
-                          Creator
-                        </Badge>
-                      </div>
-                      <p className="text-xs text-gray-400">
-                        Giveaway Host • Created {new Date(transformedGiveaway.createdAt).toLocaleDateString('en-US', {
-                          month: 'long',
-                          day: 'numeric',
-                          year: 'numeric'
-                        })}
-                      </p>
-                    </div>
-                  </div>
-                </motion.div>
               </div>
 
               {/* RIGHT COLUMN - Entry Panel (1/3 width) - STICKY */}
@@ -1176,12 +1130,56 @@ export default function GiveawayDetailPage() {
                       </div>
                     </div>
                   </div>
-
+ {/* Creator Info - Enhanced */}
+ <motion.div
+                  className="bg-gradient-to-br from-gray-900/80 to-black/80 border-2 border-purple-500/20 rounded-2xl p-4 backdrop-blur-sm relative overflow-hidden group"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                  whileHover={{ borderColor: 'rgba(168, 85, 247, 0.4)', scale: 1.02 }}
+                >
+                  <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-br from-purple-500/5 to-transparent rounded-full blur-3xl group-hover:opacity-100 opacity-50 transition-opacity"></div>
+                  
+                  <div className="relative flex items-center gap-3">
+                    <Avatar className="h-12 w-12 border-2 border-yellow-500/30 shadow-lg shadow-yellow-500/20">
+                      <AvatarImage src={transformedGiveaway.creator.avatar} />
+                      <AvatarFallback className="bg-gradient-to-br from-yellow-400 to-orange-500 text-black font-bold text-base">
+                        {transformedGiveaway.creator.name[0]}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="text-white font-bold text-base">{transformedGiveaway.creator.name}</h3>
+                        {transformedGiveaway.creator.verified && (
+                          <motion.div 
+                            initial={{ scale: 0, rotate: -180 }} 
+                            animate={{ scale: 1, rotate: 0 }} 
+                            transition={{ delay: 0.7, type: "spring" }}
+                            className="flex items-center"
+                            title="Verified Creator"
+                          >
+                            <VerifiedIcon size="sm" />
+                          </motion.div>
+                        )}
+                        <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30 text-xs">
+                          Creator
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-gray-400">
+                        Giveaway Host • Created {new Date(transformedGiveaway.createdAt).toLocaleDateString('en-US', {
+                          month: 'long',
+                          day: 'numeric',
+                          year: 'numeric'
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
                   {/* Share/Wishlist Actions - Compact */}
-                  <div className="grid grid-cols-2 gap-2">
+                  {/* <div className="grid grid-cols-2 gap-2"> */}
                     <Button
                       variant="outline"
-                      className="border-gray-700 hover:border-yellow-500/50 hover:bg-yellow-500/10 transition-all text-sm h-9"
+                      className=" w-full border-gray-700 hover:border-yellow-500/50 hover:bg-yellow-500/10 transition-all text-sm h-9"
                       onClick={() => {
                         navigator.clipboard.writeText(window.location.href)
                         toast.success("Link copied!")
@@ -1190,7 +1188,7 @@ export default function GiveawayDetailPage() {
                       <Share2 className="h-3.5 w-3.5 mr-1.5" />
                       Share
                     </Button>
-                    <Button
+                    {/* <Button
                       variant="outline"
                       className={`border-gray-700 transition-all text-sm h-9 ${
                         isWishlisted 
@@ -1201,8 +1199,8 @@ export default function GiveawayDetailPage() {
                     >
                       <Heart className={`h-3.5 w-3.5 mr-1.5 ${isWishlisted ? 'fill-current' : ''}`} />
                       Save
-                    </Button>
-                  </div>
+                    </Button> */}
+                  {/* </div> */}
                 </motion.div>
               </div>
             </div>
