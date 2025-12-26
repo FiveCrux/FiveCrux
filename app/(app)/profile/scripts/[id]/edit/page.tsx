@@ -454,7 +454,7 @@ export default function EditScriptPage() {
     return (
       <>
         <Navbar />
-        <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="min-h-screen text-white flex items-center justify-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-orange-500"></div>
         </div>
       </>
@@ -468,7 +468,7 @@ export default function EditScriptPage() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-black text-white relative overflow-hidden">
+      <div className="min-h-screen text-white relative overflow-hidden">
         {/* Animated background */}
         <div className="fixed inset-0 -z-10">
           <motion.div

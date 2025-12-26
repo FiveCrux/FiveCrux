@@ -116,7 +116,7 @@ export const Navbar = ({ children, className }: NavbarProps) => {
   return (
     <motion.div
       ref={ref}
-      className={cn("fixed inset-x-0 top-0 z-40 w-full", className)}
+      className={cn("fixed inset-x-0 top-0 z-[60] w-full", className)}
       initial={{ y: 0, opacity: 1 }}
       animate={{
         y: isScrollingDown ? "-100%" : "0%",
