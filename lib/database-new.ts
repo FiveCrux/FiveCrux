@@ -526,22 +526,24 @@ export async function getScripts(filters?: ScriptFilters) {
       .limit(limit)
       .offset(offset);
     
-    // Fetch seller roles for all scripts with sellerId
+    // Fetch seller roles and images for all scripts with sellerId
     const sellerIds = results
       .map(s => s.sellerId)
       .filter((id): id is string => !!id);
     
     const sellerRolesMap = new Map<string, string[] | null>();
+    const sellerImagesMap = new Map<string, string | null>();
     if (sellerIds.length > 0) {
       // Fetch all sellers in one query
       const uniqueSellerIds = [...new Set(sellerIds)];
       const sellers = await db
-        .select({ id: users.id, roles: users.roles })
+        .select({ id: users.id, roles: users.roles, profilePicture: users.profilePicture, image: users.image })
         .from(users)
         .where(inArray(users.id, uniqueSellerIds));
       
       sellers.forEach(seller => {
         sellerRolesMap.set(seller.id, seller.roles);
+        sellerImagesMap.set(seller.id, getUserProfilePicture(seller));
       });
     }
       
@@ -554,6 +556,8 @@ export async function getScripts(filters?: ScriptFilters) {
       currency_symbol: script.currencySymbol,
       seller_name: script.seller_name,
       seller_email: script.seller_email,
+      seller_id: script.sellerId,
+      seller_image: script.sellerId ? sellerImagesMap.get(script.sellerId) || null : null,
       seller_roles: script.sellerId ? sellerRolesMap.get(script.sellerId) || null : null,
       other_links: script.otherLinks || [],
       created_at: script.createdAt,

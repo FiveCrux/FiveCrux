@@ -542,7 +542,7 @@ export default function ProfilePage() {
     return (
       <>
         <Navbar />
-        <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="min-h-screen text-white flex items-center justify-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-orange-500"></div>
         </div>
       </>
@@ -556,7 +556,7 @@ export default function ProfilePage() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-black text-white">
+      <div className="min-h-screen text-white">
         {/* Header */}
         <div className="bg-gradient-to-r from-orange-500/10 to-yellow-400/10 py-16 px-4 sm:px-6 lg:px-8 border-b border-gray-800/50">
           <div className="max-w-7xl mx-auto">

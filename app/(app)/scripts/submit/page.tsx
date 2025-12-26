@@ -490,7 +490,7 @@ export default function SubmitScriptPage() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-black text-white relative overflow-hidden">
+      <div className="min-h-screen text-white relative overflow-hidden">
         <AnimatedParticles />
 
         {/* Animated background */}

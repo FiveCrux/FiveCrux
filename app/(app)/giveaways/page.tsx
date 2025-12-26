@@ -398,7 +398,7 @@ export default function GiveawaysPage() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-black text-white relative overflow-hidden">
+      <div className="min-h-screen text-white relative overflow-hidden">
 
         {/* Header */}
         <motion.div
@@ -688,7 +688,7 @@ export default function GiveawaysPage() {
                       >
                         <Link href={`/giveaway/${giveaway.id}`}>
                           <Card
-                            className={`bg-neutral-900 border-2 hover:border-white cursor-pointer h-full backdrop-blur-sm relative overflow-hidden shadow-2xl rounded-lg transition-all duration-300 flex flex-col ${
+                            className={`bg-neutral-900 hover:border-white cursor-pointer h-full backdrop-blur-sm relative overflow-hidden shadow-2xl rounded-lg transition-all duration-300 flex flex-col ${
                               isEnded ? "grayscale opacity-60" : ""
                             }`}
                           >
