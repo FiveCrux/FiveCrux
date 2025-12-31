@@ -18,6 +18,7 @@ interface FeaturedScriptCardProps {
     framework?: string[]
     price: number
     original_price?: number
+    currency_symbol?: string
   }
   index: number
   className?: string
@@ -146,7 +147,7 @@ export default function FeaturedScriptCard({ item, index, className = "", style 
 
               {/* Price */}
               <CardDescription className="text-orange-500 text-xl font-bold pt-1">
-                ${item.price}
+                {item.currency_symbol || "$"}{item.price}
               </CardDescription>
             </CardContent>
             <div className="flex justify-center px-3 pb-3">

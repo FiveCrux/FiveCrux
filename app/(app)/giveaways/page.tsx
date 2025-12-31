@@ -38,6 +38,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/componentss/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/componentss/ui/avatar";
 import { Badge } from "@/componentss/ui/badge";
 import { Progress } from "@/componentss/ui/progress";
 import {
@@ -521,29 +522,32 @@ export default function GiveawaysPage() {
           </motion.div>
 
           <Tabs defaultValue="active" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 bg-gray-800/30 border border-gray-700/50 backdrop-blur-sm rounded-2xl h-auto items-stretch p-1">
+            <TabsList className="flex sm:grid sm:grid-cols-3 w-full bg-gray-800/30 border border-gray-700/50 overflow-hidden backdrop-blur-sm rounded-2xl h-auto items-stretch p-1 gap-1">
               <TabsTrigger
                 value="active"
-                className="h-10 inline-flex items-center justify-center rounded-xl font-bold text-sm py-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-400 data-[state=active]:to-orange-500 data-[state=active]:text-black data-[state=active]:shadow-none data-[state=active]:translate-y-0"
+                className="flex-1 sm:flex-none h-10 inline-flex items-center justify-center rounded-xl font-bold text-xs sm:text-sm py-2 px-2 sm:px-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-400 data-[state=active]:to-orange-500 data-[state=active]:text-black data-[state=active]:shadow-none data-[state=active]:translate-y-0"
               >
-                <Gift className="mr-2 h-4 w-4" />
-                Active Giveaways
+                <Gift className="mr-1 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
+                <span className="truncate">Active</span>
+                <span className="hidden sm:inline"> Giveaways</span>
               </TabsTrigger>
 
               <TabsTrigger
                 value="ended"
-                className="h-10 inline-flex items-center justify-center rounded-xl font-bold text-sm py-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-400 data-[state=active]:to-orange-500 data-[state=active]:text-black data-[state=active]:shadow-none data-[state=active]:translate-y-0"
+                className="flex-1 sm:flex-none h-10 inline-flex items-center justify-center rounded-xl font-bold text-xs sm:text-sm py-2 px-2 sm:px-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-400 data-[state=active]:to-orange-500 data-[state=active]:text-black data-[state=active]:shadow-none data-[state=active]:translate-y-0"
               >
-                <Clock className="mr-2 h-4 w-4" />
-                Ended Giveaways
+                <Clock className="mr-1 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
+                <span className="truncate">Ended</span>
+                <span className="hidden sm:inline"> Giveaways</span>
               </TabsTrigger>
 
               <TabsTrigger
                 value="rules"
-                className="h-10 inline-flex items-center justify-center rounded-xl font-bold text-sm py-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-400 data-[state=active]:to-orange-500 data-[state=active]:text-black data-[state=active]:shadow-none data-[state=active]:translate-y-0"
+                className="flex-1 sm:flex-none h-10 inline-flex items-center justify-center rounded-xl font-bold text-xs sm:text-sm py-2 px-2 sm:px-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-400 data-[state=active]:to-orange-500 data-[state=active]:text-black data-[state=active]:shadow-none data-[state=active]:translate-y-0"
               >
-                <Star className="mr-2 h-4 w-4" />
-                Rules & Info
+                <Star className="mr-1 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
+                <span className="truncate">Rules</span>
+                <span className="hidden sm:inline"> & Info</span>
               </TabsTrigger>
             </TabsList>
 
@@ -688,9 +692,8 @@ export default function GiveawaysPage() {
                       >
                         <Link href={`/giveaway/${giveaway.id}`}>
                           <Card
-                            className={`bg-neutral-900 hover:border-white cursor-pointer h-full backdrop-blur-sm relative overflow-hidden shadow-2xl rounded-lg transition-all duration-300 flex flex-col ${
-                              isEnded ? "grayscale opacity-60" : ""
-                            }`}
+                            className={`bg-neutral-900 hover:border-white cursor-pointer h-full backdrop-blur-sm relative overflow-hidden shadow-2xl rounded-lg transition-all duration-300 flex flex-col ${isEnded ? "grayscale opacity-60" : ""
+                              }`}
                           >
                             {/* Image Section */}
                             <CardHeader className="p-0 overflow-hidden rounded-t-lg relative">
@@ -757,11 +760,10 @@ export default function GiveawaysPage() {
                                     }}
                                     disabled={enteredGiveaways.includes(giveaway.id)}
                                     variant="outline"
-                                    className={`w-full bg-white text-black hover:bg-gray-300 hover:border-gray-300 hover:text-black transition-colors duration-200 font-semibold text-xs py-1.5 h-auto ${
-                                      enteredGiveaways.includes(giveaway.id)
+                                    className={`w-full bg-white text-black hover:bg-gray-300 hover:border-gray-300 hover:text-black transition-colors duration-200 font-semibold text-xs py-1.5 h-auto ${enteredGiveaways.includes(giveaway.id)
                                         ? "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white"
                                         : ""
-                                    }`}
+                                      }`}
                                   >
                                     {enteredGiveaways.includes(giveaway.id) ? (
                                       <>
@@ -789,7 +791,7 @@ export default function GiveawaysPage() {
                     );
                   });
                 })()}
-                
+
               </motion.div>
             </TabsContent>
 
@@ -934,9 +936,8 @@ export default function GiveawaysPage() {
                       >
                         <Link href={`/giveaway/${giveaway.id}`}>
                           <Card
-                            className={`bg-neutral-900 border-2 border-neutral-700/50 cursor-pointer h-full backdrop-blur-sm relative overflow-hidden shadow-2xl rounded-lg transition-all duration-300 flex flex-col ${
-                              isEnded ? "grayscale opacity-60" : ""
-                            }`}
+                            className={`bg-neutral-900 border-2 border-neutral-700/50 cursor-pointer h-full backdrop-blur-sm relative overflow-hidden shadow-2xl rounded-lg transition-all duration-300 flex flex-col ${isEnded ? "grayscale opacity-60" : ""
+                              }`}
                           >
                             {/* Image Section */}
                             <CardHeader className="p-0 overflow-hidden rounded-t-lg relative">
@@ -978,7 +979,17 @@ export default function GiveawaysPage() {
                                 )}
 
                                 {/* Description */}
-                                <CardDescription className="text-neutral-400 text-xs leading-snug line-clamp-2 flex items-center gap-1.5">
+                                <CardDescription className="text-neutral-400 text-xs  flex flex-row items-center gap-1.5">
+                                  <Avatar className="h-4 w-4">
+                                    <AvatarImage
+                                      src={
+                                        giveaway.creatorImage || "/placeholder-user.jpg"
+                                      }
+                                    />
+                                    <AvatarFallback className="text-[8px]">
+                                      {giveaway.creator?.charAt(0).toUpperCase() || "U"}
+                                    </AvatarFallback>
+                                  </Avatar>
                                   <span>By {giveaway.creator || "Unknown Creator"}</span>
                                   {isVerifiedCreator(giveaway.creator_roles) && (
                                     <VerifiedIcon size="sm" />
@@ -1003,11 +1014,10 @@ export default function GiveawaysPage() {
                                     }}
                                     disabled={enteredGiveaways.includes(giveaway.id)}
                                     variant="outline"
-                                    className={`w-full bg-white text-black hover:bg-gray-300 hover:border-gray-300 hover:text-black transition-colors duration-200 font-semibold text-xs py-1.5 h-auto ${
-                                      enteredGiveaways.includes(giveaway.id)
+                                    className={`w-full bg-white text-black hover:bg-gray-300 hover:border-gray-300 hover:text-black transition-colors duration-200 font-semibold text-xs py-1.5 h-auto ${enteredGiveaways.includes(giveaway.id)
                                         ? "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white"
                                         : ""
-                                    }`}
+                                      }`}
                                   >
                                     {enteredGiveaways.includes(giveaway.id) ? (
                                       <>
