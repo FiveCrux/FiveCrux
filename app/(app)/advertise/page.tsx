@@ -448,7 +448,7 @@ export default function AdvertisePage() {
           starColor={resolvedTheme === 'dark' ? '#FFF' : '#000'}
           className={cn(
             'absolute inset-0 flex items-center justify-center rounded-xl',
-            'bg-neutral-950 dark:bg-neutral-950',
+            'bg-[#131313]',
           )}
         />
         <div className="max-w-7xl mx-auto text-center relative z-10">
@@ -588,9 +588,9 @@ export default function AdvertisePage() {
         transition={{ duration: 1 }}
       >
         <HexagonBackground 
-          className="absolute inset-0 bg-neutral-950 dark:bg-neutral-950" 
+          className="absolute inset-0 bg-[#131313]" 
           hexagonProps={{ 
-            className: "before:bg-neutral-950 dark:before:bg-neutral-950 after:bg-neutral-950 dark:after:bg-neutral-950" 
+            className: "before:bg-[#131313] after:bg-[#131313]" 
           }} 
         />
         <div className="max-w-7xl mx-auto relative z-10">

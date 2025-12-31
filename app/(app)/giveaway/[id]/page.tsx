@@ -865,10 +865,10 @@ export default function GiveawayDetailPage() {
             }}
           >
             {/* Overlay to reduce background image opacity */}
-            <div className="absolute inset-0 bg-black/60 pointer-events-none" />
+            <div className="absolute inset-0 bg-[#131313] pointer-events-none" />
             
             {/* Gradient fade from middle to bottom - completely dark */}
-            <div className="absolute inset-x-0 top-1/3 bottom-0 bg-gradient-to-b from-transparent via-neutral-900 to-neutral-900 pointer-events-none z-[1]" />
+            <div className="absolute inset-x-0 top-1/3 bottom-0 bg-[#131313] pointer-events-none z-[1]" />
           </div>
           
           {/* Content */}

@@ -38,6 +38,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/componentss/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/componentss/ui/avatar";
 import { Badge } from "@/componentss/ui/badge";
 import { Progress } from "@/componentss/ui/progress";
 import {
@@ -688,9 +689,8 @@ export default function GiveawaysPage() {
                       >
                         <Link href={`/giveaway/${giveaway.id}`}>
                           <Card
-                            className={`bg-neutral-900 hover:border-white cursor-pointer h-full backdrop-blur-sm relative overflow-hidden shadow-2xl rounded-lg transition-all duration-300 flex flex-col ${
-                              isEnded ? "grayscale opacity-60" : ""
-                            }`}
+                            className={`bg-neutral-900 hover:border-white cursor-pointer h-full backdrop-blur-sm relative overflow-hidden shadow-2xl rounded-lg transition-all duration-300 flex flex-col ${isEnded ? "grayscale opacity-60" : ""
+                              }`}
                           >
                             {/* Image Section */}
                             <CardHeader className="p-0 overflow-hidden rounded-t-lg relative">
@@ -757,11 +757,10 @@ export default function GiveawaysPage() {
                                     }}
                                     disabled={enteredGiveaways.includes(giveaway.id)}
                                     variant="outline"
-                                    className={`w-full bg-white text-black hover:bg-gray-300 hover:border-gray-300 hover:text-black transition-colors duration-200 font-semibold text-xs py-1.5 h-auto ${
-                                      enteredGiveaways.includes(giveaway.id)
+                                    className={`w-full bg-white text-black hover:bg-gray-300 hover:border-gray-300 hover:text-black transition-colors duration-200 font-semibold text-xs py-1.5 h-auto ${enteredGiveaways.includes(giveaway.id)
                                         ? "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white"
                                         : ""
-                                    }`}
+                                      }`}
                                   >
                                     {enteredGiveaways.includes(giveaway.id) ? (
                                       <>
@@ -789,7 +788,7 @@ export default function GiveawaysPage() {
                     );
                   });
                 })()}
-                
+
               </motion.div>
             </TabsContent>
 
@@ -934,9 +933,8 @@ export default function GiveawaysPage() {
                       >
                         <Link href={`/giveaway/${giveaway.id}`}>
                           <Card
-                            className={`bg-neutral-900 border-2 border-neutral-700/50 cursor-pointer h-full backdrop-blur-sm relative overflow-hidden shadow-2xl rounded-lg transition-all duration-300 flex flex-col ${
-                              isEnded ? "grayscale opacity-60" : ""
-                            }`}
+                            className={`bg-neutral-900 border-2 border-neutral-700/50 cursor-pointer h-full backdrop-blur-sm relative overflow-hidden shadow-2xl rounded-lg transition-all duration-300 flex flex-col ${isEnded ? "grayscale opacity-60" : ""
+                              }`}
                           >
                             {/* Image Section */}
                             <CardHeader className="p-0 overflow-hidden rounded-t-lg relative">
@@ -978,7 +976,17 @@ export default function GiveawaysPage() {
                                 )}
 
                                 {/* Description */}
-                                <CardDescription className="text-neutral-400 text-xs leading-snug line-clamp-2 flex items-center gap-1.5">
+                                <CardDescription className="text-neutral-400 text-xs  flex flex-row items-center gap-1.5">
+                                  <Avatar className="h-4 w-4">
+                                    <AvatarImage
+                                      src={
+                                        giveaway.creatorImage || "/placeholder-user.jpg"
+                                      }
+                                    />
+                                    <AvatarFallback className="text-[8px]">
+                                      {giveaway.creator?.charAt(0).toUpperCase() || "U"}
+                                    </AvatarFallback>
+                                  </Avatar>
                                   <span>By {giveaway.creator || "Unknown Creator"}</span>
                                   {isVerifiedCreator(giveaway.creator_roles) && (
                                     <VerifiedIcon size="sm" />
@@ -1003,11 +1011,10 @@ export default function GiveawaysPage() {
                                     }}
                                     disabled={enteredGiveaways.includes(giveaway.id)}
                                     variant="outline"
-                                    className={`w-full bg-white text-black hover:bg-gray-300 hover:border-gray-300 hover:text-black transition-colors duration-200 font-semibold text-xs py-1.5 h-auto ${
-                                      enteredGiveaways.includes(giveaway.id)
+                                    className={`w-full bg-white text-black hover:bg-gray-300 hover:border-gray-300 hover:text-black transition-colors duration-200 font-semibold text-xs py-1.5 h-auto ${enteredGiveaways.includes(giveaway.id)
                                         ? "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white"
                                         : ""
-                                    }`}
+                                      }`}
                                   >
                                     {enteredGiveaways.includes(giveaway.id) ? (
                                       <>
