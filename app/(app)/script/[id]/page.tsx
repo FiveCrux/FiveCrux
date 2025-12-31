@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useParams, useRouter } from "next/navigation";
 import {
@@ -92,6 +92,10 @@ const MediaCarousel = ({
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+  const thumbnailRef = useRef<HTMLDivElement>(null);
 
   let allMedia = [...images, ...screenshots, ...videos];
 
@@ -141,9 +145,9 @@ const MediaCarousel = ({
   );
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <>
       {/* Main Carousel */}
-      <div className="sticky top-24">
+      <div className="lg:sticky lg:top-24">
         <div className="relative bg-transparent rounded-lg overflow-hidden">
           {/* Main Display */}
           <div className="relative aspect-video">
@@ -190,20 +194,53 @@ const MediaCarousel = ({
           {allMedia.length > 1 && (
             <div className="p-4 bg-transparent ">
               <div
-                className="thumbnail-scrollbar flex gap-3 overflow-x-auto pb-2"
+                ref={thumbnailRef}
+                className="thumbnail-scrollbar flex gap-3 overflow-x-auto pb-2 cursor-grab active:cursor-grabbing select-none"
                 style={{
                   scrollbarWidth: "none",
+                }}
+                onMouseDown={(e) => {
+                  if (!thumbnailRef.current) return;
+                  setIsDragging(true);
+                  setStartX(e.pageX - thumbnailRef.current.offsetLeft);
+                  setScrollLeft(thumbnailRef.current.scrollLeft);
+                }}
+                onMouseLeave={() => {
+                  setIsDragging(false);
+                }}
+                onMouseUp={() => {
+                  setIsDragging(false);
+                }}
+                onMouseMove={(e) => {
+                  if (!isDragging || !thumbnailRef.current) return;
+                  e.preventDefault();
+                  const x = e.pageX - thumbnailRef.current.offsetLeft;
+                  const walk = (x - startX) * 2; // Scroll speed multiplier
+                  thumbnailRef.current.scrollLeft = scrollLeft - walk;
                 }}
               >
                 {allMedia.map((media, index) => (
                   <button
                     key={index}
-                    onClick={() => setCurrentIndex(index)}
+                    onClick={(e) => {
+                      // Prevent click when dragging
+                      if (isDragging) {
+                        e.preventDefault();
+                        return;
+                      }
+                      setCurrentIndex(index);
+                    }}
+                    onMouseDown={(e) => {
+                      // Allow dragging to work
+                      if (e.button === 0) {
+                        e.preventDefault();
+                      }
+                    }}
                     className={`flex-shrink-0 w-24 h-16 rounded overflow-hidden border-2 transition-colors ${
                       index === currentIndex
                         ? "border-orange-500"
                         : "border-neutral-700 hover:border-orange-500/50"
-                    }`}
+                    } ${isDragging ? "pointer-events-none" : ""}`}
                   >
                     {isVideo(media) ? (
                       <div className="relative w-full h-full bg-neutral-800 flex items-center justify-center">
@@ -214,6 +251,7 @@ const MediaCarousel = ({
                         src={media}
                         alt={`Thumbnail ${index + 1}`}
                         className="w-full h-full object-cover"
+                        draggable={false}
                       />
                     )}
                   </button>
@@ -278,7 +316,7 @@ const MediaCarousel = ({
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 };
 
@@ -448,10 +486,10 @@ export default function ScriptDetailPage() {
           }}
         >
           {/* Overlay to reduce background image opacity */}
-          <div className="absolute inset-0 bg-black/60 pointer-events-none" />
+          <div className="absolute inset-0 bg-[#131313] pointer-events-none" />
 
           {/* Gradient fade from middle to bottom - completely dark */}
-          <div className="absolute inset-x-0 top-[15%] bottom-0 bg-gradient-to-b from-transparent via-neutral-900 to-neutral-900 pointer-events-none z-[1]" />
+          <div className="absolute inset-x-0 top-[15%] bottom-0 bg-[#131313] pointer-events-none z-[1]" />
 
           {/* Content */}
           <div className="relative z-10">
