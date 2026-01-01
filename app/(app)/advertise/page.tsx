@@ -590,7 +590,7 @@ export default function AdvertisePage() {
         <HexagonBackground 
           className="absolute inset-0 bg-[#131313]" 
           hexagonProps={{ 
-            className: "before:bg-[#131313] after:bg-[#131313]" 
+            className: "before:!bg-[#0f0f0f] after:!bg-[#131313] dark:!before:bg-[#0f0f0f] dark:!after:bg-[#131313] hover:!before:bg-[#252525] dark:hover:!before:bg-[#252525] hover:!after:bg-[#2a2a2a] dark:hover:!after:bg-[#2a2a2a]" 
           }} 
         />
         <div className="max-w-7xl mx-auto relative z-10">
@@ -826,7 +826,7 @@ export default function AdvertisePage() {
                             <Check className="h-3 w-3 text-white" />
                           </div>
                           <span className="text-gray-300 text-sm leading-relaxed">
-                            Email support
+                            Discord support
                           </span>
                         </motion.li>
                       </ul>
