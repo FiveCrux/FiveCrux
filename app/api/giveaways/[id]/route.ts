@@ -25,7 +25,13 @@ export async function GET(
       return NextResponse.json({ error: "Giveaway not found" }, { status: 404 })
     }
 
-    return NextResponse.json(giveaway)
+    // Map camelCase to snake_case for frontend compatibility
+    const response = {
+      ...giveaway,
+      youtube_video_link: (giveaway as any).youtubeVideoLink || (giveaway as any).youtube_video_link,
+    }
+
+    return NextResponse.json(response)
   } catch (error) {
     console.error("Error fetching giveaway:", error)
     return NextResponse.json({ error: "Failed to fetch giveaway" }, { status: 500 })

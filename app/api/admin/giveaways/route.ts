@@ -85,6 +85,7 @@ export async function GET(request: NextRequest) {
           prizes: prizesMap.get(g.id) || [],
           currency: g.currency,
           currency_symbol: g.currencySymbol,
+          youtube_video_link: g.youtubeVideoLink,
         };
       });
     } else if (status === "pending") {
@@ -119,6 +120,7 @@ export async function GET(request: NextRequest) {
         prizes: prizesMap.get(g.id) || [],
         currency: g.currency,
         currency_symbol: g.currencySymbol,
+        youtube_video_link: g.youtubeVideoLink,
       }));
     } else if (status === "approved") {
       const allGiveaways = await getApprovedGiveaways(limit + offset + 1);
@@ -151,6 +153,7 @@ export async function GET(request: NextRequest) {
         prizes: prizesMap.get(g.id) || [],
         currency: g.currency,
         currency_symbol: g.currencySymbol,
+        youtube_video_link: g.youtubeVideoLink,
       }));
     } else if (status === "rejected") {
       const allGiveaways = await getRejectedGiveaways(limit + offset + 1);
@@ -183,6 +186,7 @@ export async function GET(request: NextRequest) {
         prizes: prizesMap.get(g.id) || [],
         currency: g.currency,
         currency_symbol: g.currencySymbol,
+        youtube_video_link: g.youtubeVideoLink,
       }));
     }
 

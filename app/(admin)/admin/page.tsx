@@ -33,6 +33,7 @@ import {
   Trophy,
   Star,
   Tag,
+  Video,
 } from "lucide-react";
 import { Button } from "@/componentss/ui/button";
 import {
@@ -126,6 +127,7 @@ interface Script {
   requirements: string[];
   link?: string;
   other_links?: string[];
+  youtube_video_link?: string;
   images: string[];
   videos: string[];
   screenshots: string[];
@@ -158,6 +160,7 @@ interface Giveaway {
   auto_announce: boolean;
   images: string[];
   videos: string[];
+  youtube_video_link?: string;
   coverImage?: string;
   tags: string[];
   rules: string[];
@@ -2306,7 +2309,8 @@ export default function AdminPage() {
                 {/* Media Section */}
                 {(viewingScript.images?.length > 0 ||
                   viewingScript.videos?.length > 0 ||
-                  viewingScript.screenshots?.length > 0) && (
+                  viewingScript.screenshots?.length > 0 ||
+                  viewingScript.youtube_video_link) && (
                   <div>
                     <h3 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
                       <ImageIcon className="h-5 w-5 text-orange-500" />
@@ -2387,6 +2391,32 @@ export default function AdminPage() {
                           </div>
                         </div>
                       )}
+
+                    {/* YouTube Video Link */}
+                    {viewingScript.youtube_video_link && (
+                      <div className="mb-6">
+                        <h4 className="text-lg font-medium text-white mb-3 flex items-center gap-2">
+                          <Video className="h-5 w-5 text-red-500" />
+                          YouTube Video Link
+                        </h4>
+                        <div className="flex items-center gap-2 bg-gray-900/50 p-3 rounded-lg">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-red-400 hover:text-red-300 border-red-500/50"
+                            onClick={() =>
+                              window.open(viewingScript.youtube_video_link!, "_blank")
+                            }
+                          >
+                            <ExternalLink className="h-3 w-3 mr-1" />
+                            Open YouTube Video
+                          </Button>
+                          <span className="text-gray-300 text-sm truncate flex-1">
+                            {viewingScript.youtube_video_link}
+                          </span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -2854,7 +2884,9 @@ export default function AdminPage() {
                 {/* Media Section */}
                 {(viewingGiveaway.images?.length > 0 ||
                   viewingGiveaway.videos?.length > 0 ||
-                  (viewingGiveaway as any).coverImage) && (
+                  (viewingGiveaway as any).coverImage ||
+                  (viewingGiveaway as any).youtube_video_link ||
+                  (viewingGiveaway as any).youtubeVideoLink) && (
                   <div>
                     <h3 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
                       <ImageIcon className="h-5 w-5 text-purple-500" />
@@ -2937,6 +2969,32 @@ export default function AdminPage() {
                           </div>
                         </div>
                       )}
+
+                    {/* YouTube Video Link */}
+                    {((viewingGiveaway as any).youtube_video_link || (viewingGiveaway as any).youtubeVideoLink) && (
+                      <div className="mb-6">
+                        <h4 className="text-lg font-medium text-white mb-3 flex items-center gap-2">
+                          <Video className="h-5 w-5 text-red-500" />
+                          YouTube Video Link
+                        </h4>
+                        <div className="flex items-center gap-2 bg-gray-900/50 p-3 rounded-lg">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-red-400 hover:text-red-300 border-red-500/50"
+                            onClick={() =>
+                              window.open((viewingGiveaway as any).youtube_video_link || (viewingGiveaway as any).youtubeVideoLink, "_blank")
+                            }
+                          >
+                            <ExternalLink className="h-3 w-3 mr-1" />
+                            Open YouTube Video
+                          </Button>
+                          <span className="text-gray-300 text-sm truncate flex-1">
+                            {(viewingGiveaway as any).youtube_video_link || (viewingGiveaway as any).youtubeVideoLink}
+                          </span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 

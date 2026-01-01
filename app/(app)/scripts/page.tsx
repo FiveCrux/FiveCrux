@@ -141,6 +141,7 @@ export default function ScriptsPage() {
     priceCategory: string;
     tags: string[];
     lastUpdated: string;
+    featured?: boolean;
   };
 
   type GridItem = UIScript | (any & { isAd: boolean });
@@ -221,6 +222,7 @@ export default function ScriptsPage() {
                   : "Premium",
               tags: (s.tags || []) as string[],
               lastUpdated: s.updated_at,
+              featured: s.featured || false,
             };
           });
           console.log("Mapped scripts:", mappedScripts);
@@ -1237,7 +1239,7 @@ export default function ScriptsPage() {
                               >
                                 {/* Image Section */}
                                 <CardHeader
-                                  className={`p-0 overflow-hidden ${
+                                  className={`p-0 overflow-hidden relative ${
                                     viewMode === "list"
                                       ? "w-56 flex-shrink-0 rounded-l-lg"
                                       : "rounded-t-lg"
@@ -1252,6 +1254,11 @@ export default function ScriptsPage() {
                                       viewMode === "list" ? "h-full" : "h-52"
                                     }`}
                                   />
+                                  {script.featured && (
+                                    <Badge className="absolute top-2 left-2 bg-yellow-500 text-black font-semibold shadow-lg">
+                                      Featured
+                                    </Badge>
+                                  )}
                                 </CardHeader>
 
                                 {/* Content Section */}

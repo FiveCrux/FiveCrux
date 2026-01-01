@@ -50,6 +50,7 @@ export async function POST(request: NextRequest) {
       videos: body.videos || [],
       screenshots: body.screenshots || [],
       coverImage: body.cover_image || null,
+      youtubeVideoLink: body.youtube_video_link || null,
       featured: body.featured || false,
       id: 0
     })

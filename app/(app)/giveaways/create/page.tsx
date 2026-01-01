@@ -98,6 +98,8 @@ export default function CreateGiveawayPage() {
     videos: [] as string[],
     coverImage: null as string | null,
   })
+  const [youtubeVideoLink, setYoutubeVideoLink] = useState("")
+  const [youtubeLinkError, setYoutubeLinkError] = useState("")
   const [selectedFiles, setSelectedFiles] = useState({
     coverImage: null as File | null,
     images: [] as File[],
@@ -169,6 +171,21 @@ export default function CreateGiveawayPage() {
     setPrizes(prizes.map((p) => (p.id === id ? { ...p, [field]: value } : p)))
   }
 
+  const validateYouTubeUrl = (url: string): boolean => {
+    if (!url.trim()) return true // Empty is valid (optional field)
+    const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/
+    return youtubeRegex.test(url.trim())
+  }
+
+  const handleYoutubeLinkChange = (value: string) => {
+    setYoutubeVideoLink(value)
+    if (value.trim() && !validateYouTubeUrl(value)) {
+      setYoutubeLinkError("Please enter a valid YouTube video URL (e.g., https://www.youtube.com/watch?v=...)")
+    } else {
+      setYoutubeLinkError("")
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -183,6 +200,12 @@ export default function CreateGiveawayPage() {
           }
         }
       }
+      // Validate YouTube link if provided
+      if (youtubeVideoLink.trim() && !validateYouTubeUrl(youtubeVideoLink)) {
+        toast.error("Please enter a valid YouTube video URL")
+        return
+      }
+
       const payload = {
         giveaway: {
           title: formData.title,
@@ -198,6 +221,7 @@ export default function CreateGiveawayPage() {
           images: media.images,
           videos: media.videos,
           cover_image: media.coverImage,
+          youtube_video_link: youtubeVideoLink.trim() || null,
           tags: [],
           rules: [],
           status: "active",
@@ -238,6 +262,8 @@ export default function CreateGiveawayPage() {
           images: [],
           videos: [],
         })
+        setYoutubeVideoLink("")
+        setYoutubeLinkError("")
         setRequirements([{ id: 1, type: "discord", description: "", points: 1, required: true }])
         setPrizes([{ id: 1, name: "", description: "", value: "", position: 1, numberOfWinners: 1 }])
       } else {
@@ -920,6 +946,25 @@ export default function CreateGiveawayPage() {
                           ))}
                         </div>
                       )}
+                    </div>
+
+                    <div>
+                      <Label htmlFor="youtubeVideoLink" className="text-white font-medium">
+                        YouTube Video Link (Optional)
+                      </Label>
+                      <Input
+                        id="youtubeVideoLink"
+                        value={youtubeVideoLink}
+                        onChange={(e) => handleYoutubeLinkChange(e.target.value)}
+                        placeholder="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+                        className="mt-2 bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-yellow-500"
+                      />
+                      {youtubeLinkError && (
+                        <p className="text-red-500 text-sm mt-1">{youtubeLinkError}</p>
+                      )}
+                      <p className="text-sm text-gray-400 mt-2">
+                        Provide a direct link to a YouTube video showcasing your giveaway.
+                      </p>
                     </div>
                   </CardContent>
                 </Card>

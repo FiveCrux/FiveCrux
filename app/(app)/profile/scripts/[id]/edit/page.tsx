@@ -68,23 +68,19 @@ interface Script {
 }
 
 const scriptCategories = [
-  { value: "utility", label: "Utility" },
-  { value: "gameplay", label: "Gameplay" },
-  { value: "ui", label: "UI/UX" },
-  { value: "admin", label: "Admin Tools" },
+  { value: "scripts", label: "Scripts" },
+  { value: "maps", label: "Maps" },
+  { value: "props", label: "Props" },
+  { value: "clothing", label: "Clothing" },
   { value: "economy", label: "Economy" },
-  { value: "vehicles", label: "Vehicles" },
-  { value: "jobs", label: "Jobs" },
-  { value: "housing", label: "Housing" },
-  { value: "weapons", label: "Weapons" },
-  { value: "other", label: "Other" },
+  { value: "vehicles", label: "Vehicles" }
 ]
-
 const frameworks = [
   { value: "qbcore", label: "QBCore" },
   { value: "qbox", label: "Qbox" },
   { value: "esx", label: "ESX" },
   { value: "ox", label: "OX" },
+  { value: "vrp", label: "VRP" },
   { value: "standalone", label: "Standalone" },
 ]
 
