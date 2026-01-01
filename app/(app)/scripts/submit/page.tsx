@@ -110,6 +110,8 @@ export default function SubmitScriptPage() {
   const [requirements, setRequirements] = useState([{ id: 1, text: "" }])
   const [otherLinks, setOtherLinks] = useState([{ id: 1, text: "" }])
   const [link, setLink] = useState("")
+  const [youtubeVideoLink, setYoutubeVideoLink] = useState("")
+  const [youtubeLinkError, setYoutubeLinkError] = useState("")
   const [media, setMedia] = useState<{
     images: string[]
     videos: string[]
@@ -196,6 +198,11 @@ export default function SubmitScriptPage() {
               setOtherLinks([{ id: 1, text: "" }])
             }
             
+            // Set YouTube video link
+            if (script.youtube_video_link) {
+              setYoutubeVideoLink(script.youtube_video_link)
+            }
+            
             // Set media
             setMedia({
               images: script.images || [],
@@ -231,16 +238,12 @@ export default function SubmitScriptPage() {
   }
 
   const scriptCategories = [
-    { value: "economy", label: "Economy & Banking" },
-    { value: "vehicles", label: "Vehicles & Transportation" },
-    { value: "jobs", label: "Jobs & Careers" },
-    { value: "housing", label: "Housing & Real Estate" },
-    { value: "medical", label: "Medical & Healthcare" },
-    { value: "police", label: "Police & Law Enforcement" },
-    { value: "utilities", label: "Utilities & Tools" },
-    { value: "core", label: "Core & Framework" },
-    { value: "ui", label: "UI & Interface" },
-    { value: "roleplay", label: "Roleplay & Immersion" },
+    { value: "scripts", label: "Scripts" },
+    { value: "maps", label: "Maps" },
+    { value: "props", label: "Props" },
+    { value: "clothing", label: "Clothing" },
+    { value: "economy", label: "Economy" },
+    { value: "vehicles", label: "Vehicles" }
   ]
 
   const frameworks = [
@@ -248,6 +251,7 @@ export default function SubmitScriptPage() {
     { value: "qbox", label: "Qbox" },
     { value: "esx", label: "ESX" },
     { value: "ox", label: "OX" },
+    { value: "vrp", label: "VRP" },
     { value: "standalone", label: "Standalone" },
   ]
 
@@ -409,8 +413,33 @@ export default function SubmitScriptPage() {
     }))
   }
 
+  // Validate YouTube URL
+  const validateYouTubeUrl = (url: string): boolean => {
+    if (!url.trim()) return true 
+    
+    const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+/
+    return youtubeRegex.test(url)
+  }
+
+  const handleYoutubeLinkChange = (value: string) => {
+    setYoutubeVideoLink(value)
+    if (value.trim() && !validateYouTubeUrl(value)) {
+      setYoutubeLinkError("Please enter a valid YouTube URL (youtube.com or youtu.be)")
+    } else {
+      setYoutubeLinkError("")
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Validate YouTube link if provided
+    if (youtubeVideoLink.trim() && !validateYouTubeUrl(youtubeVideoLink)) {
+      setYoutubeLinkError("Please enter a valid YouTube URL (youtube.com or youtu.be)")
+      toast.error("Please fix the YouTube video link before submitting")
+      return
+    }
+    
     setIsSubmitting(true)
 
     try {
@@ -430,6 +459,7 @@ export default function SubmitScriptPage() {
         videos: media.videos,
         screenshots: media.screenshots,
         cover_image: media.coverImage,
+        youtube_video_link: youtubeVideoLink.trim() || null,
         status: "pending" as const,
       }
 
@@ -1112,6 +1142,28 @@ export default function SubmitScriptPage() {
                           ))}
                         </div>
                       )}
+                    </div>
+
+                    <div>
+                      <Label htmlFor="youtube-video-link" className="text-white font-medium">
+                        YouTube Video Link (Optional)
+                      </Label>
+                      <Input
+                        id="youtube-video-link"
+                        type="url"
+                        value={youtubeVideoLink}
+                        onChange={(e) => handleYoutubeLinkChange(e.target.value)}
+                        placeholder="https://www.youtube.com/watch?v=..."
+                        className={`mt-2 bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-orange-500 ${
+                          youtubeLinkError ? "border-red-500 focus:border-red-500" : ""
+                        }`}
+                      />
+                      {youtubeLinkError && (
+                        <p className="mt-1 text-sm text-red-400">{youtubeLinkError}</p>
+                      )}
+                      <p className="text-sm text-gray-400 mt-2">
+                        Enter a YouTube video URL (youtube.com or youtu.be)
+                      </p>
                     </div>
                   </CardContent>
                 </Card>

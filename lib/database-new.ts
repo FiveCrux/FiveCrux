@@ -15,6 +15,7 @@ import type {
   NewGiveawayRequirement, NewGiveawayPrize, NewFeaturedScript
 } from './db/schema';
 import { validateFrameworks, isValidFramework } from './constants';
+import { announceScriptFeatured } from './discord';
 
 // Valid roles in the system
 export const VALID_ROLES = ['founder', 'verified_creator', 'crew', 'admin', 'moderator', 'user'] as const;
@@ -435,6 +436,129 @@ export async function checkAndDeactivateExpiredSlots(): Promise<{ checked: numbe
   };
 }
 
+// Check and deactivate expired featured script slots and their associated featured scripts
+export async function checkAndDeactivateExpiredFeaturedScriptSlots(): Promise<{ checked: number; deactivated: number; featuredScriptsDeactivated: number; scriptsUpdated: number }> {
+  const now = new Date();
+  
+  // Find all active featured script slots that have passed their end date
+  const expiredSlots = await db
+    .select()
+    .from(userFeaturedScriptSlots)
+    .where(
+      and(
+        eq(userFeaturedScriptSlots.featuredSlotStatus, 'active'),
+        sql`${userFeaturedScriptSlots.featuredSlotEndDate} IS NOT NULL`,
+        sql`${userFeaturedScriptSlots.featuredSlotEndDate} < CURRENT_TIMESTAMP`
+      )
+    );
+  
+  let featuredScriptsDeactivated = 0;
+  const scriptIdsToCheck = new Set<number>();
+  
+  // Deactivate each expired slot and its associated featured scripts
+  for (const slot of expiredSlots) {
+    // Get all unique IDs for this slot
+    const slotUniqueIds = (slot.featuredSlotUniqueIds || []) as string[];
+    
+    // Deactivate all featured scripts associated with this slot's unique IDs
+    for (const uniqueId of slotUniqueIds) {
+      // Find featured scripts using this slot unique ID
+      const featuredScriptsToDeactivate = await db
+        .select()
+        .from(featuredScripts)
+        .where(
+          and(
+            eq(featuredScripts.featuredSlotUniqueId, uniqueId),
+            eq(featuredScripts.featuredStatus, 'active')
+          )
+        );
+      
+      for (const featuredScript of featuredScriptsToDeactivate) {
+        // Track script IDs to check if they need featured field updated
+        scriptIdsToCheck.add(featuredScript.scriptId);
+        
+        // Deactivate the featured script
+        await db
+          .update(featuredScripts)
+          .set({ 
+            featuredStatus: 'inactive',
+            featuredUpdatedAt: new Date()
+          })
+          .where(eq(featuredScripts.id, featuredScript.id));
+        featuredScriptsDeactivated++;
+      }
+    }
+    
+    // Deactivate the slot itself
+    await db
+      .update(userFeaturedScriptSlots)
+      .set({ 
+        featuredSlotStatus: 'inactive'
+      })
+      .where(eq(userFeaturedScriptSlots.id, slot.id));
+  }
+  
+  // Also check for individual featured scripts that have passed their end date (independent of slot expiration)
+  const expiredFeaturedScripts = await db
+    .select()
+    .from(featuredScripts)
+    .where(
+      and(
+        eq(featuredScripts.featuredStatus, 'active'),
+        sql`${featuredScripts.featuredEndDate} IS NOT NULL`,
+        lt(featuredScripts.featuredEndDate, now)
+      )
+    );
+  
+  // Deactivate expired featured scripts
+  for (const featuredScript of expiredFeaturedScripts) {
+    scriptIdsToCheck.add(featuredScript.scriptId);
+    
+    await db
+      .update(featuredScripts)
+      .set({ 
+        featuredStatus: 'inactive',
+        featuredUpdatedAt: new Date()
+      })
+      .where(eq(featuredScripts.id, featuredScript.id));
+    featuredScriptsDeactivated++;
+  }
+  
+  // Update the featured field in approvedScripts for scripts that no longer have active featured entries
+  let scriptsUpdated = 0;
+  for (const scriptId of scriptIdsToCheck) {
+    // Check if there are any other active featured entries for this script
+    const otherActiveFeaturedEntries = await db
+      .select()
+      .from(featuredScripts)
+      .where(
+        and(
+          eq(featuredScripts.scriptId, scriptId),
+          eq(featuredScripts.featuredStatus, 'active')
+        )
+      );
+    
+    // If no other active featured entries exist, set featured to false in approvedScripts
+    if (otherActiveFeaturedEntries.length === 0) {
+      await db
+        .update(approvedScripts)
+        .set({ 
+          featured: false,
+          updatedAt: new Date()
+        })
+        .where(eq(approvedScripts.id, scriptId));
+      scriptsUpdated++;
+    }
+  }
+  
+  return {
+    checked: expiredSlots.length + expiredFeaturedScripts.length,
+    deactivated: expiredSlots.length,
+    featuredScriptsDeactivated,
+    scriptsUpdated
+  };
+}
+
 // Helper function to get user profile picture with priority: profile_picture first, then Discord image
 export function getUserProfilePicture(user: { profilePicture?: string | null; image?: string | null } | null): string | null {
   if (!user) return null;
@@ -520,11 +644,15 @@ export async function getScripts(filters?: ScriptFilters) {
       ? baseQuery.where(and(...conditions))
       : baseQuery;
     
-    // Execute query with sorting and pagination
+    // Fetch more results to ensure we get all featured scripts before shuffling
+    // We'll apply limit/offset after shuffling
+    const fetchLimit = limit + offset + 200; // Fetch extra to account for shuffling
+    
+    // Execute query with sorting
+    // Sort by featured first (featured scripts first), then by createdAt
     const results = await query
-      .orderBy(desc(approvedScripts.createdAt))
-      .limit(limit)
-      .offset(offset);
+      .orderBy(desc(approvedScripts.featured), desc(approvedScripts.createdAt))
+      .limit(fetchLimit);
     
     // Fetch seller roles and images for all scripts with sellerId
     const sellerIds = results
@@ -546,9 +674,9 @@ export async function getScripts(filters?: ScriptFilters) {
         sellerImagesMap.set(seller.id, getUserProfilePicture(seller));
       });
     }
-      
+    
     // Map database fields to API-expected field names
-    return results.map(script => ({
+    const mappedResults = results.map(script => ({
       ...script,
       cover_image: script.coverImage,
       original_price: script.originalPrice,
@@ -560,9 +688,35 @@ export async function getScripts(filters?: ScriptFilters) {
       seller_image: script.sellerId ? sellerImagesMap.get(script.sellerId) || null : null,
       seller_roles: script.sellerId ? sellerRolesMap.get(script.sellerId) || null : null,
       other_links: script.otherLinks || [],
+      youtube_video_link: script.youtubeVideoLink,
+      featured: script.featured, // Explicitly include featured field
       created_at: script.createdAt,
       updated_at: script.updatedAt,
     }));
+    
+    // Separate featured and non-featured scripts
+    const featuredScripts = mappedResults.filter(s => s.featured === true);
+    const nonFeaturedScripts = mappedResults.filter(s => s.featured !== true);
+    
+    // Shuffle featured scripts using Fisher-Yates algorithm
+    const shuffleArray = <T,>(array: T[]): T[] => {
+      const shuffled = [...array];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      return shuffled;
+    };
+    
+    const shuffledFeatured = shuffleArray(featuredScripts);
+    
+    // Combine: shuffled featured scripts first, then non-featured scripts
+    const combinedResults = [...shuffledFeatured, ...nonFeaturedScripts];
+    
+    // Apply pagination (offset and limit)
+    const paginatedResults = combinedResults.slice(offset, offset + limit);
+    
+    return paginatedResults;
   } catch (error) {
     console.error('Error fetching scripts:', error);
     throw error;
@@ -605,6 +759,7 @@ export async function getScriptById(id: number) {
         seller_name: script.seller_name,
         seller_email: script.seller_email,
         other_links: script.otherLinks || [],
+        youtube_video_link: script.youtubeVideoLink,
         created_at: script.createdAt,
         updated_at: script.updatedAt,
       };
@@ -643,6 +798,7 @@ export async function getScriptById(id: number) {
         seller_name: script.seller_name,
         seller_email: script.seller_email,
         other_links: script.otherLinks || [],
+        youtube_video_link: script.youtubeVideoLink,
         created_at: script.createdAt,
         updated_at: script.updatedAt,
       };
@@ -681,6 +837,7 @@ export async function getScriptById(id: number) {
         seller_name: script.seller_name,
         seller_email: script.seller_email,
         other_links: script.otherLinks || [],
+        youtube_video_link: script.youtubeVideoLink,
         created_at: script.createdAt,
         updated_at: script.updatedAt,
       };
@@ -810,6 +967,27 @@ export async function rejectScript(scriptId: number, adminId: string, rejectionR
       adminNotes: adminNotes || null
     }).returning();
     
+    // If moving from approved to rejected, remove associated featured scripts
+    if (sourceTable === 'approved') {
+      // Find all featured scripts associated with this script
+      const associatedFeaturedScripts = await db
+        .select()
+        .from(featuredScripts)
+        .where(eq(featuredScripts.scriptId, scriptId));
+      
+      // Delete all associated featured scripts
+      if (associatedFeaturedScripts.length > 0) {
+        await db.delete(featuredScripts).where(eq(featuredScripts.scriptId, scriptId));
+        console.log(`Deleted ${associatedFeaturedScripts.length} featured script(s) associated with script ${scriptId}`);
+      }
+      
+      // Update the featured field to false in approved_scripts before deleting
+      await db
+        .update(approvedScripts)
+        .set({ featured: false, updatedAt: new Date() })
+        .where(eq(approvedScripts.id, scriptId));
+    }
+    
     // Delete from the source table
     if (sourceTable === 'pending') {
       await db.delete(pendingScripts).where(eq(pendingScripts.id, scriptId));
@@ -876,6 +1054,8 @@ export async function updateScriptForReapproval(id: number, updateData: any) {
     // Media with snake_case aliases
     if (updateData.coverImage !== undefined) assignIfDefined('coverImage', updateData.coverImage);
     if (updateData.cover_image !== undefined) assignIfDefined('coverImage', updateData.cover_image);
+    if (updateData.youtubeVideoLink !== undefined) assignIfDefined('youtubeVideoLink', updateData.youtubeVideoLink);
+    if (updateData.youtube_video_link !== undefined) assignIfDefined('youtubeVideoLink', updateData.youtube_video_link);
     assignIfDefined('version', updateData.version);
     if (updateData.featured !== undefined) assignIfDefined('featured', Boolean(updateData.featured));
 
@@ -883,14 +1063,33 @@ export async function updateScriptForReapproval(id: number, updateData: any) {
 
     // Start a transaction to move script from approved to pending
     const result = await db.transaction(async (tx) => {
-      // 1. Delete from approved_scripts
+      // 1. Find and delete all featured scripts associated with this script
+      const associatedFeaturedScripts = await tx
+        .select()
+        .from(featuredScripts)
+        .where(eq(featuredScripts.scriptId, id));
+      
+      if (associatedFeaturedScripts.length > 0) {
+        await tx.delete(featuredScripts).where(eq(featuredScripts.scriptId, id));
+        console.log(`Deleted ${associatedFeaturedScripts.length} featured script(s) associated with script ${id}`);
+      }
+      
+      // 2. Update the featured field to false in approved_scripts before deleting
+      await tx
+        .update(approvedScripts)
+        .set({ featured: false, updatedAt: new Date() })
+        .where(eq(approvedScripts.id, id));
+      
+      // 3. Delete from approved_scripts
       await tx.delete(approvedScripts).where(eq(approvedScripts.id, id));
       
-      // 2. Insert into pending_scripts with updated data
+      // 4. Insert into pending_scripts with updated data
+      // Always set featured to false when moving to pending (scripts need to be re-approved to be featured again)
       const newPendingScript = await tx.insert(pendingScripts)
         .values({
           ...currentScript[0],
           ...mappedUpdate,
+          featured: false, // Always set to false when moving to pending
           id: id, // Keep the same ID
         })
         .returning();
@@ -942,6 +1141,8 @@ export async function updatePendingScript(id: number, updateData: any) {
     assignIfDefined('screenshots', updateData.screenshots);
     if (updateData.coverImage !== undefined) assignIfDefined('coverImage', updateData.coverImage);
     if (updateData.cover_image !== undefined) assignIfDefined('coverImage', updateData.cover_image);
+    if (updateData.youtubeVideoLink !== undefined) assignIfDefined('youtubeVideoLink', updateData.youtubeVideoLink);
+    if (updateData.youtube_video_link !== undefined) assignIfDefined('youtubeVideoLink', updateData.youtube_video_link);
     assignIfDefined('version', updateData.version);
     if (updateData.featured !== undefined) assignIfDefined('featured', Boolean(updateData.featured));
 
@@ -1000,6 +1201,8 @@ export async function updateRejectedScriptForReapproval(id: number, updateData: 
     assignIfDefined('screenshots', updateData.screenshots);
     if (updateData.coverImage !== undefined) assignIfDefined('coverImage', updateData.coverImage);
     if (updateData.cover_image !== undefined) assignIfDefined('coverImage', updateData.cover_image);
+    if (updateData.youtubeVideoLink !== undefined) assignIfDefined('youtubeVideoLink', updateData.youtubeVideoLink);
+    if (updateData.youtube_video_link !== undefined) assignIfDefined('youtubeVideoLink', updateData.youtube_video_link);
     assignIfDefined('version', updateData.version);
     if (updateData.featured !== undefined) assignIfDefined('featured', Boolean(updateData.featured));
 
@@ -1009,6 +1212,7 @@ export async function updateRejectedScriptForReapproval(id: number, updateData: 
         .values({
           ...currentScript[0],
           ...mappedUpdate,
+          featured: false, // Always set to false when moving to pending
           id,
         })
         .returning();
@@ -1064,6 +1268,8 @@ export async function updateScript(id: number, updateData: any) {
     // Media with snake_case aliases
     if (updateData.coverImage !== undefined) assignIfDefined('coverImage', updateData.coverImage);
     if (updateData.cover_image !== undefined) assignIfDefined('coverImage', updateData.cover_image);
+    if (updateData.youtubeVideoLink !== undefined) assignIfDefined('youtubeVideoLink', updateData.youtubeVideoLink);
+    if (updateData.youtube_video_link !== undefined) assignIfDefined('youtubeVideoLink', updateData.youtube_video_link);
     assignIfDefined('version', updateData.version);
     if (updateData.featured !== undefined) assignIfDefined('featured', Boolean(updateData.featured));
 
@@ -1131,6 +1337,7 @@ export async function createGiveaway(giveawayData: NewGiveaway) {
     images: giveawayData.images || (giveawayData as any).images || [],
     videos: giveawayData.videos || (giveawayData as any).videos || [],
     coverImage: giveawayData.coverImage || (giveawayData as any).cover_image || null,
+    youtubeVideoLink: giveawayData.youtubeVideoLink || (giveawayData as any).youtube_video_link || null,
     tags: giveawayData.tags || (giveawayData as any).tags || [],
     rules: giveawayData.rules || (giveawayData as any).rules || []
   };
@@ -1428,6 +1635,8 @@ export async function updateGiveawayForReapproval(id: number, updateData: any) {
     assignIfDefined('images', updateData.images);
     assignIfDefined('videos', updateData.videos);
     if (updateData.cover_image !== undefined) assignIfDefined('coverImage', updateData.cover_image);
+    if (updateData.youtube_video_link !== undefined) assignIfDefined('youtubeVideoLink', updateData.youtube_video_link);
+    if (updateData.youtubeVideoLink !== undefined) assignIfDefined('youtubeVideoLink', updateData.youtubeVideoLink);
     assignIfDefined('tags', updateData.tags);
     assignIfDefined('rules', updateData.rules);
     if (updateData.featured !== undefined) assignIfDefined('featured', Boolean(updateData.featured));
@@ -1506,6 +1715,7 @@ export async function updateGiveaway(id: number, updateData: Partial<NewGiveaway
       images: giveaway.images,
       videos: giveaway.videos,
       coverImage: giveaway.coverImage,
+      youtubeVideoLink: giveaway.youtubeVideoLink,
       tags: giveaway.tags,
       rules: giveaway.rules,
       featured: giveaway.featured,
@@ -1545,6 +1755,8 @@ export async function updateGiveaway(id: number, updateData: Partial<NewGiveaway
     if (data.videos !== undefined) updateObject.videos = data.videos;
     if (data.cover_image !== undefined) updateObject.coverImage = data.cover_image;
     if (data.coverImage !== undefined) updateObject.coverImage = data.coverImage;
+    if (data.youtube_video_link !== undefined) updateObject.youtubeVideoLink = data.youtube_video_link;
+    if (data.youtubeVideoLink !== undefined) updateObject.youtubeVideoLink = data.youtubeVideoLink;
     if (data.tags !== undefined) updateObject.tags = data.tags;
     if (data.rules !== undefined) updateObject.rules = data.rules;
     if (data.featured !== undefined) updateObject.featured = Boolean(data.featured);
@@ -2745,9 +2957,11 @@ export async function createFeaturedScript(featuredScriptData: NewFeaturedScript
     }
   }
 
+  const scriptId = (featuredScriptData as any).scriptId ?? (featuredScriptData as any).script_id;
+
   const mapped = {
     id: id,
-    scriptId: (featuredScriptData as any).scriptId ?? (featuredScriptData as any).script_id,
+    scriptId: scriptId,
     featuredSlotUniqueId: slotUniqueId,
     featuredStartDate: (featuredScriptData as any).startDate ?? (featuredScriptData as any).start_date ?? new Date(),
     featuredEndDate: featuredScriptEndDate || null,
@@ -2756,6 +2970,56 @@ export async function createFeaturedScript(featuredScriptData: NewFeaturedScript
   };
 
   const result = await db.insert(featuredScripts).values(mapped as any).returning({ id: featuredScripts.id });
+  
+  // Update the approved script's featured field to true
+  if (result[0]?.id && scriptId) {
+    await db.update(approvedScripts)
+      .set({ featured: true, updatedAt: new Date() })
+      .where(eq(approvedScripts.id, scriptId));
+    
+    // Send Discord notification for featured script
+    try {
+      // Get the script details
+      const script = await db.select()
+        .from(approvedScripts)
+        .where(eq(approvedScripts.id, scriptId))
+        .limit(1);
+      
+      if (script[0]) {
+        const scriptData = script[0];
+        const creatorId = mapped.featuredCreatedBy;
+        
+        // Get seller and creator details
+        const [seller, creator] = await Promise.all([
+          scriptData.sellerId ? getUserById(scriptData.sellerId) : null,
+          creatorId ? getUserById(creatorId) : null
+        ]);
+        
+        if (seller && creator) {
+          await announceScriptFeatured(
+            {
+              id: scriptData.id,
+              title: scriptData.title,
+              coverImage: scriptData.coverImage,
+              sellerId: scriptData.sellerId,
+            },
+            {
+              id: seller.id,
+              name: seller.name,
+            },
+            {
+              id: creator.id,
+              name: creator.name,
+            }
+          );
+        }
+      }
+    } catch (discordError) {
+      console.error('Failed to send Discord notification for featured script:', discordError);
+      // Don't fail the feature creation if Discord notification fails
+    }
+  }
+  
   return result[0]?.id;
 }
 
@@ -2888,6 +3152,20 @@ export async function getUserFeaturedScripts(userId: string, limit?: number) {
 // Update featured script
 export async function updateFeaturedScript(id: number, updateData: any) {
   try {
+    // Get the featured script to retrieve scriptId before updating
+    const featuredScript = await db.select()
+      .from(featuredScripts)
+      .where(eq(featuredScripts.id, id))
+      .limit(1);
+    
+    if (featuredScript.length === 0) {
+      return null;
+    }
+    
+    const scriptId = featuredScript[0].scriptId;
+    const isStatusChanging = updateData.status !== undefined;
+    const newStatus = updateData.status;
+    
     // Map update data to new column names
     const mappedUpdate: any = { featuredUpdatedAt: new Date() };
     if (updateData.status !== undefined) mappedUpdate.featuredStatus = updateData.status;
@@ -2897,6 +3175,33 @@ export async function updateFeaturedScript(id: number, updateData: any) {
       .set(mappedUpdate)
       .where(eq(featuredScripts.id, id))
       .returning();
+    
+    // If status is being changed, update the approved script's featured field accordingly
+    if (result[0] && scriptId && isStatusChanging) {
+      if (newStatus === 'inactive') {
+        // Check if there are any other active featured entries for this script
+        const otherActiveFeaturedEntries = await db.select()
+          .from(featuredScripts)
+          .where(
+            and(
+              eq(featuredScripts.scriptId, scriptId),
+              eq(featuredScripts.featuredStatus, 'active')
+            )
+          );
+        
+        // If no other active featured entries exist, set featured to false
+        if (otherActiveFeaturedEntries.length === 0) {
+          await db.update(approvedScripts)
+            .set({ featured: false, updatedAt: new Date() })
+            .where(eq(approvedScripts.id, scriptId));
+        }
+      } else if (newStatus === 'active') {
+        // If status is being set to active, set featured to true
+        await db.update(approvedScripts)
+          .set({ featured: true, updatedAt: new Date() })
+          .where(eq(approvedScripts.id, scriptId));
+      }
+    }
     
     return result[0] || null;
   } catch (error) {
@@ -2908,7 +3213,40 @@ export async function updateFeaturedScript(id: number, updateData: any) {
 // Delete featured script
 export async function deleteFeaturedScript(id: number) {
   try {
+    // Get the featured script to retrieve scriptId before deleting
+    const featuredScript = await db.select()
+      .from(featuredScripts)
+      .where(eq(featuredScripts.id, id))
+      .limit(1);
+    
+    if (featuredScript.length === 0) {
+      return false;
+    }
+    
+    const scriptId = featuredScript[0].scriptId;
+    
+    // Delete the featured script
     const result = await db.delete(featuredScripts).where(eq(featuredScripts.id, id)).returning();
+    
+    if (result.length > 0 && scriptId) {
+      // Check if there are any other active featured entries for this script
+      const otherFeaturedEntries = await db.select()
+        .from(featuredScripts)
+        .where(
+          and(
+            eq(featuredScripts.scriptId, scriptId),
+            eq(featuredScripts.featuredStatus, 'active')
+          )
+        );
+      
+      // If no other active featured entries exist, set featured to false in approvedScripts
+      if (otherFeaturedEntries.length === 0) {
+        await db.update(approvedScripts)
+          .set({ featured: false, updatedAt: new Date() })
+          .where(eq(approvedScripts.id, scriptId));
+      }
+    }
+    
     return result.length > 0;
   } catch (error) {
     console.error('Error deleting featured script:', error);

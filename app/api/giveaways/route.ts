@@ -123,6 +123,7 @@ export async function GET(request: NextRequest) {
       max_entries: giveaway.maxEntries,
       auto_announce: giveaway.autoAnnounce,
       cover_image: giveaway.coverImage,
+      youtube_video_link: giveaway.youtubeVideoLink,
       entries_count: giveaway.entriesCount,
       created_at: giveaway.createdAt,
       updated_at: giveaway.updatedAt,

@@ -138,6 +138,56 @@ export async function announceScriptApproval(
   return await sendDiscordWebhook(embed, env.DISCORD_SCRIPT_APPROVAL_WEBHOOK_URL)
 }
 
+export async function announceScriptFeatured(
+  script: {
+    id: number
+    title: string
+    coverImage?: string | null
+    sellerId?: string | null
+  },
+  seller: {
+    id: string
+    name: string | null
+  },
+  creator: {
+    id: string
+    name: string | null
+  }
+) {
+  const embed: DiscordEmbed = {
+    title: '⭐ Script Featured!',
+    description: `**${script.title}** has been featured and is now prominently displayed at the top of the marketplace!`,
+    color: 0xffd700, // Gold color
+    fields: [
+      {
+        name: 'Creator',
+        value: script.sellerId ? `<@${script.sellerId}> (${seller.name ?? 'Unknown'})` : seller.name ?? 'Unknown',
+        inline: true,
+      },
+      {
+        name: 'Featured By',
+        value: `<@${creator.id}> (${creator.name ?? 'User'})`,
+        inline: true,
+      },
+      {
+        name: 'Script ID',
+        value: `#${script.id}`,
+        inline: true,
+      },
+      {
+        name: 'Link',
+        value: `${env.NEXTAUTH_URL ?? ''}/script/${script.id}`,
+      },
+    ],
+    thumbnail: script.coverImage ? { url: script.coverImage } : undefined,
+    footer: { text: 'Crux Marketplace • Featured Scripts' },
+    timestamp: new Date().toISOString(),
+  }
+
+  // Use the featured script webhook if configured
+  return await sendDiscordWebhook(embed, env.DISCORD_FEATURED_SCRIPT_WEBHOOK_URL)
+}
+
 export async function announceScriptPending(
   script: {
     id: number

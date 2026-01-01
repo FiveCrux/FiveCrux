@@ -35,6 +35,7 @@ const baseScriptFields = {
   otherLinks: text('other_links').array().default([]),
   images: text('images').array().default([]),
   videos: text('videos').array().default([]),
+  youtubeVideoLink: text('youtube_video_link'),
   screenshots: text('screenshots').array().default([]),
   coverImage: text('cover_image'),
   featured: boolean('featured').default(false),
@@ -85,6 +86,7 @@ const baseGiveawayFields = {
   creatorId: text('creator_id'),
   images: text('images').array().default([]),
   videos: text('videos').array().default([]),
+  youtubeVideoLink: text('youtube_video_link'),
   coverImage: text('cover_image'),
   tags: text('tags').array().default([]),
   rules: text('rules').array().default([]),
@@ -234,7 +236,7 @@ export const userAdSlots = pgTable('user_ad_slots', {
 // Featured scripts table (no approval needed - users can only feature approved scripts)
 export const featuredScripts = pgTable('featured_scripts', {
   id: integer('id').primaryKey().notNull(),
-  scriptId: integer('script_id').notNull(), // Reference to the script being featured
+  scriptId: integer('script_id').notNull().references(() => approvedScripts.id, { onDelete: 'cascade' }), // Reference to the script being featured
   featuredSlotUniqueId: text('featured_slot_unique_id'), // Unique ID to identify which featured script slot this belongs to
   featuredSlotStatus: text('featured_slot_status').default('active').notNull(), // 'active' when endDate > current date, 'inactive' when current date passes endDate
   featuredStartDate: timestamp('featured_start_date').defaultNow(),
@@ -284,6 +286,15 @@ export const userFeaturedScriptSlotsRelations = relations(userFeaturedScriptSlot
 
 // Scripts relations moved to approvedScripts
 export const approvedScriptsRelations = relations(approvedScripts, ({ many }) => ({
+  featuredScripts: many(featuredScripts), // One approved script can have many featured entries
+}));
+
+// Featured scripts relations
+export const featuredScriptsRelations = relations(featuredScripts, ({ one }) => ({
+  script: one(approvedScripts, {
+    fields: [featuredScripts.scriptId],
+    references: [approvedScripts.id],
+  }),
 }));
 
 // Relations for approved giveaways (primary giveaway table)

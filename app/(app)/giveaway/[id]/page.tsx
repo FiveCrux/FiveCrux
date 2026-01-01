@@ -113,21 +113,62 @@ const MediaSlider = ({
   screenshots, 
   videos, 
   title,
-  coverImage 
+  coverImage,
+  youtubeVideoLink
 }: { 
   images: string[], 
   screenshots: string[], 
   videos: string[], 
   title: string,
-  coverImage?: string 
+  coverImage?: string,
+  youtubeVideoLink?: string
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0)
   
-  let allMedia = [...images, ...screenshots, ...videos]
+  // Extract YouTube video ID from URL
+  const getYouTubeVideoId = (url: string): string | null => {
+    if (!url) return null;
+    
+    // Match various YouTube URL formats
+    const patterns = [
+      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
+      /youtube\.com\/watch\?.*v=([^&\n?#]+)/,
+    ];
+    
+    for (const pattern of patterns) {
+      const match = url.match(pattern);
+      if (match && match[1]) {
+        return match[1];
+      }
+    }
+    
+    return null;
+  };
+
+  // Create media items array with YouTube video as special type
+  type MediaItem = {
+    type: 'image' | 'video' | 'youtube';
+    url: string;
+    youtubeId?: string;
+  };
+
+  let allMedia: MediaItem[] = [
+    ...images.map(url => ({ type: 'image' as const, url })),
+    ...screenshots.map(url => ({ type: 'image' as const, url })),
+    ...videos.map(url => ({ type: 'video' as const, url })),
+  ];
+
+  // Add YouTube video if present
+  if (youtubeVideoLink) {
+    const youtubeId = getYouTubeVideoId(youtubeVideoLink);
+    if (youtubeId) {
+      allMedia.push({ type: 'youtube', url: youtubeVideoLink, youtubeId });
+    }
+  }
   
   if (coverImage) {
-    allMedia = allMedia.filter(media => media !== coverImage)
-    allMedia = [coverImage, ...allMedia]
+    allMedia = allMedia.filter(media => media.url !== coverImage)
+    allMedia = [{ type: 'image' as const, url: coverImage }, ...allMedia]
   }
   
   if (allMedia.length === 0) return null
@@ -140,9 +181,7 @@ const MediaSlider = ({
     setCurrentIndex((prev) => (prev - 1 + allMedia.length) % allMedia.length)
   }
 
-  const isVideo = (url: string) => {
-    return videos.includes(url)
-  }
+  const isVideo = (media: MediaItem) => media.type === 'video'
 
   return (
     <div className="relative">
@@ -158,16 +197,26 @@ const MediaSlider = ({
             animate={{ opacity: index === currentIndex ? 1 : 0, scale: index === currentIndex ? 1 : 1.1 }}
             transition={{ duration: 0.5 }}
           >
-            {isVideo(media) ? (
+            {media.type === 'youtube' && media.youtubeId ? (
+              <div className="w-full h-full bg-black">
+                <iframe
+                  src={`https://www.youtube.com/embed/${media.youtubeId}?rel=0&modestbranding=1`}
+                  className="w-full h-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  title={`${title} - YouTube Video`}
+                />
+              </div>
+            ) : isVideo(media) ? (
               <video
-                src={media}
+                src={media.url}
                 controls
                 preload="metadata"
                 className="w-full h-full object-contain"
               />
             ) : (
               <img
-                src={media}
+                src={media.url}
                 alt={`${title} - Media ${index + 1}`}
                 className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-105"
                 loading="lazy"
@@ -217,16 +266,25 @@ const MediaSlider = ({
                   : 'border-gray-700 hover:border-yellow-500/50'
               }`}
             >
-              {isVideo(media) ? (
+              {media.type === 'youtube' ? (
+                <div className="relative w-full h-full bg-red-600 flex items-center justify-center">
+                  <Play className="h-5 w-5 text-white" />
+                  <div className="absolute top-0.5 right-0.5">
+                    <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                    </svg>
+                  </div>
+                </div>
+              ) : isVideo(media) ? (
                 <div className="relative w-full h-full bg-gray-900">
-                  <video src={media} className="w-full h-full object-cover" muted />
+                  <video src={media.url} className="w-full h-full object-cover" muted />
                   <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
                     <Play className="h-5 w-5 text-yellow-400" />
                   </div>
                 </div>
               ) : (
                 <img
-                  src={media}
+                  src={media.url}
                   alt={`Thumbnail ${index + 1}`}
                   className="w-full h-full object-cover"
                   loading="lazy"
@@ -515,6 +573,7 @@ export default function GiveawayDetailPage() {
     images: giveaway?.images || [],
     videos: giveaway?.videos || [],
     cover_image: giveaway?.coverImage || (giveaway?.images && giveaway.images[0]) || "/placeholder.jpg",
+    youtube_video_link: giveaway?.youtube_video_link || (giveaway as any)?.youtubeVideoLink,
   }
 
   const [openedDiscordTasks, setOpenedDiscordTasks] = useState<number[]>([])
@@ -966,7 +1025,8 @@ export default function GiveawayDetailPage() {
                     {/* Media Gallery with Gaming Border */}
                     {((transformedGiveaway.images && transformedGiveaway.images.length > 0) || 
                       (transformedGiveaway.videos && transformedGiveaway.videos.length > 0) || 
-                      transformedGiveaway.cover_image) && (
+                      transformedGiveaway.cover_image ||
+                      transformedGiveaway.youtube_video_link) && (
                       <motion.div
                         ref={mediaCarouselRef}
                         initial={{ opacity: 0, x: -30 }}
@@ -979,6 +1039,7 @@ export default function GiveawayDetailPage() {
                           videos={transformedGiveaway.videos || []}
                           title={transformedGiveaway.title}
                           coverImage={transformedGiveaway.cover_image}
+                          youtubeVideoLink={transformedGiveaway.youtube_video_link}
                         />
                       </motion.div>
                     )}

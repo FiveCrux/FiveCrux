@@ -61,6 +61,7 @@ interface Script {
   features: string[];
   requirements: string[];
   link?: string;
+  youtube_video_link?: string;
   images: string[];
   videos: string[];
   screenshots: string[];
@@ -83,12 +84,14 @@ const MediaCarousel = ({
   videos,
   title,
   coverImage,
+  youtubeVideoLink,
 }: {
   images: string[];
   screenshots: string[];
   videos: string[];
   title: string;
   coverImage?: string;
+  youtubeVideoLink?: string;
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -97,11 +100,56 @@ const MediaCarousel = ({
   const [scrollLeft, setScrollLeft] = useState(0);
   const thumbnailRef = useRef<HTMLDivElement>(null);
 
-  let allMedia = [...images, ...screenshots, ...videos];
+  // Extract YouTube video ID from URL
+  const getYouTubeVideoId = (url: string): string | null => {
+    if (!url) return null;
+    
+    // Match various YouTube URL formats
+    const patterns = [
+      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
+      /youtube\.com\/watch\?.*v=([^&\n?#]+)/,
+    ];
+    
+    for (const pattern of patterns) {
+      const match = url.match(pattern);
+      if (match && match[1]) {
+        return match[1];
+      }
+    }
+    
+    return null;
+  };
 
+  // Check if a media item is a YouTube video
+  const isYouTubeVideo = (media: string): boolean => {
+    return media === youtubeVideoLink && !!youtubeVideoLink;
+  };
+
+  // Create media items array with YouTube video as special type
+  type MediaItem = {
+    type: 'image' | 'video' | 'youtube';
+    url: string;
+    youtubeId?: string;
+  };
+
+  let allMedia: MediaItem[] = [
+    ...images.map(url => ({ type: 'image' as const, url })),
+    ...screenshots.map(url => ({ type: 'image' as const, url })),
+    ...videos.map(url => ({ type: 'video' as const, url })),
+  ];
+
+  // Add YouTube video if present
+  if (youtubeVideoLink) {
+    const youtubeId = getYouTubeVideoId(youtubeVideoLink);
+    if (youtubeId) {
+      allMedia.push({ type: 'youtube', url: youtubeVideoLink, youtubeId });
+    }
+  }
+
+  // Handle cover image
   if (coverImage) {
-    allMedia = allMedia.filter((media) => media !== coverImage);
-    allMedia = [coverImage, ...allMedia];
+    allMedia = allMedia.filter((media) => media.url !== coverImage);
+    allMedia = [{ type: 'image' as const, url: coverImage }, ...allMedia];
   }
 
   if (allMedia.length === 0) return null;
@@ -114,35 +162,51 @@ const MediaCarousel = ({
     setCurrentIndex((prev) => (prev - 1 + allMedia.length) % allMedia.length);
   };
 
-  const isVideo = (url: string) => videos.includes(url);
+  const isVideo = (media: MediaItem) => media.type === 'video';
 
   const MediaContent = ({
     media,
     index,
     className = "",
   }: {
-    media: string;
+    media: MediaItem;
     index: number;
     className?: string;
-  }) => (
-    <>
-      {isVideo(media) ? (
+  }) => {
+    if (media.type === 'youtube' && media.youtubeId) {
+      return (
+        <div className={`w-full h-full bg-black ${className}`}>
+          <iframe
+            src={`https://www.youtube.com/embed/${media.youtubeId}?rel=0&modestbranding=1`}
+            className="w-full h-full"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            title={`${title} - YouTube Video`}
+          />
+        </div>
+      );
+    }
+    
+    if (isVideo(media)) {
+      return (
         <video
-          src={media}
+          src={media.url}
           controls
           preload="metadata"
           className={`w-full h-full object-contain bg-black ${className}`}
         />
-      ) : (
-        <img
-          src={media}
-          alt={`${title} - Media ${index + 1}`}
-          className={`w-full h-full object-contain bg-black ${className}`}
-          loading="lazy"
-        />
-      )}
-    </>
-  );
+      );
+    }
+    
+    return (
+      <img
+        src={media.url}
+        alt={`${title} - Media ${index + 1}`}
+        className={`w-full h-full object-contain bg-black ${className}`}
+        loading="lazy"
+      />
+    );
+  };
 
   return (
     <>
@@ -242,13 +306,22 @@ const MediaCarousel = ({
                         : "border-neutral-700 hover:border-orange-500/50"
                     } ${isDragging ? "pointer-events-none" : ""}`}
                   >
-                    {isVideo(media) ? (
+                    {media.type === 'youtube' ? (
+                      <div className="relative w-full h-full bg-red-600 flex items-center justify-center">
+                        <Play className="h-5 w-5 text-white" />
+                        <div className="absolute top-0.5 right-0.5">
+                          <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                          </svg>
+                        </div>
+                      </div>
+                    ) : isVideo(media) ? (
                       <div className="relative w-full h-full bg-neutral-800 flex items-center justify-center">
                         <Play className="h-5 w-5 text-orange-500" />
                       </div>
                     ) : (
                       <img
-                        src={media}
+                        src={media.url}
                         alt={`Thumbnail ${index + 1}`}
                         className="w-full h-full object-cover"
                         draggable={false}
@@ -455,6 +528,8 @@ export default function ScriptDetailPage() {
     ...(script.videos || []),
     ...(script.screenshots || []),
   ];
+  
+  const hasMedia = allMedia.length > 0 || script.youtube_video_link;
 
   return (
     <>
@@ -510,13 +585,14 @@ export default function ScriptDetailPage() {
               <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
                 {/* Left Column - Media Carousel */}
                 <div className="lg:col-span-3">
-                  {allMedia.length > 0 ? (
+                  {hasMedia ? (
                     <MediaCarousel
                       images={script.images || []}
                       screenshots={script.screenshots || []}
                       videos={script.videos || []}
                       title={script.title}
                       coverImage={script.cover_image}
+                      youtubeVideoLink={script.youtube_video_link}
                     />
                   ) : (
                     <div className="aspect-video bg-black rounded-lg flex items-center justify-center border border-orange-500/30">
