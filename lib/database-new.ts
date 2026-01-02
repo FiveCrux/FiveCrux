@@ -644,15 +644,11 @@ export async function getScripts(filters?: ScriptFilters) {
       ? baseQuery.where(and(...conditions))
       : baseQuery;
     
-    // Fetch more results to ensure we get all featured scripts before shuffling
-    // We'll apply limit/offset after shuffling
-    const fetchLimit = limit + offset + 200; // Fetch extra to account for shuffling
-    
-    // Execute query with sorting
-    // Sort by featured first (featured scripts first), then by createdAt
+    // Execute query with sorting by createdAt
     const results = await query
-      .orderBy(desc(approvedScripts.featured), desc(approvedScripts.createdAt))
-      .limit(fetchLimit);
+      .orderBy(desc(approvedScripts.createdAt))
+      .limit(limit)
+      .offset(offset);
     
     // Fetch seller roles and images for all scripts with sellerId
     const sellerIds = results
@@ -694,29 +690,7 @@ export async function getScripts(filters?: ScriptFilters) {
       updated_at: script.updatedAt,
     }));
     
-    // Separate featured and non-featured scripts
-    const featuredScripts = mappedResults.filter(s => s.featured === true);
-    const nonFeaturedScripts = mappedResults.filter(s => s.featured !== true);
-    
-    // Shuffle featured scripts using Fisher-Yates algorithm
-    const shuffleArray = <T,>(array: T[]): T[] => {
-      const shuffled = [...array];
-      for (let i = shuffled.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-      }
-      return shuffled;
-    };
-    
-    const shuffledFeatured = shuffleArray(featuredScripts);
-    
-    // Combine: shuffled featured scripts first, then non-featured scripts
-    const combinedResults = [...shuffledFeatured, ...nonFeaturedScripts];
-    
-    // Apply pagination (offset and limit)
-    const paginatedResults = combinedResults.slice(offset, offset + limit);
-    
-    return paginatedResults;
+    return mappedResults;
   } catch (error) {
     console.error('Error fetching scripts:', error);
     throw error;
@@ -2971,13 +2945,8 @@ export async function createFeaturedScript(featuredScriptData: NewFeaturedScript
 
   const result = await db.insert(featuredScripts).values(mapped as any).returning({ id: featuredScripts.id });
   
-  // Update the approved script's featured field to true
+  // Send Discord notification for featured script
   if (result[0]?.id && scriptId) {
-    await db.update(approvedScripts)
-      .set({ featured: true, updatedAt: new Date() })
-      .where(eq(approvedScripts.id, scriptId));
-    
-    // Send Discord notification for featured script
     try {
       // Get the script details
       const script = await db.select()
@@ -3086,6 +3055,7 @@ export async function getFeaturedScriptsWithDetails(filters?: {
         scriptCategory: approvedScripts.category,
         scriptFramework: approvedScripts.framework,
         scriptSellerName: approvedScripts.seller_name,
+        scriptCurrencySymbol: approvedScripts.currencySymbol,
       })
       .from(featuredScripts)
       .leftJoin(approvedScripts, eq(featuredScripts.scriptId, approvedScripts.id))
@@ -3162,10 +3132,6 @@ export async function updateFeaturedScript(id: number, updateData: any) {
       return null;
     }
     
-    const scriptId = featuredScript[0].scriptId;
-    const isStatusChanging = updateData.status !== undefined;
-    const newStatus = updateData.status;
-    
     // Map update data to new column names
     const mappedUpdate: any = { featuredUpdatedAt: new Date() };
     if (updateData.status !== undefined) mappedUpdate.featuredStatus = updateData.status;
@@ -3175,33 +3141,6 @@ export async function updateFeaturedScript(id: number, updateData: any) {
       .set(mappedUpdate)
       .where(eq(featuredScripts.id, id))
       .returning();
-    
-    // If status is being changed, update the approved script's featured field accordingly
-    if (result[0] && scriptId && isStatusChanging) {
-      if (newStatus === 'inactive') {
-        // Check if there are any other active featured entries for this script
-        const otherActiveFeaturedEntries = await db.select()
-          .from(featuredScripts)
-          .where(
-            and(
-              eq(featuredScripts.scriptId, scriptId),
-              eq(featuredScripts.featuredStatus, 'active')
-            )
-          );
-        
-        // If no other active featured entries exist, set featured to false
-        if (otherActiveFeaturedEntries.length === 0) {
-          await db.update(approvedScripts)
-            .set({ featured: false, updatedAt: new Date() })
-            .where(eq(approvedScripts.id, scriptId));
-        }
-      } else if (newStatus === 'active') {
-        // If status is being set to active, set featured to true
-        await db.update(approvedScripts)
-          .set({ featured: true, updatedAt: new Date() })
-          .where(eq(approvedScripts.id, scriptId));
-      }
-    }
     
     return result[0] || null;
   } catch (error) {
@@ -3213,39 +3152,8 @@ export async function updateFeaturedScript(id: number, updateData: any) {
 // Delete featured script
 export async function deleteFeaturedScript(id: number) {
   try {
-    // Get the featured script to retrieve scriptId before deleting
-    const featuredScript = await db.select()
-      .from(featuredScripts)
-      .where(eq(featuredScripts.id, id))
-      .limit(1);
-    
-    if (featuredScript.length === 0) {
-      return false;
-    }
-    
-    const scriptId = featuredScript[0].scriptId;
-    
     // Delete the featured script
     const result = await db.delete(featuredScripts).where(eq(featuredScripts.id, id)).returning();
-    
-    if (result.length > 0 && scriptId) {
-      // Check if there are any other active featured entries for this script
-      const otherFeaturedEntries = await db.select()
-        .from(featuredScripts)
-        .where(
-          and(
-            eq(featuredScripts.scriptId, scriptId),
-            eq(featuredScripts.featuredStatus, 'active')
-          )
-        );
-      
-      // If no other active featured entries exist, set featured to false in approvedScripts
-      if (otherFeaturedEntries.length === 0) {
-        await db.update(approvedScripts)
-          .set({ featured: false, updatedAt: new Date() })
-          .where(eq(approvedScripts.id, scriptId));
-      }
-    }
     
     return result.length > 0;
   } catch (error) {

@@ -63,6 +63,7 @@ interface Script {
   framework?: string[];
   price: number;
   original_price?: number;
+  currency_symbol?: string;
 }
 
 export default function HomePage() {
@@ -125,6 +126,7 @@ export default function HomePage() {
             framework: Array.isArray(item.scriptFramework) ? item.scriptFramework : item.scriptFramework ? [item.scriptFramework] : [],
             price: item.scriptPrice || 0,
             original_price: item.scriptPrice || 0,
+            currency_symbol: item.scriptCurrencySymbol || "$",
           }));
           setFeaturedScripts(mappedScripts);
         }
