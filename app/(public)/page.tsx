@@ -34,8 +34,7 @@ import {
   Users,
   Star,
   ArrowRight,
-  TrendingUp,
-  Package,
+  Megaphone,
   Code,
 } from "lucide-react";
 import { HexagonBackground } from "@/components/animate-ui/components/backgrounds/hexagon";
@@ -140,30 +139,48 @@ export default function HomePage() {
     fetchFeaturedScripts();
   }, []);
 
+  const faqs = [
+    {
+      question: "How does publishing a script work?",
+      answer: "Developers can submit their scripts through the developer panel. Each submission goes through a review process to ensure quality, security, and compatibility before being published.",
+    },
+    {
+      question: "Who owns the script rights?",
+      answer:"Developers retain full ownership of their scripts. FiveCrux only provides the platform for promotion."
+    },
+    {
+      question:"Is there any publishing fee?",
+      answer:"There is no upfront fee to publish scripts."
+    },
+    {
+      question:"Can I host giveaways on FiveCrux?",
+      answer:"Yes. Developers can create and publish giveaways to promote their scripts, gain visibility, and reach a wider FiveM audience."
+    }
+  ]
   const platformFeatures = [
     {
-      title: "Lightning Fast",
-      description: "Optimized scripts that won't slow down your server",
-      icon: Zap,
+      title: "Community Driven",
+      description: "Built by experienced FiveM developers, trusted and improved by the community.",
+      icon: Users,
       gradient: "from-orange-500 to-orange-600",
     },
     {
-      title: "Secure & Tested",
-      description: "All scripts are thoroughly tested and security reviewed",
-      icon: Shield,
+      title: "Premium Quality",
+      description: "Only top-tier scripts that meet our quality standards are listed on FiveCrux. ",
+      icon: Star,
       gradient: "from-yellow-400 to-yellow-500",
     },
     {
-      title: "Community Driven",
-      description: "Built by developers, for developers in the FiveM community",
-      icon: Users,
+      title: "Security Verified",
+      description: "Every resource is manually reviewed",
+      icon: Shield,
       gradient: "from-orange-500 to-red-500",
     },
     {
-      title: "Premium Quality",
+      title: "Maximum Reach",
       description:
-        "Only the highest quality scripts make it to our marketplace",
-      icon: Star,
+        "Get your scripts discovered by thousands of FiveM server owners and communities worldwide.",
+      icon: Megaphone,
       gradient: "from-yellow-400 to-orange-500",
     },
   ];
@@ -212,7 +229,7 @@ export default function HomePage() {
                     className="mb-8"
                   >
                     <motion.h1
-                      className="text-5xl md:text-8xl font-bold mb-6 leading-tight"
+                      className="text-5xl md:text-7xl font-bold mb-6 leading-tight"
                       animate={{
                         backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
                       }}
@@ -231,7 +248,8 @@ export default function HomePage() {
                     >
                       Premium FiveM
                       <br />
-                      Marketplace
+                      Marketplace & <br />
+                      Giveaway Platform
                     </motion.h1>
                   </motion.div>
 
@@ -256,7 +274,6 @@ export default function HomePage() {
                     <motion.div
                       whileHover={{
                         scale: 1.05,
-                        boxShadow: "0 25px 50px rgba(249, 115, 22, 0.4)",
                       }}
                       whileTap={{ scale: 0.95 }}
                     >
@@ -266,7 +283,7 @@ export default function HomePage() {
                             size="lg"
                             className="bg-gradient-to-r from-orange-500 via-yellow-400 to-orange-500 hover:from-orange-600 hover:via-yellow-500 hover:to-orange-600 text-black font-bold px-10 py-4 text-xl rounded-full shadow-2xl transition-all duration-300"
                           >
-                            Explore Scripts
+                            Explore Marketplace
                           </Button>
                         </Link>
                       ) : (
@@ -283,18 +300,17 @@ export default function HomePage() {
                     <motion.div
                       whileHover={{
                         scale: 1.05,
-                        boxShadow: "0 25px 50px rgba(249, 115, 22, 0.3)",
                       }}
                       whileTap={{ scale: 0.95 }}
                     >
-                      <Link href="/scripts/submit">
+                      <Link href="/giveaways">
                         <Button
                           size="lg"
                           variant="outline"
                           className="bg-transparent border-2 border-orange-500/50 text-orange-500 hover:bg-orange-500/10 hover:border-orange-500 hover:text-orange-500 px-10 py-4 text-xl rounded-full backdrop-blur-sm transition-all duration-300 flex items-center gap-2"
                         >
                           <Code className="h-5 w-5" />
-                          Submit Script
+                          Explore Giveaways
                         </Button>
                       </Link>
                     </motion.div>
@@ -395,13 +411,12 @@ export default function HomePage() {
               <h2 className="text-5xl md:text-6xl font-bold text-white mb-6 bg-gradient-to-r from-white via-orange-200 to-yellow-200 bg-clip-text text-transparent">
                 Why Choose{" "}
                 <span className="bg-gradient-to-r from-orange-500 to-yellow-400 bg-clip-text text-transparent">
-                  FiveHub
+                  FiveCrux
                 </span>
                 ?
               </h2>
               <p className="text-xl text-gray-300 max-w-2xl mx-auto leading-relaxed">
-                The most trusted marketplace for premium FiveM scripts and
-                resources
+              The most trusted marketplace and giveaway platform for premium FiveM scripts and resources
               </p>
             </motion.div>
 
@@ -455,7 +470,7 @@ export default function HomePage() {
               </p>
             </motion.div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 max-w-7xl mx-auto gap-6 px-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 max-w-7xl mx-auto gap-6 px-8">
             <motion.div
               whileHover={{ scale: 1.02, y: -5 }}
               transition={{ duration: 0.3 }}
@@ -464,25 +479,25 @@ export default function HomePage() {
                 <CardHeader className="pb-3">
                   <div className="flex items-center gap-3 mb-2">
                     <div className="p-2 rounded-lg bg-gradient-to-br from-orange-500/20 to-yellow-400/20 group-hover:from-orange-500/30 group-hover:to-yellow-400/30 transition-all duration-300">
-                      <Zap className="h-6 w-6 text-orange-400" />
+                      <Image src="/gamecrux.webp" alt="GameCrux" width={48} height={48} />
                     </div>
-                    <CardTitle className="text-xl font-bold text-white">FiveCrux</CardTitle>
+                    <CardTitle className="text-xl font-bold text-white">GameCrux</CardTitle>
                   </div>
                 </CardHeader>
                 <CardContent className="pt-0">
                   <CardDescription className="text-gray-300 text-sm leading-relaxed">
-                    FiveCrux is a platform that allows you to create and manage your
-                    own server with ease and efficiency.
+                  Discover, Play, and Enjoy a Curated Selection of Exciting Minigames <br />
+                  Dive into the ultimate experience with our comprehensive games. Get started now!
                   </CardDescription>
                 </CardContent>
                 <CardFooter className="pt-4">
                   <a 
-                    href="https://fivecrux.net" 
+                    href="https://www.gamecrux.io/" 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="text-orange-400 hover:text-orange-500 font-semibold text-sm flex items-center gap-2 transition-colors"
                   >
-                    Visit FiveCrux.net
+                    Visit GameCrux
                     <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
                   </a>
                 </CardFooter>
@@ -496,57 +511,27 @@ export default function HomePage() {
                 <CardHeader className="pb-3">
                   <div className="flex items-center gap-3 mb-2">
                     <div className="p-2 rounded-lg bg-gradient-to-br from-orange-500/20 to-yellow-400/20 group-hover:from-orange-500/30 group-hover:to-yellow-400/30 transition-all duration-300">
-                      <Zap className="h-6 w-6 text-orange-400" />
+                      {/* <Zap className="h-6 w-6 text-orange-400" /> */}
+                      <Image src="/cs.webp" alt="Crux Studio" width={48} height={48} />
                     </div>
-                    <CardTitle className="text-xl font-bold text-white">FiveCrux</CardTitle>
+                    <CardTitle className="text-xl font-bold text-white">Crux Studio</CardTitle>
                   </div>
                 </CardHeader>
                 <CardContent className="pt-0">
                   <CardDescription className="text-gray-300 text-sm leading-relaxed">
-                    FiveCrux is a platform that allows you to create and manage your
-                    own server with ease and efficiency.
+                    Premium Fivem Assets Marketplace
+                    <br />
+                    Creating high-quality products with passion and attention to detail to make your server even better.
                   </CardDescription>
                 </CardContent>
                 <CardFooter className="pt-4">
                   <a 
-                    href="https://fivecrux.net" 
+                    href="https://crux.tebex.io/" 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="text-orange-400 hover:text-orange-500 font-semibold text-sm flex items-center gap-2 transition-colors"
                   >
-                    Visit FiveCrux.net
-                    <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                  </a>
-                </CardFooter>
-              </Card>
-            </motion.div>
-            <motion.div
-              whileHover={{ scale: 1.02, y: -5 }}
-              transition={{ duration: 0.3 }}
-            >
-              <Card className="bg-neutral-900/40 border-gray-700/50 hover:border-orange-500/50 transition-all duration-500 backdrop-blur-sm h-full relative overflow-hidden group">
-                <CardHeader className="pb-3">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="p-2 rounded-lg bg-gradient-to-br from-orange-500/20 to-yellow-400/20 group-hover:from-orange-500/30 group-hover:to-yellow-400/30 transition-all duration-300">
-                      <Zap className="h-6 w-6 text-orange-400" />
-                    </div>
-                    <CardTitle className="text-xl font-bold text-white">FiveCrux</CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <CardDescription className="text-gray-300 text-sm leading-relaxed">
-                    FiveCrux is a platform that allows you to create and manage your
-                    own server with ease and efficiency.
-                  </CardDescription>
-                </CardContent>
-                <CardFooter className="pt-4">
-                  <a 
-                    href="https://fivecrux.net" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-orange-400 hover:text-orange-500 font-semibold text-sm flex items-center gap-2 transition-colors"
-                  >
-                    Visit FiveCrux.net
+                    Visit Crux Studio
                     <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
                   </a>
                 </CardFooter>
@@ -566,34 +551,14 @@ export default function HomePage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20 align-middle justify-center">
           <h2 className="text-4xl font-bold mb-8">FAQs</h2>
         <Accordion type="single" collapsible>
-          <AccordionItem value="item-1">
-            <AccordionTrigger className="text-2xl">Where can I Download this Script?</AccordionTrigger>
-            <AccordionContent>
-            After your purchase, your package will appear on the Keymaster. You can download the package or transfer your license.
-            </AccordionContent>
-          </AccordionItem>
-          <AccordionItem value="item-2">
-            <AccordionTrigger className="text-2xl">How does this system work?</AccordionTrigger>
-            <AccordionContent>
-            All resources are encrypted by Cfx.re and linked to your personal Cfx.re account. This process is automated and instant. Purchases are tied to your Cfx.re account, not a specific license key. If you buy a package, it will work for all of your keys. If another Cfx.re account needs access, you need to transfer your license on the Keymaster.
-            </AccordionContent>
-          </AccordionItem>
-          <AccordionItem value="item-3">
-            <AccordionTrigger className="text-2xl">Can I resell this Script?</AccordionTrigger>
-            <AccordionContent>
-            No. Tebex Limited is the only authorized reseller of CRUX assets. Any external offers or websites claiming to sell our products are unauthorized and violate copyright laws. If you find CRUX assets outside our store, they are likely scams and could pose security risks. To guarantee authenticity and protection, all our assets are delivered exclusively through the Cfx Escrow system.
-            </AccordionContent>
-          </AccordionItem>
-          <AccordionItem value="item-4">
-            <AccordionTrigger className="text-2xl">Where can I get support?</AccordionTrigger>
-            <AccordionContent>
-            Our official support is available through our Discord server, where our team is ready to assist you with technical issues and questions 24/7.
-            </AccordionContent>
-          </AccordionItem>
-          
+          {faqs.map((faq, index) => (
+            <AccordionItem key={index} value={`item-${index + 1}`}>
+              <AccordionTrigger className="text-2xl">{faq.question}</AccordionTrigger>
+              <AccordionContent>{faq.answer}</AccordionContent>
+            </AccordionItem>
+          ))}
         </Accordion>
         </div>
-          
         </motion.section>
         <Footer />
       </div>

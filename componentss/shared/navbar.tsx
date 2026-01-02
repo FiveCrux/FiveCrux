@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { motion } from "framer-motion"
 import Link from "next/link"
+import Image from "next/image"
 import { useSession, signIn, signOut } from "next-auth/react"
 import { Avatar, AvatarImage, AvatarFallback } from "@/componentss/ui/avatar"
 import {
@@ -32,6 +33,7 @@ export default function NavbarComponent() {
   const CustomLogo = () => {
     return (
       <Link href="/" className="relative z-20 mr-4 flex items-center space-x-2 px-2 py-1 text-sm font-normal">
+        <Image src="/CF.svg" alt="logo" width={30} height={30} />
         <motion.span
           className="text-orange-500 text-2xl font-bold"
           animate={{
@@ -56,7 +58,7 @@ export default function NavbarComponent() {
           }}
           transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY, delay: 0.5 }}
         >
-          Hub
+          Crux
         </motion.span>
       </Link>
     )
