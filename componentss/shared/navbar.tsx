@@ -33,7 +33,7 @@ export default function NavbarComponent() {
   const CustomLogo = () => {
     return (
       <Link href="/" className="relative z-20 mr-4 flex items-center space-x-2 px-2 py-1 text-sm font-normal">
-        <Image src="/CF.svg" alt="logo" width={30} height={30} />
+        {/* <Image src="/CF.svg" alt="logo" width={80} height={80} /> */}
         <motion.span
           className="text-orange-500 text-2xl font-bold"
           animate={{
