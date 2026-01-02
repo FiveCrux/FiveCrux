@@ -548,7 +548,7 @@ export default function GiveawayDetailPage() {
     entries: giveaway?.entriesCount || 0,
     timeLeft: calculateTimeLeft(giveaway?.endDate || "2024-12-31"),
     endDate: giveaway?.endDate || "2024-12-31",
-    category: giveaway?.category || "Scripts",
+    category: giveaway?.category || "Giveaways",
     createdAt: giveaway?.createdAt || new Date().toISOString(),
     updatedAt: giveaway?.updatedAt || new Date().toISOString(),
     featured: giveaway?.featured || false,
@@ -923,11 +923,12 @@ export default function GiveawayDetailPage() {
               minHeight: bgHeight ? undefined : '100vh',
             }}
           >
-            {/* Overlay to reduce background image opacity */}
-            <div className="absolute inset-0 bg-[#131313] pointer-events-none" />
+          <div className="absolute inset-0 bg-[#131313]/80 pointer-events-none" />
+
+          {/* Gradient fade from middle to bottom - completely dark */}
+          <div className="absolute inset-x-0 top-[15%] bottom-0 bg-gradient-to-b from-transparent to-[#131313] pointer-events-none z-[1]" />
+
             
-            {/* Gradient fade from middle to bottom - completely dark */}
-            <div className="absolute inset-x-0 top-1/3 bottom-0 bg-[#131313] pointer-events-none z-[1]" />
           </div>
           
           {/* Content */}

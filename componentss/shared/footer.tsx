@@ -34,7 +34,7 @@ export default function Footer() {
         >
           <h3 className="text-2xl font-bold mb-4">
             <span className="text-orange-500">Five</span>
-            <span className="text-yellow-400">Hub</span>
+            <span className="text-yellow-400">Crux</span>
           </h3>
           <p className="text-gray-400 mb-4 leading-relaxed">
             Your trusted source for premium FiveM scripts and resources. Built by developers, for developers.
@@ -106,7 +106,7 @@ export default function Footer() {
         transition={{ duration: 1, delay: 0.5 }}
       >
         <p className="text-gray-400">
-          &copy; 2024 FiveHub. All rights reserved. Made with{" "}
+          &copy; 2024 FiveCrux. All rights reserved. Made with{" "}
           for the FiveM community.
         </p>
       </motion.div>
