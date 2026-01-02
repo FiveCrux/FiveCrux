@@ -36,6 +36,9 @@ import {
   ArrowRight,
   Megaphone,
   Code,
+  ClipboardCheck,
+  MousePointerClick,
+  CodeXmlIcon,
 } from "lucide-react";
 import { HexagonBackground } from "@/components/animate-ui/components/backgrounds/hexagon";
 import { StarsBackground } from "@/components/animate-ui/components/backgrounds/stars";
@@ -144,15 +147,15 @@ export default function HomePage() {
     },
     {
       question: "Who owns the script rights?",
-      answer:"Developers retain full ownership of their scripts. FiveCrux only provides the platform for promotion."
+      answer: "Developers retain full ownership of their scripts. FiveCrux only provides the platform for promotion."
     },
     {
-      question:"Is there any publishing fee?",
-      answer:"There is no upfront fee to publish scripts."
+      question: "Is there any publishing fee?",
+      answer: "There is no upfront fee to publish scripts."
     },
     {
-      question:"Can I host giveaways on FiveCrux?",
-      answer:"Yes. Developers can create and publish giveaways to promote their scripts, gain visibility, and reach a wider FiveM audience."
+      question: "Can I host giveaways on FiveCrux?",
+      answer: "Yes. Developers can create and publish giveaways to promote their scripts, gain visibility, and reach a wider FiveM audience."
     }
   ]
   const platformFeatures = [
@@ -414,7 +417,7 @@ export default function HomePage() {
                 ?
               </h2>
               <p className="text-xl text-gray-300 max-w-2xl mx-auto leading-relaxed">
-              The most trusted marketplace and giveaway platform for premium FiveM scripts and resources
+                The most trusted marketplace and giveaway platform for premium FiveM scripts and resources
               </p>
             </motion.div>
 
@@ -452,7 +455,7 @@ export default function HomePage() {
           </div>
         </motion.section>
 
-      
+
 
         {/*Our Services Seciton*/}
         <motion.div>
@@ -484,14 +487,14 @@ export default function HomePage() {
                 </CardHeader>
                 <CardContent className="pt-0">
                   <CardDescription className="text-gray-300 text-sm leading-relaxed">
-                  Discover, Play, and Enjoy a Curated Selection of Exciting Minigames <br />
-                  Dive into the ultimate experience with our comprehensive games. Get started now!
+                    Discover, Play, and Enjoy a Curated Selection of Exciting Minigames <br />
+                    Dive into the ultimate experience with our comprehensive games. Get started now!
                   </CardDescription>
                 </CardContent>
                 <CardFooter className="pt-4">
-                  <a 
-                    href="https://www.gamecrux.io/" 
-                    target="_blank" 
+                  <a
+                    href="https://www.gamecrux.io/"
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="text-orange-400 hover:text-orange-500 font-semibold text-sm flex items-center gap-2 transition-colors"
                   >
@@ -523,9 +526,9 @@ export default function HomePage() {
                   </CardDescription>
                 </CardContent>
                 <CardFooter className="pt-4">
-                  <a 
-                    href="https://crux.tebex.io/" 
-                    target="_blank" 
+                  <a
+                    href="https://crux.tebex.io/"
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="text-orange-400 hover:text-orange-500 font-semibold text-sm flex items-center gap-2 transition-colors"
                   >
@@ -538,6 +541,66 @@ export default function HomePage() {
           </div>
         </motion.div>
 
+        <motion.div className="max-w-7xl mx-auto mt-10 px-4 sm:px-6">
+          <div className="relative h-64 sm:h-80 md:h-96 rounded-lg overflow-hidden">
+            {/* Background Image */}
+            <img
+              src="/gtav_1.jpg"
+              alt="FiveCrux"
+              className="w-full h-full object-cover object-top opacity-60"
+            />
+
+            {/* Gradient Overlays */}
+            <div className="absolute inset-0 bg-gradient-to-br from-orange-600/50 via-red-600/40 to-purple-900/60"></div>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
+
+            {/* Content */}
+            <div className="absolute inset-0 flex flex-col md:flex-row items-center md:items-center justify-center md:justify-between px-4 sm:px-6 z-10 gap-4 md:gap-8">
+              {/* Left Content */}
+              <div className="max-w-xl flex flex-col items-start gap-3 md:gap-4">
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white">Publish Your Script</h2>
+                <p className="text-gray-300 text-xs sm:text-sm leading-relaxed text-left">
+                  Every huge store starts with a great idea and yours could be next. Share published mods and get instant exposure. With us your scripts evolve alongside the community that loves it
+                </p>
+               
+                  <button className="bg-white text-black font-bold px-6 sm:px-8 py-2 sm:py-3 text-base sm:text-lg shadow-lg rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-2">
+                    Submit Your Script <MousePointerClick className="h-4 w-4 sm:h-5 sm:w-5" />
+                  </button>
+              </div>
+
+            </div>
+          </div>
+        </motion.div>
+        
+        <motion.div className="max-w-7xl mx-auto mt-10 px-4 sm:px-6">
+          <div className="relative h-64 sm:h-80 md:h-96 rounded-lg overflow-hidden">
+            {/* Background Image */}
+            <img
+              src="/gtav_2.jpg"
+              alt="FiveCrux"
+              className="w-full h-full object-cover object-top opacity-60"
+            />
+
+            {/* Gradient Overlays */}
+            <div className="absolute inset-0 bg-gradient-to-br from-orange-600/50 via-red-600/40 to-purple-900/60"></div>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
+
+            {/* Content */}
+            <div className="absolute inset-0 flex flex-col md:flex-row items-center md:items-center justify-center md:justify-between px-4 sm:px-6 z-10 gap-4 md:gap-8">
+              {/* Left Content */}
+              <div className="max-w-xl flex flex-col items-start gap-3 md:gap-4">
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white">Create Your Giveaway</h2>
+                <p className="text-gray-300 text-xs sm:text-sm leading-relaxed text-left">
+                  Create and publish giveaways to promote your scripts and get instant exposure. With us your giveaways evolve alongside the community that loves it
+                </p>
+                  <button className="bg-white text-black font-bold px-6 sm:px-8 py-2 sm:py-3 text-base sm:text-lg shadow-lg rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-2">
+                    Create Your Giveaway <MousePointerClick className="h-4 w-4 sm:h-5 sm:w-5" />
+                  </button>
+              </div>
+
+            </div>
+          </div>
+        </motion.div>
         {/* Call to Action Section */}
         <motion.section
           className="py-32 px-4 sm:px-6 lg:px-8 relative overflow-hidden"
@@ -547,16 +610,16 @@ export default function HomePage() {
         >
           {/* Background effects */}
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20 align-middle justify-center">
-          <h2 className="text-4xl font-bold mb-8">FAQs</h2>
-        <Accordion type="single" collapsible>
-          {faqs.map((faq, index) => (
-            <AccordionItem key={index} value={`item-${index + 1}`}>
-              <AccordionTrigger className="text-2xl">{faq.question}</AccordionTrigger>
-              <AccordionContent>{faq.answer}</AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
-        </div>
+            <h2 className="text-4xl font-bold mb-8">FAQs</h2>
+            <Accordion type="single" collapsible>
+              {faqs.map((faq, index) => (
+                <AccordionItem key={index} value={`item-${index + 1}`}>
+                  <AccordionTrigger className="text-2xl">{faq.question}</AccordionTrigger>
+                  <AccordionContent>{faq.answer}</AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </div>
         </motion.section>
         <Footer />
       </div>
