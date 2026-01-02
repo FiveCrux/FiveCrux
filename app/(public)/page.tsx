@@ -277,7 +277,6 @@ export default function HomePage() {
                       }}
                       whileTap={{ scale: 0.95 }}
                     >
-                      {status === "authenticated" ? (
                         <Link href="/scripts">
                           <Button
                             size="lg"
@@ -286,15 +285,6 @@ export default function HomePage() {
                             Explore Marketplace
                           </Button>
                         </Link>
-                      ) : (
-                        <Button
-                          size="lg"
-                          className="bg-gradient-to-r from-orange-500 via-yellow-400 to-orange-500 hover:from-orange-600 hover:via-yellow-500 hover:to-orange-600 text-black font-bold px-10 py-4 text-xl rounded-full shadow-2xl transition-all duration-300"
-                          onClick={() => signIn("discord")}
-                        >
-                          Login to Explore
-                        </Button>
-                      )}
                     </motion.div>
 
                     <motion.div
