@@ -587,6 +587,7 @@ export async function createScript(scriptData: NewScript & { framework?: string 
     seller_name: scriptData.seller_name || 'Unknown Seller',
     seller_email: scriptData.seller_email || 'unknown@example.com',
     featured: scriptData.featured ?? false,
+    free: (scriptData as any).free ?? false,
     images: scriptData.images || [],
     videos: scriptData.videos || [],
     screenshots: scriptData.screenshots || [],
@@ -1032,6 +1033,7 @@ export async function updateScriptForReapproval(id: number, updateData: any) {
     if (updateData.youtube_video_link !== undefined) assignIfDefined('youtubeVideoLink', updateData.youtube_video_link);
     assignIfDefined('version', updateData.version);
     if (updateData.featured !== undefined) assignIfDefined('featured', Boolean(updateData.featured));
+    if (updateData.free !== undefined) assignIfDefined('free', Boolean(updateData.free));
 
     console.log('Mapped update object for re-approval:', mappedUpdate);
 
@@ -1119,6 +1121,7 @@ export async function updatePendingScript(id: number, updateData: any) {
     if (updateData.youtube_video_link !== undefined) assignIfDefined('youtubeVideoLink', updateData.youtube_video_link);
     assignIfDefined('version', updateData.version);
     if (updateData.featured !== undefined) assignIfDefined('featured', Boolean(updateData.featured));
+    if (updateData.free !== undefined) assignIfDefined('free', Boolean(updateData.free));
 
     const result = await db.update(pendingScripts)
       .set(mappedUpdate)
@@ -1179,6 +1182,7 @@ export async function updateRejectedScriptForReapproval(id: number, updateData: 
     if (updateData.youtube_video_link !== undefined) assignIfDefined('youtubeVideoLink', updateData.youtube_video_link);
     assignIfDefined('version', updateData.version);
     if (updateData.featured !== undefined) assignIfDefined('featured', Boolean(updateData.featured));
+    if (updateData.free !== undefined) assignIfDefined('free', Boolean(updateData.free));
 
     const result = await db.transaction(async (tx) => {
       await tx.delete(rejectedScripts).where(eq(rejectedScripts.id, id));
@@ -3056,6 +3060,7 @@ export async function getFeaturedScriptsWithDetails(filters?: {
         scriptFramework: approvedScripts.framework,
         scriptSellerName: approvedScripts.seller_name,
         scriptCurrencySymbol: approvedScripts.currencySymbol,
+        scriptFree: approvedScripts.free,
       })
       .from(featuredScripts)
       .leftJoin(approvedScripts, eq(featuredScripts.scriptId, approvedScripts.id))

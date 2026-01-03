@@ -63,6 +63,7 @@ interface Script {
   price: number;
   original_price?: number;
   currency_symbol?: string;
+  free?: boolean;
 }
 
 export default function HomePage() {
@@ -126,8 +127,12 @@ export default function HomePage() {
             price: item.scriptPrice || 0,
             original_price: item.scriptPrice || 0,
             currency_symbol: item.scriptCurrencySymbol || "$",
+            free: item.scriptFree || false,
           }));
-          setFeaturedScripts(mappedScripts);
+          
+          // Shuffle the array to randomize starting position
+          const shuffledScripts = [...mappedScripts].sort(() => Math.random() - 2);
+          setFeaturedScripts(shuffledScripts);
         }
       } catch (error) {
         console.error("Error fetching featured scripts:", error);

@@ -88,6 +88,7 @@ export default function SubmitScriptPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isEditMode, setIsEditMode] = useState(false)
   const [isLoadingScript, setIsLoadingScript] = useState(false)
+  const [isFree, setIsFree] = useState(false)
 
   // Form state (must be declared before effects that reference setters)
   const [formData, setFormData] = useState({
@@ -211,6 +212,9 @@ export default function SubmitScriptPage() {
               coverImage: script.cover_image || null,
               thumbnail: null,
             })
+            
+            // Set free status from database
+            setIsFree(script.free === true || script.free === 1)
           } else {
             console.error('Failed to fetch script')
             router.push('/scripts/submit')
@@ -445,10 +449,11 @@ export default function SubmitScriptPage() {
     try {
       const scriptData = {
         ...formData,
-        price: Number.parseFloat(formData.price),
-        original_price: formData.originalPrice ? Number.parseFloat(formData.originalPrice) : null,
-        currency: formData.currency || null,
-        currency_symbol: formData.currencySymbol || null,
+        price: isFree ? 0 : Number.parseFloat(formData.price),
+        original_price: isFree ? null : (formData.originalPrice ? Number.parseFloat(formData.originalPrice) : null),
+        currency: isFree ? null : (formData.currency || null),
+        currency_symbol: isFree ? null : (formData.currencySymbol || null),
+        free: isFree,
         seller_name: formData.sellerName,
         seller_email: formData.sellerEmail,
         features: features.filter((f) => f.text.trim()).map((f) => f.text.trim()),
@@ -745,8 +750,33 @@ export default function SubmitScriptPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6">
+                    {/* Free Toggle */}
+                    <div className="flex items-center space-x-2 pb-4 border-b border-gray-700">
+                      <Switch
+                        id="isFree"
+                        checked={isFree}
+                        onCheckedChange={(checked) => {
+                          setIsFree(checked)
+                          if (checked) {
+                            // Clear price and currency when setting to free
+                            setFormData({ 
+                              ...formData, 
+                              price: "0",
+                              originalPrice: "",
+                              currency: "",
+                              currencySymbol: ""
+                            })
+                            setSelectedCurrency(null)
+                          }
+                        }}
+                      />
+                      <Label htmlFor="isFree" className="text-white font-medium cursor-pointer">
+                        Free Script
+                      </Label>
+                    </div>
+
                     <div className="space-y-4">
-                      <div>
+                      <div className={cn("transition-opacity", isFree && "opacity-50 pointer-events-none")}>
                         <Label className="text-white font-medium">
                           Currency *
                         </Label>
@@ -770,17 +800,20 @@ export default function SubmitScriptPage() {
                               })
                             }}
                             placeholder="Select currency"
-                            disabled={false}
+                            disabled={isFree}
                             currencies="all"
                             variant="default"
-                            className="bg-gray-900/50 border-gray-700 text-white"
+                            className={cn(
+                              "bg-gray-900/50 border-gray-700 text-white",
+                              isFree && "cursor-not-allowed opacity-50"
+                            )}
                           />
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className={cn("grid grid-cols-1 md:grid-cols-2 gap-4 transition-opacity", isFree && "opacity-50 pointer-events-none")}>
                         <div>
-                          <Label htmlFor="price" className="text-white font-medium">
+                          <Label htmlFor="price" className={cn("text-white font-medium", isFree && "text-gray-500")}>
                             Price *
                           </Label>
                           <div className="relative mt-2">
@@ -792,11 +825,14 @@ export default function SubmitScriptPage() {
                               value={formData.price}
                               onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                               placeholder="25.99"
-                              className="pr-10 bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-orange-500"
-                              required
-                              disabled={!selectedCurrency}
+                              className={cn(
+                                "pr-10 bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-orange-500",
+                                isFree && "cursor-not-allowed opacity-50 bg-gray-800/30"
+                              )}
+                              required={!isFree}
+                              disabled={isFree || !selectedCurrency}
                             />
-                            {selectedCurrency && (
+                            {selectedCurrency && !isFree && (
                               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">
                                 {selectedCurrency.symbol}
                               </span>
@@ -805,7 +841,7 @@ export default function SubmitScriptPage() {
                         </div>
 
                         <div>
-                          <Label htmlFor="originalPrice" className="text-white font-medium">
+                          <Label htmlFor="originalPrice" className={cn("text-white font-medium", isFree && "text-gray-500")}>
                             Original Price (Optional)
                           </Label>
                           <div className="relative mt-2">
@@ -817,10 +853,13 @@ export default function SubmitScriptPage() {
                               value={formData.originalPrice}
                               onChange={(e) => setFormData({ ...formData, originalPrice: e.target.value })}
                               placeholder="35.99"
-                              className="pr-10 bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-orange-500"
-                              disabled={!selectedCurrency}
+                              className={cn(
+                                "pr-10 bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-orange-500",
+                                isFree && "cursor-not-allowed opacity-50 bg-gray-800/30"
+                              )}
+                              disabled={isFree || !selectedCurrency}
                             />
-                            {selectedCurrency && (
+                            {selectedCurrency && !isFree && (
                               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">
                                 {selectedCurrency.symbol}
                               </span>
@@ -830,7 +869,7 @@ export default function SubmitScriptPage() {
                       </div>
                     </div>
 
-                    {discount > 0 && (
+                    {discount > 0 && !isFree && (
                       <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
                         <div className="flex items-center gap-2">
                           <CheckCircle className="h-5 w-5 text-green-500" />
@@ -1260,12 +1299,18 @@ export default function SubmitScriptPage() {
 
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <span className="text-orange-500 font-bold text-xl">{selectedCurrency?.symbol || "$"}{formData.price || "0.00"}</span>
-                          {formData.originalPrice && (
-                            <span className="text-gray-500 line-through text-sm">{selectedCurrency?.symbol || "$"}{formData.originalPrice}</span>
+                          {isFree ? (
+                            <span className="text-orange-500 font-bold text-xl">Free</span>
+                          ) : (
+                            <>
+                              <span className="text-orange-500 font-bold text-xl">{selectedCurrency?.symbol || "$"}{formData.price || "0.00"}</span>
+                              {formData.originalPrice && (
+                                <span className="text-gray-500 line-through text-sm">{selectedCurrency?.symbol || "$"}{formData.originalPrice}</span>
+                              )}
+                            </>
                           )}
                         </div>
-                        {discount > 0 && <Badge className="bg-red-500 text-white">-{discount}%</Badge>}
+                        {discount > 0 && !isFree && <Badge className="bg-red-500 text-white">-{discount}%</Badge>}
                       </div>
 
                       <div className="flex flex-wrap gap-2">

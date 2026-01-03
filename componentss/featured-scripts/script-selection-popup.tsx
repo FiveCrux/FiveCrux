@@ -180,7 +180,7 @@ export default function ScriptSelectionPopup({ isOpen, onClose, onSelect, slotUn
                           </Badge>
                         )}
                         <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30 text-xs">
-                          {script.currency_symbol || "$"}{script.price}
+                          {script.free || script.price === 0 ? "Free" : `${script.currency_symbol || "$"}${script.price}`}
                         </Badge>
                       </div>
                     </div>

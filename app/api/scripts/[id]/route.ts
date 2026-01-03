@@ -94,6 +94,7 @@ export async function PATCH(
         last_updated: body.last_updated,
         status: "pending",
         featured: body.featured,
+        free: body.free || false,
       })
     } else if (currentScript.status === "rejected") {
       // Rejected -> move to pending with updates
@@ -120,6 +121,7 @@ export async function PATCH(
         last_updated: body.last_updated,
         status: "pending",
         featured: body.featured,
+        free: body.free || false,
       })
     } else {
       // Pending -> in-place update (refresh submittedAt for ordering)
@@ -145,6 +147,7 @@ export async function PATCH(
         youtubeVideoLink: body.youtube_video_link,
         last_updated: body.last_updated,
         featured: body.featured,
+        free: body.free || false,
       })
     }
 
