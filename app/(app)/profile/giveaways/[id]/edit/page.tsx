@@ -709,6 +709,7 @@ export default function EditGiveawayPage() {
                           }
                           label="End Date*"
                           id="endDate"
+                          disablePastDates={true}
                         />
                       </div>
                     </div>

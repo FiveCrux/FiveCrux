@@ -110,7 +110,10 @@ export default function AdCard({ ad, className = "", variant = 'default' }: AdCa
         whileHover={{ y: -5, scale: 1.02 }}
         className={`group ${className}`}
       >
-        <Card className="bg-neutral-900 border-neutral-700/50 hover:border-white cursor-pointer h-full backdrop-blur-sm relative overflow-hidden shadow-2xl rounded-lg transition-all duration-300 flex flex-col">
+        <Card 
+          onClick={handleClick}
+          className="bg-neutral-900 border-neutral-700/50 hover:border-white cursor-pointer h-full backdrop-blur-sm relative overflow-hidden shadow-2xl rounded-lg transition-all duration-300 flex flex-col"
+        >
           {/* Image Section */}
           <CardHeader className="p-0 overflow-hidden rounded-t-lg">
             <div className="relative">
@@ -181,9 +184,12 @@ export default function AdCard({ ad, className = "", variant = 'default' }: AdCa
               <Button 
                 variant="outline" 
                 className="w-full bg-white text-black hover:bg-gray-300 hover:text-black transition-colors duration-200 font-semibold text-xs py-1.5 h-auto"
-                onClick={handleClick}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleClick();
+                }}
               >
-                {ad.link_url ? 'Learn More' : 'View Details'}
+                {ad.link_url ? 'View Details' : 'View Details'}
               </Button>
             </div>
           </div>
@@ -203,7 +209,10 @@ export default function AdCard({ ad, className = "", variant = 'default' }: AdCa
         whileHover={{ y: -5, scale: 1.02 }}
         className={`group ${className}`}
       >
-        <Card className="bg-neutral-900 hover:border-white cursor-pointer h-full backdrop-blur-sm relative overflow-hidden shadow-2xl rounded-lg transition-all duration-300 flex flex-col">
+        <Card 
+          onClick={handleClick}
+          className="bg-neutral-900 hover:border-white cursor-pointer h-full backdrop-blur-sm relative overflow-hidden shadow-2xl rounded-lg transition-all duration-300 flex flex-col"
+        >
           {/* Image Section */}
           <CardHeader className="p-0 overflow-hidden rounded-t-lg relative">
             <div className="relative">
@@ -269,9 +278,12 @@ export default function AdCard({ ad, className = "", variant = 'default' }: AdCa
               <Button 
                 variant="outline" 
                 className="w-full bg-white text-black hover:bg-gray-300 hover:border-gray-300 hover:text-black transition-colors duration-200 font-semibold text-xs py-1.5 h-auto"
-                onClick={handleClick}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleClick();
+                }}
               >
-                {ad.link_url ? 'Learn More' : 'View Details'}
+                {ad.link_url ? 'View Details' : 'View Details'}
               </Button>
             </div>
           </div>
@@ -289,7 +301,10 @@ export default function AdCard({ ad, className = "", variant = 'default' }: AdCa
       transition={{ duration: 0.3 }}
       className={`w-full max-w-sm mx-auto ${className}`}
     >
-      <Card className="bg-neutral-900 border-2 border-neutral-700/50 hover:border-orange-500 cursor-pointer h-full backdrop-blur-sm relative overflow-hidden shadow-2xl rounded-lg transition-all duration-300 flex flex-col">
+      <Card 
+        onClick={handleClick}
+        className="bg-neutral-900 border-2 border-neutral-700/50 hover:border-orange-500 cursor-pointer h-full backdrop-blur-sm relative overflow-hidden shadow-2xl rounded-lg transition-all duration-300 flex flex-col"
+      >
         {/* Image Section */}
         <CardHeader className="p-0 overflow-hidden rounded-t-lg">
           <div className="relative">
@@ -346,9 +361,12 @@ export default function AdCard({ ad, className = "", variant = 'default' }: AdCa
             <Button 
               variant="outline" 
               className="w-full bg-white text-black hover:bg-orange-600 hover:text-white transition-colors duration-200 font-semibold text-xs py-1.5 h-auto"
-              onClick={handleClick}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleClick();
+              }}
             >
-              {ad.link_url ? 'Learn More' : 'View Details'}
+              {ad.link_url ? 'View Details' : 'View Details'}
             </Button>
           </div>
         </div>

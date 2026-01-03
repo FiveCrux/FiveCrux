@@ -14,8 +14,7 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: "FiveCrux - Premium FiveM Scripts & Giveaways",
   description:
-    "Your one-stop destination for premium FiveM scripts and exciting giveaways. Discover, purchase, and download the community's best scripts.",
-    generator: 'v0.dev'
+    "Your one-stop destination for premium FiveM scripts and exciting giveaways. Discover, purchase, and download the community's best scripts."
 }
 
 export default function RootLayout({
