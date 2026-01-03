@@ -76,6 +76,7 @@ interface Script {
   last_updated: string;
   status: "pending" | "approved" | "rejected";
   featured: boolean;
+  free?: boolean;
   downloads: number;
   rating: number;
   review_count: number;
@@ -474,6 +475,7 @@ export default function ScriptDetailPage() {
               seller: s.seller_name || "Unknown",
               seller_roles: s.seller_roles,
               framework: Array.isArray(s.framework) ? s.framework : (s.framework ? [s.framework] : []),
+              free: s.free || false,
             };
           });
         
@@ -653,27 +655,35 @@ export default function ScriptDetailPage() {
                     <CardContent className="p-6 space-y-6">
                       {/* Price Section */}
                       <div className="space-y-3">
-                        <div className="flex items-end gap-3 flex-wrap">
-                          {script.original_price && (
-                            <span className="text-xl text-gray-500 line-through font-medium">
-                              {script.currency_symbol || "$"}{script.original_price}
-                            </span>
-                          )}
+                        {script.free ? (
                           <div className="flex items-center gap-2">
-                            <span className="text-4xl font-black text-white leading-none">
-                              {script.currency_symbol || "$"}{script.price}
-                            </span>
-                            {script.original_price && (
-                              <Badge className="bg-gradient-to-r from-red-500 to-red-600 text-white px-2.5 py-1 rounded-md text-xs font-bold shadow-lg">
-                                -{discount}% OFF
-                              </Badge>
-                            )}
+                            <span className="text-4xl font-black text-white leading-none">Free</span>
                           </div>
-                        </div>
-                        {script.original_price && (
-                          <p className="text-sm text-gray-400">
-                            Save {script.currency_symbol || "$"}{(script.original_price - script.price).toFixed(2)}
-                          </p>
+                        ) : (
+                          <>
+                            <div className="flex items-end gap-3 flex-wrap">
+                              {script.original_price && (
+                                <span className="text-xl text-gray-500 line-through font-medium">
+                                  {script.currency_symbol || "$"}{script.original_price}
+                                </span>
+                              )}
+                              <div className="flex items-center gap-2">
+                                <span className="text-4xl font-black text-white leading-none">
+                                  {script.currency_symbol || "$"}{script.price}
+                                </span>
+                                {script.original_price && (
+                                  <Badge className="bg-gradient-to-r from-red-500 to-red-600 text-white px-2.5 py-1 rounded-md text-xs font-bold shadow-lg">
+                                    -{discount}% OFF
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                            {script.original_price && (
+                              <p className="text-sm text-gray-400">
+                                Save {script.currency_symbol || "$"}{(script.original_price - script.price).toFixed(2)}
+                              </p>
+                            )}
+                          </>
                         )}
                       </div>
 
@@ -761,8 +771,8 @@ export default function ScriptDetailPage() {
                 const hasRequirements = script.requirements && script.requirements.length > 0;
                 const hasSupport = script.other_links && script.other_links.length > 0;
                 
-                // Count visible tabs (Details is always visible)
-                const visibleTabsCount = 1 + (hasFeatures ? 1 : 0) + (hasRequirements ? 1 : 0) + (hasSupport ? 1 : 0);
+                // Count visible tabs
+                const visibleTabsCount = (hasFeatures ? 1 : 0) + (hasRequirements ? 1 : 0) + (hasSupport ? 1 : 0);
                 
                 // Map tab count to grid class
                 const gridClassMap: Record<number, string> = {
@@ -774,17 +784,11 @@ export default function ScriptDetailPage() {
                 const gridClass = gridClassMap[visibleTabsCount] || 'grid-cols-1';
                 
                 // Determine default tab (first available)
-                const defaultTab = "details";
+                const defaultTab = hasFeatures ? "features" : hasRequirements ? "requirements" : hasSupport ? "Other Links" : "features";
                 
                 return (
                   <Tabs key={`tabs-${visibleTabsCount}`} defaultValue={defaultTab} className="w-full">
                     <TabsList className={`grid w-full ${gridClass} bg-neutral-900 p-0 h-auto gap-0`}>
-                      <TabsTrigger
-                        value="details"
-                        className="data-[state=active]:bg-orange-500 data-[state=active]:text-white bg-neutral-900 text-white py-3 px-4 font-medium transition-colors"
-                      >
-                        Details
-                      </TabsTrigger>
                       {hasFeatures && (
                         <TabsTrigger
                           value="features"
@@ -810,68 +814,6 @@ export default function ScriptDetailPage() {
                         </TabsTrigger>
                       )}
                     </TabsList>
-
-                {/* Script Details Tab */}
-                <TabsContent value="details" className="mt-0">
-                  <CardContent className="p-6">
-                    <div className="flex items-center gap-2 mb-6">
-                      <div className="h-6 w-6 rounded bg-orange-500 flex items-center justify-center">
-                        <Info className="h-4 w-4 text-white" />
-                      </div>
-                      <h3 className="text-white text-xl font-bold">
-                        Script Details
-                      </h3>
-                    </div>
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center p-3 bg-neutral-900 rounded">
-                        <span className="text-gray-400 font-medium">
-                          Version
-                        </span>
-                        <span className="text-white font-bold">
-                          {script.version}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center p-3 bg-neutral-900 rounded">
-                        <span className="text-gray-400 font-medium">
-                          Last Updated
-                        </span>
-                        <span className="text-white font-bold">
-                          {new Date(script.last_updated).toLocaleDateString()}
-                        </span>
-                      </div>
-                      {script.framework && (
-                        <div className="flex justify-between items-center p-3 bg-neutral-900 rounded">
-                          <span className="text-gray-400 font-medium">
-                            Framework
-                          </span>
-                          <span className="text-white font-bold">
-                            {Array.isArray(script.framework)
-                              ? script.framework.join(", ")
-                              : script.framework}
-                          </span>
-                        </div>
-                      )}
-                      <div className="flex justify-between items-center p-3 bg-neutral-900 rounded">
-                        <span className="text-gray-400 font-medium">
-                          Downloads
-                        </span>
-                        <span className="text-white font-bold">
-                          {script.downloads || 0}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center p-3 bg-neutral-900 rounded">
-                        <span className="text-gray-400 font-medium">
-                          Rating
-                        </span>
-                        <span className="text-white font-bold flex items-center gap-1">
-                          {script.rating > 0
-                            ? `${script.rating.toFixed(1)} ⭐`
-                            : "No ratings yet"}
-                        </span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </TabsContent>
 
                 {/* Features Tab */}
                 {hasFeatures && (
@@ -1258,8 +1200,7 @@ export default function ScriptDetailPage() {
 
                           {/* Price */}
                           <CardDescription className="text-orange-500 text-xl font-bold pt-1">
-                            {otherScript.currency_symbol || "$"}
-                            {otherScript.price}
+                            {otherScript.free ? "Free" : `${otherScript.currency_symbol || "$"}${otherScript.price}`}
                           </CardDescription>
                         </CardContent>
 

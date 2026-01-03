@@ -93,6 +93,7 @@ interface Script {
   status: "pending" | "approved" | "rejected";
   rejection_reason?: string;
   featured: boolean;
+  free?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -918,9 +919,13 @@ export default function ProfilePage() {
 
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2">
-                                <span className="font-bold">
-                                  <span className="text-orange-500">{script.currency_symbol || "$"}</span> {script.price}
-                                </span>
+                                {script.free ? (
+                                  <span className="font-bold text-orange-500">Free</span>
+                                ) : (
+                                  <span className="font-bold">
+                                    <span className="text-orange-500">{script.currency_symbol || "$"}</span> {script.price}
+                                  </span>
+                                )}
                               </div>
                               <Badge className={getStatusColor(script.status)}>
                                 {script.status}

@@ -39,6 +39,7 @@ const baseScriptFields = {
   screenshots: text('screenshots').array().default([]),
   coverImage: text('cover_image'),
   featured: boolean('featured').default(false),
+  free: boolean('free').default(false),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 }

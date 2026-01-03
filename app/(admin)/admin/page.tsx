@@ -133,6 +133,7 @@ interface Script {
   screenshots: string[];
   cover_image?: string;
   featured: boolean;
+  free?: boolean;
   downloads: number;
   rating: number;
   review_count: number;
@@ -1049,7 +1050,9 @@ export default function AdminPage() {
                               </div>
                               <div className="min-w-0">
                                 <span className="text-gray-400">Price:</span>
-                                <p className="text-white">{script.currency_symbol || "$"}{script.price}</p>
+                                <p className="text-white">
+                                  {script.free ? "Free" : `${script.currency_symbol || "$"}${script.price}`}
+                                </p>
                               </div>
                               <div className="min-w-0">
                                 <span className="text-gray-400">
@@ -2121,10 +2124,10 @@ export default function AdminPage() {
                               Price:
                             </span>
                             <p className="text-white font-semibold">
-                              {viewingScript.currency_symbol || "$"}{viewingScript.price}
+                              {viewingScript.free ? "Free" : `${viewingScript.currency_symbol || "$"}${viewingScript.price}`}
                             </p>
                           </div>
-                          {viewingScript.original_price && (
+                          {viewingScript.original_price && !viewingScript.free && (
                             <div>
                               <span className="text-gray-400 text-sm font-medium">
                                 Original Price:
@@ -2159,24 +2162,6 @@ export default function AdminPage() {
                           <p className="text-white">
                             {viewingScript.seller_email}
                           </p>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <span className="text-gray-400 text-sm font-medium">
-                              Downloads:
-                            </span>
-                            <p className="text-white">
-                              {viewingScript.downloads || 0}
-                            </p>
-                          </div>
-                          <div>
-                            <span className="text-gray-400 text-sm font-medium">
-                              Rating:
-                            </span>
-                            <p className="text-white">
-                              {viewingScript.rating || 0}/5
-                            </p>
-                          </div>
                         </div>
                       </div>
                     </div>
@@ -2445,14 +2430,6 @@ export default function AdminPage() {
                         {new Date(
                           viewingScript.updated_at
                         ).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="text-gray-400 text-sm font-medium">
-                        Reviews:
-                      </span>
-                      <p className="text-white">
-                        {viewingScript.review_count || 0}
                       </p>
                     </div>
                     <div>

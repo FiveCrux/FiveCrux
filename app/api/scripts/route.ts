@@ -52,6 +52,7 @@ export async function POST(request: NextRequest) {
       coverImage: body.cover_image || null,
       youtubeVideoLink: body.youtube_video_link || null,
       featured: body.featured || false,
+      free: body.free || false,
       id: 0
     })
 

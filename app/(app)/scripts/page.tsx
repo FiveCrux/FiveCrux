@@ -99,6 +99,7 @@ export default function ScriptsPage() {
   const filtersInView = useInView(filtersRef, { once: true });
   const scriptsInView = useInView(scriptsRef, { once: true });
   const priceRangeInitialized = useRef(false);
+  const scriptsShuffled = useRef(false);
 
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [priceRange, setPriceRange] = useState<number[]>([0, 1000]);
@@ -118,6 +119,7 @@ export default function ScriptsPage() {
     string[]
   >([]);
   const [onSaleOnly, setOnSaleOnly] = useState(false);
+  const [freeOnly, setFreeOnly] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [openFilter, setOpenFilter] = useState<string | null>(null);
 
@@ -144,6 +146,7 @@ export default function ScriptsPage() {
     tags: string[];
     lastUpdated: string;
     featured?: boolean;
+    free?: boolean;
   };
 
   type GridItem = UIScript | (any & { isAd: boolean });
@@ -229,10 +232,20 @@ export default function ScriptsPage() {
               tags: (s.tags || []) as string[],
               lastUpdated: s.updated_at,
               featured: s.featured || false,
+              free: s.free || false,
             };
           });
           console.log("Mapped scripts:", mappedScripts);
-          setAllScripts(mappedScripts);
+          
+          // Shuffle the array to randomize order only on initial page load
+          if (!scriptsShuffled.current) {
+            const shuffledScripts = [...mappedScripts].sort(() => Math.random() - 0.5);
+            setAllScripts(shuffledScripts);
+            scriptsShuffled.current = true;
+          } else {
+            // If already shuffled, just set the scripts without shuffling again
+            setAllScripts(mappedScripts);
+          }
         }
 
         if (adsRes.ok) {
@@ -269,8 +282,12 @@ export default function ScriptsPage() {
             price: item.scriptPrice || 0,
             original_price: item.scriptPrice || 0,
             currency_symbol: item.scriptCurrencySymbol || "$",
+            free: item.scriptFree || false,
           }));
-          setFeaturedScripts(mappedScripts);
+          
+          // Shuffle the array to randomize starting position
+          const shuffledScripts = [...mappedScripts].sort(() => Math.random() - 0.5);
+          setFeaturedScripts(shuffledScripts);
         }
       } catch (error) {
         console.error("Error fetching featured scripts:", error);
@@ -283,24 +300,23 @@ export default function ScriptsPage() {
   }, []);
 
   const categories = [
+    { id: "scripts", name: "Scripts" },
+    { id: "maps", name: "Maps" },
+    { id: "props", name: "Props" },
+    { id: "clothing", name: "Clothing" },
     { id: "economy", name: "Economy" },
     { id: "vehicles", name: "Vehicles" },
-    { id: "jobs", name: "Jobs" },
-    { id: "housing", name: "Housing" },
-    { id: "medical", name: "Medical" },
-    { id: "police", name: "Police" },
-    { id: "utilities", name: "Utilities" },
-    { id: "core", name: "Core" },
   ];
 
+
   const frameworks = [
-    { value: "All Frameworks", label: "All Frameworks" },
     { value: "qbcore", label: "QBCore" },
     { value: "qbox", label: "Qbox" },
     { value: "esx", label: "ESX" },
     { value: "ox", label: "OX" },
+    { value: "vrp", label: "VRP" },
     { value: "standalone", label: "Standalone" },
-  ];
+  ]
   const priceCategories = ["Budget", "Standard", "Premium"];
 
   // Calculate min and max prices from scripts for dynamic slider range
@@ -372,6 +388,10 @@ export default function ScriptsPage() {
         return false;
       }
 
+      if (freeOnly && !script.free) {
+        return false;
+      }
+
       return true;
     });
   }, [
@@ -382,6 +402,7 @@ export default function ScriptsPage() {
     priceRange,
     priceBounds,
     onSaleOnly,
+    freeOnly,
   ]);
 
   // Sorting logic
@@ -459,6 +480,7 @@ export default function ScriptsPage() {
     setSelectedPriceCategories([]);
     setPriceRange([priceBounds.min, priceBounds.max]);
     setOnSaleOnly(false);
+    setFreeOnly(false);
     setSearchQuery("");
     router.push("/scripts");
   }, [router, priceBounds]);
@@ -485,13 +507,15 @@ export default function ScriptsPage() {
       selectedCategories.length +
       selectedFrameworks.length +
       (priceRange[0] !== priceBounds.min || priceRange[1] !== priceBounds.max ? 1 : 0) +
-      (onSaleOnly ? 1 : 0),
+      (onSaleOnly ? 1 : 0) +
+      (freeOnly ? 1 : 0),
     [
       selectedCategories.length,
       selectedFrameworks.length,
       priceRange,
       priceBounds,
       onSaleOnly,
+      freeOnly,
     ]
   );
 
@@ -518,6 +542,42 @@ export default function ScriptsPage() {
 
   // Get random ads for scripts page
   const randomAds = useRandomAds(ads, 2);
+  
+  // Memoize ad positions based on current sorted scripts and ads
+  // This ensures positions are stable when filters change (only recalculates when scripts or ads actually change)
+  const memoizedAdPositions = useMemo(() => {
+    if (randomAds.length === 0 || sortedScripts.length === 0) {
+      return [];
+    }
+    
+    const positions: number[] = [];
+    const usedPositions = new Set<number>();
+    
+    // Generate random positions for each ad based on current sorted scripts
+    for (let i = 0; i < randomAds.length; i++) {
+      let attempts = 0;
+      let position: number;
+      
+      do {
+        position = Math.floor(Math.random() * sortedScripts.length);
+        attempts++;
+      } while (usedPositions.has(position) && attempts < 100);
+      
+      if (usedPositions.has(position)) {
+        for (let j = 0; j < sortedScripts.length; j++) {
+          if (!usedPositions.has(j)) {
+            position = j;
+            break;
+          }
+        }
+      }
+      
+      usedPositions.add(position);
+      positions.push(position);
+    }
+    
+    return positions.sort((a, b) => a - b);
+  }, [randomAds.map(ad => ad.id).join(','), sortedScripts.length]); // Only recalculate when ads or total count changes, not when filters change
 
   return (
     <>
@@ -908,7 +968,8 @@ export default function ScriptsPage() {
                                   className={`bg-gradient-to-r from-gray-800/80 to-gray-900/80 border-2 text-white font-semibold px-4 py-2 rounded-lg shadow-lg transition-all duration-300 ${
                                     openFilter === "price" ||
                                     priceRange[0] !== priceBounds.min ||
-                                    priceRange[1] !== priceBounds.max
+                                    priceRange[1] !== priceBounds.max ||
+                                    freeOnly
                                       ? "border-orange-500 bg-gradient-to-r from-orange-500/20 to-orange-600/20 shadow-orange-500/50"
                                       : "border-neutral-600/50 hover:border-orange-500/70 hover:from-gray-700/80 hover:to-gray-800/80"
                                   }`}
@@ -920,6 +981,11 @@ export default function ScriptsPage() {
                                       priceRange[1] !== priceBounds.max) && (
                                       <span className="text-orange-400">
                                         {` ${priceRange[0]}-${priceRange[1]}`}
+                                      </span>
+                                    )}
+                                    {freeOnly && (
+                                      <span className="text-orange-400">
+                                        {priceRange[0] !== priceBounds.min || priceRange[1] !== priceBounds.max ? ", " : " "}Free
                                       </span>
                                     )}
                                   </span>
@@ -950,6 +1016,29 @@ export default function ScriptsPage() {
                                     <span>{priceRange[0]}</span>
                                     <span>{priceRange[1]}</span>
                                   </div>
+                                </div>
+                                
+                                {/* Free Toggle */}
+                                <div className="border-t border-neutral-700/50 pt-4">
+                                  <motion.div
+                                    className="flex items-center space-x-2"
+                                    whileHover={{ x: 5 }}
+                                  >
+                                    <Checkbox
+                                      id="free-only"
+                                      checked={freeOnly}
+                                      onCheckedChange={(checked) =>
+                                        setFreeOnly(checked as boolean)
+                                      }
+                                    />
+                                    <label
+                                      htmlFor="free-only"
+                                      className="text-sm text-gray-300 hover:text-white transition-colors cursor-pointer flex items-center gap-2"
+                                    >
+                                      <Zap className="h-4 w-4 text-orange-400" />
+                                      Free Only
+                                    </label>
+                                  </motion.div>
                                 </div>
                               </div>
                             </CollapsibleContent>
@@ -1023,9 +1112,6 @@ export default function ScriptsPage() {
                       </SelectItem>
                       <SelectItem value="price-high" className="text-white">
                         Price: High to Low
-                      </SelectItem>
-                      <SelectItem value="rating" className="text-white">
-                        Highest Rated
                       </SelectItem>
                     </SelectContent>
                   </Select>
@@ -1187,6 +1273,29 @@ export default function ScriptsPage() {
                           </Badge>
                         </motion.div>
                       )}
+                      {freeOnly && (
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.8 }}
+                          whileHover={{ scale: 1.05 }}
+                        >
+                          <Badge
+                            variant="secondary"
+                            className="bg-green-500/20 text-green-400 border-green-500/30 flex items-center gap-1 backdrop-blur-sm"
+                          >
+                            Free
+                            <motion.button
+                              onClick={() => setFreeOnly(false)}
+                              className="hover:text-white transition-colors"
+                              whileHover={{ scale: 1.2 }}
+                              whileTap={{ scale: 0.8 }}
+                            >
+                              <X className="h-3 w-3" />
+                            </motion.button>
+                          </Badge>
+                        </motion.div>
+                      )}
                     </motion.div>
                   </motion.div>
                 )}
@@ -1312,17 +1421,25 @@ export default function ScriptsPage() {
                   >
                     {(() => {
                       const items: GridItem[] = [...paginatedScripts];
-                      // Insert ads at deterministic positions to avoid hydration issues
-                      if (randomAds.length > 0) {
-                        const adPositions = [];
-                        for (let i = 0; i < randomAds.length; i++) {
-                          // Use deterministic positioning based on index to avoid hydration issues
-                          const position = Math.floor(
-                            (i * (items.length + 1)) / randomAds.length
-                          );
-                          adPositions.push({ ad: randomAds[i], position });
+                      // Insert ads at memoized positions (only if they fall within current page)
+                      if (randomAds.length > 0 && items.length > 0 && memoizedAdPositions.length > 0) {
+                        const adPositions: Array<{ ad: any; position: number }> = [];
+                        
+                        // Find which ads should appear on this page based on memoized positions
+                        for (let i = 0; i < randomAds.length && i < memoizedAdPositions.length; i++) {
+                          const globalPosition = memoizedAdPositions[i];
+                          // Check if this ad position falls within the current page
+                          if (globalPosition >= startIndex && globalPosition < endIndex) {
+                            // Convert global position to local page position
+                            const localPosition = globalPosition - startIndex;
+                            adPositions.push({ 
+                              ad: randomAds[i], 
+                              position: localPosition 
+                            });
+                          }
                         }
-                        // Sort by position in descending order to avoid index shifting
+                        
+                        // Sort by position in descending order to avoid index shifting when inserting
                         adPositions.sort((a, b) => b.position - a.position);
                         adPositions.forEach(({ ad, position }) => {
                           items.splice(position, 0, {
@@ -1430,19 +1547,25 @@ export default function ScriptsPage() {
                                     </CardDescription>
                                     {/* Price */}
                                     <div className="flex items-center gap-2 pt-1 flex-wrap">
-                                      {script.discount > 0 && script.originalPrice ? (
+                                      {script.free ? (
+                                        <span className="text-orange-500 text-xl font-bold">Free</span>
+                                      ) : (
                                         <>
-                                          <span className="text-gray-500 text-sm line-through">
-                                            {script.currency_symbol || "$"}{script.originalPrice}
+                                          {script.discount > 0 && script.originalPrice ? (
+                                            <>
+                                              <span className="text-gray-500 text-sm line-through">
+                                                {script.currency_symbol || "$"}{script.originalPrice}
+                                              </span>
+                                              <Badge className="bg-red-500/20 text-red-400 border-red-500/30 text-xs font-semibold px-2 py-0.5">
+                                                -{script.discount}%
+                                              </Badge>
+                                            </>
+                                          ) : null}
+                                          <span className="text-orange-500 text-xl font-bold">
+                                            {script.currency_symbol || "$"}{script.price}
                                           </span>
-                                          <Badge className="bg-red-500/20 text-red-400 border-red-500/30 text-xs font-semibold px-2 py-0.5">
-                                            -{script.discount}%
-                                          </Badge>
                                         </>
-                                      ) : null}
-                                      <span className="text-orange-500 text-xl font-bold">
-                                        {script.currency_symbol || "$"}{script.price}
-                                      </span>
+                                      )}
                                     </div>
                                   </CardContent>
 
