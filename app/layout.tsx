@@ -8,6 +8,7 @@ import { QueryProvider } from "@/providers/query-provider"
 import { Toaster } from "@/componentss/ui/toaster"
 import { Toaster as Sonner } from "@/componentss/ui/sonner"
 import { AutoCheckWrapper } from "@/components/auto-check-wrapper"
+import { Analytics } from "@vercel/analytics/next"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -33,6 +34,7 @@ export default function RootLayout({
               </AutoCheckWrapper>
               <Toaster />
               <Sonner />
+              <Analytics />
             </ThemeProvider>
           </QueryProvider>
         </SessionProvider>
