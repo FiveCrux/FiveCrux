@@ -153,6 +153,8 @@ export default function ScriptsPage() {
   const [loading, setLoading] = useState(true);
   const [featuredScripts, setFeaturedScripts] = useState<any[]>([]);
   const [scriptsLoading, setScriptsLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 12;
 
   useEffect(() => {
     const load = async () => {
@@ -401,6 +403,17 @@ export default function ScriptsPage() {
       default:
         return scripts.sort((a, b) => b.reviews - a.reviews);
     }
+  }, [filteredScripts, sortBy]);
+
+  // Pagination logic
+  const totalPages = Math.ceil(sortedScripts.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedScripts = sortedScripts.slice(startIndex, endIndex);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
   }, [filteredScripts, sortBy]);
 
   // Debug logging removed for production
@@ -1298,7 +1311,7 @@ export default function ScriptsPage() {
                     transition={{ duration: 0.5, staggerChildren: 0.1 }}
                   >
                     {(() => {
-                      const items: GridItem[] = [...sortedScripts];
+                      const items: GridItem[] = [...paginatedScripts];
                       // Insert ads at deterministic positions to avoid hydration issues
                       if (randomAds.length > 0) {
                         const adPositions = [];
@@ -1454,7 +1467,7 @@ export default function ScriptsPage() {
               </AnimatePresence>
 
               {/* Pagination */}
-              {sortedScripts.length > 0 && (
+              {sortedScripts.length > 0 && totalPages > 1 && (
                 <motion.div
                   className="flex justify-center mt-12"
                   initial={{ opacity: 0, y: 20 }}
@@ -1462,27 +1475,65 @@ export default function ScriptsPage() {
                   transition={{ delay: 0.5 }}
                 >
                   <div className="flex space-x-2">
-                    {["Previous", "1", "2", "3", "Next"].map((item, index) => (
+                    {/* Previous Button */}
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.05 }}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <Button
+                        variant="outline"
+                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                        disabled={currentPage === 1}
+                        className="bg-neutral-900/30 border-neutral-700/50 text-white hover:bg-orange-500 hover:border-orange-500 backdrop-blur-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Previous
+                      </Button>
+                    </motion.div>
+
+                    {/* Page Numbers */}
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
                       <motion.div
-                        key={item}
+                        key={pageNum}
                         initial={{ opacity: 0, scale: 0.8 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: index * 0.05 }}
+                        transition={{ delay: pageNum * 0.05 }}
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                       >
                         <Button
-                          variant={item === "1" ? "default" : "outline"}
+                          variant={currentPage === pageNum ? "default" : "outline"}
+                          onClick={() => setCurrentPage(pageNum)}
                           className={
-                            item === "1"
+                            currentPage === pageNum
                               ? "bg-orange-500 text-white"
                               : "bg-neutral-900/30 border-neutral-700/50 text-white hover:bg-orange-500 hover:border-orange-500 backdrop-blur-sm"
                           }
                         >
-                          {item}
+                          {pageNum}
                         </Button>
                       </motion.div>
                     ))}
+
+                    {/* Next Button */}
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: (totalPages + 1) * 0.05 }}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <Button
+                        variant="outline"
+                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                        disabled={currentPage === totalPages}
+                        className="bg-neutral-900/30 border-neutral-700/50 text-white hover:bg-orange-500 hover:border-orange-500 backdrop-blur-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Next
+                      </Button>
+                    </motion.div>
                   </div>
                 </motion.div>
               )}

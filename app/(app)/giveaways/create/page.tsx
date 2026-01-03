@@ -564,9 +564,9 @@ export default function CreateGiveawayPage() {
                           onDateChange={(date) =>
                             setFormData({ ...formData, endDate: date })
                           }
-                      
                           label="End Date*(UTC)"
                           id="endDate"
+                          disablePastDates={true}
                         />
                       </div>
                     </div>

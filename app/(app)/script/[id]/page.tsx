@@ -18,6 +18,11 @@ import {
   Maximize2,
   Download,
   ShoppingCart,
+  MessageCircle,
+  BookOpen,
+  Github,
+  Globe,
+  HelpCircle,
 } from "lucide-react";
 import { Button } from "@/componentss/ui/button";
 import {
@@ -62,6 +67,7 @@ interface Script {
   requirements: string[];
   link?: string;
   youtube_video_link?: string;
+  other_links?: string[];
   images: string[];
   videos: string[];
   screenshots: string[];
@@ -749,33 +755,61 @@ export default function ScriptDetailPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
           <div className="mt-8">
             <Card className="bg-neutral-800 border border-neutral-700">
-              <Tabs defaultValue="details" className="w-full">
-                <TabsList className="grid w-full grid-cols-4 bg-neutral-900 p-0 h-auto gap-0">
-                  <TabsTrigger
-                    value="details"
-                    className="data-[state=active]:bg-orange-500 data-[state=active]:text-white bg-neutral-900 text-white py-3 px-4 font-medium transition-colors"
-                  >
-                    Details
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="features"
-                    className="data-[state=active]:bg-orange-500 data-[state=active]:text-white bg-neutral-900 text-white py-3 px-4 font-medium transition-colors"
-                  >
-                    Features
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="requirements"
-                    className="data-[state=active]:bg-orange-500 data-[state=active]:text-white bg-neutral-900 text-white py-3 px-4 font-medium transition-colors"
-                  >
-                    Requirements
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="support"
-                    className="data-[state=active]:bg-orange-500 data-[state=active]:text-white bg-neutral-900 text-white py-3 px-4 font-medium transition-colors"
-                  >
-                    Support
-                  </TabsTrigger>
-                </TabsList>
+              {(() => {
+                // Determine which tabs have data
+                const hasFeatures = script.features && script.features.length > 0;
+                const hasRequirements = script.requirements && script.requirements.length > 0;
+                const hasSupport = script.other_links && script.other_links.length > 0;
+                
+                // Count visible tabs (Details is always visible)
+                const visibleTabsCount = 1 + (hasFeatures ? 1 : 0) + (hasRequirements ? 1 : 0) + (hasSupport ? 1 : 0);
+                
+                // Map tab count to grid class
+                const gridClassMap: Record<number, string> = {
+                  1: 'grid-cols-1',
+                  2: 'grid-cols-2',
+                  3: 'grid-cols-3',
+                  4: 'grid-cols-4',
+                };
+                const gridClass = gridClassMap[visibleTabsCount] || 'grid-cols-1';
+                
+                // Determine default tab (first available)
+                const defaultTab = "details";
+                
+                return (
+                  <Tabs key={`tabs-${visibleTabsCount}`} defaultValue={defaultTab} className="w-full">
+                    <TabsList className={`grid w-full ${gridClass} bg-neutral-900 p-0 h-auto gap-0`}>
+                      <TabsTrigger
+                        value="details"
+                        className="data-[state=active]:bg-orange-500 data-[state=active]:text-white bg-neutral-900 text-white py-3 px-4 font-medium transition-colors"
+                      >
+                        Details
+                      </TabsTrigger>
+                      {hasFeatures && (
+                        <TabsTrigger
+                          value="features"
+                          className="data-[state=active]:bg-orange-500 data-[state=active]:text-white bg-neutral-900 text-white py-3 px-4 font-medium transition-colors"
+                        >
+                          Features
+                        </TabsTrigger>
+                      )}
+                      {hasRequirements && (
+                        <TabsTrigger
+                          value="requirements"
+                          className="data-[state=active]:bg-orange-500 data-[state=active]:text-white bg-neutral-900 text-white py-3 px-4 font-medium transition-colors"
+                        >
+                          Requirements
+                        </TabsTrigger>
+                      )}
+                      {hasSupport && (
+                        <TabsTrigger
+                          value="Other Links"
+                          className="data-[state=active]:bg-orange-500 data-[state=active]:text-white bg-neutral-900 text-white py-3 px-4 font-medium transition-colors"
+                        >
+                          Support
+                        </TabsTrigger>
+                      )}
+                    </TabsList>
 
                 {/* Script Details Tab */}
                 <TabsContent value="details" className="mt-0">
@@ -840,6 +874,7 @@ export default function ScriptDetailPage() {
                 </TabsContent>
 
                 {/* Features Tab */}
+                {hasFeatures && (
                 <TabsContent value="features" className="mt-0">
                   <CardContent className="p-6">
                     <div className="flex items-center gap-2 mb-6">
@@ -867,8 +902,10 @@ export default function ScriptDetailPage() {
                     )}
                   </CardContent>
                 </TabsContent>
+                )}
 
                 {/* Requirements Tab */}
+                {hasRequirements && (
                 <TabsContent value="requirements" className="mt-0">
                   <CardContent className="p-6">
                     <div className="flex items-center gap-2 mb-6">
@@ -896,43 +933,246 @@ export default function ScriptDetailPage() {
                     )}
                   </CardContent>
                 </TabsContent>
+                )}
 
                 {/* Support Tab */}
-                <TabsContent value="support" className="mt-0">
+                {hasSupport && (
+                <TabsContent value="Other Links" className="mt-0">
                   <CardContent className="p-6">
                     <div className="flex items-center gap-2 mb-6">
                       <Info className="h-6 w-6 text-orange-500" />
                       <h3 className="text-white text-xl font-bold">
-                        Support & Documentation
+                        Other Links
                       </h3>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="flex items-start gap-3 p-4 rounded bg-neutral-900 border border-neutral-700">
-                        <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
-                        <div>
-                          <h4 className="text-white font-semibold mb-1">
-                            Documentation
-                          </h4>
-                          <p className="text-sm text-gray-400">
-                            Complete setup and usage guide
-                          </p>
-                        </div>
+                    
+                    {script.other_links && script.other_links.length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {script.other_links.map((link, index) => {
+                          // Function to extract clean domain name from URL
+                          const extractDomainName = (url: string): string => {
+                            try {
+                              // Normalize URL - add protocol if missing
+                              let normalizedUrl = url.trim();
+                              if (!normalizedUrl.startsWith('http://') && !normalizedUrl.startsWith('https://')) {
+                                normalizedUrl = `https://${normalizedUrl}`;
+                              }
+                              
+                              const urlObj = new URL(normalizedUrl);
+                              let hostname = urlObj.hostname.toLowerCase();
+                              
+                              // Remove www. prefix
+                              hostname = hostname.replace(/^www\./, '');
+                              
+                              // Extract main domain name (before first dot)
+                              const domainParts = hostname.split('.');
+                              let domainName = domainParts[0];
+                              
+                              // Handle special cases like subdomains
+                              // If it's a common subdomain, use the main domain
+                              const commonSubdomains = ['www', 'app', 'blog', 'shop', 'store', 'support', 'help', 'docs', 'wiki', 'forum'];
+                              if (commonSubdomains.includes(domainName) && domainParts.length > 1) {
+                                domainName = domainParts[1];
+                              }
+                              
+                              // Capitalize first letter
+                              return domainName.charAt(0).toUpperCase() + domainName.slice(1);
+                            } catch {
+                              // Fallback: try to extract from string directly
+                              const cleaned = url.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0].split('.')[0];
+                              return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+                            }
+                          };
+                          
+                          // Function to detect link type and return appropriate icon and label
+                          const getLinkInfo = (url: string) => {
+                            const lowerUrl = url.toLowerCase();
+                            
+                            // Extract domain from URL
+                            let domain = '';
+                            try {
+                              const urlObj = new URL(url.startsWith('http') ? url : `https://${url}`);
+                              domain = urlObj.hostname.replace('www.', '');
+                            } catch {
+                              domain = lowerUrl;
+                            }
+                            
+                            // Discord
+                            if (domain.includes('discord') || lowerUrl.includes('discord.gg') || lowerUrl.includes('discord.com')) {
+                              return {
+                                label: 'Discord',
+                                icon: MessageCircle,
+                                color: 'text-indigo-400',
+                                bgColor: 'bg-indigo-500/10',
+                                borderColor: 'border-indigo-500/30',
+                                hoverColor: 'hover:bg-indigo-500/20',
+                              };
+                            }
+                            
+                            // YouTube
+                            if (domain.includes('youtube') || domain.includes('youtu.be')) {
+                              return {
+                                label: 'YouTube',
+                                icon: Play,
+                                color: 'text-red-400',
+                                bgColor: 'bg-red-500/10',
+                                borderColor: 'border-red-500/30',
+                                hoverColor: 'hover:bg-red-500/20',
+                              };
+                            }
+                            
+                            // GitHub
+                            if (domain.includes('github')) {
+                              return {
+                                label: 'GitHub',
+                                icon: Github,
+                                color: 'text-gray-300',
+                                bgColor: 'bg-gray-500/10',
+                                borderColor: 'border-gray-500/30',
+                                hoverColor: 'hover:bg-gray-500/20',
+                              };
+                            }
+                            
+                            // Instagram
+                            if (domain.includes('instagram')) {
+                              return {
+                                label: 'Instagram',
+                                icon: Globe,
+                                color: 'text-pink-400',
+                                bgColor: 'bg-pink-500/10',
+                                borderColor: 'border-pink-500/30',
+                                hoverColor: 'hover:bg-pink-500/20',
+                              };
+                            }
+                            
+                            // Facebook
+                            if (domain.includes('facebook')) {
+                              return {
+                                label: 'Facebook',
+                                icon: Globe,
+                                color: 'text-blue-400',
+                                bgColor: 'bg-blue-500/10',
+                                borderColor: 'border-blue-500/30',
+                                hoverColor: 'hover:bg-blue-500/20',
+                              };
+                            }
+                            
+                            // TikTok
+                            if (domain.includes('tiktok')) {
+                              return {
+                                label: 'TikTok',
+                                icon: Globe,
+                                color: 'text-cyan-400',
+                                bgColor: 'bg-cyan-500/10',
+                                borderColor: 'border-cyan-500/30',
+                                hoverColor: 'hover:bg-cyan-500/20',
+                              };
+                            }
+                            
+                            // Documentation sites
+                            if (domain.includes('docs') || domain.includes('documentation') || domain.includes('wiki') || 
+                                lowerUrl.includes('/docs/') || lowerUrl.includes('/documentation/') || lowerUrl.includes('/wiki/')) {
+                              return {
+                                label: 'Documentation',
+                                icon: BookOpen,
+                                color: 'text-blue-400',
+                                bgColor: 'bg-blue-500/10',
+                                borderColor: 'border-blue-500/30',
+                                hoverColor: 'hover:bg-blue-500/20',
+                              };
+                            }
+                            
+                            // Support/Help
+                            if (domain.includes('support') || domain.includes('help') || 
+                                lowerUrl.includes('/support/') || lowerUrl.includes('/help/')) {
+                              return {
+                                label: 'Support',
+                                icon: HelpCircle,
+                                color: 'text-green-400',
+                                bgColor: 'bg-green-500/10',
+                                borderColor: 'border-green-500/30',
+                                hoverColor: 'hover:bg-green-500/20',
+                              };
+                            }
+                            
+                            // Twitter/X
+                            if (domain.includes('twitter') || domain.includes('x.com')) {
+                              return {
+                                label: 'Twitter/X',
+                                icon: MessageCircle,
+                                color: 'text-sky-400',
+                                bgColor: 'bg-sky-500/10',
+                                borderColor: 'border-sky-500/30',
+                                hoverColor: 'hover:bg-sky-500/20',
+                              };
+                            }
+                            
+                            // Reddit
+                            if (domain.includes('reddit')) {
+                              return {
+                                label: 'Reddit',
+                                icon: MessageCircle,
+                                color: 'text-orange-400',
+                                bgColor: 'bg-orange-500/10',
+                                borderColor: 'border-orange-500/30',
+                                hoverColor: 'hover:bg-orange-500/20',
+                              };
+                            }
+                            
+                            // Default for other links - extract domain name
+                            const extractedName = extractDomainName(url);
+                            return {
+                              label: extractedName || 'External Link',
+                              icon: Globe,
+                              color: 'text-orange-400',
+                              bgColor: 'bg-orange-500/10',
+                              borderColor: 'border-orange-500/30',
+                              hoverColor: 'hover:bg-orange-500/20',
+                            };
+                          };
+                          
+                          const linkInfo = getLinkInfo(link);
+                          const IconComponent = linkInfo.icon;
+                          
+                          return (
+                            <motion.a
+                              key={index}
+                              href={link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={`flex items-center gap-4 p-5 rounded-lg border-2 transition-all duration-300 cursor-pointer group ${linkInfo.bgColor} ${linkInfo.borderColor} ${linkInfo.hoverColor}`}
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: index * 0.1 }}
+                            >
+                              <div className={`flex-shrink-0 w-12 h-12 rounded-lg ${linkInfo.bgColor} border ${linkInfo.borderColor} flex items-center justify-center transition-transform`}>
+                                <IconComponent className={`h-6 w-6 ${linkInfo.color}`} />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h4 className={`text-white font-semibold mb-1 group-hover:text-orange-400 transition-colors`}>
+                                  {linkInfo.label}
+                                </h4>
+                                <p className="text-sm text-gray-400 truncate">
+                                  {link.replace(/^https?:\/\//, '').replace(/^www\./, '')}
+                                </p>
+                              </div>
+                              <ExternalLink className={`h-5 w-5 ${linkInfo.color} opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0`} />
+                            </motion.a>
+                          );
+                        })}
                       </div>
-                      <div className="flex items-start gap-3 p-4 rounded bg-neutral-900 border border-neutral-700">
-                        <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
-                        <div>
-                          <h4 className="text-white font-semibold mb-1">
-                            Installation Help
-                          </h4>
-                          <p className="text-sm text-gray-400">
-                            Step-by-step installation
-                          </p>
-                        </div>
+                    ) : (
+                      <div className="text-center py-12">
+                        <Info className="h-16 w-16 text-gray-500 mx-auto mb-4" />
+                        <p className="text-gray-400">No support links available at the moment.</p>
                       </div>
-                    </div>
+                    )}
                   </CardContent>
                 </TabsContent>
+                )}
               </Tabs>
+              );
+              })()}
             </Card>
           </div>
         </div>
