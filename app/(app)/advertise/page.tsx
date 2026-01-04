@@ -58,7 +58,7 @@ const pricingPackages: PricingPackage[] = [
     name: "STARTER PACK",
     packageId: "starter",
     slotsPerMonth: 1,
-    description: "Perfect for small businesses and individual creators. One-time payment, all slots unlocked immediately.",
+    description: "Perfect for small businesses and individual creators. All slots unlocked immediately.",
     gradient: "from-gray-600 to-gray-700",
     icon: TargetIcon,
     durations: [
@@ -72,7 +72,7 @@ const pricingPackages: PricingPackage[] = [
     name: "PREMIUM PACK",
     packageId: "premium",
     slotsPerMonth: 3,
-    description: "Ideal for growing businesses with higher visibility needs. One-time payment, all slots unlocked immediately.",
+    description: "Ideal for growing businesses with higher visibility needs. All slots unlocked immediately.",
     gradient: "from-orange-500 to-yellow-400",
     icon: TrendingUp,
     popular: true,
@@ -87,7 +87,7 @@ const pricingPackages: PricingPackage[] = [
     name: "EXECUTIVE PACK",
     packageId: "executive",
     slotsPerMonth: 5,
-    description: "Maximum exposure for established brands and agencies. One-time payment, all slots unlocked immediately.",
+    description: "Maximum exposure for established brands and agencies. All slots unlocked immediately.",
     gradient: "from-yellow-400 via-orange-500 to-red-500",
     icon: Crown,
     durations: [ 
@@ -105,7 +105,7 @@ const featuredScriptPackages: PricingPackage[] = [
     name: "STARTER PACK",
     packageId: "starter",
     slotsPerMonth: 1,
-    description: "Perfect for showcasing one script. One-time payment, slot unlocked immediately.",
+    description: "Perfect for showcasing one script. Slot unlocked immediately.",
     gradient: "from-purple-600 to-pink-600",
     icon: Star,
     durations: [
@@ -119,7 +119,7 @@ const featuredScriptPackages: PricingPackage[] = [
     name: "PREMIUM PACK",
     packageId: "premium",
     slotsPerMonth: 3,
-    description: "Ideal for showcasing multiple scripts. One-time payment, all slots unlocked immediately.",
+    description: "Ideal for showcasing multiple scripts. All slots unlocked immediately.",
     gradient: "from-purple-500 to-pink-500",
     icon: Sparkles,
     popular: true,
@@ -134,7 +134,7 @@ const featuredScriptPackages: PricingPackage[] = [
     name: "EXECUTIVE PACK",
     packageId: "executive",
     slotsPerMonth: 5,
-    description: "Maximum visibility for your scripts. One-time payment, all slots unlocked immediately.",
+    description: "Maximum visibility for your scripts. All slots unlocked immediately.",
     gradient: "from-pink-500 via-purple-500 to-indigo-500",
     icon: Crown,
     durations: [
@@ -730,9 +730,6 @@ export default function AdvertisePage() {
                         )}>
                           {pkg.slotsPerMonth} Slot{pkg.slotsPerMonth > 1 ? 's' : ''}{activeTab === "ads" ? " per Month" : ""}
                         </Badge>
-                        <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
-                          One-Time Payment
-                        </Badge>
                       </div>
                     </CardHeader>
                     <CardContent className="p-8 pt-4 relative z-10">
@@ -757,7 +754,7 @@ export default function AdvertisePage() {
                           </Badge>
                         </div>
                         <div className="text-gray-400 text-sm mt-2">
-                          One-time payment • No recurring charges
+                          No recurring charges
                         </div>
                         <div className={cn(
                           "text-sm font-semibold mt-1",
