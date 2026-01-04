@@ -562,16 +562,28 @@ export default function HomePage() {
                 <p className="text-gray-300 text-xs sm:text-sm leading-relaxed text-left">
                   Every huge store starts with a great idea and yours could be next. Share published mods and get instant exposure. With us your scripts evolve alongside the community that loves it
                 </p>
-               
-                  <button className="bg-white text-black font-bold px-6 sm:px-8 py-2 sm:py-3 text-base sm:text-lg shadow-lg rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-2">
-                    Submit Your Script <MousePointerClick className="h-4 w-4 sm:h-5 sm:w-5" />
-                  </button>
+                {status === "authenticated" ? (
+                  <Link href="/scripts/submit">
+                    <button className="bg-white text-black font-bold px-6 sm:px-8 py-2 sm:py-3 text-base sm:text-lg shadow-lg rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-2">
+                      Submit Your Script <MousePointerClick className="h-4 w-4 sm:h-5 sm:w-5" />
+                    </button>
+                  </Link>
+                ) : (
+                  <Button
+                    size="lg"
+                    className="bg-gradient-to-r from-orange-500 via-yellow-400 to-orange-500 hover:from-orange-600 hover:via-yellow-500 hover:to-orange-600 text-black font-bold px-10 py-4 text-xl rounded-full shadow-2xl transition-all duration-300"
+                    onClick={() => signIn("discord")}
+                  >
+                    Login to Explore
+                  </Button>
+                )}
+
               </div>
 
             </div>
           </div>
         </motion.div>
-        
+
         <motion.div className="max-w-7xl mx-auto mt-10 px-4 sm:px-6">
           <div className="relative h-64 sm:h-80 md:h-96 rounded-lg overflow-hidden">
             {/* Background Image */}
@@ -593,9 +605,22 @@ export default function HomePage() {
                 <p className="text-gray-300 text-xs sm:text-sm leading-relaxed text-left">
                   Create and publish giveaways to promote your scripts and get instant exposure. With us your giveaways evolve alongside the community that loves it
                 </p>
-                  <button className="bg-white text-black font-bold px-6 sm:px-8 py-2 sm:py-3 text-base sm:text-lg shadow-lg rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-2">
-                    Create Your Giveaway <MousePointerClick className="h-4 w-4 sm:h-5 sm:w-5" />
-                  </button>
+                {status === "authenticated" ? (
+                  <Link href="/giveaways/create">
+                    <button className="bg-white text-black font-bold px-6 sm:px-8 py-2 sm:py-3 text-base sm:text-lg shadow-lg rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-2">
+                      Create Your Giveaway <MousePointerClick className="h-4 w-4 sm:h-5 sm:w-5" />
+                    </button>
+                  </Link>
+                ) : (
+                  <Button
+                    size="lg"
+                    className="bg-gradient-to-r from-orange-500 via-yellow-400 to-orange-500 hover:from-orange-600 hover:via-yellow-500 hover:to-orange-600 text-black font-bold px-10 py-4 text-xl rounded-full shadow-2xl transition-all duration-300"
+                    onClick={() => signIn("discord")}
+                  >
+                    Login to Explore
+                  </Button>
+                )}
+
               </div>
 
             </div>
