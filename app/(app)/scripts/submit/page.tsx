@@ -23,6 +23,7 @@ import {
   AlertCircle,
   DollarSign,
   Settings,
+  Loader2,
 } from "lucide-react"
 import { Button } from "@/componentss/ui/button"
 import { Input } from "@/componentss/ui/input"
@@ -89,6 +90,9 @@ export default function SubmitScriptPage() {
   const [isEditMode, setIsEditMode] = useState(false)
   const [isLoadingScript, setIsLoadingScript] = useState(false)
   const [isFree, setIsFree] = useState(false)
+  const [uploadingCoverImage, setUploadingCoverImage] = useState(false)
+  const [uploadingScreenshots, setUploadingScreenshots] = useState(false)
+  const [uploadingVideos, setUploadingVideos] = useState(false)
 
   // Form state (must be declared before effects that reference setters)
   const [formData, setFormData] = useState({
@@ -339,25 +343,30 @@ export default function SubmitScriptPage() {
     const files = event.target.files
     if (!files) return
 
+    setUploadingScreenshots(true)
     const newScreenshots: string[] = []
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i]
-      if (media.screenshots.length + newScreenshots.length >= 10) {
-        toast.warning("Maximum 10 screenshots allowed")
-        break
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i]
+        if (media.screenshots.length + newScreenshots.length >= 10) {
+          toast.warning("Maximum 10 screenshots allowed")
+          break
+        }
+
+        const url = await handleFileUpload(file, "image", "screenshot")
+        if (url) {
+          newScreenshots.push(url)
+        }
       }
 
-      const url = await handleFileUpload(file, "image", "screenshot")
-      if (url) {
-        newScreenshots.push(url)
+      if (newScreenshots.length > 0) {
+        setMedia(prev => ({
+          ...prev,
+          screenshots: [...prev.screenshots, ...newScreenshots]
+        }))
       }
-    }
-
-    if (newScreenshots.length > 0) {
-      setMedia(prev => ({
-        ...prev,
-        screenshots: [...prev.screenshots, ...newScreenshots]
-      }))
+    } finally {
+      setUploadingScreenshots(false)
     }
   }
 
@@ -365,13 +374,18 @@ export default function SubmitScriptPage() {
     const files = event.target.files
     if (!files || files.length === 0) return
 
-    const file = files[0]
-    const url = await handleFileUpload(file, "image", "cover")
-    if (url) {
-      setMedia(prev => ({
-        ...prev,
-        coverImage: url
-      }))
+    setUploadingCoverImage(true)
+    try {
+      const file = files[0]
+      const url = await handleFileUpload(file, "image", "cover")
+      if (url) {
+        setMedia(prev => ({
+          ...prev,
+          coverImage: url
+        }))
+      }
+    } finally {
+      setUploadingCoverImage(false)
     }
   }
 
@@ -379,20 +393,25 @@ export default function SubmitScriptPage() {
     const files = event.target.files
     if (!files) return
 
+    setUploadingVideos(true)
     const newVideos: string[] = []
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i]
-      const url = await handleFileUpload(file, "video", "demo")
-      if (url) {
-        newVideos.push(url)
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i]
+        const url = await handleFileUpload(file, "video", "demo")
+        if (url) {
+          newVideos.push(url)
+        }
       }
-    }
 
-    if (newVideos.length > 0) {
-      setMedia(prev => ({
-        ...prev,
-        videos: [...prev.videos, ...newVideos]
-      }))
+      if (newVideos.length > 0) {
+        setMedia(prev => ({
+          ...prev,
+          videos: [...prev.videos, ...newVideos]
+        }))
+      }
+    } finally {
+      setUploadingVideos(false)
     }
   }
 
@@ -1068,14 +1087,28 @@ export default function SubmitScriptPage() {
                         onChange={handleCoverImageUpload}
                         className="hidden"
                         id="cover-image-upload"
+                        disabled={uploadingCoverImage}
                       />
                       <label
                         htmlFor="cover-image-upload"
-                        className="mt-2 border-2 border-dashed border-gray-600 rounded-lg p-8 text-center hover:border-orange-500 transition-colors cursor-pointer block"
+                        className={`mt-2 border-2 border-dashed border-gray-600 rounded-lg p-8 text-center transition-colors block ${
+                          uploadingCoverImage 
+                            ? "opacity-50 cursor-not-allowed" 
+                            : "hover:border-orange-500 cursor-pointer"
+                        }`}
                       >
-                        <ImageIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                        <p className="text-gray-400">Upload cover image</p>
-                        <p className="text-sm text-gray-500 mt-2">PNG, JPG up to 5MB (will be displayed on scripts listing)</p>
+                        {uploadingCoverImage ? (
+                          <>
+                            <Loader2 className="h-12 w-12 text-orange-500 mx-auto mb-4 animate-spin" />
+                            <p className="text-orange-400">Uploading cover image...</p>
+                          </>
+                        ) : (
+                          <>
+                            <ImageIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                            <p className="text-gray-400">Upload cover image</p>
+                            <p className="text-sm text-gray-500 mt-2">PNG, JPG up to 5MB (will be displayed on scripts listing)</p>
+                          </>
+                        )}
                       </label>
                       
                       {/* Display uploaded cover image */}
@@ -1108,14 +1141,28 @@ export default function SubmitScriptPage() {
                         onChange={handleScreenshotUpload}
                         className="hidden"
                         id="screenshot-upload"
+                        disabled={uploadingScreenshots}
                       />
                       <label
                         htmlFor="screenshot-upload"
-                        className="mt-2 border-2 border-dashed border-gray-600 rounded-lg p-8 text-center hover:border-orange-500 transition-colors cursor-pointer block"
+                        className={`mt-2 border-2 border-dashed border-gray-600 rounded-lg p-8 text-center transition-colors block ${
+                          uploadingScreenshots 
+                            ? "opacity-50 cursor-not-allowed" 
+                            : "hover:border-orange-500 cursor-pointer"
+                        }`}
                       >
-                        <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                        <p className="text-gray-400">Upload script screenshots</p>
-                        <p className="text-sm text-gray-500 mt-2">PNG, JPG up to 5MB each (max 10 images)</p>
+                        {uploadingScreenshots ? (
+                          <>
+                            <Loader2 className="h-12 w-12 text-orange-500 mx-auto mb-4 animate-spin" />
+                            <p className="text-orange-400">Uploading screenshots...</p>
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                            <p className="text-gray-400">Upload script screenshots</p>
+                            <p className="text-sm text-gray-500 mt-2">PNG, JPG up to 5MB each (max 10 images)</p>
+                          </>
+                        )}
                       </label>
                       
                       {/* Display uploaded screenshots */}
@@ -1150,14 +1197,28 @@ export default function SubmitScriptPage() {
                         onChange={handleVideoUpload}
                         className="hidden"
                         id="video-upload"
+                        disabled={uploadingVideos}
                       />
                       <label
                         htmlFor="video-upload"
-                        className="mt-2 border-2 border-dashed border-gray-600 rounded-lg p-8 text-center hover:border-orange-500 transition-colors cursor-pointer block"
+                        className={`mt-2 border-2 border-dashed border-gray-600 rounded-lg p-8 text-center transition-colors block ${
+                          uploadingVideos 
+                            ? "opacity-50 cursor-not-allowed" 
+                            : "hover:border-orange-500 cursor-pointer"
+                        }`}
                       >
-                        <Video className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                        <p className="text-gray-400">Upload demo videos</p>
-                        <p className="text-sm text-gray-500 mt-2">MP4, MOV up to 4.5 mb each</p>
+                        {uploadingVideos ? (
+                          <>
+                            <Loader2 className="h-12 w-12 text-orange-500 mx-auto mb-4 animate-spin" />
+                            <p className="text-orange-400">Uploading videos...</p>
+                          </>
+                        ) : (
+                          <>
+                            <Video className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                            <p className="text-gray-400">Upload demo videos</p>
+                            <p className="text-sm text-gray-500 mt-2">MP4, MOV up to 4.5 mb each</p>
+                          </>
+                        )}
                       </label>
                       
                       {/* Display uploaded videos */}

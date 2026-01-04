@@ -21,6 +21,7 @@ import {
   Star,
   CheckCircle,
   AlertCircle,
+  Loader2
 } from "lucide-react"
 import { Button } from "@/componentss/ui/button"
 import { Input } from "@/componentss/ui/input"
@@ -107,7 +108,10 @@ export default function CreateGiveawayPage() {
   })
 
   const [errors, setErrors] = useState({})
-
+  const [submiting,setSubmitting] = useState(false);
+  const [uploadingCoverImage, setUploadingCoverImage] = useState(false)
+  const [uploadingImages, setUploadingImages] = useState(false)
+  const [uploadingVideos, setUploadingVideos] = useState(false)
   // Update form data when session loads
   useEffect(() => {
     if (session?.user) {
@@ -188,7 +192,7 @@ export default function CreateGiveawayPage() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
+    setSubmitting(true);
     try {
       // Validate YouTube requirements have valid YouTube URLs
       const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+/
@@ -272,6 +276,9 @@ export default function CreateGiveawayPage() {
       }
     } catch (err: any) {
       toast.error('Network error: ' + err.message);
+    }finally{
+      setSubmitting(false);
+      router.push('/giveaways');
     }
   };
 
@@ -317,13 +324,18 @@ export default function CreateGiveawayPage() {
     const files = event.target.files
     if (!files || files.length === 0) return
 
-    const file = files[0]
-    const url = await handleFileUpload(file, "image", "cover")
-    if (url) {
-      setMedia(prev => ({
-        ...prev,
-        coverImage: url
-      }))
+    setUploadingCoverImage(true)
+    try {
+      const file = files[0]
+      const url = await handleFileUpload(file, "image", "cover")
+      if (url) {
+        setMedia(prev => ({
+          ...prev,
+          coverImage: url
+        }))
+      }
+    } finally {
+      setUploadingCoverImage(false)
     }
   }
 
@@ -331,25 +343,30 @@ export default function CreateGiveawayPage() {
     const files = event.target.files
     if (!files) return
 
+    setUploadingImages(true)
     const newImages: string[] = []
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i]
-      if (media.images.length + newImages.length >= 10) {
-        toast.warning("Maximum 10 images allowed")
-        break
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i]
+        if (media.images.length + newImages.length >= 10) {
+          toast.warning("Maximum 10 images allowed")
+          break
+        }
+
+        const url = await handleFileUpload(file, "image", "screenshot")
+        if (url) {
+          newImages.push(url)
+        }
       }
 
-      const url = await handleFileUpload(file, "image", "screenshot")
-      if (url) {
-        newImages.push(url)
+      if (newImages.length > 0) {
+        setMedia(prev => ({
+          ...prev,
+          images: [...prev.images, ...newImages]
+        }))
       }
-    }
-
-    if (newImages.length > 0) {
-      setMedia(prev => ({
-        ...prev,
-        images: [...prev.images, ...newImages]
-      }))
+    } finally {
+      setUploadingImages(false)
     }
   }
 
@@ -357,25 +374,30 @@ export default function CreateGiveawayPage() {
     const files = event.target.files
     if (!files) return
 
+    setUploadingVideos(true)
     const newVideos: string[] = []
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i]
-      if (media.videos.length + newVideos.length >= 5) {
-        toast.warning("Maximum 5 videos allowed")
-        break
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i]
+        if (media.videos.length + newVideos.length >= 5) {
+          toast.warning("Maximum 5 videos allowed")
+          break
+        }
+
+        const url = await handleFileUpload(file, "video", "demo")
+        if (url) {
+          newVideos.push(url)
+        }
       }
 
-      const url = await handleFileUpload(file, "video", "demo")
-      if (url) {
-        newVideos.push(url)
+      if (newVideos.length > 0) {
+        setMedia(prev => ({
+          ...prev,
+          videos: [...prev.videos, ...newVideos]
+        }))
       }
-    }
-
-    if (newVideos.length > 0) {
-      setMedia(prev => ({
-        ...prev,
-        videos: [...prev.videos, ...newVideos]
-      }))
+    } finally {
+      setUploadingVideos(false)
     }
   }
 
@@ -823,14 +845,28 @@ export default function CreateGiveawayPage() {
                         onChange={handleCoverImageUpload}
                         className="hidden"
                         id="cover-upload"
+                        disabled={uploadingCoverImage}
                       />
                       <label
                         htmlFor="cover-upload"
-                        className="mt-2 border-2 border-dashed border-gray-600 rounded-lg p-8 text-center hover:border-yellow-500 transition-colors cursor-pointer block"
+                        className={`mt-2 border-2 border-dashed border-gray-600 rounded-lg p-8 text-center transition-colors block ${
+                          uploadingCoverImage 
+                            ? "opacity-50 cursor-not-allowed" 
+                            : "hover:border-yellow-500 cursor-pointer"
+                        }`}
                       >
-                        <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                        <p className="text-gray-400">Click to upload cover image</p>
-                        <p className="text-sm text-gray-500 mt-2">PNG, JPG up to 5MB</p>
+                        {uploadingCoverImage ? (
+                          <>
+                            <Loader2 className="h-12 w-12 text-yellow-500 mx-auto mb-4 animate-spin" />
+                            <p className="text-yellow-400">Uploading cover image...</p>
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                            <p className="text-gray-400">Click to upload cover image</p>
+                            <p className="text-sm text-gray-500 mt-2">PNG, JPG up to 5MB</p>
+                          </>
+                        )}
                       </label>
                       
                       {/* Display cover image */}
@@ -863,14 +899,28 @@ export default function CreateGiveawayPage() {
                         onChange={handleImageUpload}
                         className="hidden"
                         id="image-upload"
+                        disabled={uploadingImages}
                       />
                       <label
                         htmlFor="image-upload"
-                        className="mt-2 border-2 border-dashed border-gray-600 rounded-lg p-8 text-center hover:border-yellow-500 transition-colors cursor-pointer block"
+                        className={`mt-2 border-2 border-dashed border-gray-600 rounded-lg p-8 text-center transition-colors block ${
+                          uploadingImages 
+                            ? "opacity-50 cursor-not-allowed" 
+                            : "hover:border-yellow-500 cursor-pointer"
+                        }`}
                       >
-                        <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                        <p className="text-gray-400">Upload additional images</p>
-                        <p className="text-sm text-gray-500 mt-2">PNG, JPG up to 5MB each (max 10 images)</p>
+                        {uploadingImages ? (
+                          <>
+                            <Loader2 className="h-12 w-12 text-yellow-500 mx-auto mb-4 animate-spin" />
+                            <p className="text-yellow-400">Uploading images...</p>
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                            <p className="text-gray-400">Upload additional images</p>
+                            <p className="text-sm text-gray-500 mt-2">PNG, JPG up to 5MB each (max 10 images)</p>
+                          </>
+                        )}
                       </label>
                       
                       {/* Display uploaded images */}
@@ -910,14 +960,28 @@ export default function CreateGiveawayPage() {
                         onChange={handleVideoUpload}
                         className="hidden"
                         id="video-upload"
+                        disabled={uploadingVideos}
                       />
                       <label
                         htmlFor="video-upload"
-                        className="mt-2 border-2 border-dashed border-gray-600 rounded-lg p-8 text-center hover:border-yellow-500 transition-colors cursor-pointer block"
+                        className={`mt-2 border-2 border-dashed border-gray-600 rounded-lg p-8 text-center transition-colors block ${
+                          uploadingVideos 
+                            ? "opacity-50 cursor-not-allowed" 
+                            : "hover:border-yellow-500 cursor-pointer"
+                        }`}
                       >
-                        <Video className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                        <p className="text-gray-400">Upload videos</p>
-                        <p className="text-sm text-gray-500 mt-2">MP4, WebM up to 50MB each (max 5 videos)</p>
+                        {uploadingVideos ? (
+                          <>
+                            <Loader2 className="h-12 w-12 text-yellow-500 mx-auto mb-4 animate-spin" />
+                            <p className="text-yellow-400">Uploading videos...</p>
+                          </>
+                        ) : (
+                          <>
+                            <Video className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                            <p className="text-gray-400">Upload videos</p>
+                            <p className="text-sm text-gray-500 mt-2">MP4, WebM up to 50MB each (max 5 videos)</p>
+                          </>
+                        )}
                       </label>
                       
                       {/* Display uploaded videos */}
@@ -975,8 +1039,20 @@ export default function CreateGiveawayPage() {
                     type="submit"
                     className="flex-1 bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-black font-bold py-3 text-lg shadow-lg"
                   >
-                    <Sparkles className="mr-2 h-5 w-5" />
-                    Create Giveaway
+                    {
+                      submiting?(
+                        <>
+                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                        Creating Giveaway...
+                        </>
+
+                      ):(
+                        <>
+                        <Sparkles className="mr-2 h-5 w-5" />
+                        Create Giveaway
+                        </>
+                      )
+                    }
                   </Button>
                   <Button
                     type="button"

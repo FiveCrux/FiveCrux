@@ -105,7 +105,12 @@ const MediaCarousel = ({
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
+  const [dragDistance, setDragDistance] = useState(0);
+  const [isMainDragging, setIsMainDragging] = useState(false);
+  const [mainStartX, setMainStartX] = useState(0);
+  const [mainDragDistance, setMainDragDistance] = useState(0);
   const thumbnailRef = useRef<HTMLDivElement>(null);
+  const mainImageRef = useRef<HTMLDivElement>(null);
 
   // Extract YouTube video ID from URL
   const getYouTubeVideoId = (url: string): string | null => {
@@ -209,7 +214,7 @@ const MediaCarousel = ({
       <img
         src={media.url}
         alt={`${title} - Media ${index + 1}`}
-        className={`w-full h-full object-contain bg-black ${className}`}
+        className={`w-full h-full object-fill bg-black ${className}`}
         loading="lazy"
       />
     );
@@ -221,7 +226,64 @@ const MediaCarousel = ({
       <div className="lg:sticky lg:top-24">
         <div className="relative bg-transparent rounded-lg overflow-hidden">
           {/* Main Display */}
-          <div className="relative aspect-video">
+          <div 
+            ref={mainImageRef}
+            className="relative aspect-video"
+            onMouseDown={(e) => {
+              if (allMedia.length <= 1) return;
+              setIsMainDragging(true);
+              setMainDragDistance(0);
+              setMainStartX(e.pageX);
+            }}
+            onMouseUp={() => {
+              if (isMainDragging && Math.abs(mainDragDistance) > 50) {
+                // Swipe left (negative distance) - next
+                if (mainDragDistance < 0) {
+                  nextSlide();
+                }
+                // Swipe right (positive distance) - previous
+                else {
+                  prevSlide();
+                }
+              }
+              setIsMainDragging(false);
+              setMainDragDistance(0);
+            }}
+            onMouseLeave={() => {
+              setIsMainDragging(false);
+              setMainDragDistance(0);
+            }}
+            onMouseMove={(e) => {
+              if (!isMainDragging) return;
+              const distance = e.pageX - mainStartX;
+              setMainDragDistance(distance);
+            }}
+            onTouchStart={(e) => {
+              if (allMedia.length <= 1) return;
+              setIsMainDragging(true);
+              setMainDragDistance(0);
+              setMainStartX(e.touches[0].pageX);
+            }}
+            onTouchEnd={() => {
+              if (isMainDragging && Math.abs(mainDragDistance) > 50) {
+                // Swipe left - next
+                if (mainDragDistance < 0) {
+                  nextSlide();
+                }
+                // Swipe right - previous
+                else {
+                  prevSlide();
+                }
+              }
+              setIsMainDragging(false);
+              setMainDragDistance(0);
+            }}
+            onTouchMove={(e) => {
+              if (!isMainDragging) return;
+              const distance = e.touches[0].pageX - mainStartX;
+              setMainDragDistance(distance);
+            }}
+          >
             <div className="absolute inset-0">
               <MediaContent
                 media={allMedia[currentIndex]}
@@ -273,20 +335,45 @@ const MediaCarousel = ({
                 onMouseDown={(e) => {
                   if (!thumbnailRef.current) return;
                   setIsDragging(true);
+                  setDragDistance(0);
                   setStartX(e.pageX - thumbnailRef.current.offsetLeft);
                   setScrollLeft(thumbnailRef.current.scrollLeft);
                 }}
                 onMouseLeave={() => {
                   setIsDragging(false);
+                  setDragDistance(0);
                 }}
                 onMouseUp={() => {
                   setIsDragging(false);
+                  setDragDistance(0);
                 }}
                 onMouseMove={(e) => {
                   if (!isDragging || !thumbnailRef.current) return;
                   e.preventDefault();
                   const x = e.pageX - thumbnailRef.current.offsetLeft;
                   const walk = (x - startX) * 2; // Scroll speed multiplier
+                  const distance = Math.abs(x - startX);
+                  setDragDistance(distance);
+                  thumbnailRef.current.scrollLeft = scrollLeft - walk;
+                }}
+                onTouchStart={(e) => {
+                  if (!thumbnailRef.current) return;
+                  setIsDragging(true);
+                  setDragDistance(0);
+                  setStartX(e.touches[0].pageX - thumbnailRef.current.offsetLeft);
+                  setScrollLeft(thumbnailRef.current.scrollLeft);
+                }}
+                onTouchEnd={() => {
+                  setIsDragging(false);
+                  setDragDistance(0);
+                }}
+                onTouchMove={(e) => {
+                  if (!isDragging || !thumbnailRef.current) return;
+                  e.preventDefault();
+                  const x = e.touches[0].pageX - thumbnailRef.current.offsetLeft;
+                  const walk = (x - startX) * 2;
+                  const distance = Math.abs(x - startX);
+                  setDragDistance(distance);
                   thumbnailRef.current.scrollLeft = scrollLeft - walk;
                 }}
               >
@@ -294,24 +381,24 @@ const MediaCarousel = ({
                   <button
                     key={index}
                     onClick={(e) => {
-                      // Prevent click when dragging
-                      if (isDragging) {
+                      // Only prevent click if user actually dragged (moved more than 5px)
+                      if (dragDistance > 5) {
                         e.preventDefault();
                         return;
                       }
                       setCurrentIndex(index);
                     }}
                     onMouseDown={(e) => {
-                      // Allow dragging to work
+                      // Don't prevent default to allow both drag and click
                       if (e.button === 0) {
-                        e.preventDefault();
+                        // Let the parent handle dragging
                       }
                     }}
                     className={`flex-shrink-0 w-24 h-16 rounded overflow-hidden border-2 transition-colors ${
                       index === currentIndex
                         ? "border-orange-500"
                         : "border-neutral-700 hover:border-orange-500/50"
-                    } ${isDragging ? "pointer-events-none" : ""}`}
+                    }`}
                   >
                     {media.type === 'youtube' ? (
                       <div className="relative w-full h-full bg-red-600 flex items-center justify-center">
@@ -624,8 +711,6 @@ export default function ScriptDetailPage() {
                                       script.framework.length > 0 && (
                                         <motion.div
                                           className="flex flex-wrap gap-1"
-                                          // initial={{ scale: 0, rotate: 180 }}
-                                          // animate={{ scale: 1, rotate: 0 }}
                                         >
                                           {script.framework.map((fw, idx) => (
                                             <motion.div

@@ -327,6 +327,25 @@ export default function GiveawaysPage() {
     },
   ];
 
+  const tabs = [
+    {
+      label: "Active Giveaways",
+      value: "active",
+      icon: Gift,
+    },
+    {
+      label: "Ended Giveaways",
+      description: "View all ended giveaways",
+      value: "ended",
+      icon: Clock,
+    },
+    {
+      label: "Rules",
+      value: "rules",
+      icon: Star,
+    },
+  ]
+
   const enterGiveaway = async (giveawayId: number) => {
     try {
       const response = await fetch(`/api/giveaways/${giveawayId}/entries`, {
@@ -522,34 +541,27 @@ export default function GiveawaysPage() {
           </motion.div>
 
           <Tabs defaultValue="active" className="w-full">
-            <TabsList className="flex sm:grid sm:grid-cols-3 w-full bg-gray-800/30 border border-gray-700/50 overflow-hidden backdrop-blur-sm rounded-2xl h-auto items-stretch p-1 gap-1">
-              <TabsTrigger
-                value="active"
-                className="flex-1 sm:flex-none h-10 inline-flex items-center justify-center rounded-xl font-bold text-xs sm:text-sm py-2 px-2 sm:px-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-400 data-[state=active]:to-orange-500 data-[state=active]:text-black data-[state=active]:shadow-none data-[state=active]:translate-y-0"
-              >
-                <Gift className="mr-1 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
-                <span className="truncate">Active</span>
-                <span className="hidden sm:inline"> Giveaways</span>
-              </TabsTrigger>
-
-              <TabsTrigger
-                value="ended"
-                className="flex-1 sm:flex-none h-10 inline-flex items-center justify-center rounded-xl font-bold text-xs sm:text-sm py-2 px-2 sm:px-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-400 data-[state=active]:to-orange-500 data-[state=active]:text-black data-[state=active]:shadow-none data-[state=active]:translate-y-0"
-              >
-                <Clock className="mr-1 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
-                <span className="truncate">Ended</span>
-                <span className="hidden sm:inline"> Giveaways</span>
-              </TabsTrigger>
-
-              <TabsTrigger
-                value="rules"
-                className="flex-1 sm:flex-none h-10 inline-flex items-center justify-center rounded-xl font-bold text-xs sm:text-sm py-2 px-2 sm:px-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-400 data-[state=active]:to-orange-500 data-[state=active]:text-black data-[state=active]:shadow-none data-[state=active]:translate-y-0"
-              >
-                <Star className="mr-1 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
-                <span className="truncate">Rules</span>
-                <span className="hidden sm:inline"> & Info</span>
-              </TabsTrigger>
-            </TabsList>
+            <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              <TabsList className="flex sm:grid sm:grid-cols-3 w-max sm:w-full min-w-full sm:min-w-0 bg-gray-800/30 border border-gray-700/50 overflow-visible sm:overflow-hidden backdrop-blur-sm rounded-2xl h-auto items-stretch p-1 gap-1.5 sm:gap-1">
+                {tabs.map((tab) => {
+                  const Icon = tab.icon;
+                  const labelParts = tab.label.split(" ");
+                  const shortLabel = labelParts[0];
+                  const suffix = labelParts.slice(1).join(" ");
+                  return (
+                    <TabsTrigger
+                      key={tab.value}
+                      value={tab.value}
+                      className="flex-none sm:flex-none h-10 inline-flex items-center justify-center rounded-xl font-bold text-xs sm:text-sm py-2 px-3 sm:px-3 whitespace-nowrap shrink-0 data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-400 data-[state=active]:to-orange-500 data-[state=active]:text-black data-[state=active]:shadow-none data-[state=active]:translate-y-0"
+                    >
+                      <Icon className="mr-1.5 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
+                      <span className="hidden sm:inline">{tab.label}</span>
+                      <span className="sm:hidden">{shortLabel}</span>
+                    </TabsTrigger>
+                  );
+                })}
+              </TabsList>
+            </div>
 
             <TabsContent value="active" className="mt-8">
               <motion.div

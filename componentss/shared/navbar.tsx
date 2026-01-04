@@ -33,8 +33,8 @@ export default function NavbarComponent() {
   // Custom logo component
   const CustomLogo = () => {
     return (
-      <Link href="/" className="relative z-20 mr-4 flex items-center space-x-2 px-2 py-1 text-sm font-normal">
-        <Image src="/CF.svg" alt="logo" width={30} height={30} />
+      <Link href="/" className="relative z-20 mr-4 flex items-center text-sm font-normal">
+        <Image src="/CF.svg" alt="logo" width={60} height={60} />
         <motion.span
           className="text-orange-500 text-2xl font-bold"
           animate={{
@@ -83,11 +83,12 @@ export default function NavbarComponent() {
                     </AvatarFallback>
                   </Avatar>
                 </Link>
-                <NavbarButton variant="secondary" href="/admin">
+                <NavbarButton variant="secondary" className="text-white" href="/admin">
                   Admin
                 </NavbarButton>
                 <NavbarButton
                   variant="secondary"
+                  className="text-white"
                   as="button"
                   onClick={() => signOut()}
                 >
