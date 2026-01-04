@@ -843,14 +843,12 @@ export default function ScriptsPage() {
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
                         >
-                          <Button
-                            variant="outline"
-                            className={`bg-gradient-to-r from-gray-800/80 to-gray-900/80 border-2 text-white font-semibold px-4 py-2 rounded-lg shadow-lg transition-all duration-300 ${
+                          <label
+                            className={`flex items-center cursor-pointer bg-gradient-to-r from-gray-800/80 to-gray-900/80 border-2 text-white font-semibold px-4 py-2 rounded-lg shadow-lg transition-all duration-300 ${
                               onSaleOnly
                                 ? "border-orange-500 bg-gradient-to-r from-orange-500/20 to-orange-600/20 shadow-orange-500/50"
                                 : "border-neutral-600/50 hover:border-orange-500/70 hover:from-gray-700/80 hover:to-gray-800/80"
                             }`}
-                            onClick={() => setOnSaleOnly(!onSaleOnly)}
                           >
                             <Checkbox
                               id="on-sale"
@@ -864,7 +862,7 @@ export default function ScriptsPage() {
                               <Zap className="h-4 w-4" />
                               On Sale Only
                             </span>
-                          </Button>
+                          </label>
                         </motion.div>
                       </div>
                     </div>
