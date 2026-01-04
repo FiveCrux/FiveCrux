@@ -55,8 +55,14 @@ export const authOptions: NextAuthOptions = {
 						if (dbUser.name) {
 							session.user.name = dbUser.name
 						}
-						// Use profile picture with priority: profile_picture first, then Discord image
-						;(session.user as any).profilePicture = getUserProfilePicture(dbUser)
+						// Set profile picture with priority: Profile_picture (database column) first, then image (Discord)
+						// Store both fields in session for flexibility
+						;(session.user as any).Profile_picture = dbUser.profilePicture || null
+						;(session.user as any).profilePicture = dbUser.profilePicture || null
+						// Keep Discord image as fallback
+						if (!dbUser.profilePicture && session.user.image) {
+							;(session.user as any).image = session.user.image
+						}
 					}
 				} catch (e) {
 					console.error("Auth callback - Error fetching user:", e)

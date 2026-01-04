@@ -45,30 +45,30 @@ export default function Footer() {
           {
             title: "Categories",
             links: [
+              { name: "Scripts", href: "/scripts?category=scripts" },
+              { name: "Maps", href: "/scripts?category=maps" },
+              { name: "Props", href: "/scripts?category=props" },
+              { name: "Clothing", href: "/scripts?category=clothing" },
               { name: "Economy", href: "/scripts?category=economy" },
-              { name: "Vehicles", href: "/scripts?category=vehicles" },
-              { name: "Jobs", href: "/scripts?category=jobs" },
-              { name: "Housing", href: "/scripts?category=housing" },
+              { name: "Vehicles", href: "/scripts?category=vehicles" }
             ],
           },
           {
             title: "Support",
             links: [
-              { name: "Help Center", href: "/help" },
-              { name: "Contact Us", href: "/contact" },
-              { name: "Discord", href: "/discord" },
-              { name: "Terms of Service", href: "/terms" },
+              { name: "Contact Us", href: "mailto:support@fivecrux.com" },
+              { name: "Discord", href: "https://discord.gg/EwGrUb7DW6", target: "_blank"},
             ],
           },
-          {
-            title: "Connect",
-            links: [
-              { name: "Giveaways", href: "/giveaways" },
-              { name: "Submit Script", href: "/scripts/submit" },
-              { name: "For Developers", href: "/developers" },
-              { name: "API", href: "/api" },
-            ],
-          },
+          // {
+          //   title: "Connect",
+          //   links: [
+          //     { name: "Giveaways", href: "/giveaways" },
+          //     { name: "Submit Script", href: "/scripts/submit" },
+          //     { name: "For Developers", href: "/developers" },
+          //     { name: "API", href: "/api" },
+          //   ],
+          // },
         ].map((section, sectionIndex) => (
           <motion.div
             key={section.title}
@@ -106,7 +106,7 @@ export default function Footer() {
         transition={{ duration: 1, delay: 0.5 }}
       >
         <p className="text-gray-400">
-          &copy; 2024 FiveCrux. All rights reserved. Made with{" "}
+          &copy; 2026 FiveCrux. All rights reserved. Made with{" "}
           for the FiveM community.
         </p>
       </motion.div>
