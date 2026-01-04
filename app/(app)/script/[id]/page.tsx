@@ -656,10 +656,10 @@ export default function ScriptDetailPage() {
           }}
         >
           {/* Overlay to reduce background image opacity */}
-          <div className="absolute inset-0 bg-[#131313]/80 pointer-events-none" />
+          <div className="absolute inset-0 bg-[#131313]/90 pointer-events-none" />
 
           {/* Gradient fade from middle to bottom - completely dark */}
-          <div className="absolute inset-x-0 top-[15%] bottom-0 bg-gradient-to-b from-transparent to-[#131313] pointer-events-none z-[1]" />
+          <div className="absolute inset-x-0 top-[10%] bottom-0 bg-gradient-to-b from-transparent to-[#131313] pointer-events-none z-[1]" />
           {/* Content */}
           <div className="relative z-10">
             {/* Back Button */}
