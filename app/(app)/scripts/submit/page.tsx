@@ -342,24 +342,24 @@ export default function SubmitScriptPage() {
     setUploadingScreenshots(true)
     const newScreenshots: string[] = []
     try {
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i]
-        if (media.screenshots.length + newScreenshots.length >= 10) {
-          toast.warning("Maximum 10 screenshots allowed")
-          break
-        }
-
-        const url = await handleFileUpload(file, "image", "screenshot")
-        if (url) {
-          newScreenshots.push(url)
-        }
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i]
+      if (media.screenshots.length + newScreenshots.length >= 10) {
+        toast.warning("Maximum 10 screenshots allowed")
+        break
       }
 
-      if (newScreenshots.length > 0) {
-        setMedia(prev => ({
-          ...prev,
-          screenshots: [...prev.screenshots, ...newScreenshots]
-        }))
+      const url = await handleFileUpload(file, "image", "screenshot")
+      if (url) {
+        newScreenshots.push(url)
+      }
+    }
+
+    if (newScreenshots.length > 0) {
+      setMedia(prev => ({
+        ...prev,
+        screenshots: [...prev.screenshots, ...newScreenshots]
+      }))
       }
     } finally {
       setUploadingScreenshots(false)
@@ -372,13 +372,13 @@ export default function SubmitScriptPage() {
 
     setUploadingCoverImage(true)
     try {
-      const file = files[0]
-      const url = await handleFileUpload(file, "image", "cover")
-      if (url) {
-        setMedia(prev => ({
-          ...prev,
-          coverImage: url
-        }))
+    const file = files[0]
+    const url = await handleFileUpload(file, "image", "cover")
+    if (url) {
+      setMedia(prev => ({
+        ...prev,
+        coverImage: url
+      }))
       }
     } finally {
       setUploadingCoverImage(false)
@@ -392,19 +392,19 @@ export default function SubmitScriptPage() {
     setUploadingVideos(true)
     const newVideos: string[] = []
     try {
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i]
-        const url = await handleFileUpload(file, "video", "demo")
-        if (url) {
-          newVideos.push(url)
-        }
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i]
+      const url = await handleFileUpload(file, "video", "demo")
+      if (url) {
+        newVideos.push(url)
       }
+    }
 
-      if (newVideos.length > 0) {
-        setMedia(prev => ({
-          ...prev,
-          videos: [...prev.videos, ...newVideos]
-        }))
+    if (newVideos.length > 0) {
+      setMedia(prev => ({
+        ...prev,
+        videos: [...prev.videos, ...newVideos]
+      }))
       }
     } finally {
       setUploadingVideos(false)
@@ -1065,9 +1065,9 @@ export default function SubmitScriptPage() {
                           </>
                         ) : (
                           <>
-                            <ImageIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                            <p className="text-gray-400">Upload cover image</p>
-                            <p className="text-sm text-gray-500 mt-2">PNG, JPG up to 5MB (will be displayed on scripts listing)</p>
+                        <ImageIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                        <p className="text-gray-400">Upload cover image</p>
+                        <p className="text-sm text-gray-500 mt-2">PNG, JPG up to 5MB (will be displayed on scripts listing)</p>
                           </>
                         )}
                       </label>
@@ -1119,9 +1119,9 @@ export default function SubmitScriptPage() {
                           </>
                         ) : (
                           <>
-                            <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                            <p className="text-gray-400">Upload script screenshots</p>
-                            <p className="text-sm text-gray-500 mt-2">PNG, JPG up to 5MB each (max 10 images)</p>
+                        <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                        <p className="text-gray-400">Upload script screenshots</p>
+                        <p className="text-sm text-gray-500 mt-2">PNG, JPG up to 5MB each (max 10 images)</p>
                           </>
                         )}
                       </label>
@@ -1175,9 +1175,9 @@ export default function SubmitScriptPage() {
                           </>
                         ) : (
                           <>
-                            <Video className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                            <p className="text-gray-400">Upload demo videos</p>
-                            <p className="text-sm text-gray-500 mt-2">MP4, MOV up to 4.5 mb each</p>
+                        <Video className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                        <p className="text-gray-400">Upload demo videos</p>
+                        <p className="text-sm text-gray-500 mt-2">MP4, MOV up to 4.5 mb each</p>
                           </>
                         )}
                       </label>

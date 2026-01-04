@@ -21,6 +21,7 @@ import {
   Star,
   CheckCircle,
   AlertCircle,
+  Loader2,
 } from "lucide-react"
 import { Button } from "@/componentss/ui/button"
 import { Input } from "@/componentss/ui/input"
@@ -106,9 +107,12 @@ export default function EditGiveawayPage() {
     videos: [] as File[],
   })
 
-  const [errors, setErrors] = useState({})
+  const [errors, setErrors] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [uploadingCoverImage, setUploadingCoverImage] = useState(false)
+  const [uploadingImages, setUploadingImages] = useState(false)
+  const [uploadingVideos, setUploadingVideos] = useState(false)
   const [youtubeVideoLink, setYoutubeVideoLink] = useState("")
   const [youtubeLinkError, setYoutubeLinkError] = useState("")
 
@@ -297,31 +301,136 @@ export default function EditGiveawayPage() {
     } else {
       setYoutubeLinkError("")
     }
+    // Clear error from errors state
+    if (errors.youtubeVideoLink) {
+      setErrors(prev => {
+        const newErrors = { ...prev }
+        delete newErrors.youtubeVideoLink
+        return newErrors
+      })
+    }
+  }
+
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {}
+
+    // Validate title
+    if (!formData.title.trim()) {
+      newErrors.title = "Title is required"
+    } else if (formData.title.trim().length < 3) {
+      newErrors.title = "Title must be at least 3 characters"
+    } else if (formData.title.trim().length > 100) {
+      newErrors.title = "Title must be less than 100 characters"
+    }
+
+    // Validate description
+    if (!formData.description.trim()) {
+      newErrors.description = "Description is required"
+    } else if (formData.description.trim().length < 10) {
+      newErrors.description = "Description must be at least 10 characters"
+    } else if (formData.description.trim().length > 2000) {
+      newErrors.description = "Description must be less than 2000 characters"
+    }
+
+    // Validate creator name
+    if (!formData.creatorName.trim()) {
+      newErrors.creatorName = "Creator name is required"
+    }
+
+    // Validate creator email
+    if (!formData.creatorEmail.trim()) {
+      newErrors.creatorEmail = "Creator email is required"
+    } else {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      if (!emailRegex.test(formData.creatorEmail)) {
+        newErrors.creatorEmail = "Please enter a valid email address"
+      }
+    }
+
+    // Validate currency
+    if (!formData.currency) {
+      newErrors.currency = "Currency is required"
+    }
+
+    // Validate total value
+    if (!formData.value.trim()) {
+      newErrors.value = "Total value is required"
+    } else {
+      const numValue = parseFloat(formData.value)
+      if (isNaN(numValue) || numValue <= 0) {
+        newErrors.value = "Total value must be a positive number"
+      }
+    }
+
+    // Validate end date
+    if (!formData.endDate) {
+      newErrors.endDate = "End date is required"
+    } else {
+      const now = new Date()
+      if (formData.endDate <= now) {
+        newErrors.endDate = "End date must be in the future"
+      }
+    }
+
+    // Validate cover image (must have existing or new image)
+    const hasCoverImage = media.coverImage || selectedFiles.coverImage
+    if (!hasCoverImage) {
+      newErrors.coverImage = "Cover image is required"
+    }
+
+    // Validate image file if selected
+    if (selectedFiles.coverImage) {
+      const maxSize = 5 * 1024 * 1024 // 5MB in bytes
+      if (selectedFiles.coverImage.size > maxSize) {
+        newErrors.coverImage = "Cover image size must be less than 5MB"
+      }
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif']
+      if (!validTypes.includes(selectedFiles.coverImage.type)) {
+        newErrors.coverImage = "Cover image must be JPEG, PNG, WebP, or GIF format"
+      }
+    }
+
+    // Validate requirements
+    const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+/
+    const discordRegex = /^(https?:\/\/)?(www\.)?(discord\.(gg|com|io)|discordapp\.com)\/.+/
+    
+    requirements.forEach((requirement, index) => {
+      if (requirement.required && !requirement.description.trim()) {
+        newErrors[`requirement_${requirement.id}_description`] = `Requirement ${index + 1} description is required`
+      } else if (requirement.description.trim()) {
+        if (requirement.type === "youtube" && !youtubeRegex.test(requirement.description.trim())) {
+          newErrors[`requirement_${requirement.id}_description`] = `Requirement ${index + 1} must be a valid YouTube URL`
+        } else if (requirement.type === "discord" && !discordRegex.test(requirement.description.trim())) {
+          newErrors[`requirement_${requirement.id}_description`] = `Requirement ${index + 1} must be a valid Discord invite link`
+        }
+      }
+      
+      if (requirement.points < 1 || requirement.points > 10) {
+        newErrors[`requirement_${requirement.id}_points`] = `Requirement ${index + 1} points must be between 1 and 10`
+      }
+    })
+
+    // Validate YouTube video link if provided (optional field)
+    if (youtubeVideoLink.trim() && !validateYouTubeUrl(youtubeVideoLink)) {
+      newErrors.youtubeVideoLink = "Please enter a valid YouTube video URL"
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
   }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    
+    // Validate form before submission
+    if (!validateForm()) {
+      toast.error("Please fix the errors in the form before submitting.")
+      return
+    }
+
     setSaving(true);
 
     try {
-      // Validate YouTube requirements have valid YouTube URLs
-      const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+/
-      for (const requirement of requirements) {
-        if (requirement.type === "youtube" && requirement.description) {
-          if (!youtubeRegex.test(requirement.description)) {
-            toast.error(`Please enter a valid YouTube URL for the "${requirementTypes.find(t => t.value === requirement.type)?.label}" requirement`)
-            setSaving(false)
-            return
-          }
-        }
-      }
-
-      // Validate YouTube video link if provided
-      if (youtubeVideoLink.trim() && !validateYouTubeUrl(youtubeVideoLink)) {
-        toast.error("Please enter a valid YouTube video URL")
-        setSaving(false)
-        return
-      }
       // Process media - combine existing URLs with newly uploaded files
       const finalImages: string[] = []
       const finalVideos: string[] = []
@@ -462,13 +571,30 @@ export default function EditGiveawayPage() {
     const files = event.target.files
     if (!files || files.length === 0) return
 
-    const file = files[0]
-    const url = await handleFileUpload(file, "image", "cover")
-    if (url) {
-      setMedia(prev => ({
-        ...prev,
-        coverImage: url
-      }))
+    setUploadingCoverImage(true)
+    try {
+      const file = files[0]
+      const url = await handleFileUpload(file, "image", "cover")
+      if (url) {
+        setMedia(prev => ({
+          ...prev,
+          coverImage: url
+        }))
+        setSelectedFiles(prev => ({
+          ...prev,
+          coverImage: file
+        }))
+        // Clear error when image is uploaded
+        if (errors.coverImage) {
+          setErrors(prev => {
+            const newErrors = { ...prev }
+            delete newErrors.coverImage
+            return newErrors
+          })
+        }
+      }
+    } finally {
+      setUploadingCoverImage(false)
     }
   }
 
@@ -476,25 +602,30 @@ export default function EditGiveawayPage() {
     const files = event.target.files
     if (!files) return
 
+    setUploadingImages(true)
     const newImages: string[] = []
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i]
-      if (media.images.length + newImages.length >= 10) {
-        toast.warning("Maximum 10 images allowed")
-        break
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i]
+        if (media.images.length + newImages.length >= 10) {
+          toast.warning("Maximum 10 images allowed")
+          break
+        }
+
+        const url = await handleFileUpload(file, "image", "screenshot")
+        if (url) {
+          newImages.push(url)
+        }
       }
 
-      const url = await handleFileUpload(file, "image", "screenshot")
-      if (url) {
-        newImages.push(url)
+      if (newImages.length > 0) {
+        setMedia(prev => ({
+          ...prev,
+          images: [...prev.images, ...newImages]
+        }))
       }
-    }
-
-    if (newImages.length > 0) {
-      setMedia(prev => ({
-        ...prev,
-        images: [...prev.images, ...newImages]
-      }))
+    } finally {
+      setUploadingImages(false)
     }
   }
 
@@ -502,25 +633,30 @@ export default function EditGiveawayPage() {
     const files = event.target.files
     if (!files) return
 
+    setUploadingVideos(true)
     const newVideos: string[] = []
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i]
-      if (media.videos.length + newVideos.length >= 5) {
-        toast.warning("Maximum 5 videos allowed")
-        break
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i]
+        if (media.videos.length + newVideos.length >= 5) {
+          toast.warning("Maximum 5 videos allowed")
+          break
+        }
+
+        const url = await handleFileUpload(file, "video", "demo")
+        if (url) {
+          newVideos.push(url)
+        }
       }
 
-      const url = await handleFileUpload(file, "video", "demo")
-      if (url) {
-        newVideos.push(url)
+      if (newVideos.length > 0) {
+        setMedia(prev => ({
+          ...prev,
+          videos: [...prev.videos, ...newVideos]
+        }))
       }
-    }
-
-    if (newVideos.length > 0) {
-      setMedia(prev => ({
-        ...prev,
-        videos: [...prev.videos, ...newVideos]
-      }))
+    } finally {
+      setUploadingVideos(false)
     }
   }
 
@@ -613,11 +749,23 @@ export default function EditGiveawayPage() {
                       <Input
                         id="title"
                         value={formData.title}
-                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                        onChange={(e) => {
+                          setFormData({ ...formData, title: e.target.value })
+                          if (errors.title) {
+                            setErrors(prev => {
+                              const newErrors = { ...prev }
+                              delete newErrors.title
+                              return newErrors
+                            })
+                          }
+                        }}
                         placeholder="Enter an exciting title for your giveaway"
-                        className="mt-2 bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-yellow-500"
+                        className={`mt-2 bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-yellow-500 ${errors.title ? 'border-red-500' : ''}`}
                         required
                       />
+                      {errors.title && (
+                        <p className="text-red-400 text-xs mt-1">{errors.title}</p>
+                      )}
                     </div>
 
                     <div>
@@ -627,12 +775,24 @@ export default function EditGiveawayPage() {
                       <Textarea
                         id="description"
                         value={formData.description}
-                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        onChange={(e) => {
+                          setFormData({ ...formData, description: e.target.value })
+                          if (errors.description) {
+                            setErrors(prev => {
+                              const newErrors = { ...prev }
+                              delete newErrors.description
+                              return newErrors
+                            })
+                          }
+                        }}
                         placeholder="Describe your giveaway in detail..."
                         rows={4}
-                        className="mt-2 bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-yellow-500"
+                        className={`mt-2 bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-yellow-500 ${errors.description ? 'border-red-500' : ''}`}
                         required
                       />
+                      {errors.description && (
+                        <p className="text-red-400 text-xs mt-1">{errors.description}</p>
+                      )}
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -672,9 +832,16 @@ export default function EditGiveawayPage() {
                         <div className="mt-2 flex flex-col gap-2">
                           <CurrencySelect
                             value={formData.currency}
-                            onValueChange={(value) =>
+                            onValueChange={(value) => {
                               setFormData({ ...formData, currency: value })
-                            }
+                              if (errors.currency) {
+                                setErrors(prev => {
+                                  const newErrors = { ...prev }
+                                  delete newErrors.currency
+                                  return newErrors
+                                })
+                              }
+                            }}
                             onCurrencySelect={(currency) =>
                               setFormData({
                                 ...formData,
@@ -686,30 +853,52 @@ export default function EditGiveawayPage() {
                             disabled={false}
                             currencies="all"
                             variant="default"
-                            className="bg-gray-900/50 border-gray-700 text-white"
+                            className={`bg-gray-900/50 border-gray-700 text-white ${errors.currency ? 'border-red-500' : ''}`}
                           />
                           <Input
                             id="value"
                             type="number"
                             min="0"
                             value={formData.value}
-                            onChange={(e) => setFormData({ ...formData, value: e.target.value })}
+                            onChange={(e) => {
+                              setFormData({ ...formData, value: e.target.value })
+                              if (errors.value) {
+                                setErrors(prev => {
+                                  const newErrors = { ...prev }
+                                  delete newErrors.value
+                                  return newErrors
+                                })
+                              }
+                            }}
                             placeholder="150"
-                            className="bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-yellow-500"
+                            className={`bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-yellow-500 ${errors.value ? 'border-red-500' : ''}`}
                             required
                           />
                         </div>
+                        {(errors.currency || errors.value) && (
+                          <p className="text-red-400 text-xs mt-1">{errors.currency || errors.value}</p>
+                        )}
                       </div>
 
                       <div>
                         <DateTimePicker
                           date={formData.endDate}
-                          onDateChange={(date) =>
+                          onDateChange={(date) => {
                             setFormData({ ...formData, endDate: date })
-                          }
+                            if (errors.endDate) {
+                              setErrors(prev => {
+                                const newErrors = { ...prev }
+                                delete newErrors.endDate
+                                return newErrors
+                              })
+                            }
+                          }}
                           label="End Date*"
                           id="endDate"
                         />
+                        {errors.endDate && (
+                          <p className="text-red-400 text-xs mt-1">{errors.endDate}</p>
+                        )}
                       </div>
                     </div>
 
@@ -808,11 +997,21 @@ export default function EditGiveawayPage() {
                               min="1"
                               max="10"
                               value={requirement.points}
-                              onChange={(e) =>
+                              onChange={(e) => {
                                 updateRequirement(requirement.id, "points", Number.parseInt(e.target.value))
-                              }
-                              className="mt-1 bg-gray-900/50 border-gray-600 text-white"
+                                if (errors[`requirement_${requirement.id}_points`]) {
+                                  setErrors(prev => {
+                                    const newErrors = { ...prev }
+                                    delete newErrors[`requirement_${requirement.id}_points`]
+                                    return newErrors
+                                  })
+                                }
+                              }}
+                              className={`mt-1 bg-gray-900/50 border-gray-600 text-white ${errors[`requirement_${requirement.id}_points`] ? 'border-red-500' : ''}`}
                             />
+                            {errors[`requirement_${requirement.id}_points`] && (
+                              <p className="text-red-400 text-xs mt-1">{errors[`requirement_${requirement.id}_points`]}</p>
+                            )}
                           </div>
 
                           <div className="flex items-end">
@@ -837,7 +1036,16 @@ export default function EditGiveawayPage() {
                           <Input
                             type={requirement.type === "youtube" ? "url" : "text"}
                             value={requirement.description}
-                            onChange={(e) => updateRequirement(requirement.id, "description", e.target.value)}
+                            onChange={(e) => {
+                              updateRequirement(requirement.id, "description", e.target.value)
+                              if (errors[`requirement_${requirement.id}_description`]) {
+                                setErrors(prev => {
+                                  const newErrors = { ...prev }
+                                  delete newErrors[`requirement_${requirement.id}_description`]
+                                  return newErrors
+                                })
+                              }
+                            }}
                             placeholder={
                               requirement.type === "discord" 
                                 ? "https://discord.gg/your-server" 
@@ -845,14 +1053,17 @@ export default function EditGiveawayPage() {
                                 ? "https://youtube.com/@channel or https://youtu.be/..."
                                 : "Describe what users need to do..."
                             }
-                            className="mt-1 bg-gray-900/50 border-gray-600 text-white placeholder-gray-400"
+                            className={`mt-1 bg-gray-900/50 border-gray-600 text-white placeholder-gray-400 ${errors[`requirement_${requirement.id}_description`] ? 'border-red-500' : ''}`}
                           />
-                          {requirement.type === "discord" && (
+                          {errors[`requirement_${requirement.id}_description`] && (
+                            <p className="text-red-400 text-xs mt-1">{errors[`requirement_${requirement.id}_description`]}</p>
+                          )}
+                          {!errors[`requirement_${requirement.id}_description`] && requirement.type === "discord" && (
                             <p className="text-xs text-gray-400 mt-1">
                               Enter your Discord server invite link (e.g., https://discord.gg/abc123)
                             </p>
                           )}
-                          {requirement.type === "youtube" && (
+                          {!errors[`requirement_${requirement.id}_description`] && requirement.type === "youtube" && (
                             <p className="text-xs text-gray-400 mt-1">
                               Enter your YouTube channel URL (e.g., https://youtube.com/@channel or https://youtu.be/videoId)
                             </p>
@@ -983,20 +1194,39 @@ export default function EditGiveawayPage() {
                   <CardContent className="space-y-6">
                     <div>
                       <Label className="text-white font-medium">Cover Image *</Label>
+                      {errors.coverImage && (
+                        <p className="text-red-400 text-xs mt-1 mb-2">{errors.coverImage}</p>
+                      )}
                       <input
                         type="file"
                         accept="image/*"
                         onChange={handleCoverImageUpload}
                         className="hidden"
                         id="cover-upload"
+                        disabled={uploadingCoverImage}
                       />
                       <label
                         htmlFor="cover-upload"
-                        className="mt-2 border-2 border-dashed border-gray-600 rounded-lg p-8 text-center hover:border-yellow-500 transition-colors cursor-pointer block"
+                        className={`mt-2 border-2 border-dashed rounded-lg p-8 text-center transition-colors block ${
+                          uploadingCoverImage
+                            ? "opacity-50 cursor-not-allowed"
+                            : errors.coverImage 
+                            ? "border-red-500 cursor-pointer" 
+                            : "border-gray-600 hover:border-yellow-500 cursor-pointer"
+                        }`}
                       >
-                        <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                        <p className="text-gray-400">Click to upload cover image</p>
-                        <p className="text-sm text-gray-500 mt-2">PNG, JPG up to 5MB</p>
+                        {uploadingCoverImage ? (
+                          <>
+                            <Loader2 className="h-12 w-12 text-yellow-500 mx-auto mb-4 animate-spin" />
+                            <p className="text-yellow-400">Uploading cover image...</p>
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                            <p className="text-gray-400">Click to upload cover image</p>
+                            <p className="text-sm text-gray-500 mt-2">PNG, JPG up to 5MB</p>
+                          </>
+                        )}
                       </label>
                       
                       {/* Display cover image */}
@@ -1029,14 +1259,28 @@ export default function EditGiveawayPage() {
                         onChange={handleImageUpload}
                         className="hidden"
                         id="image-upload"
+                        disabled={uploadingImages}
                       />
                       <label
                         htmlFor="image-upload"
-                        className="mt-2 border-2 border-dashed border-gray-600 rounded-lg p-8 text-center hover:border-yellow-500 transition-colors cursor-pointer block"
+                        className={`mt-2 border-2 border-dashed border-gray-600 rounded-lg p-8 text-center transition-colors block ${
+                          uploadingImages 
+                            ? "opacity-50 cursor-not-allowed" 
+                            : "hover:border-yellow-500 cursor-pointer"
+                        }`}
                       >
-                        <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                        <p className="text-gray-400">Upload additional images</p>
-                        <p className="text-sm text-gray-500 mt-2">PNG, JPG up to 5MB each (max 10 images)</p>
+                        {uploadingImages ? (
+                          <>
+                            <Loader2 className="h-12 w-12 text-yellow-500 mx-auto mb-4 animate-spin" />
+                            <p className="text-yellow-400">Uploading images...</p>
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                            <p className="text-gray-400">Upload additional images</p>
+                            <p className="text-sm text-gray-500 mt-2">PNG, JPG up to 5MB each (max 10 images)</p>
+                          </>
+                        )}
                       </label>
                       
                       {/* Display uploaded images */}
@@ -1076,14 +1320,28 @@ export default function EditGiveawayPage() {
                         onChange={handleVideoUpload}
                         className="hidden"
                         id="video-upload"
+                        disabled={uploadingVideos}
                       />
                       <label
                         htmlFor="video-upload"
-                        className="mt-2 border-2 border-dashed border-gray-600 rounded-lg p-8 text-center hover:border-yellow-500 transition-colors cursor-pointer block"
+                        className={`mt-2 border-2 border-dashed border-gray-600 rounded-lg p-8 text-center transition-colors block ${
+                          uploadingVideos 
+                            ? "opacity-50 cursor-not-allowed" 
+                            : "hover:border-yellow-500 cursor-pointer"
+                        }`}
                       >
-                        <Video className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                        <p className="text-gray-400">Upload videos</p>
-                        <p className="text-sm text-gray-500 mt-2">MP4, WebM up to 4.5 mb each (max 5 videos)</p>
+                        {uploadingVideos ? (
+                          <>
+                            <Loader2 className="h-12 w-12 text-yellow-500 mx-auto mb-4 animate-spin" />
+                            <p className="text-yellow-400">Uploading videos...</p>
+                          </>
+                        ) : (
+                          <>
+                            <Video className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                            <p className="text-gray-400">Upload videos</p>
+                            <p className="text-sm text-gray-500 mt-2">MP4, WebM up to 4.5 mb each (max 5 videos)</p>
+                          </>
+                        )}
                       </label>
                       
                       {/* Display uploaded videos */}
@@ -1123,9 +1381,12 @@ export default function EditGiveawayPage() {
                         value={youtubeVideoLink}
                         onChange={(e) => handleYoutubeLinkChange(e.target.value)}
                         placeholder="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
-                        className="mt-2 bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-yellow-500"
+                        className={`mt-2 bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-yellow-500 ${errors.youtubeVideoLink ? 'border-red-500' : ''}`}
                       />
-                      {youtubeLinkError && (
+                      {errors.youtubeVideoLink && (
+                        <p className="text-red-400 text-xs mt-1">{errors.youtubeVideoLink}</p>
+                      )}
+                      {youtubeLinkError && !errors.youtubeVideoLink && (
                         <p className="text-red-500 text-sm mt-1">{youtubeLinkError}</p>
                       )}
                       <p className="text-sm text-gray-400 mt-2">
