@@ -23,6 +23,7 @@ import {
   AlertCircle,
   Lock,
   MousePointer,
+  Clock,
 } from "lucide-react";
 import { Button } from "@/componentss/ui/button";
 import {
@@ -1083,6 +1084,26 @@ export default function ProfilePage() {
                               </Badge>
                             </div>
 
+                            {(() => {
+                              const endDate = giveaway.end_date ? new Date(giveaway.end_date) : null;
+                              const isEnded = endDate ? new Date() > endDate : false;
+                              return isEnded && endDate ? (
+                                <div className="mt-2 p-3 bg-orange-500/10 border border-orange-500/20 rounded-lg">
+                                  <div className="flex items-start gap-2">
+                                    <Clock className="h-4 w-4 text-orange-400 mt-0.5 flex-shrink-0" />
+                                    <div>
+                                      <p className="text-orange-400 text-sm font-medium">
+                                        Giveaway Ended
+                                      </p>
+                                      <p className="text-orange-300 text-sm mt-1">
+                                        Ended on {endDate.toLocaleDateString()} at {endDate.toLocaleTimeString()}. Editing is disabled.
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                              ) : null;
+                            })()}
+
                             {giveaway.status === "rejected" &&
                               giveaway.rejection_reason && (
                                 <div className="mt-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
@@ -1129,16 +1150,24 @@ export default function ProfilePage() {
                                 <Eye className="h-4 w-4 mr-1 md:mr-1" />
                                 <span className="hidden sm:inline">View</span>
                               </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                type="button"
-                                onClick={() => handleEditGiveaway(giveaway.id)}
-                                className="flex-1 md:flex-initial min-w-0"
-                              >
-                                <Edit className="h-4 w-4 mr-1 md:mr-1" />
-                                <span className="hidden sm:inline">Edit</span>
-                              </Button>
+                              {(() => {
+                                const endDate = giveaway.end_date ? new Date(giveaway.end_date) : null;
+                                const isEnded = endDate ? new Date() > endDate : false;
+                                return (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    type="button"
+                                    onClick={() => handleEditGiveaway(giveaway.id)}
+                                    disabled={isEnded}
+                                    className="flex-1 md:flex-initial min-w-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    title={isEnded && endDate ? `Giveaway ended on ${endDate.toLocaleDateString()} at ${endDate.toLocaleTimeString()}` : "Edit giveaway"}
+                                  >
+                                    <Edit className="h-4 w-4 mr-1 md:mr-1" />
+                                    <span className="hidden sm:inline">Edit</span>
+                                  </Button>
+                                );
+                              })()}
                               <Button
                                 size="sm"
                                 variant="outline"
@@ -1218,14 +1247,6 @@ export default function ProfilePage() {
                                 {ad.status}
                               </Badge>
                             </div>
-                            <CardTitle className="text-white text-lg line-clamp-2">
-                              {ad.title}
-                            </CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                            <p className="text-gray-400 text-sm mb-4 line-clamp-3">
-                              {ad.description}
-                            </p>
                             {ad.image_url && (
                               <div className="w-full h-32 rounded-lg overflow-hidden mb-4">
                                 <img
@@ -1236,6 +1257,15 @@ export default function ProfilePage() {
                                 />
                               </div>
                             )}
+                            <CardTitle className="text-white text-lg line-clamp-2">
+                              {ad.title}
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <p className="text-gray-400 text-sm mb-4 line-clamp-3">
+                              {ad.description}
+                            </p>
+                            
                             {ad.status === "rejected" &&
                               ad.rejection_reason && (
                                 <div className="mt-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
