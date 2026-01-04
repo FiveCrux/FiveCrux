@@ -501,12 +501,12 @@ export default function AdvertisePage() {
                   className="flex flex-col sm:flex-row gap-6 justify-center items-center"
                 >
                   <motion.div 
-                    whileHover={{ scale: 1.05, boxShadow: "0 25px 50px rgba(249, 115, 22, 0.4)" }} 
+                    whileHover={{ scale: 1.05}} 
                     whileTap={{ scale: 0.95 }}
                   >
                     <Button 
                       size="lg" 
-                      className="bg-gradient-to-r from-orange-500 via-yellow-400 to-orange-500 hover:from-orange-600 hover:via-yellow-500 hover:to-orange-600 text-black font-bold px-10 py-4 text-xl rounded-full shadow-2xl transition-all duration-300"
+                      className="!bg-gradient-to-r from-orange-500 via-yellow-400 to-orange-500 hover:!from-orange-600 hover:!via-yellow-500 hover:!to-orange-600 text-black font-bold px-10 py-4 text-xl rounded-full shadow-2xl transition-all duration-300 border-none"
                       onClick={() => {
                         document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })
                       }}
