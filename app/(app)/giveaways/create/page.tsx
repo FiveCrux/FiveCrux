@@ -107,7 +107,7 @@ export default function CreateGiveawayPage() {
     videos: [] as File[],
   })
 
-  const [errors, setErrors] = useState({})
+  const [errors, setErrors] = useState<Record<string, string>>({})
   const [submiting,setSubmitting] = useState(false);
   const [uploadingCoverImage, setUploadingCoverImage] = useState(false)
   const [uploadingImages, setUploadingImages] = useState(false)
@@ -190,25 +190,124 @@ export default function CreateGiveawayPage() {
     }
   }
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setSubmitting(true);
-    try {
-      // Validate YouTube requirements have valid YouTube URLs
-      const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+/
-      for (const requirement of requirements) {
-        if (requirement.type === "youtube" && requirement.description) {
-          if (!youtubeRegex.test(requirement.description)) {
-            toast.error(`Please enter a valid YouTube URL for the "${requirementTypes.find(t => t.value === requirement.type)?.label}" requirement`)
-            return
-          }
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {}
+
+    // Validate title
+    if (!formData.title.trim()) {
+      newErrors.title = "Title is required"
+    } else if (formData.title.trim().length < 3) {
+      newErrors.title = "Title must be at least 3 characters"
+    } else if (formData.title.trim().length > 100) {
+      newErrors.title = "Title must be less than 100 characters"
+    }
+
+    // Validate description
+    if (!formData.description.trim()) {
+      newErrors.description = "Description is required"
+    } else if (formData.description.trim().length < 10) {
+      newErrors.description = "Description must be at least 10 characters"
+    } else if (formData.description.trim().length > 2000) {
+      newErrors.description = "Description must be less than 2000 characters"
+    }
+
+    // Validate creator name (even though it's auto-filled, should still validate)
+    if (!formData.creatorName.trim()) {
+      newErrors.creatorName = "Creator name is required"
+    }
+
+    // Validate creator email (even though it's auto-filled, should still validate)
+    if (!formData.creatorEmail.trim()) {
+      newErrors.creatorEmail = "Creator email is required"
+    } else {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      if (!emailRegex.test(formData.creatorEmail)) {
+        newErrors.creatorEmail = "Please enter a valid email address"
+      }
+    }
+
+    // Validate currency
+    if (!formData.currency) {
+      newErrors.currency = "Currency is required"
+    }
+
+    // Validate total value
+    if (!formData.value.trim()) {
+      newErrors.value = "Total value is required"
+    } else {
+      const numValue = parseFloat(formData.value)
+      if (isNaN(numValue) || numValue <= 0) {
+        newErrors.value = "Total value must be a positive number"
+      }
+    }
+
+    // Validate end date
+    if (!formData.endDate) {
+      newErrors.endDate = "End date is required"
+    } else {
+      const now = new Date()
+      if (formData.endDate <= now) {
+        newErrors.endDate = "End date must be in the future"
+      }
+    }
+
+    // Validate cover image
+    if (!media.coverImage && !selectedFiles.coverImage) {
+      newErrors.coverImage = "Cover image is required"
+    }
+
+    // Validate image file if selected
+    if (selectedFiles.coverImage) {
+      const maxSize = 5 * 1024 * 1024 // 5MB in bytes
+      if (selectedFiles.coverImage.size > maxSize) {
+        newErrors.coverImage = "Cover image size must be less than 5MB"
+      }
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif']
+      if (!validTypes.includes(selectedFiles.coverImage.type)) {
+        newErrors.coverImage = "Cover image must be JPEG, PNG, WebP, or GIF format"
+      }
+    }
+
+    // Validate requirements
+    const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+/
+    const discordRegex = /^(https?:\/\/)?(www\.)?(discord\.(gg|com|io)|discordapp\.com)\/.+/
+    
+    requirements.forEach((requirement, index) => {
+      if (requirement.required && !requirement.description.trim()) {
+        newErrors[`requirement_${requirement.id}_description`] = `Requirement ${index + 1} description is required`
+      } else if (requirement.description.trim()) {
+        if (requirement.type === "youtube" && !youtubeRegex.test(requirement.description.trim())) {
+          newErrors[`requirement_${requirement.id}_description`] = `Requirement ${index + 1} must be a valid YouTube URL`
+        } else if (requirement.type === "discord" && !discordRegex.test(requirement.description.trim())) {
+          newErrors[`requirement_${requirement.id}_description`] = `Requirement ${index + 1} must be a valid Discord invite link`
         }
       }
-      // Validate YouTube link if provided
-      if (youtubeVideoLink.trim() && !validateYouTubeUrl(youtubeVideoLink)) {
-        toast.error("Please enter a valid YouTube video URL")
-        return
+      
+      if (requirement.points < 1 || requirement.points > 10) {
+        newErrors[`requirement_${requirement.id}_points`] = `Requirement ${index + 1} points must be between 1 and 10`
       }
+    })
+
+    // Validate YouTube video link if provided (optional field)
+    if (youtubeVideoLink.trim() && !validateYouTubeUrl(youtubeVideoLink)) {
+      newErrors.youtubeVideoLink = "Please enter a valid YouTube video URL"
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    
+    // Validate form before submission
+    if (!validateForm()) {
+      toast.error("Please fix the errors in the form before submitting.")
+      return
+    }
+
+    setSubmitting(true);
+    try {
 
       const payload = {
         giveaway: {
@@ -242,6 +341,7 @@ export default function CreateGiveawayPage() {
       });
 
       if (res.ok) {
+        const result = await res.json();
         toast.success('Giveaway created successfully!');
         // Reset form
         setFormData({
@@ -270,6 +370,9 @@ export default function CreateGiveawayPage() {
         setYoutubeLinkError("")
         setRequirements([{ id: 1, type: "discord", description: "", points: 1, required: true }])
         setPrizes([{ id: 1, name: "", description: "", value: "", position: 1, numberOfWinners: 1 }])
+        setErrors({})
+        // Route to giveaways page
+        router.push('/giveaways');
       } else {
         const error = await res.json();
         toast.error('Error: ' + (error.error || 'Failed to create giveaway'));
@@ -278,7 +381,6 @@ export default function CreateGiveawayPage() {
       toast.error('Network error: ' + err.message);
     }finally{
       setSubmitting(false);
-      router.push('/giveaways');
     }
   };
 
@@ -333,6 +435,18 @@ export default function CreateGiveawayPage() {
           ...prev,
           coverImage: url
         }))
+        setSelectedFiles(prev => ({
+          ...prev,
+          coverImage: file
+        }))
+        // Clear error when image is uploaded
+        if (errors.coverImage) {
+          setErrors(prev => {
+            const newErrors = { ...prev }
+            delete newErrors.coverImage
+            return newErrors
+          })
+        }
       }
     } finally {
       setUploadingCoverImage(false)
@@ -346,24 +460,24 @@ export default function CreateGiveawayPage() {
     setUploadingImages(true)
     const newImages: string[] = []
     try {
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i]
-        if (media.images.length + newImages.length >= 10) {
-          toast.warning("Maximum 10 images allowed")
-          break
-        }
-
-        const url = await handleFileUpload(file, "image", "screenshot")
-        if (url) {
-          newImages.push(url)
-        }
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i]
+      if (media.images.length + newImages.length >= 10) {
+        toast.warning("Maximum 10 images allowed")
+        break
       }
 
-      if (newImages.length > 0) {
-        setMedia(prev => ({
-          ...prev,
-          images: [...prev.images, ...newImages]
-        }))
+      const url = await handleFileUpload(file, "image", "screenshot")
+      if (url) {
+        newImages.push(url)
+      }
+    }
+
+    if (newImages.length > 0) {
+      setMedia(prev => ({
+        ...prev,
+        images: [...prev.images, ...newImages]
+      }))
       }
     } finally {
       setUploadingImages(false)
@@ -377,24 +491,24 @@ export default function CreateGiveawayPage() {
     setUploadingVideos(true)
     const newVideos: string[] = []
     try {
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i]
-        if (media.videos.length + newVideos.length >= 5) {
-          toast.warning("Maximum 5 videos allowed")
-          break
-        }
-
-        const url = await handleFileUpload(file, "video", "demo")
-        if (url) {
-          newVideos.push(url)
-        }
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i]
+      if (media.videos.length + newVideos.length >= 5) {
+        toast.warning("Maximum 5 videos allowed")
+        break
       }
 
-      if (newVideos.length > 0) {
-        setMedia(prev => ({
-          ...prev,
-          videos: [...prev.videos, ...newVideos]
-        }))
+      const url = await handleFileUpload(file, "video", "demo")
+      if (url) {
+        newVideos.push(url)
+      }
+    }
+
+    if (newVideos.length > 0) {
+      setMedia(prev => ({
+        ...prev,
+        videos: [...prev.videos, ...newVideos]
+      }))
       }
     } finally {
       setUploadingVideos(false)
@@ -490,11 +604,23 @@ export default function CreateGiveawayPage() {
                       <Input
                         id="title"
                         value={formData.title}
-                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                        onChange={(e) => {
+                          setFormData({ ...formData, title: e.target.value })
+                          if (errors.title) {
+                            setErrors(prev => {
+                              const newErrors = { ...prev }
+                              delete newErrors.title
+                              return newErrors
+                            })
+                          }
+                        }}
                         placeholder="Enter an exciting title for your giveaway"
-                        className="mt-2 bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-yellow-500"
+                        className={`mt-2 bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-yellow-500 ${errors.title ? 'border-red-500' : ''}`}
                         required
                       />
+                      {errors.title && (
+                        <p className="text-red-400 text-xs mt-1">{errors.title}</p>
+                      )}
                     </div>
 
                     <div>
@@ -504,12 +630,24 @@ export default function CreateGiveawayPage() {
                       <Textarea
                         id="description"
                         value={formData.description}
-                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        onChange={(e) => {
+                          setFormData({ ...formData, description: e.target.value })
+                          if (errors.description) {
+                            setErrors(prev => {
+                              const newErrors = { ...prev }
+                              delete newErrors.description
+                              return newErrors
+                            })
+                          }
+                        }}
                         placeholder="Describe your giveaway in detail..."
                         rows={4}
-                        className="mt-2 bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-yellow-500"
+                        className={`mt-2 bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-yellow-500 ${errors.description ? 'border-red-500' : ''}`}
                         required
                       />
+                      {errors.description && (
+                        <p className="text-red-400 text-xs mt-1">{errors.description}</p>
+                      )}
                     </div>
 
                     <div className=" grid-cols-1 hidden md:grid-cols-2 gap-4">
@@ -549,9 +687,16 @@ export default function CreateGiveawayPage() {
                         <div className="mt-2 flex flex-col gap-2">
                           <CurrencySelect
                             value={formData.currency}
-                            onValueChange={(value) =>
+                            onValueChange={(value) => {
                               setFormData({ ...formData, currency: value })
-                            }
+                              if (errors.currency) {
+                                setErrors(prev => {
+                                  const newErrors = { ...prev }
+                                  delete newErrors.currency
+                                  return newErrors
+                                })
+                              }
+                            }}
                             onCurrencySelect={(currency) =>
                               setFormData({
                                 ...formData,
@@ -563,33 +708,53 @@ export default function CreateGiveawayPage() {
                             disabled={false}
                             currencies="all"
                             variant="default"
-                            className="bg-gray-900/50 border-gray-700 text-white"
+                            className={`bg-gray-900/50 border-gray-700 text-white ${errors.currency ? 'border-red-500' : ''}`}
                           />
                           <Input
                             id="value"
                             type="number"
                             min="0"
                             value={formData.value}
-                            onChange={(e) =>
+                            onChange={(e) => {
                               setFormData({ ...formData, value: e.target.value })
-                            }
+                              if (errors.value) {
+                                setErrors(prev => {
+                                  const newErrors = { ...prev }
+                                  delete newErrors.value
+                                  return newErrors
+                                })
+                              }
+                            }}
                             placeholder="150"
-                            className="bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-yellow-500"
+                            className={`bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-yellow-500 ${errors.value ? 'border-red-500' : ''}`}
                             required
                           />
                         </div>
+                        {(errors.currency || errors.value) && (
+                          <p className="text-red-400 text-xs mt-1">{errors.currency || errors.value}</p>
+                        )}
                       </div>
 
                       <div>
                         <DateTimePicker
                           date={formData.endDate}
-                          onDateChange={(date) =>
+                          onDateChange={(date) => {
                             setFormData({ ...formData, endDate: date })
-                          }
+                            if (errors.endDate) {
+                              setErrors(prev => {
+                                const newErrors = { ...prev }
+                                delete newErrors.endDate
+                                return newErrors
+                              })
+                            }
+                          }}
                           label="End Date*(UTC)"
                           id="endDate"
                           disablePastDates={true}
                         />
+                        {errors.endDate && (
+                          <p className="text-red-400 text-xs mt-1">{errors.endDate}</p>
+                        )}
                       </div>
                     </div>
                   </CardContent>
@@ -664,11 +829,21 @@ export default function CreateGiveawayPage() {
                               min="1"
                               max="10"
                               value={requirement.points}
-                              onChange={(e) =>
+                              onChange={(e) => {
                                 updateRequirement(requirement.id, "points", Number.parseInt(e.target.value))
-                              }
-                              className="mt-1 bg-gray-900/50 border-gray-600 text-white"
+                                if (errors[`requirement_${requirement.id}_points`]) {
+                                  setErrors(prev => {
+                                    const newErrors = { ...prev }
+                                    delete newErrors[`requirement_${requirement.id}_points`]
+                                    return newErrors
+                                  })
+                                }
+                              }}
+                              className={`mt-1 bg-gray-900/50 border-gray-600 text-white ${errors[`requirement_${requirement.id}_points`] ? 'border-red-500' : ''}`}
                             />
+                            {errors[`requirement_${requirement.id}_points`] && (
+                              <p className="text-red-400 text-xs mt-1">{errors[`requirement_${requirement.id}_points`]}</p>
+                            )}
                           </div>
 
                           <div className="flex items-end">
@@ -693,7 +868,16 @@ export default function CreateGiveawayPage() {
                           <Input
                             type={requirement.type === "youtube" ? "url" : "text"}
                             value={requirement.description}
-                            onChange={(e) => updateRequirement(requirement.id, "description", e.target.value)}
+                            onChange={(e) => {
+                              updateRequirement(requirement.id, "description", e.target.value)
+                              if (errors[`requirement_${requirement.id}_description`]) {
+                                setErrors(prev => {
+                                  const newErrors = { ...prev }
+                                  delete newErrors[`requirement_${requirement.id}_description`]
+                                  return newErrors
+                                })
+                              }
+                            }}
                             placeholder={
                               requirement.type === "discord" 
                                 ? "https://discord.gg/your-server" 
@@ -701,14 +885,17 @@ export default function CreateGiveawayPage() {
                                 ? "https://youtube.com/@channel or https://youtu.be/..."
                                 : "Describe what users need to do..."
                             }
-                            className="mt-1 bg-gray-900/50 border-gray-600 text-white placeholder-gray-400"
+                            className={`mt-1 bg-gray-900/50 border-gray-600 text-white placeholder-gray-400 ${errors[`requirement_${requirement.id}_description`] ? 'border-red-500' : ''}`}
                           />
-                          {requirement.type === "discord" && (
+                          {errors[`requirement_${requirement.id}_description`] && (
+                            <p className="text-red-400 text-xs mt-1">{errors[`requirement_${requirement.id}_description`]}</p>
+                          )}
+                          {!errors[`requirement_${requirement.id}_description`] && requirement.type === "discord" && (
                             <p className="text-xs text-gray-400 mt-1">
                               Enter your Discord server invite link (e.g., https://discord.gg/abc123)
                             </p>
                           )}
-                          {requirement.type === "youtube" && (
+                          {!errors[`requirement_${requirement.id}_description`] && requirement.type === "youtube" && (
                             <p className="text-xs text-gray-400 mt-1">
                               Enter your YouTube channel URL (e.g., https://youtube.com/@channel or https://youtu.be/videoId)
                             </p>
@@ -839,6 +1026,9 @@ export default function CreateGiveawayPage() {
                   <CardContent className="space-y-6">
                     <div>
                       <Label className="text-white font-medium">Cover Image *</Label>
+                      {errors.coverImage && (
+                        <p className="text-red-400 text-xs mt-1 mb-2">{errors.coverImage}</p>
+                      )}
                       <input
                         type="file"
                         accept="image/*"
@@ -862,9 +1052,9 @@ export default function CreateGiveawayPage() {
                           </>
                         ) : (
                           <>
-                            <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                            <p className="text-gray-400">Click to upload cover image</p>
-                            <p className="text-sm text-gray-500 mt-2">PNG, JPG up to 5MB</p>
+                        <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                        <p className="text-gray-400">Click to upload cover image</p>
+                        <p className="text-sm text-gray-500 mt-2">PNG, JPG up to 5MB</p>
                           </>
                         )}
                       </label>
@@ -916,9 +1106,9 @@ export default function CreateGiveawayPage() {
                           </>
                         ) : (
                           <>
-                            <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                            <p className="text-gray-400">Upload additional images</p>
-                            <p className="text-sm text-gray-500 mt-2">PNG, JPG up to 5MB each (max 10 images)</p>
+                        <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                        <p className="text-gray-400">Upload additional images</p>
+                        <p className="text-sm text-gray-500 mt-2">PNG, JPG up to 5MB each (max 10 images)</p>
                           </>
                         )}
                       </label>
@@ -977,9 +1167,9 @@ export default function CreateGiveawayPage() {
                           </>
                         ) : (
                           <>
-                            <Video className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                            <p className="text-gray-400">Upload videos</p>
-                            <p className="text-sm text-gray-500 mt-2">MP4, WebM up to 50MB each (max 5 videos)</p>
+                        <Video className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                        <p className="text-gray-400">Upload videos</p>
+                        <p className="text-sm text-gray-500 mt-2">MP4, WebM up to 50MB each (max 5 videos)</p>
                           </>
                         )}
                       </label>
@@ -1019,11 +1209,23 @@ export default function CreateGiveawayPage() {
                       <Input
                         id="youtubeVideoLink"
                         value={youtubeVideoLink}
-                        onChange={(e) => handleYoutubeLinkChange(e.target.value)}
+                        onChange={(e) => {
+                          handleYoutubeLinkChange(e.target.value)
+                          if (errors.youtubeVideoLink) {
+                            setErrors(prev => {
+                              const newErrors = { ...prev }
+                              delete newErrors.youtubeVideoLink
+                              return newErrors
+                            })
+                          }
+                        }}
                         placeholder="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
-                        className="mt-2 bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-yellow-500"
+                        className={`mt-2 bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-yellow-500 ${errors.youtubeVideoLink ? 'border-red-500' : ''}`}
                       />
-                      {youtubeLinkError && (
+                      {errors.youtubeVideoLink && (
+                        <p className="text-red-400 text-xs mt-1">{errors.youtubeVideoLink}</p>
+                      )}
+                      {youtubeLinkError && !errors.youtubeVideoLink && (
                         <p className="text-red-500 text-sm mt-1">{youtubeLinkError}</p>
                       )}
                       <p className="text-sm text-gray-400 mt-2">
@@ -1048,8 +1250,8 @@ export default function CreateGiveawayPage() {
 
                       ):(
                         <>
-                        <Sparkles className="mr-2 h-5 w-5" />
-                        Create Giveaway
+                    <Sparkles className="mr-2 h-5 w-5" />
+                    Create Giveaway
                         </>
                       )
                     }

@@ -473,67 +473,76 @@ export default function HomePage() {
               whileHover={{ scale: 1.02, y: -5 }}
               transition={{ duration: 0.3 }}
             >
-              <Card className="bg-neutral-900/40 border-gray-700/50 hover:border-orange-500/50 transition-all duration-500 backdrop-blur-sm h-full relative overflow-hidden group">
-                <CardHeader className="pb-3">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="p-2 rounded-lg bg-gradient-to-br from-orange-500/20 to-yellow-400/20 group-hover:from-orange-500/30 group-hover:to-yellow-400/30 transition-all duration-300">
-                      <Image src="/gamecrux.webp" alt="GameCrux" width={48} height={48} />
+
+              <a
+                href="https://www.gamecrux.io/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Card className="bg-neutral-900/40 border-gray-700/50 hover:border-orange-500/50 transition-all duration-500 backdrop-blur-sm h-full relative overflow-hidden group">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="p-2 rounded-lg bg-gradient-to-br from-orange-500/20 to-yellow-400/20 group-hover:from-orange-500/30 group-hover:to-yellow-400/30 transition-all duration-300">
+                        <Image src="/gamecrux.webp" alt="GameCrux" width={48} height={48} />
+                      </div>
+                      <CardTitle className="text-xl font-bold text-white">GameCrux</CardTitle>
                     </div>
-                    <CardTitle className="text-xl font-bold text-white">GameCrux</CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <CardDescription className="text-gray-300 text-sm leading-relaxed">
-                    Discover, Play, and Enjoy a Curated Selection of Exciting Minigames <br />
-                    Dive into the ultimate experience with our comprehensive games. Get started now!
-                  </CardDescription>
-                </CardContent>
-                <CardFooter className="pt-4">
-                  <a
-                    href="https://www.gamecrux.io/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-orange-400 hover:text-orange-500 font-semibold text-sm flex items-center gap-2 transition-colors"
-                  >
-                    Visit GameCrux
-                    <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                  </a>
-                </CardFooter>
-              </Card>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <CardDescription className="text-gray-300 text-sm leading-relaxed">
+                      Discover, Play, and Enjoy a Curated Selection of Exciting Minigames <br />
+                      Dive into the ultimate experience with our comprehensive games. Get started now!
+                    </CardDescription>
+                  </CardContent>
+                  <CardFooter className="pt-4">
+                    <div
+
+                      className="text-orange-400 hover:text-orange-500 font-semibold text-sm flex items-center gap-2 transition-colors"
+                    >
+                      Visit GameCrux
+                      <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                    </div>
+                  </CardFooter>
+                </Card>
+              </a>
             </motion.div>
             <motion.div
               whileHover={{ scale: 1.02, y: -5 }}
               transition={{ duration: 0.3 }}
             >
-              <Card className="bg-neutral-900/40 border-gray-700/50 hover:border-orange-500/50 transition-all duration-500 backdrop-blur-sm h-full relative overflow-hidden group">
-                <CardHeader className="pb-3">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="p-2 rounded-lg bg-gradient-to-br from-orange-500/20 to-yellow-400/20 group-hover:from-orange-500/30 group-hover:to-yellow-400/30 transition-all duration-300">
-                      {/* <Zap className="h-6 w-6 text-orange-400" /> */}
-                      <Image src="/cs.webp" alt="Crux Studio" width={48} height={48} />
+              <a
+                href="https://crux.tebex.io/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Card className="bg-neutral-900/40 border-gray-700/50 hover:border-orange-500/50 transition-all duration-500 backdrop-blur-sm h-full relative overflow-hidden group">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="p-2 rounded-lg bg-gradient-to-br from-orange-500/20 to-yellow-400/20 group-hover:from-orange-500/30 group-hover:to-yellow-400/30 transition-all duration-300">
+                        {/* <Zap className="h-6 w-6 text-orange-400" /> */}
+                        <Image src="/cs.webp" alt="Crux Studio" width={48} height={48} />
+                      </div>
+                      <CardTitle className="text-xl font-bold text-white">Crux Studio</CardTitle>
                     </div>
-                    <CardTitle className="text-xl font-bold text-white">Crux Studio</CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <CardDescription className="text-gray-300 text-sm leading-relaxed">
-                    Premium Fivem Assets Marketplace
-                    <br />
-                    Creating high-quality products with passion and attention to detail to make your server even better.
-                  </CardDescription>
-                </CardContent>
-                <CardFooter className="pt-4">
-                  <a
-                    href="https://crux.tebex.io/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-orange-400 hover:text-orange-500 font-semibold text-sm flex items-center gap-2 transition-colors"
-                  >
-                    Visit Crux Studio
-                    <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                  </a>
-                </CardFooter>
-              </Card>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <CardDescription className="text-gray-300 text-sm leading-relaxed">
+                      Premium Fivem Assets Marketplace
+                      <br />
+                      Creating high-quality products with passion and attention to detail to make your server even better.
+                    </CardDescription>
+                  </CardContent>
+                  <CardFooter className="pt-4">
+                    <div
+                      className="text-orange-400 hover:text-orange-500 font-semibold text-sm flex items-center gap-2 transition-colors"
+                    >
+                      Visit Crux Studio
+                      <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                    </div>
+                  </CardFooter>
+                </Card>
+              </a>
+
             </motion.div>
           </div>
         </motion.div>
@@ -566,14 +575,11 @@ export default function HomePage() {
                     </button>
                   </Link>
                 ) : (
-                  <Button
-                    size="lg"
-                    className="bg-gradient-to-r from-orange-500 via-yellow-400 to-orange-500 hover:from-orange-600 hover:via-yellow-500 hover:to-orange-600 text-black font-bold px-10 py-4 text-xl rounded-full shadow-2xl transition-all duration-300"
-                    onClick={() => signIn("discord")}
-                  >
-                    Login to Explore
-                  </Button>
-                )}
+                  <button onClick={() => signIn("discord")} className="bg-white text-black font-bold px-6 sm:px-8 py-2 sm:py-3 text-base sm:text-lg shadow-lg rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-2">
+                    Submit Your Script <MousePointerClick className="h-4 w-4 sm:h-5 sm:w-5" />
+                  </button>
+                )
+                }
 
               </div>
 
@@ -609,13 +615,9 @@ export default function HomePage() {
                     </button>
                   </Link>
                 ) : (
-                  <Button
-                    size="lg"
-                    className="bg-gradient-to-r from-orange-500 via-yellow-400 to-orange-500 hover:from-orange-600 hover:via-yellow-500 hover:to-orange-600 text-black font-bold px-10 py-4 text-xl rounded-full shadow-2xl transition-all duration-300"
-                    onClick={() => signIn("discord")}
-                  >
-                    Login to Explore
-                  </Button>
+                  <button onClick={() => signIn("discord")} className="bg-white text-black font-bold px-6 sm:px-8 py-2 sm:py-3 text-base sm:text-lg shadow-lg rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-2">
+                    Create Your Giveaway <MousePointerClick className="h-4 w-4 sm:h-5 sm:w-5" />
+                  </button>
                 )}
 
               </div>

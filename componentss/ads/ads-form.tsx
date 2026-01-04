@@ -42,6 +42,7 @@ export default function AdsForm({ isOpen, onClose, onSuccess, editData, slotUniq
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [imageDeleted, setImageDeleted] = useState(false)
+  const [errors, setErrors] = useState<Record<string, string>>({})
   const isEditMode = !!editData
 
   // Update form data when editData changes
@@ -57,6 +58,7 @@ export default function AdsForm({ isOpen, onClose, onSuccess, editData, slotUniq
       })
       setImageDeleted(false)
       setSelectedImage(null)
+      setErrors({})
     } else {
       // Reset form when not in edit mode
       setFormData({
@@ -69,6 +71,7 @@ export default function AdsForm({ isOpen, onClose, onSuccess, editData, slotUniq
       })
       setImageDeleted(false)
       setSelectedImage(null)
+      setErrors({})
     }
   }, [editData])
 
@@ -81,8 +84,14 @@ export default function AdsForm({ isOpen, onClose, onSuccess, editData, slotUniq
 
   const handleImageUpload = (file: File) => {
     setSelectedImage(file)
-    // You can upload the image here and get the URL
-    // For now, we'll just store the file
+    // Clear image error when a new image is selected
+    if (errors.image) {
+      setErrors(prev => {
+        const newErrors = { ...prev }
+        delete newErrors.image
+        return newErrors
+      })
+    }
   }
 
   const handleDeleteCurrentImage = () => {
@@ -93,8 +102,83 @@ export default function AdsForm({ isOpen, onClose, onSuccess, editData, slotUniq
     }))
   }
 
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {}
+
+    // Validate title
+    if (!formData.title.trim()) {
+      newErrors.title = "Title is required"
+    } else if (formData.title.trim().length < 3) {
+      newErrors.title = "Title must be at least 3 characters"
+    } else if (formData.title.trim().length > 100) {
+      newErrors.title = "Title must be less than 100 characters"
+    }
+
+    // Validate description
+    if (!formData.description.trim()) {
+      newErrors.description = "Description is required"
+    } else if (formData.description.trim().length < 10) {
+      newErrors.description = "Description must be at least 10 characters"
+    } else if (formData.description.trim().length > 500) {
+      newErrors.description = "Description must be less than 500 characters"
+    }
+
+    // Validate category
+    if (!formData.category) {
+      newErrors.category = "Category is required"
+    } else if (!['scripts', 'giveaways'].includes(formData.category)) {
+      newErrors.category = "Please select a valid category"
+    }
+
+    // Validate link URL
+    if (!formData.link_url.trim()) {
+      newErrors.link_url = "Link URL is required"
+    } else {
+      try {
+        const url = new URL(formData.link_url)
+        if (!['http:', 'https:'].includes(url.protocol)) {
+          newErrors.link_url = "URL must start with http:// or https://"
+        }
+      } catch {
+        newErrors.link_url = "Please enter a valid URL"
+      }
+    }
+
+    // Validate image
+    const hasImage = selectedImage || (formData.image_url && !imageDeleted)
+    if (!hasImage) {
+      newErrors.image = "An image is required for the advertisement"
+    }
+
+    // Validate image file if selected
+    if (selectedImage) {
+      const maxSize = 5 * 1024 * 1024 // 5MB in bytes
+      if (selectedImage.size > maxSize) {
+        newErrors.image = "Image size must be less than 5MB"
+      }
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif']
+      if (!validTypes.includes(selectedImage.type)) {
+        newErrors.image = "Image must be JPEG, PNG, WebP, or GIF format"
+      }
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
   const handleSubmit = async (e: React.FormEvent | React.MouseEvent) => {
     e.preventDefault()
+    
+    // Validate form before submission
+    if (!validateForm()) {
+      toast({
+        title: 'Validation Error',
+        description: 'Please fix the errors in the form before submitting.',
+        variant: 'destructive' as any,
+      })
+      return
+    }
+
     setIsSubmitting(true)
 
     try {
@@ -162,6 +246,7 @@ export default function AdsForm({ isOpen, onClose, onSuccess, editData, slotUniq
         })
         setSelectedImage(null)
         setImageDeleted(false)
+        setErrors({})
       } else {
         const error = await response.json().catch(() => ({ error: "Unknown error" }))
         console.error('Error creating ad:', error)
@@ -212,11 +297,23 @@ export default function AdsForm({ isOpen, onClose, onSuccess, editData, slotUniq
               </label>
               <Input
                 value={formData.title}
-                onChange={(e) => handleInputChange('title', e.target.value)}
+                onChange={(e) => {
+                  handleInputChange('title', e.target.value)
+                  if (errors.title) {
+                    setErrors(prev => {
+                      const newErrors = { ...prev }
+                      delete newErrors.title
+                      return newErrors
+                    })
+                  }
+                }}
                 placeholder="Enter ad title..."
-                className="bg-gray-700 border-gray-600 text-white"
+                className={`bg-gray-700 border-gray-600 text-white ${errors.title ? 'border-red-500' : ''}`}
                 required
               />
+              {errors.title && (
+                <p className="text-red-400 text-xs mt-1">{errors.title}</p>
+              )}
             </div>
 
             {/* Description */}
@@ -226,12 +323,24 @@ export default function AdsForm({ isOpen, onClose, onSuccess, editData, slotUniq
               </label>
               <Textarea
                 value={formData.description}
-                onChange={(e) => handleInputChange('description', e.target.value)}
+                onChange={(e) => {
+                  handleInputChange('description', e.target.value)
+                  if (errors.description) {
+                    setErrors(prev => {
+                      const newErrors = { ...prev }
+                      delete newErrors.description
+                      return newErrors
+                    })
+                  }
+                }}
                 placeholder="Describe your ad..."
-                className="bg-gray-700 border-gray-600 text-white"
+                className={`bg-gray-700 border-gray-600 text-white ${errors.description ? 'border-red-500' : ''}`}
                 rows={3}
                 required
               />
+              {errors.description && (
+                <p className="text-red-400 text-xs mt-1">{errors.description}</p>
+              )}
             </div>
 
             {/* Category */}
@@ -239,8 +348,20 @@ export default function AdsForm({ isOpen, onClose, onSuccess, editData, slotUniq
               <label className="text-sm font-medium text-gray-300 mb-2 block">
                 Category *
               </label>
-              <Select value={formData.category} onValueChange={(value) => handleInputChange('category', value)}>
-                <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+              <Select 
+                value={formData.category} 
+                onValueChange={(value) => {
+                  handleInputChange('category', value)
+                  if (errors.category) {
+                    setErrors(prev => {
+                      const newErrors = { ...prev }
+                      delete newErrors.category
+                      return newErrors
+                    })
+                  }
+                }}
+              >
+                <SelectTrigger className={`bg-gray-700 border-gray-600 text-white ${errors.category ? 'border-red-500' : ''}`}>
                   <SelectValue placeholder="Select category..." />
                 </SelectTrigger>
                 <SelectContent className="bg-gray-700 border-gray-600">
@@ -249,6 +370,9 @@ export default function AdsForm({ isOpen, onClose, onSuccess, editData, slotUniq
                   {/* <SelectItem value="both" className="text-white hover:bg-gray-600">Both</SelectItem> */}
                 </SelectContent>
               </Select>
+              {errors.category && (
+                <p className="text-red-400 text-xs mt-1">{errors.category}</p>
+              )}
             </div>
 
             {/* Link URL */}
@@ -260,20 +384,35 @@ export default function AdsForm({ isOpen, onClose, onSuccess, editData, slotUniq
                 <Link className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
                   value={formData.link_url}
-                  onChange={(e) => handleInputChange('link_url', e.target.value)}
+                  onChange={(e) => {
+                    handleInputChange('link_url', e.target.value)
+                    if (errors.link_url) {
+                      setErrors(prev => {
+                        const newErrors = { ...prev }
+                        delete newErrors.link_url
+                        return newErrors
+                      })
+                    }
+                  }}
                   placeholder="https://example.com"
-                  className="bg-gray-700 border-gray-600 text-white pl-10"
+                  className={`bg-gray-700 border-gray-600 text-white pl-10 ${errors.link_url ? 'border-red-500' : ''}`}
                   type="url"
                   required
                 />
               </div>
+              {errors.link_url && (
+                <p className="text-red-400 text-xs mt-1">{errors.link_url}</p>
+              )}
             </div>
 
             {/* Image Upload */}
             <div>
               <label className="text-sm font-medium text-gray-300 mb-2 block">
-                Ad Image
+                Ad Image *
               </label>
+              {errors.image && (
+                <p className="text-red-400 text-xs mb-2">{errors.image}</p>
+              )}
               
               {/* Show existing image preview with delete button when editing and image exists */}
               {isEditMode && formData.image_url && !imageDeleted && !selectedImage ? (
