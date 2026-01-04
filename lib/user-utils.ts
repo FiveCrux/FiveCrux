@@ -14,10 +14,12 @@ export function getUserProfilePicture(user: {
 
 /**
  * Get user profile picture from session object
+ * Priority: Profile_picture (database column) > profilePicture (schema field) > image (Discord)
  */
 export function getSessionUserProfilePicture(session: any): string | null {
   if (!session?.user) return null;
   const user = session.user as any;
-  return user.profilePicture || user.image || null;
+  // Check Profile_picture (database column name) first, then profilePicture (schema field), then image (Discord)
+  return user.Profile_picture || user.profilePicture || user.image || null;
 }
 

@@ -6,6 +6,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { useSession, signIn, signOut } from "next-auth/react"
 import { Avatar, AvatarImage, AvatarFallback } from "@/componentss/ui/avatar"
+import { getSessionUserProfilePicture } from "@/lib/user-utils"
 import {
   Navbar,
   NavBody,
@@ -76,7 +77,7 @@ export default function NavbarComponent() {
               <>
                 <Link href="/profile" className="block">
                   <Avatar className="h-9 w-9 ring-1 ring-gray-700/60">
-                    <AvatarImage src={String((session?.user as any)?.image || "")} alt={String(session?.user?.name || "User")} />
+                    <AvatarImage src={String(getSessionUserProfilePicture(session) || "")} alt={String(session?.user?.name || "User")} />
                     <AvatarFallback className="bg-gray-800 text-white text-sm">
                       {String(session?.user?.name || "U").charAt(0).toUpperCase()}
                     </AvatarFallback>
@@ -134,7 +135,7 @@ export default function NavbarComponent() {
               <div className="flex w-full flex-col gap-4">
                 <div className="flex items-center space-x-3 pb-4 border-b border-gray-700">
                   <Avatar className="h-10 w-10 ring-1 ring-gray-700/60">
-                    <AvatarImage src={String((session?.user as any)?.image || "")} alt={String(session?.user?.name || "User")} />
+                    <AvatarImage src={String(getSessionUserProfilePicture(session) || "")} alt={String(session?.user?.name || "User")} />
                     <AvatarFallback className="bg-gray-800 text-white text-sm">
                       {String(session?.user?.name || "U").charAt(0).toUpperCase()}
                     </AvatarFallback>
