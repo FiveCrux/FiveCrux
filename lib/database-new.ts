@@ -3059,6 +3059,7 @@ export async function getFeaturedScriptsWithDetails(filters?: {
         scriptCategory: approvedScripts.category,
         scriptFramework: approvedScripts.framework,
         scriptSellerName: approvedScripts.seller_name,
+        scriptSellerId: approvedScripts.sellerId,
         scriptCurrencySymbol: approvedScripts.currencySymbol,
         scriptFree: approvedScripts.free,
       })
@@ -3068,7 +3069,35 @@ export async function getFeaturedScriptsWithDetails(filters?: {
       .orderBy(desc(featuredScripts.featuredCreatedAt))
       .limit(limitVal);
 
-    return results;
+    // Fetch seller roles and images for all scripts with sellerId
+    const sellerIds = results
+      .map(r => r.scriptSellerId)
+      .filter((id): id is string => !!id);
+    
+    const sellerRolesMap = new Map<string, string[] | null>();
+    const sellerImagesMap = new Map<string, string | null>();
+    if (sellerIds.length > 0) {
+      // Fetch all sellers in one query
+      const uniqueSellerIds = [...new Set(sellerIds)];
+      const sellers = await db
+        .select({ id: users.id, roles: users.roles, profilePicture: users.profilePicture, image: users.image })
+        .from(users)
+        .where(inArray(users.id, uniqueSellerIds));
+      
+      sellers.forEach(seller => {
+        sellerRolesMap.set(seller.id, seller.roles);
+        sellerImagesMap.set(seller.id, getUserProfilePicture(seller));
+      });
+    }
+
+    // Map results with seller info
+    const mappedResults = results.map(result => ({
+      ...result,
+      scriptSellerImage: result.scriptSellerId ? sellerImagesMap.get(result.scriptSellerId) || null : null,
+      scriptSellerRoles: result.scriptSellerId ? sellerRolesMap.get(result.scriptSellerId) || null : null,
+    }));
+
+    return mappedResults;
   } catch (error) {
     console.error('Error fetching featured scripts with details:', error);
     return [];
