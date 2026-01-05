@@ -57,9 +57,11 @@ export async function GET(request: NextRequest) {
       userRejected: userRejected.length 
     });
 
-    // Combine and format the ads
+    // Combine and format the ads (filter out inactive ads by status and slotStatus)
     const allAds = [
-      ...userPending.map(a => ({ 
+      ...userPending
+        .filter(a => a.slotStatus === 'active')
+        .map(a => ({ 
         ...a, 
         status: 'pending',
         image_url: a.imageUrl,
@@ -70,7 +72,7 @@ export async function GET(request: NextRequest) {
         updated_at: a.updatedAt
       })),
       ...userApproved
-        .filter(a => a.status !== 'inactive')
+        .filter(a => a.status !== 'inactive' && a.slotStatus === 'active')
         .map(a => ({ 
         ...a, 
           status: a.status || 'approved',
@@ -82,7 +84,9 @@ export async function GET(request: NextRequest) {
         created_at: a.createdAt || a.approvedAt,
         updated_at: a.updatedAt
       })),
-      ...userRejected.filter(a => a.status !== 'inactive').map(a => ({ 
+      ...userRejected
+        .filter(a => a.slotStatus === 'active')
+        .map(a => ({ 
         ...a, 
         status: a.status || 'rejected',
         rejection_reason: a.rejectionReason,
