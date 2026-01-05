@@ -389,10 +389,43 @@ export async function checkAndDeactivateExpiredSlots(): Promise<{ checked: numbe
           .update(approvedAds)
           .set({ 
             status: 'inactive',
+            slotStatus: 'inactive',
             updatedAt: new Date()
           })
           .where(eq(approvedAds.id, ad.id));
         adsDeactivated++;
+      }
+      
+      // Update slotStatus in pending_ads table (regardless of status)
+      const pendingAdsToUpdate = await db
+        .select()
+        .from(pendingAds)
+        .where(eq(pendingAds.slotUniqueId, uniqueId));
+      
+      for (const ad of pendingAdsToUpdate) {
+        await db
+          .update(pendingAds)
+          .set({ 
+            slotStatus: 'inactive',
+            updatedAt: new Date()
+          })
+          .where(eq(pendingAds.id, ad.id));
+      }
+      
+      // Update slotStatus in rejected_ads table (regardless of status)
+      const rejectedAdsToUpdate = await db
+        .select()
+        .from(rejectedAds)
+        .where(eq(rejectedAds.slotUniqueId, uniqueId));
+      
+      for (const ad of rejectedAdsToUpdate) {
+        await db
+          .update(rejectedAds)
+          .set({ 
+            slotStatus: 'inactive',
+            updatedAt: new Date()
+          })
+          .where(eq(rejectedAds.id, ad.id));
       }
     }
     
@@ -423,6 +456,7 @@ export async function checkAndDeactivateExpiredSlots(): Promise<{ checked: numbe
       .update(approvedAds)
       .set({ 
         status: 'inactive',
+        slotStatus: 'inactive',
         updatedAt: new Date()
       })
       .where(eq(approvedAds.id, ad.id));
@@ -477,11 +511,12 @@ export async function checkAndDeactivateExpiredFeaturedScriptSlots(): Promise<{ 
         // Track script IDs to check if they need featured field updated
         scriptIdsToCheck.add(featuredScript.scriptId);
         
-        // Deactivate the featured script
+        // Deactivate the featured script - update both featuredStatus and featuredSlotStatus
         await db
           .update(featuredScripts)
           .set({ 
             featuredStatus: 'inactive',
+            featuredSlotStatus: 'inactive',
             featuredUpdatedAt: new Date()
           })
           .where(eq(featuredScripts.id, featuredScript.id));
@@ -514,10 +549,12 @@ export async function checkAndDeactivateExpiredFeaturedScriptSlots(): Promise<{ 
   for (const featuredScript of expiredFeaturedScripts) {
     scriptIdsToCheck.add(featuredScript.scriptId);
     
+    // Deactivate the featured script - update both featuredStatus and featuredSlotStatus
     await db
       .update(featuredScripts)
       .set({ 
         featuredStatus: 'inactive',
+        featuredSlotStatus: 'inactive',
         featuredUpdatedAt: new Date()
       })
       .where(eq(featuredScripts.id, featuredScript.id));
@@ -2176,12 +2213,22 @@ export async function getAds(filters?: {
     const conditions: any[] = [];
     if (filters?.status) conditions.push(eq(approvedAds.status, filters.status as any));
     if (filters?.category) conditions.push(eq(approvedAds.category, filters.category));
+    // Always filter out inactive ads (both status and slotStatus must be active)
+    if (filters?.status === 'active' || !filters?.status) {
+      conditions.push(eq(approvedAds.status, 'active'));
+      conditions.push(eq(approvedAds.slotStatus, 'active'));
+    }
     
     const limitVal = filters?.limit || 50;
     
     const query = conditions.length
       ? db.select().from(approvedAds).where(and(...conditions))
-      : db.select().from(approvedAds);
+      : db.select().from(approvedAds).where(
+          and(
+            eq(approvedAds.status, 'active'),
+            eq(approvedAds.slotStatus, 'active')
+          )
+        );
     
     const results = await query
       .orderBy(desc(approvedAds.createdAt))
@@ -2250,6 +2297,7 @@ export async function getPendingAds(limit?: number): Promise<any[]> {
       createdBy: pendingAds.createdBy,
       createdAt: pendingAds.createdAt,
       updatedAt: pendingAds.updatedAt,
+      slotStatus: pendingAds.slotStatus,
       adminNotes: pendingAds.adminNotes,
       creator_name: users.name,
       creator_email: users.email,
@@ -2257,6 +2305,7 @@ export async function getPendingAds(limit?: number): Promise<any[]> {
     })
     .from(pendingAds)
     .leftJoin(users, eq(pendingAds.createdBy, users.id))
+    .where(eq(pendingAds.slotStatus, 'active'))
     .orderBy(desc(pendingAds.createdAt));
   return await (limit ? base.limit(limit) : base) as any[];
 }
@@ -2276,6 +2325,7 @@ export async function getApprovedAds(limit?: number): Promise<any[]> {
       createdAt: approvedAds.createdAt,
       updatedAt: approvedAds.updatedAt,
       status: approvedAds.status,
+      slotStatus: approvedAds.slotStatus,
       approvedAt: approvedAds.approvedAt,
       approvedBy: approvedAds.approvedBy,
       adminNotes: approvedAds.adminNotes,
@@ -2287,6 +2337,12 @@ export async function getApprovedAds(limit?: number): Promise<any[]> {
     })
     .from(approvedAds)
     .leftJoin(users, eq(approvedAds.createdBy, users.id))
+    .where(
+      and(
+        eq(approvedAds.status, 'active'),
+        eq(approvedAds.slotStatus, 'active')
+      )
+    )
     .orderBy(desc(approvedAds.approvedAt));
   const results = await (limit ? base.limit(limit) : base) as any[];
   
@@ -2311,6 +2367,7 @@ export async function getRejectedAds(limit?: number): Promise<any[]> {
       createdBy: rejectedAds.createdBy,
       createdAt: rejectedAds.createdAt,
       updatedAt: rejectedAds.updatedAt,
+      slotStatus: rejectedAds.slotStatus,
       rejectedAt: rejectedAds.rejectedAt,
       rejectedBy: rejectedAds.rejectedBy,
       rejectionReason: rejectedAds.rejectionReason,
@@ -2321,6 +2378,7 @@ export async function getRejectedAds(limit?: number): Promise<any[]> {
     })
     .from(rejectedAds)
     .leftJoin(users, eq(rejectedAds.createdBy, users.id))
+    .where(eq(rejectedAds.slotStatus, 'active'))
     .orderBy(desc(rejectedAds.rejectedAt));
   return await (limit ? base.limit(limit) : base) as any[];
 }
@@ -3033,6 +3091,10 @@ export async function getFeaturedScriptsWithDetails(filters?: {
     // Default to active status for public display
     const statusFilter = filters?.status || 'active';
     conditions.push(eq(featuredScripts.featuredStatus, statusFilter as any));
+    // Also filter out inactive slots
+    if (statusFilter === 'active') {
+      conditions.push(eq(featuredScripts.featuredSlotStatus, 'active'));
+    }
     
     const limitVal = filters?.limit || 50;
     
@@ -3142,7 +3204,13 @@ export async function getUserFeaturedScripts(userId: string, limit?: number) {
       })
       .from(featuredScripts)
       .leftJoin(approvedScripts, eq(featuredScripts.scriptId, approvedScripts.id))
-      .where(eq(featuredScripts.featuredCreatedBy, userId))
+      .where(
+        and(
+          eq(featuredScripts.featuredCreatedBy, userId),
+          eq(featuredScripts.featuredSlotStatus, 'active'),
+          eq(featuredScripts.featuredStatus, 'active')
+        )
+      )
       .orderBy(desc(featuredScripts.featuredCreatedAt))
       .limit(limitVal);
 
