@@ -130,10 +130,6 @@ export default function FeaturedScriptCard({ item, index, className = "", style 
                     {item.framework.map((fw: string, idx: number) => (
                       <motion.div
                         key={idx}
-                        whileHover={{
-                          scale: 1.1,
-                          y: -2,
-                        }}
                       >
                         <Badge className="bg-neutral-800/95 text-white backdrop-blur-sm text-[10px] font-bold border border-neutral-600/50 rounded px-1.5 py-0.5 uppercase tracking-wide shadow-lg hover:bg-neutral-800/95 hover:text-white">
                           <span className="mr-1 text-xs">
