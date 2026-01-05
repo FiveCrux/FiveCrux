@@ -362,6 +362,7 @@ function FeaturedScriptPayPalButtonWrapper({
         color: "gold",
         shape: "rect",
         label: "paypal",
+        tagline: false,
       }}
     />
   )
@@ -846,6 +847,12 @@ export default function AdvertisePage() {
         animate={benefitsInView ? { opacity: 1 } : {}}
         transition={{ duration: 1 }}
       >
+        <HexagonBackground
+          className="absolute bg-[#131313]"
+          hexagonProps={{
+            className: "before:!bg-[#0f0f0f] after:!bg-[#131313] dark:!before:bg-[#0f0f0f] dark:!after:bg-[#131313] hover:!before:bg-[#252525] dark:hover:!before:bg-[#252525] hover:!after:bg-[#2a2a2a] dark:hover:!after:bg-[#2a2a2a]"
+          }}
+        />
         <div className="max-w-7xl mx-auto relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 50 }}
