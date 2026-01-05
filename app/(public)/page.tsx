@@ -570,12 +570,12 @@ export default function HomePage() {
                 </p>
                 {status === "authenticated" ? (
                   <Link href="/scripts/submit">
-                    <button className="bg-white text-black font-bold px-6 sm:px-8 py-2 sm:py-3 text-base sm:text-lg shadow-lg rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-2">
+                    <button className="bg-white text-black font-bold px-6 sm:px-8 py-2 sm:py-3 text-base sm:text-lg shadow-lg rounded-lg hover:bg-gray-300 transition-colors flex items-center gap-2">
                       Submit Your Script <MousePointerClick className="h-4 w-4 sm:h-5 sm:w-5" />
                     </button>
                   </Link>
                 ) : (
-                  <button onClick={() => signIn("discord")} className="bg-white text-black font-bold px-6 sm:px-8 py-2 sm:py-3 text-base sm:text-lg shadow-lg rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-2">
+                  <button onClick={() => signIn("discord")} className="bg-white text-black font-bold px-6 sm:px-8 py-2 sm:py-3 text-base sm:text-lg shadow-lg rounded-lg hover:bg-gray-300 transition-colors flex items-center gap-2">
                     Submit Your Script <MousePointerClick className="h-4 w-4 sm:h-5 sm:w-5" />
                   </button>
                 )
@@ -610,12 +610,12 @@ export default function HomePage() {
                 </p>
                 {status === "authenticated" ? (
                   <Link href="/giveaways/create">
-                    <button className="bg-white text-black font-bold px-6 sm:px-8 py-2 sm:py-3 text-base sm:text-lg shadow-lg rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-2">
+                    <button className="bg-white text-black font-bold px-6 sm:px-8 py-2 sm:py-3 text-base sm:text-lg shadow-lg rounded-lg hover:bg-gray-300 transition-colors flex items-center gap-2">
                       Create Your Giveaway <MousePointerClick className="h-4 w-4 sm:h-5 sm:w-5" />
                     </button>
                   </Link>
                 ) : (
-                  <button onClick={() => signIn("discord")} className="bg-white text-black font-bold px-6 sm:px-8 py-2 sm:py-3 text-base sm:text-lg shadow-lg rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-2">
+                  <button onClick={() => signIn("discord")} className="bg-white text-black font-bold px-6 sm:px-8 py-2 sm:py-3 text-base sm:text-lg shadow-lg rounded-lg hover:bg-gray-300 transition-colors flex items-center gap-2">
                     Create Your Giveaway <MousePointerClick className="h-4 w-4 sm:h-5 sm:w-5" />
                   </button>
                 )}
