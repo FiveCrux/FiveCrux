@@ -10,13 +10,13 @@ import Navbar from "@/componentss/shared/navbar"
 import Footer from "@/componentss/shared/footer"
 import { StarsBackground } from "@/components/animate-ui/components/backgrounds/stars"
 import { HexagonBackground } from "@/components/animate-ui/components/backgrounds/hexagon"
-import { 
-  Zap, 
-  TrendingUp, 
+import {
+  Zap,
+  TrendingUp,
   TargetIcon,
-  BarChart3, 
-  Users, 
-  Check, 
+  BarChart3,
+  Users,
+  Check,
   Star,
   ArrowRight,
   Sparkles,
@@ -90,7 +90,7 @@ const pricingPackages: PricingPackage[] = [
     description: "Maximum exposure for established brands and agencies. All slots unlocked immediately.",
     gradient: "from-yellow-400 via-orange-500 to-red-500",
     icon: Crown,
-    durations: [ 
+    durations: [
       { label: "1 Month", months: 1, price: 150, originalPrice: 350 },
       { label: "3 Months", months: 3, price: 420, originalPrice: 1050 },
       { label: "6 Months", months: 6, price: 750, originalPrice: 2100 },
@@ -374,10 +374,10 @@ export default function AdvertisePage() {
   const { resolvedTheme } = useTheme()
   const router = useRouter()
   const searchParams = useSearchParams()
-  
+
   // State for selected tab (ad slots or featured script slots)
   const [activeTab, setActiveTab] = useState<"ads" | "featured-scripts">("ads")
-  
+
   // State for selected duration index (shared across all packages)
   const [selectedDurationIndex, setSelectedDurationIndex] = useState<number>(0)
 
@@ -409,7 +409,7 @@ export default function AdvertisePage() {
   useEffect(() => {
     const success = searchParams.get("success")
     const canceled = searchParams.get("canceled")
-    
+
     if (success) {
       toast.success("Payment successful! Your ad slots have been activated.")
       router.replace("/advertise")
@@ -422,7 +422,7 @@ export default function AdvertisePage() {
   const heroInView = useInView(heroRef, { once: true })
   const pricingInView = useInView(pricingRef, { once: true })
   const benefitsInView = useInView(benefitsRef, { once: true })
-  
+
   const handlePurchaseSuccess = () => {
     // Refresh the page or update UI as needed
     router.refresh()
@@ -490,7 +490,7 @@ export default function AdvertisePage() {
                   transition={{ duration: 1, delay: 0.4 }}
                   className="text-xl md:text-2xl text-gray-300 mb-12 max-w-4xl mx-auto leading-relaxed"
                 >
-                  Reach thousands of active FiveM server owners, developers, and enthusiasts. 
+                  Reach thousands of active FiveM server owners, developers, and enthusiasts.
                   Our premium advertising platform delivers targeted visibility and proven results.
                 </motion.p>
 
@@ -500,12 +500,12 @@ export default function AdvertisePage() {
                   transition={{ duration: 1, delay: 0.6 }}
                   className="flex flex-col sm:flex-row gap-6 justify-center items-center"
                 >
-                  <motion.div 
-                    whileHover={{ scale: 1.05}} 
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
-                    <Button 
-                      size="lg" 
+                    <Button
+                      size="lg"
                       className="!bg-gradient-to-r from-orange-500 via-yellow-400 to-orange-500 hover:!from-orange-600 hover:!via-yellow-500 hover:!to-orange-600 text-black font-bold px-10 py-4 text-xl rounded-full shadow-2xl transition-all duration-300 border-none"
                       onClick={() => {
                         document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })
@@ -522,61 +522,6 @@ export default function AdvertisePage() {
         </div>
       </motion.section>
 
-      {/* Benefits Section */}
-      <motion.section
-        ref={benefitsRef}
-        className="py-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden"
-        initial={{ opacity: 0 }}
-        animate={benefitsInView ? { opacity: 1 } : {}}
-        transition={{ duration: 1 }}
-      >
-        <div className="max-w-7xl mx-auto relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            animate={benefitsInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 1 }}
-            className="text-center mb-16"
-          >
-            <Badge className="bg-gradient-to-r from-orange-500/20 to-yellow-400/20 text-orange-400 border-orange-500/30 mb-6 px-4 py-2 text-sm font-semibold">
-              Why Advertise Here
-            </Badge>
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 bg-gradient-to-r from-white via-orange-200 to-yellow-200 bg-clip-text text-transparent">
-              Reach Your Target Audience
-            </h2>
-            <p className="text-xl text-gray-300 max-w-2xl mx-auto leading-relaxed">
-              Connect with the most engaged FiveM community members
-            </p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {benefits.map((benefit, index) => {
-              const Icon = benefit.icon
-              return (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 50 }}
-                  animate={benefitsInView ? { opacity: 1, y: 0 } : {}}
-                  transition={{ duration: 0.8, delay: index * 0.1 }}
-                  whileHover={{ scale: 1.05, y: -10 }}
-                  className="group"
-                >
-                  <Card className="bg-neutral-900/40 border-gray-700/50 hover:border-orange-500/50 transition-all duration-500 backdrop-blur-sm h-full relative overflow-hidden">
-                    <CardContent className="p-8 text-center relative z-10">
-                      <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br ${benefit.gradient} mb-6 group-hover:scale-110 transition-transform duration-300`}>
-                        <Icon className="h-8 w-8 text-white" />
-                      </div>
-                      <h3 className="text-white font-bold text-xl mb-3 group-hover:text-orange-400 transition-colors">
-                        {benefit.title}
-                      </h3>
-                      <p className="text-gray-400 text-sm leading-relaxed">{benefit.description}</p>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              )
-            })}
-          </div>
-        </div>
-      </motion.section>
 
       {/* Pricing Section */}
       <motion.section
@@ -587,11 +532,11 @@ export default function AdvertisePage() {
         animate={pricingInView ? { opacity: 1 } : {}}
         transition={{ duration: 1 }}
       >
-        <HexagonBackground 
-          className="absolute inset-0 bg-[#131313]" 
-          hexagonProps={{ 
-            className: "before:!bg-[#0f0f0f] after:!bg-[#131313] dark:!before:bg-[#0f0f0f] dark:!after:bg-[#131313] hover:!before:bg-[#252525] dark:hover:!before:bg-[#252525] hover:!after:bg-[#2a2a2a] dark:hover:!after:bg-[#2a2a2a]" 
-          }} 
+        <HexagonBackground
+          className="absolute bg-[#131313]"
+          hexagonProps={{
+            className: "before:!bg-[#0f0f0f] after:!bg-[#131313] dark:!before:bg-[#0f0f0f] dark:!after:bg-[#131313] hover:!before:bg-[#252525] dark:hover:!before:bg-[#252525] hover:!after:bg-[#2a2a2a] dark:hover:!after:bg-[#2a2a2a]"
+          }}
         />
         <div className="max-w-7xl mx-auto relative z-10">
           <motion.div
@@ -612,21 +557,21 @@ export default function AdvertisePage() {
             <p className="text-xl text-gray-300 max-w-2xl mx-auto leading-relaxed mb-8">
               Flexible pricing options to suit businesses of all sizes
             </p>
-            
+
             {/* Tabs for Ad Slots vs Featured Script Slots */}
             <Tabs value={activeTab} onValueChange={(value) => {
               setActiveTab(value as "ads" | "featured-scripts")
               setSelectedDurationIndex(0) // Reset duration when switching tabs
             }} className="w-full max-w-2xl mx-auto mb-8">
               <TabsList className="grid w-full grid-cols-2 bg-neutral-800/50 border border-gray-700/50">
-                <TabsTrigger 
-                  value="ads" 
+                <TabsTrigger
+                  value="ads"
                   className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-yellow-400 data-[state=active]:text-black data-[state=active]:font-bold"
                 >
                   <Tag className="h-4 w-4 mr-2" />
                   Ad Slots
                 </TabsTrigger>
-                <TabsTrigger 
+                <TabsTrigger
                   value="featured-scripts"
                   className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white data-[state=active]:font-bold"
                 >
@@ -638,7 +583,7 @@ export default function AdvertisePage() {
 
             {/* Duration Selection - Now at the top */}
             <div className="mb-12">
-              <Tabs 
+              <Tabs
                 value={selectedDurationIndex.toString()}
                 onValueChange={(value) => setSelectedDurationIndex(parseInt(value))}
                 className="w-full max-w-2xl mx-auto"
@@ -650,7 +595,7 @@ export default function AdvertisePage() {
                       value={durIndex.toString()}
                       className={cn(
                         "text-sm data-[state=active]:font-bold",
-                        activeTab === "ads" 
+                        activeTab === "ads"
                           ? "data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-yellow-400 data-[state=active]:text-black"
                           : "data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white"
                       )}
@@ -669,7 +614,7 @@ export default function AdvertisePage() {
               const Icon = pkg.icon
               const selectedDuration = pkg.durations[selectedDurationIndex]
               const discount = Math.round(((selectedDuration.originalPrice - selectedDuration.price) / selectedDuration.originalPrice) * 100)
-              
+
               return (
                 <motion.div
                   key={pkg.packageId}
@@ -703,7 +648,7 @@ export default function AdvertisePage() {
                   )}
                   <Card className={cn(
                     "bg-neutral-900/60 border-gray-700/50 backdrop-blur-sm h-full relative overflow-hidden transition-all duration-500",
-                    pkg.popular 
+                    pkg.popular
                       ? activeTab === "ads"
                         ? "border-2 border-orange-500/50 shadow-2xl shadow-orange-500/20"
                         : "border-2 border-purple-500/50 shadow-2xl shadow-purple-500/20"
@@ -781,7 +726,7 @@ export default function AdvertisePage() {
                           </div>
                           <span className="text-gray-300 text-sm leading-relaxed">
                             {activeTab === "ads" ? (
-                              <>{pkg.slotsPerMonth} ad slot{pkg.slotsPerMonth  > 1 ? 's' : ''} (all slots unlocked immediately)</>
+                              <>{pkg.slotsPerMonth} ad slot{pkg.slotsPerMonth > 1 ? 's' : ''} (all slots unlocked immediately)</>
                             ) : (
                               <>{pkg.slotsPerMonth} featured script slot{pkg.slotsPerMonth > 1 ? 's' : ''} (all slots unlocked immediately)</>
                             )}
@@ -889,41 +834,68 @@ export default function AdvertisePage() {
               )
             })}
           </div>
-
-          {/* Additional Info */}
+        </div>
+      </motion.section>
+      
+      
+      {/* Benefits Section */}
+      <motion.section
+        ref={benefitsRef}
+        className="py-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden"
+        initial={{ opacity: 0 }}
+        animate={benefitsInView ? { opacity: 1 } : {}}
+        transition={{ duration: 1 }}
+      >
+        <div className="max-w-7xl mx-auto relative z-10">
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={pricingInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 1, delay: 0.6 }}
-            className="mt-16 text-center"
+            initial={{ opacity: 0, y: 50 }}
+            animate={benefitsInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 1 }}
+            className="text-center mb-16"
           >
-            <Card className="bg-neutral-900/40 border-gray-700/50 backdrop-blur-sm">
-              <CardContent className="p-8">
-                <div className="flex items-center justify-center gap-2 mb-4">
-                  <BarChart3 className="h-6 w-6 text-orange-500" />
-                  <h3 className="text-2xl font-bold text-white">Need Custom Solutions?</h3>
-                </div>
-                <p className="text-gray-300 mb-6 max-w-2xl mx-auto">
-                  Looking for a custom advertising package tailored to your specific needs? 
-                  Contact our sales team to discuss enterprise solutions and bulk pricing options.
-                </p>
-                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  <Button
-                    variant="outline"
-                    className="bg-transparent border-2 border-orange-500/50 text-orange-500 hover:bg-orange-500/10 hover:border-orange-500 px-8 py-3 rounded-full"
-                  >
-                    Contact Sales Team
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </motion.div>
-              </CardContent>
-            </Card>
+            <Badge className="bg-gradient-to-r from-orange-500/20 to-yellow-400/20 text-orange-400 border-orange-500/30 mb-6 px-4 py-2 text-sm font-semibold">
+              Why Advertise Here
+            </Badge>
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 bg-gradient-to-r from-white via-orange-200 to-yellow-200 bg-clip-text text-transparent">
+              Reach Your Target Audience
+            </h2>
+            <p className="text-xl text-gray-300 max-w-2xl mx-auto leading-relaxed">
+              Connect with the most engaged FiveM community members
+            </p>
           </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {benefits.map((benefit, index) => {
+              const Icon = benefit.icon
+              return (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 50 }}
+                  animate={benefitsInView ? { opacity: 1, y: 0 } : {}}
+                  transition={{ duration: 0.8, delay: index * 0.1 }}
+                  whileHover={{ scale: 1.05, y: -10 }}
+                  className="group"
+                >
+                  <Card className="bg-neutral-900/40 border-gray-700/50 hover:border-orange-500/50 transition-all duration-500 backdrop-blur-sm h-full relative overflow-hidden">
+                    <CardContent className="p-8 text-center relative z-10">
+                      <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br ${benefit.gradient} mb-6 group-hover:scale-110 transition-transform duration-300`}>
+                        <Icon className="h-8 w-8 text-white" />
+                      </div>
+                      <h3 className="text-white font-bold text-xl mb-3 group-hover:text-orange-400 transition-colors">
+                        {benefit.title}
+                      </h3>
+                      <p className="text-gray-400 text-sm leading-relaxed">{benefit.description}</p>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              )
+            })}
+          </div>
         </div>
       </motion.section>
 
       {/* Stats Section */}
-      <motion.section
+      {/* <motion.section
         className="py-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden"
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
@@ -968,7 +940,7 @@ export default function AdvertisePage() {
             ))}
           </motion.div>
         </div>
-      </motion.section>
+      </motion.section> */}
       <Footer />
     </div>
   )
