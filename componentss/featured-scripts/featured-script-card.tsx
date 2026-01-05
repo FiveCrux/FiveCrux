@@ -7,7 +7,9 @@ import Image from "next/image"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/componentss/ui/card"
 import { Badge } from "@/componentss/ui/badge"
 import { Button } from "@/componentss/ui/button"
-
+import { Avatar, AvatarImage, AvatarFallback } from "@/componentss/ui/avatar"
+import { VerifiedIcon } from "@/componentss/shared/verified-icon"
+import { isVerifiedCreator } from "@/lib/utils"
 interface FeaturedScriptCardProps {
   item: {
     id: number
@@ -20,6 +22,10 @@ interface FeaturedScriptCardProps {
     original_price?: number
     currency_symbol?: string
     free?: boolean
+    seller?: string
+    seller_name?: string
+    seller_image?: string
+    seller_roles?: string[]
   }
   index: number
   className?: string
@@ -115,14 +121,8 @@ export default function FeaturedScriptCard({ item, index, className = "", style 
               <CardTitle className="text-base font-bold text-white leading-tight line-clamp-2">
                 {item.title}
               </CardTitle>
-
-              {/* Description */}
-              <CardDescription className="text-neutral-400 text-xs leading-snug line-clamp-2">
-                {item.description}
-              </CardDescription>
-
-              {/* Framework Badges */}
-              {item.framework &&
+               {/* Framework Badges */}
+               {item.framework &&
                 item.framework.length > 0 && (
                   <motion.div
                     className="flex flex-wrap gap-1"
@@ -145,6 +145,23 @@ export default function FeaturedScriptCard({ item, index, className = "", style 
                     ))}
                   </motion.div>
                 )}
+              <CardDescription className="text-neutral-400 text-xs leading-snug flex items-center gap-1.5 flex-row">
+                <Avatar className="h-4 w-4 flex-shrink-0">
+                  <AvatarImage
+                    src={item.seller_image || "/placeholder-user.jpg"}
+                    alt={item.seller}
+                  />
+                  <AvatarFallback className="bg-orange-500 text-white text-[8px] font-bold">
+                    {item.seller ? item.seller[0].toUpperCase() : "?"}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="whitespace-nowrap">By {item.seller}</span>
+                {isVerifiedCreator(item.seller_roles) && (
+                  <VerifiedIcon size="sm" className="flex-shrink-0" />
+                )}
+              </CardDescription>
+
+             
 
               {/* Price */}
               <CardDescription className="text-orange-500 text-xl font-bold pt-1">

@@ -283,6 +283,10 @@ export default function ScriptsPage() {
             original_price: item.scriptPrice || 0,
             currency_symbol: item.scriptCurrencySymbol || "$",
             free: item.scriptFree || false,
+            seller: item.scriptSellerName || "",
+            seller_name: item.scriptSellerName || "",
+            seller_image: item.scriptSellerImage || null,
+            seller_roles: item.scriptSellerRoles || null,
           }));
           
           // Shuffle the array to randomize starting position
