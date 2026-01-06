@@ -858,7 +858,7 @@ export default function AdvertisePage() {
             initial={{ opacity: 0, y: 50 }}
             animate={benefitsInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 1 }}
-            className="text-center mb-16"
+            className="text-center mt-16 mb-16"
           >
             <Badge className="bg-gradient-to-r from-orange-500/20 to-yellow-400/20 text-orange-400 border-orange-500/30 mb-6 px-4 py-2 text-sm font-semibold">
               Why Advertise Here
