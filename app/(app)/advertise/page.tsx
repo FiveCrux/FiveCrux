@@ -528,7 +528,7 @@ export default function AdvertisePage() {
       <motion.section
         id="pricing"
         ref={pricingRef}
-        className="py-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden"
+        className="pt-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden"
         initial={{ opacity: 0 }}
         animate={pricingInView ? { opacity: 1 } : {}}
         transition={{ duration: 1 }}
@@ -842,7 +842,7 @@ export default function AdvertisePage() {
       {/* Benefits Section */}
       <motion.section
         ref={benefitsRef}
-        className="py-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden"
+        className="pb-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden"
         initial={{ opacity: 0 }}
         animate={benefitsInView ? { opacity: 1 } : {}}
         transition={{ duration: 1 }}
