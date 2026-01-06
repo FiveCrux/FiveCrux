@@ -87,7 +87,7 @@ export async function GET(request: NextRequest) {
       ...userRejected
         .filter(a => a.slotStatus === 'active')
         .map(a => ({ 
-        ...a, 
+          ...a, 
         status: a.status || 'rejected',
         rejection_reason: a.rejectionReason,
         image_url: a.imageUrl,

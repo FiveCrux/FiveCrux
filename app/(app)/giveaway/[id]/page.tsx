@@ -1785,8 +1785,18 @@ export default function GiveawayDetailPage() {
                     </div>
                   </div>
                 ))
-              ) : relatedGiveaways.length > 0 ? (
-                relatedGiveaways.map((giveaway, index) => (
+              ) : relatedGiveaways.filter((giveaway) => {
+                if (!giveaway.endDate) return false
+                const now = new Date()
+                const endDate = new Date(giveaway.endDate)
+                return endDate.getTime() > now.getTime()
+              }).length > 0 ? (
+                relatedGiveaways.filter((giveaway) => {
+                  if (!giveaway.endDate) return false
+                  const now = new Date()
+                  const endDate = new Date(giveaway.endDate)
+                  return endDate.getTime() > now.getTime()
+                }).map((giveaway, index) => (
                 <motion.div
                   key={giveaway.id}
                   initial={{ opacity: 0, y: 30 }}
