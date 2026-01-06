@@ -27,6 +27,6 @@ export const Env = z.object({
   DISCORD_FEATURED_SCRIPT_WEBHOOK_URL: z.string().url().optional(), // For featured scripts
   PAYPAL_CLIENT_ID: z.string().optional(), // PayPal client ID
   PAYPAL_CLIENT_SECRET: z.string().optional(), // PayPal client secret
-  PAYPAL_ENVIRONMENT: z.enum(["sandbox", "production"]).default("sandbox"), // PayPal environment
+  PAYPAL_ENVIRONMENT: z.enum(["sandbox", "production", "live"]).default("sandbox"), // PayPal environment
 });
 export const env = Env.parse(process.env);
