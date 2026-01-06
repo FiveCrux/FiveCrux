@@ -6,7 +6,7 @@ import { createAdSlots, getUserActiveAdSlots } from "@/lib/database-new"
 
 // PayPal API base URL
 const getPayPalBaseUrl = () => {
-  return env.PAYPAL_ENVIRONMENT === "production"
+  return env.PAYPAL_ENVIRONMENT === "production" || env.PAYPAL_ENVIRONMENT === "live"
     ? "https://api-m.paypal.com"
     : "https://api-m.sandbox.paypal.com"
 }
