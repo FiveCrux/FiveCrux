@@ -253,14 +253,14 @@ export default function AdCard({ ad, className = "", variant = 'default' }: AdCa
               </CardTitle>
 
               {/* Category Badge */}
-              {ad.category && (
+              {/* {ad.category && (
                 <div className="flex flex-wrap gap-1">
                   <Badge className="bg-neutral-800/95 text-white backdrop-blur-sm text-[10px] font-bold border border-neutral-600/50 rounded px-1.5 py-0.5 uppercase tracking-wide shadow-lg">
                     <span className="mr-1 text-xs">•</span>
                     {ad.category}
                   </Badge>
                 </div>
-              )}
+              )} */}
 
               {/* Description */}
               <CardDescription className="text-neutral-400 text-xs leading-snug line-clamp-2">
