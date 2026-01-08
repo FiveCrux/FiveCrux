@@ -147,7 +147,7 @@
     transform: translateX(0);
   }
   to {
-    transform: translateX(calc(-100% - 1rem));
+    transform: translateX(var(--animation-distance, calc(-100% - 1rem)));
   }
 }
 
