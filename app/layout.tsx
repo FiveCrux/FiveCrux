@@ -9,7 +9,7 @@ import { Toaster } from "@/componentss/ui/toaster"
 import { Toaster as Sonner } from "@/componentss/ui/sonner"
 import { AutoCheckWrapper } from "@/components/auto-check-wrapper"
 import { Analytics } from "@vercel/analytics/next"
-
+import FirebaseAnalytics from "@/componentss/FirebaseAnalytics"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
@@ -30,6 +30,7 @@ export default function RootLayout({
           <QueryProvider>
             <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
               <AutoCheckWrapper>
+              <FirebaseAnalytics />
                 {children}
               </AutoCheckWrapper>
               <Toaster />
