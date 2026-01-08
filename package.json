@@ -59,6 +59,7 @@
     "drizzle-kit": "^0.31.4",
     "drizzle-orm": "^0.44.5",
     "embla-carousel-react": "8.5.1",
+    "firebase": "^12.7.0",
     "formidable": "^3.5.4",
     "framer-motion": "latest",
     "input-otp": "1.4.1",
