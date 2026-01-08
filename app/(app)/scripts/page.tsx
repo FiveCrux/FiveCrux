@@ -715,7 +715,7 @@ export default function ScriptsPage() {
               <InfiniteMovingCards
                 items={featuredScripts}
                 direction="left"
-                speed="slow"
+                speed="fast"
                 pauseOnHover={true}
                 className="max-w-7xl"
                 renderItem={(item, index) => (
