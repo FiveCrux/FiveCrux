@@ -80,6 +80,7 @@ export default function CreateGiveawayPage() {
     description: "",
     value: "",
     endDate: undefined as Date | undefined,
+    startDate: undefined as Date | undefined,
     featured: false,
     autoAnnounce: true,
     creatorName: session?.user?.name || "",
@@ -112,6 +113,7 @@ export default function CreateGiveawayPage() {
   const [uploadingCoverImage, setUploadingCoverImage] = useState(false)
   const [uploadingImages, setUploadingImages] = useState(false)
   const [uploadingVideos, setUploadingVideos] = useState(false)
+  const [isScheduled, setIsScheduled] = useState(false);
   // Update form data when session loads
   useEffect(() => {
     if (session?.user) {
@@ -122,6 +124,23 @@ export default function CreateGiveawayPage() {
       }))
     }
   }, [session])
+
+  useEffect(() => {
+    if (!isScheduled) {
+      setFormData(prev => ({
+        ...prev,
+        startDate: undefined
+      }))
+      // Also clear any startDate errors
+      if (errors.startDate) {
+        setErrors(prev => {
+          const newErrors = { ...prev }
+          delete newErrors.startDate
+          return newErrors
+        })
+      }
+    }
+  }, [isScheduled])
 
   // Redirect if not authenticated
   if (status === "loading") {
@@ -317,6 +336,7 @@ export default function CreateGiveawayPage() {
           currency: formData.currency || "USD",
           currency_symbol: formData.currencySymbol || "$",
           end_date: formData.endDate ? formData.endDate.toISOString() : "",
+          start_date: isScheduled && formData.startDate ? formData.startDate.toISOString() : null,
           featured: formData.featured,
           auto_announce: true,
           creator_name: formData.creatorName,
@@ -349,6 +369,7 @@ export default function CreateGiveawayPage() {
           description: "",
           value: "",
           endDate: undefined,
+          startDate: undefined,
           featured: false,
           autoAnnounce: true,
           creatorName: session?.user?.name || "",
@@ -371,6 +392,7 @@ export default function CreateGiveawayPage() {
         setRequirements([{ id: 1, type: "discord", description: "", points: 1, required: true }])
         setPrizes([{ id: 1, name: "", description: "", value: "", position: 1, numberOfWinners: 1 }])
         setErrors({})
+        setIsScheduled(false) // Reset scheduling toggle
         // Route to giveaways page
         router.push('/giveaways');
       } else {
@@ -735,6 +757,37 @@ export default function CreateGiveawayPage() {
                         )}
                       </div>
 
+                      <div className="flex flex-col gap-4">
+                      
+                      <div className="flex flex-row gap-2 items-center">
+                      <Label htmlFor="isScheduled" className="text-white font-medium">Schedule this giveaway?</Label>
+                      <Switch
+                        checked={isScheduled}
+                        onCheckedChange={(checked) => setIsScheduled(checked)}
+                      />
+                      </div>
+                      
+                      <div className={`${isScheduled ? 'block' : 'hidden'}`}>
+                        <DateTimePicker
+                          date={formData.startDate}
+                          onDateChange={(date) => {
+                            setFormData({ ...formData, startDate: date })
+                            if (errors.startDate) {
+                              setErrors(prev => {
+                                const newErrors = { ...prev }
+                                delete newErrors.startDate
+                                return newErrors
+                              })
+                            }
+                          }}
+                          label="Start Date*(UTC)"
+                          id="startDate"
+                          disablePastDates={true}
+                        />
+                        {errors.startDate && (
+                          <p className="text-red-400 text-xs mt-1">{errors.startDate}</p>
+                        )}
+                      </div>
                       <div>
                         <DateTimePicker
                           date={formData.endDate}
@@ -755,6 +808,7 @@ export default function CreateGiveawayPage() {
                         {errors.endDate && (
                           <p className="text-red-400 text-xs mt-1">{errors.endDate}</p>
                         )}
+                      </div>
                       </div>
                     </div>
                   </CardContent>

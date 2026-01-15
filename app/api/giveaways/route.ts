@@ -120,6 +120,7 @@ export async function GET(request: NextRequest) {
       creator_roles: giveaway.creatorRoles,
       total_value: giveaway.totalValue,
       end_date: giveaway.endDate,
+      start_date: giveaway.startDate || null,
       max_entries: giveaway.maxEntries,
       auto_announce: giveaway.autoAnnounce,
       cover_image: giveaway.coverImage,
@@ -132,6 +133,7 @@ export async function GET(request: NextRequest) {
       admin_notes: giveaway.adminNotes,
       currency: giveaway.currency,
       currency_symbol: giveaway.currencySymbol,
+      is_upcoming: giveaway.isUpcoming || false, // Include upcoming status
     }))
 
     return NextResponse.json(transformedGiveaways)
