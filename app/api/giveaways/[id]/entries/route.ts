@@ -39,6 +39,15 @@ export async function POST(
       return NextResponse.json({ error: "Giveaway is not active" }, { status: 400 })
     }
 
+    // Check if giveaway has started (if it's scheduled)
+    if (giveaway.startDate) {
+      const now = new Date()
+      const startDate = new Date(giveaway.startDate)
+      if (startDate > now) {
+        return NextResponse.json({ error: "This giveaway hasn't started yet" }, { status: 400 })
+      }
+    }
+
     // Check if user has already entered this giveaway
     const existingEntry = await getUserGiveawayEntry(giveawayId, (session.user as any).id)
     if (existingEntry) {
