@@ -206,6 +206,8 @@ export default function GiveawaysPage() {
               maxEntries: g.max_entries || 0,
               timeLeft: "", // can be computed from end_date if needed
               endDate: g.end_date,
+              start_date: g.start_date || null,
+              is_upcoming: g.is_upcoming || false,
               image:
                 g.cover_image ||
                 (g.images && g.images[0]) ||
@@ -414,6 +416,8 @@ export default function GiveawaysPage() {
       new Date(giveaway.endDate).getTime() <= new Date().getTime();
     return isEnded;
   });
+
+  
 
   return (
     <>
@@ -693,6 +697,7 @@ export default function GiveawaysPage() {
                     const isEnded =
                       new Date(giveaway.endDate).getTime() <=
                       new Date().getTime();
+                    const isUpcoming = giveaway.is_upcoming || (giveaway.start_date && new Date(giveaway.start_date).getTime() > new Date().getTime());
                     return (
                       <motion.div
                         key={giveaway.id}
@@ -724,6 +729,15 @@ export default function GiveawaysPage() {
                                     alt="Ended"
                                     className="w-24 h-24 object-contain opacity-90"
                                   />
+                                </div>
+                              )}
+                              {/* Upcoming Badge */}
+                              {isUpcoming && (
+                                <div className="absolute top-2 left-2 z-50">
+                                  <Badge className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-bold shadow-lg">
+                                    <Clock className="h-3 w-3 mr-1" />
+                                    Upcoming
+                                  </Badge>
                                 </div>
                               )}
                             </CardHeader>
@@ -763,7 +777,16 @@ export default function GiveawaysPage() {
 
                               {/* Button Section */}
                               <div className="px-3 pb-3 mt-auto">
-                                {!isEnded ? (
+                                {isUpcoming ? (
+                                  <Button
+                                    variant="outline"
+                                    disabled
+                                    className="w-full bg-blue-500/20 text-blue-400 border-blue-500/50 cursor-not-allowed font-semibold text-xs py-1.5 h-auto"
+                                  >
+                                    <Clock className="mr-1.5 h-3.5 w-3.5" />
+                                    Starting Soon
+                                  </Button>
+                                ) : !isEnded ? (
                                   <Button
                                     onClick={(e) => {
                                       e.preventDefault();
@@ -937,6 +960,7 @@ export default function GiveawaysPage() {
                     const isEnded =
                       new Date(giveaway.endDate).getTime() <=
                       new Date().getTime();
+                    const isUpcoming = giveaway.is_upcoming || (giveaway.start_date && new Date(giveaway.start_date).getTime() > new Date().getTime());
                     return (
                       <motion.div
                         key={giveaway.id}
@@ -968,6 +992,15 @@ export default function GiveawaysPage() {
                                     alt="Ended"
                                     className="w-24 h-24 object-contain opacity-90"
                                   />
+                                </div>
+                              )}
+                              {/* Upcoming Badge */}
+                              {isUpcoming && (
+                                <div className="absolute top-2 left-2 z-50">
+                                  <Badge className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-bold shadow-lg">
+                                    <Clock className="h-3 w-3 mr-1" />
+                                    Upcoming
+                                  </Badge>
                                 </div>
                               )}
                             </CardHeader>
@@ -1017,7 +1050,16 @@ export default function GiveawaysPage() {
 
                               {/* Button Section */}
                               <div className="px-3 pb-3 mt-auto">
-                                {!isEnded ? (
+                                {isUpcoming ? (
+                                  <Button
+                                    variant="outline"
+                                    disabled
+                                    className="w-full bg-blue-500/20 text-blue-400 border-blue-500/50 cursor-not-allowed font-semibold text-xs py-1.5 h-auto"
+                                  >
+                                    <Clock className="mr-1.5 h-3.5 w-3.5" />
+                                    Starting Soon
+                                  </Button>
+                                ) : !isEnded ? (
                                   <Button
                                     onClick={(e) => {
                                       e.preventDefault();

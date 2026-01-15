@@ -528,6 +528,13 @@ export default function GiveawayDetailPage() {
     return end.getTime() <= now.getTime()
   }, [giveaway?.endDate])
 
+  const isGiveawayUpcoming = useMemo(() => {
+    if (!giveaway?.start_date && !giveaway?.startDate) return false
+    const now = new Date()
+    const startDate = new Date(giveaway.start_date || giveaway.startDate)
+    return startDate.getTime() > now.getTime()
+  }, [giveaway?.start_date, giveaway?.startDate])
+
   const creatorRoles = giveaway?.creator_roles || giveaway?.creatorRoles || null
   const isCreatorVerified = isVerifiedCreator(creatorRoles)
   
@@ -831,6 +838,12 @@ export default function GiveawayDetailPage() {
   }
 
   const handleEnterGiveaway = async () => {
+    // Prevent entry if giveaway hasn't started yet
+    if (isGiveawayUpcoming) {
+      toast.warning("This giveaway hasn't started yet!")
+      return
+    }
+
     const requiredTasks = transformedGiveaway.requirements.filter((req: any) => req.required)
     const completedRequired = requiredTasks.every((task: any) => completedTasks.includes(task.id))
 
@@ -955,6 +968,12 @@ export default function GiveawayDetailPage() {
                       <Badge className="bg-gradient-to-r from-yellow-500 to-orange-500 text-black font-bold mb-2">
                         {transformedGiveaway.category}
                       </Badge>
+                      {isGiveawayUpcoming && (
+                        <Badge className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-bold ml-2">
+                          <Clock className="h-3 w-3 mr-1" />
+                          Upcoming
+                        </Badge>
+                      )}
                       {transformedGiveaway.featured && (
                         <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold ml-2">
                           <Star className="h-3 w-3 mr-1" />
@@ -1141,19 +1160,24 @@ export default function GiveawayDetailPage() {
                     >
                       <Button
                         onClick={handleEnterGiveaway}
-                        disabled={isEntered || isEnteringGiveaway || isGiveawayEnded}
+                        disabled={isEntered || isEnteringGiveaway || isGiveawayEnded || isGiveawayUpcoming}
                         className={`w-full h-11 text-base font-black rounded-xl shadow-2xl transition-all duration-300 ${
-                          isGiveawayEnded
+                          isGiveawayEnded || isGiveawayUpcoming
                             ? "bg-gray-700 cursor-not-allowed"
                             : isEntered
                             ? "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 shadow-green-500/50"
                             : "bg-white text-black hover:bg-gradient-to-r hover:from-yellow-300 hover:via-orange-400 hover:to-red-400 hover:text-white shadow-yellow-500/50"
                         }`}
                       >
-                        {isGiveawayEnded ? (
+                        {isGiveawayUpcoming ? (
+                          <>
+                            <Clock className="mr-2 h-4 w-4 text-white" />
+                            <p className="text-white">Starting Soon</p>
+                          </>
+                        ) : isGiveawayEnded ? (
                           <>
                             <Clock className="mr-2 h-4 w-4" />
-                            Giveaway Ended
+                            <p className="text-white">Giveaway Ended</p>
                           </>
                         ) : isEnteringGiveaway ? (
                           <>
