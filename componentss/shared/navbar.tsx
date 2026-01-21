@@ -135,9 +135,11 @@ export default function NavbarComponent() {
                     </AvatarFallback>
                   </Avatar>
                 </Link>
-                <NavbarButton variant="secondary" className="text-white" href="/admin">
-                  Admin
-                </NavbarButton>
+                {hasAdminAccess && (
+                  <NavbarButton variant="secondary" className="text-white" href="/admin">
+                    Admin
+                  </NavbarButton>
+                )}
                 <NavbarButton
                   variant="secondary"
                   className="text-white"
@@ -197,7 +199,7 @@ export default function NavbarComponent() {
                 <span className="block">{item.name}</span>
               </Link>
             ))}
-            
+
             {status === "authenticated" ? (
               <div className="flex w-full flex-col gap-4">
                 <div className="flex items-center space-x-3 pb-4 border-b border-gray-700">
