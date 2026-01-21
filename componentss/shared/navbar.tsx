@@ -22,7 +22,8 @@ import {
 export default function NavbarComponent() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const { data: session, status } = useSession()
-
+  const userRoles = (session?.user as any)?.roles || []
+  const hasAdminAccess = userRoles.includes("admin")
   const navItems = [
     { name: "Home", link: "/" },
     { name: "Marketplace", link: "/scripts" },
@@ -83,9 +84,11 @@ export default function NavbarComponent() {
                     </AvatarFallback>
                   </Avatar>
                 </Link>
-                <NavbarButton variant="secondary" className="text-white" href="/admin">
-                  Admin
-                </NavbarButton>
+                {hasAdminAccess && (
+                  <NavbarButton variant="secondary" className="text-white" href="/admin">
+                    Admin
+                  </NavbarButton>
+                )}
                 <NavbarButton
                   variant="secondary"
                   className="text-white"
