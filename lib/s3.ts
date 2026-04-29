@@ -1,6 +1,13 @@
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3'
 import sharp from 'sharp'
 
+// Validate required AWS environment variables
+const requiredEnvVars = ['AWS_REGION', 'AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'AWS_S3_BUCKET_NAME', 'AWS_S3_BUCKET_URL']
+const missingEnvVars = requiredEnvVars.filter(v => !process.env[v])
+if (missingEnvVars.length > 0) {
+  console.error(`Missing required AWS environment variables: ${missingEnvVars.join(', ')}`)
+}
+
 const s3Client = new S3Client({
   region: process.env.AWS_REGION!,
   credentials: {
@@ -76,31 +83,47 @@ export async function uploadToS3(
   key: string,
   contentType: string
 ): Promise<string> {
-  // Extract purpose from key (e.g., "images/cover/..." -> "cover")
-  const purpose = key.split('/')[1] || 'default'
-  
-  // Resize and optimize images automatically
-  let processedFile = file
-  if (contentType.startsWith('image/')) {
-    processedFile = await resizeImage(file, purpose, contentType)
-    // Update content type to WebP if we converted it (except GIFs)
-    if (contentType !== 'image/gif') {
-      contentType = 'image/webp'
+  try {
+    // Extract purpose from key (e.g., "images/cover/..." -> "cover")
+    const purpose = key.split('/')[1] || 'default'
+    
+    // Resize and optimize images automatically
+    let processedFile = file
+    if (contentType.startsWith('image/')) {
+      processedFile = await resizeImage(file, purpose, contentType)
+      // Update content type to WebP if we converted it (except GIFs)
+      if (contentType !== 'image/gif') {
+        contentType = 'image/webp'
+      }
     }
+    
+    const command = new PutObjectCommand({
+      Bucket: process.env.AWS_S3_BUCKET_NAME!,
+      Key: key,
+      Body: processedFile,
+      ContentType: contentType,
+      // ACL removed - using bucket policy for public access instead
+      // This is required because the bucket has "ACLs disabled (recommended)"
+    })
+
+    await s3Client.send(command)
+
+    return `${process.env.AWS_S3_BUCKET_URL}/${key}`
+  } catch (error) {
+    console.error('S3 upload error:', error)
+    if (error instanceof Error) {
+      if (error.message.includes('NoCredentialsProvider')) {
+        throw new Error('AWS credentials not configured. Please set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables.')
+      }
+      if (error.message.includes('NoSuchBucket')) {
+        throw new Error('S3 bucket not found. Please check AWS_S3_BUCKET_NAME environment variable.')
+      }
+      if (error.message.includes('AccessDenied') || error.message.includes('Forbidden')) {
+        throw new Error('Access denied to S3 bucket. Please check your AWS credentials and bucket permissions.')
+      }
+    }
+    throw error
   }
-  
-  const command = new PutObjectCommand({
-    Bucket: process.env.AWS_S3_BUCKET_NAME!,
-    Key: key,
-    Body: processedFile,
-    ContentType: contentType,
-    // ACL removed - using bucket policy for public access instead
-    // This is required because the bucket has "ACLs disabled (recommended)"
-  })
-
-  await s3Client.send(command)
-
-  return `${process.env.AWS_S3_BUCKET_URL}/${key}`
 }
 
 export async function deleteFromS3(key: string): Promise<void> {

@@ -1,5 +1,4 @@
-import { ReactNode } from 'react';
-
+  import { ReactNode } from 'react';
 interface AppLayoutProps {
   children: ReactNode;
 }
@@ -7,12 +6,3 @@ interface AppLayoutProps {
 export default function AppLayout({ children }: AppLayoutProps) {
   return <>{children}</>;
 }
-
-
-
-
-
-
-
-
-

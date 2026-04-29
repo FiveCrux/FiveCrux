@@ -134,6 +134,22 @@ export async function POST(request: NextRequest) {
     
     // Handle specific error types
     if (error instanceof Error) {
+      // Check for AWS credential errors
+      if (error.message.includes('AWS') || error.message.includes('credentials') || error.message.includes('Credentials')) {
+        return NextResponse.json({ 
+          error: "AWS configuration error",
+          details: error.message
+        }, { status: 500 })
+      }
+      
+      // Check for bucket errors
+      if (error.message.includes('bucket') || error.message.includes('Bucket')) {
+        return NextResponse.json({ 
+          error: "S3 bucket error",
+          details: error.message
+        }, { status: 500 })
+      }
+
       // Check if it's a body size limit error
       if (error.message.includes('body') || error.message.includes('size') || error.message.includes('limit')) {
         return NextResponse.json({ 

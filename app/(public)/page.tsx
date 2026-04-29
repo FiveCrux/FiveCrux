@@ -39,6 +39,9 @@ import {
   ClipboardCheck,
   MousePointerClick,
   CodeXmlIcon,
+  ShoppingBag,
+  Gift,
+  HelpCircle
 } from "lucide-react";
 import { HexagonBackground } from "@/components/animate-ui/components/backgrounds/hexagon";
 import { StarsBackground } from "@/components/animate-ui/components/backgrounds/stars";
@@ -140,7 +143,7 @@ export default function HomePage() {
             seller_image: item.scriptSellerImage || null,
             seller_roles: item.scriptSellerRoles || null,
           }));
-          
+
           // Shuffle the array to randomize starting position
           const shuffledScripts = [...mappedScripts].sort(() => Math.random() - 2);
           setFeaturedScripts(shuffledScripts);
@@ -239,41 +242,137 @@ export default function HomePage() {
               {heroInView && (
                 <>
                   <motion.div
-                    initial={{ opacity: 0, y: 50 }}
+                    initial={{ opacity: 0, y: 40 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 1, ease: "easeOut" }}
+                    transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
                     className="mb-8"
                   >
-                    <motion.h1
-                      className="text-5xl md:text-7xl font-bold mb-6 leading-tight"
-                      animate={{
-                        backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
-                      }}
-                      transition={{
-                        duration: 5,
-                        repeat: Number.POSITIVE_INFINITY,
-                      }}
-                      style={{
-                        background:
-                          "linear-gradient(45deg, #f97316, #eab308, #f59e0b, #fb923c, #f97316)",
-                        backgroundSize: "400% 400%",
-                        WebkitBackgroundClip: "text",
-                        WebkitTextFillColor: "transparent",
-                        backgroundClip: "text",
-                      }}
+                    {/* Badge pill */}
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.85 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.5, delay: 0.1 }}
+                      className="inline-flex items-center gap-2 rounded-full border border-orange-500/30 bg-orange-500/10 px-4 py-1.5 mb-6 text-xs font-semibold text-orange-400 uppercase tracking-widest backdrop-blur-sm"
                     >
-                      Premium FiveM
-                      <br />
-                      Marketplace & <br />
-                      Giveaway Platform
-                    </motion.h1>
+                      <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75" />
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500" />
+                      </span>
+                      FiveM&apos;s #1 Script Marketplace
+                    </motion.div>
+
+                    <h1 className="text-4xl md:text-6xl font-bold mb-4 leading-[1.12] tracking-tight">
+                      {/* Line 1 — word-by-word stagger */}
+                      <motion.span
+                        className="block"
+                        initial="hidden"
+                        animate="visible"
+                        variants={{
+                          visible: { transition: { staggerChildren: 0.09, delayChildren: 0.2 } },
+                        }}
+                      >
+                        {["Premium", "FiveM"].map((word) => (
+                          <motion.span
+                            key={word}
+                            className="inline-block mr-[0.3em] text-white"
+                            variants={{
+                              hidden: { opacity: 0, y: 28, filter: "blur(6px)" },
+                              visible: { opacity: 1, y: 0, filter: "blur(0px)", transition: { type: "spring", stiffness: 260, damping: 20 } },
+                            }}
+                          >
+                            {word}
+                          </motion.span>
+                        ))}
+                        {/* Gradient word */}
+                        <motion.span
+                          className="inline-block mr-[0.3em]"
+                          style={{
+                            background: "linear-gradient(90deg, #f97316, #eab308, #f97316)",
+                            backgroundSize: "200% auto",
+                            WebkitBackgroundClip: "text",
+                            WebkitTextFillColor: "transparent",
+                            backgroundClip: "text",
+                          }}
+                          animate={{ backgroundPosition: ["0% center", "200% center", "0% center"] }}
+                          transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                          variants={{
+                            hidden: { opacity: 0, y: 28, filter: "blur(6px)" },
+                            visible: { opacity: 1, y: 0, filter: "blur(0px)", transition: { type: "spring", stiffness: 260, damping: 20, delay: 0.18 } },
+                          }}
+                        >
+                          Marketplace
+                        </motion.span>
+                      </motion.span>
+
+                      {/* Line 2 */}
+                      <motion.span
+                        className="block"
+                        initial="hidden"
+                        animate="visible"
+                        variants={{
+                          visible: { transition: { staggerChildren: 0.09, delayChildren: 0.5 } },
+                        }}
+                      >
+                        {["&"].map((word) => (
+                          <motion.span
+                            key={word}
+                            className="inline-block mr-[0.3em] text-neutral-400"
+                            variants={{
+                              hidden: { opacity: 0, y: 24, filter: "blur(4px)" },
+                              visible: { opacity: 1, y: 0, filter: "blur(0px)", transition: { type: "spring", stiffness: 220, damping: 22 } },
+                            }}
+                          >
+                            {word}
+                          </motion.span>
+                        ))}
+                        <motion.span
+                          className="inline-block mr-[0.3em]"
+                          style={{
+                            background: "linear-gradient(90deg, #eab308, #f97316, #eab308)",
+                            backgroundSize: "200% auto",
+                            WebkitBackgroundClip: "text",
+                            WebkitTextFillColor: "transparent",
+                            backgroundClip: "text",
+                          }}
+                          animate={{ backgroundPosition: ["0% center", "200% center", "0% center"] }}
+                          transition={{ duration: 4, repeat: Infinity, ease: "linear", delay: 0.5 }}
+                          variants={{
+                            hidden: { opacity: 0, y: 24, filter: "blur(4px)" },
+                            visible: { opacity: 1, y: 0, filter: "blur(0px)", transition: { type: "spring", stiffness: 220, damping: 22, delay: 0.1 } },
+                          }}
+                        >
+                          Giveaway
+                        </motion.span>
+                        {["Platform"].map((word) => (
+                          <motion.span
+                            key={word}
+                            className="inline-block mr-[0.3em] text-white"
+                            variants={{
+                              hidden: { opacity: 0, y: 24, filter: "blur(4px)" },
+                              visible: { opacity: 1, y: 0, filter: "blur(0px)", transition: { type: "spring", stiffness: 220, damping: 22, delay: 0.2 } },
+                            }}
+                          >
+                            {word}
+                          </motion.span>
+                        ))}
+                      </motion.span>
+                    </h1>
+
+                    {/* Animated underline glow */}
+                    <motion.div
+                      initial={{ scaleX: 0, opacity: 0 }}
+                      animate={{ scaleX: 1, opacity: 1 }}
+                      transition={{ duration: 0.9, delay: 0.85, ease: [0.22, 1, 0.36, 1] }}
+                      className="mx-auto mt-2 h-[3px] w-40 origin-left rounded-full"
+                      style={{ background: "linear-gradient(90deg, #f97316, #eab308, transparent)" }}
+                    />
                   </motion.div>
 
                   <motion.p
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 1, delay: 0.4 }}
-                    className="text-xl md:text-2xl text-gray-300 mb-12 max-w-4xl mx-auto leading-relaxed"
+                    className="text-lg md:text-xl text-gray-300 mb-12 max-w-4xl mx-auto leading-relaxed"
                   >
                     Discover the most advanced collection of high-quality
                     scripts for your FiveM server. Built by experts, trusted by
@@ -287,35 +386,51 @@ export default function HomePage() {
                     transition={{ duration: 1, delay: 0.6 }}
                     className="flex flex-col sm:flex-row gap-6 justify-center items-center"
                   >
+                    {/* ── Primary CTA: Explore Marketplace ── */}
                     <motion.div
-                      whileHover={{
-                        scale: 1.05,
-                      }}
-                      whileTap={{ scale: 0.95 }}
+                      whileHover={{ scale: 1.04, y: -1 }}
+                      whileTap={{ scale: 0.98 }}
+                      transition={{ type: "spring", stiffness: 400, damping: 25 }}
                     >
-                        <Link href="/scripts">
-                          <Button
-                            size="lg"
-                            className="bg-gradient-to-r from-orange-500 via-yellow-400 to-orange-500 hover:from-orange-600 hover:via-yellow-500 hover:to-orange-600 text-black font-bold px-10 py-4 text-xl rounded-full shadow-2xl transition-all duration-300"
-                          >
-                            Explore Marketplace
-                          </Button>
-                        </Link>
+                      <Link href="/scripts">
+                        <Button
+                          size="lg"
+                          className={cn(
+                            "group relative overflow-hidden",
+                            "bg-white text-black font-semibold",
+                            "px-9 py-4 text-base rounded-xl",
+                            "transition-all duration-300",
+                            "flex items-center gap-2.5 hover:bg-neutral-100"
+                          )}
+                        >
+                          <ShoppingBag className="h-5 w-5 transition-transform duration-300 group-hover:scale-110" />
+                          Explore Marketplace
+                          <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                        </Button>
+                      </Link>
                     </motion.div>
 
+                    {/* ── Secondary CTA: Explore Giveaways ── */}
                     <motion.div
-                      whileHover={{
-                        scale: 1.05,
-                      }}
-                      whileTap={{ scale: 0.95 }}
+                      whileHover={{ scale: 1.04, y: -1 }}
+                      whileTap={{ scale: 0.98 }}
+                      transition={{ type: "spring", stiffness: 400, damping: 25 }}
                     >
                       <Link href="/giveaways">
                         <Button
                           size="lg"
                           variant="outline"
-                          className="bg-transparent border-2 border-orange-500/50 text-orange-500 hover:bg-orange-500/10 hover:border-orange-500 hover:text-orange-500 px-10 py-4 text-xl rounded-full backdrop-blur-sm transition-all duration-300 flex items-center gap-2"
+                          className={cn(
+                            "group relative overflow-hidden",
+                            "bg-white/10 backdrop-blur-md",
+                            "border border-white/20 hover:border-white/40",
+                            "text-white hover:bg-white/20",
+                            "px-9 py-4 text-base rounded-xl font-semibold",
+                            "transition-all duration-300",
+                            "flex items-center gap-2.5"
+                          )}
                         >
-                          <Code className="h-5 w-5" />
+                          <Gift className="h-5 w-5 transition-transform duration-300 group-hover:scale-110" />
                           Explore Giveaways
                         </Button>
                       </Link>
@@ -397,32 +512,35 @@ export default function HomePage() {
         {/* Platform Features Section */}
         <motion.section
           ref={featuresRef}
-          className="py-32 px-4 sm:px-6 lg:px-8 relative overflow-hidden"
-          initial={{ opacity: 0 }}
-          animate={featuresInView ? { opacity: 1 } : {}}
-          transition={{ duration: 1 }}
+          className="py-32 px-4 sm:px-6 lg:px-8 relative"
+          initial="hidden"
+          animate={featuresInView ? "visible" : "hidden"}
+          variants={{
+            hidden: { opacity: 0 },
+            visible: { opacity: 1, transition: { staggerChildren: 0.15 } }
+          }}
         >
-          {/* Background decoration */}
+          {/* Subtle background glow */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-orange-500/5 rounded-full blur-[120px] pointer-events-none" />
 
           <div className="max-w-7xl mx-auto relative z-10">
             <motion.div
-              initial={{ opacity: 0, y: 50 }}
-              animate={featuresInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 1 }}
-              className="text-center mb-20"
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                visible: { opacity: 1, y: 0, transition: { duration: 0.8 } }
+              }}
+              className="text-center mb-24"
             >
-              <Badge className="bg-gradient-to-r from-orange-500/20 to-yellow-400/20 text-orange-400 border-orange-500/30 mb-6 px-4 py-2 text-sm font-semibold">
-                Why Choose Us
-              </Badge>
-              <h2 className="text-5xl md:text-6xl font-bold text-white mb-6 bg-gradient-to-r from-white via-orange-200 to-yellow-200 bg-clip-text text-transparent">
-                Why Choose{" "}
-                <span className="bg-gradient-to-r from-orange-500 to-yellow-400 bg-clip-text text-transparent">
-                  FiveCrux
-                </span>
-                ?
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.03] border border-white/10 mb-6 backdrop-blur-sm">
+                <span className="flex h-2 w-2 rounded-full bg-orange-500 animate-pulse" />
+                <span className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">The Platform</span>
+              </div>
+
+              <h2 className="text-4xl md:text-6xl font-bold text-white mb-6 tracking-tight">
+                Why Choose <span className="text-orange-500">FiveCrux</span>?
               </h2>
-              <p className="text-xl text-gray-300 max-w-2xl mx-auto leading-relaxed">
-                The most trusted marketplace and giveaway platform for premium FiveM scripts and resources
+              <p className="text-lg md:text-xl text-neutral-400 max-w-2xl mx-auto leading-relaxed">
+                The most trusted ecosystem for premium FiveM resources, engineered for performance and community growth.
               </p>
             </motion.div>
 
@@ -432,27 +550,41 @@ export default function HomePage() {
                 return (
                   <motion.div
                     key={index}
-                    initial={{ opacity: 0, y: 50 }}
-                    animate={featuresInView ? { opacity: 1, y: 0 } : {}}
-                    transition={{ duration: 0.8, delay: index * 0.1 }}
-                    whileHover={{ scale: 1.05, y: -10 }}
-                    className="group"
+                    variants={{
+                      hidden: { opacity: 0, y: 30 },
+                      visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 260, damping: 20 } }
+                    }}
+                    whileHover={{ y: -8 }}
+                    className="group h-full"
                   >
-                    <Card className="bg-neutral-900/40 border-gray-700/50 hover:border-orange-500/50 transition-all duration-500 backdrop-blur-sm h-full relative overflow-hidden">
-                      <CardContent className="p-8 text-center relative z-10">
-                        <div
-                          className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br ${feature.gradient} mb-6 group-hover:scale-110 transition-transform duration-300`}
-                        >
-                          <Icon className="h-8 w-8 text-white" />
-                        </div>
-                        <h3 className="text-white font-bold text-xl mb-3 group-hover:text-orange-400 transition-colors">
-                          {feature.title}
-                        </h3>
-                        <p className="text-gray-400 text-sm leading-relaxed">
-                          {feature.description}
-                        </p>
-                      </CardContent>
-                    </Card>
+                    <div className="relative h-full p-px rounded-2xl overflow-hidden bg-gradient-to-b from-white/10 to-transparent group-hover:from-orange-500/40 transition-colors duration-500">
+                      <Card className="bg-[#0a0a0f]/80 border-0 backdrop-blur-xl h-full flex flex-col relative z-10">
+                        <CardContent className="p-8 flex flex-col items-center text-center">
+                          {/* Icon Container */}
+                          <div className="relative mb-8">
+                            <div className="absolute inset-0 bg-orange-500/20 blur-xl rounded-full scale-0 group-hover:scale-150 transition-transform duration-500" />
+                            <div className={cn(
+                              "relative w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-500",
+                              "bg-gradient-to-br from-white/5 to-white/[0.02] border border-white/10 group-hover:border-orange-500/50 group-hover:rotate-[10deg]"
+                            )}>
+                              <Icon className="h-7 w-7 text-neutral-400 group-hover:text-orange-500 transition-colors duration-300" />
+                            </div>
+                          </div>
+
+                          <h3 className="text-white font-bold text-xl mb-4 group-hover:text-orange-500 transition-colors duration-300">
+                            {feature.title}
+                          </h3>
+                          <p className="text-neutral-400 text-sm leading-relaxed group-hover:text-neutral-300 transition-colors duration-300">
+                            {feature.description}
+                          </p>
+
+                          {/* Subtle arrow indicator */}
+                          <div className="mt-auto pt-8 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            <div className="w-8 h-px bg-gradient-to-r from-orange-500 to-transparent" />
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
                   </motion.div>
                 );
               })}
@@ -463,97 +595,121 @@ export default function HomePage() {
 
 
         {/*Our Services Seciton*/}
-        <motion.div>
-          <div className="max-w-7xl mx-auto relative z-10 py-16 px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center">
-            <motion.div>
-              <h2 className="text-4xl md:text-5xl font-bold text-white mb-4 flex items-center gap-3 justify-center">
-                <Zap className="h-10 w-10 text-orange-500" />
-                Our Services
+        <motion.section
+          className="py-32 px-4 sm:px-6 lg:px-8 relative overflow-hidden"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          variants={{
+            hidden: { opacity: 0 },
+            visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
+          }}
+        >
+          <div className="max-w-7xl mx-auto relative z-10">
+            <motion.div
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                visible: { opacity: 1, y: 0, transition: { duration: 0.8 } }
+              }}
+              className="text-center mb-20"
+            >
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.03] border border-white/10 mb-6 backdrop-blur-sm">
+                <Zap className="h-3 w-3 text-orange-500" />
+                <span className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Ecosystem</span>
+              </div>
+              <h2 className="text-4xl md:text-6xl font-bold text-white mb-6 tracking-tight">
+                Our <span className="text-orange-500">Services</span>
               </h2>
-              <p className="text-gray-400 max-w-2xl mx-auto">
-                Our other services that made it possible to serve this website
-                to you
+              <p className="text-lg text-neutral-400 max-w-2xl mx-auto leading-relaxed">
+                Empowering the FiveM community through a specialized suite of premium services and platforms.
               </p>
             </motion.div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 max-w-7xl mx-auto gap-6 px-8">
-            <motion.div
-              whileHover={{ scale: 1.02, y: -5 }}
-              transition={{ duration: 0.3 }}
-            >
 
-              <a
-                href="https://www.gamecrux.io/"
-                target="_blank"
-                rel="noopener noreferrer"
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+              {/* GameCrux Card */}
+              <motion.div
+                variants={{
+                  hidden: { opacity: 0, x: -20 },
+                  visible: { opacity: 1, x: 0, transition: { type: "spring", stiffness: 200, damping: 20 } }
+                }}
+                whileHover={{ y: -5 }}
+                className="group"
               >
-                <Card className="bg-neutral-900/40 border-gray-700/50 hover:border-orange-500/50 transition-all duration-500 backdrop-blur-sm h-full relative overflow-hidden group">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="p-2 rounded-lg bg-gradient-to-br from-orange-500/20 to-yellow-400/20 group-hover:from-orange-500/30 group-hover:to-yellow-400/30 transition-all duration-300">
-                        <Image src="/gamecrux.webp" alt="GameCrux" width={48} height={48} />
-                      </div>
-                      <CardTitle className="text-xl font-bold text-white">GameCrux</CardTitle>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <CardDescription className="text-gray-300 text-sm leading-relaxed">
-                      Discover, Play, and Enjoy a Curated Selection of Exciting Minigames <br />
-                      Dive into the ultimate experience with our comprehensive games. Get started now!
-                    </CardDescription>
-                  </CardContent>
-                  <CardFooter className="pt-4">
-                    <div
+                <a href="https://www.gamecrux.io/" target="_blank" rel="noopener noreferrer" className="block h-full">
+                  <div className="relative h-full p-px rounded-3xl overflow-hidden bg-gradient-to-b from-white/10 to-transparent group-hover:from-orange-500/40 transition-colors duration-500">
+                    <Card className="bg-[#0a0a0f]/80 border-0 backdrop-blur-xl h-full relative z-10 overflow-hidden">
+                      <CardHeader className="p-8 pb-4">
+                        <div className="flex items-center gap-5">
+                          <div className="relative flex-shrink-0">
+                            <div className="absolute inset-0 bg-orange-500/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                            <div className="relative w-16 h-16 rounded-2xl overflow-hidden bg-white/5 border border-white/10 p-2 group-hover:border-orange-500/50 transition-colors duration-300">
+                              <Image src="/gamecrux.webp" alt="GameCrux" width={48} height={48} className="w-full h-full object-contain" />
+                            </div>
+                          </div>
+                          <div>
+                            <CardTitle className="text-2xl font-bold text-white mb-1">GameCrux</CardTitle>
+                            <div className="text-xs font-medium text-orange-500/80 uppercase tracking-widest">Minigames Platform</div>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="px-8 py-0">
+                        <p className="text-neutral-400 text-sm leading-relaxed group-hover:text-neutral-300 transition-colors">
+                          Discover, Play, and Enjoy a Curated Selection of Exciting Minigames. Dive into the ultimate experience with our comprehensive games ecosystem.
+                        </p>
+                      </CardContent>
+                      <CardFooter className="p-8 pt-6 mt-auto">
+                        <div className="flex items-center gap-2 text-sm font-semibold text-white/50 group-hover:text-orange-400 transition-colors">
+                          Launch Platform <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                        </div>
+                      </CardFooter>
+                    </Card>
+                  </div>
+                </a>
+              </motion.div>
 
-                      className="text-orange-400 hover:text-orange-500 font-semibold text-sm flex items-center gap-2 transition-colors"
-                    >
-                      Visit GameCrux
-                      <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                    </div>
-                  </CardFooter>
-                </Card>
-              </a>
-            </motion.div>
-            <motion.div
-              whileHover={{ scale: 1.02, y: -5 }}
-              transition={{ duration: 0.3 }}
-            >
-              <a
-                href="https://crux.tebex.io/"
-                target="_blank"
-                rel="noopener noreferrer"
+              {/* Crux Studio Card */}
+              <motion.div
+                variants={{
+                  hidden: { opacity: 0, x: 20 },
+                  visible: { opacity: 1, x: 0, transition: { type: "spring", stiffness: 200, damping: 20 } }
+                }}
+                whileHover={{ y: -5 }}
+                className="group"
               >
-                <Card className="bg-neutral-900/40 border-gray-700/50 hover:border-orange-500/50 transition-all duration-500 backdrop-blur-sm h-full relative overflow-hidden group">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="p-2 rounded-lg bg-gradient-to-br from-orange-500/20 to-yellow-400/20 group-hover:from-orange-500/30 group-hover:to-yellow-400/30 transition-all duration-300">
-                        {/* <Zap className="h-6 w-6 text-orange-400" /> */}
-                        <Image src="/cs.webp" alt="Crux Studio" width={48} height={48} />
-                      </div>
-                      <CardTitle className="text-xl font-bold text-white">Crux Studio</CardTitle>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <CardDescription className="text-gray-300 text-sm leading-relaxed">
-                      Premium Fivem Assets Marketplace
-                      <br />
-                      Creating high-quality products with passion and attention to detail to make your server even better.
-                    </CardDescription>
-                  </CardContent>
-                  <CardFooter className="pt-4">
-                    <div
-                      className="text-orange-400 hover:text-orange-500 font-semibold text-sm flex items-center gap-2 transition-colors"
-                    >
-                      Visit Crux Studio
-                      <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                    </div>
-                  </CardFooter>
-                </Card>
-              </a>
-
-            </motion.div>
+                <a href="https://crux.tebex.io/" target="_blank" rel="noopener noreferrer" className="block h-full">
+                  <div className="relative h-full p-px rounded-3xl overflow-hidden bg-gradient-to-b from-white/10 to-transparent group-hover:from-orange-500/40 transition-colors duration-500">
+                    <Card className="bg-[#0a0a0f]/80 border-0 backdrop-blur-xl h-full relative z-10 overflow-hidden">
+                      <CardHeader className="p-8 pb-4">
+                        <div className="flex items-center gap-5">
+                          <div className="relative flex-shrink-0">
+                            <div className="absolute inset-0 bg-orange-500/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                            <div className="relative w-16 h-16 rounded-2xl overflow-hidden bg-white/5 border border-white/10 p-2 group-hover:border-orange-500/50 transition-colors duration-300">
+                              <Image src="/cs.webp" alt="Crux Studio" width={48} height={48} className="w-full h-full object-contain" />
+                            </div>
+                          </div>
+                          <div>
+                            <CardTitle className="text-2xl font-bold text-white mb-1">Crux Studio</CardTitle>
+                            <div className="text-xs font-medium text-orange-500/80 uppercase tracking-widest">Asset Marketplace</div>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="px-8 py-0">
+                        <p className="text-neutral-400 text-sm leading-relaxed group-hover:text-neutral-300 transition-colors">
+                          Premium FiveM Assets Marketplace. Creating high-quality products with passion and attention to detail to make your server even better.
+                        </p>
+                      </CardContent>
+                      <CardFooter className="p-8 pt-6 mt-auto">
+                        <div className="flex items-center gap-2 text-sm font-semibold text-white/50 group-hover:text-orange-400 transition-colors">
+                          Browse Store <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                        </div>
+                      </CardFooter>
+                    </Card>
+                  </div>
+                </a>
+              </motion.div>
+            </div>
           </div>
-        </motion.div>
+        </motion.section>
 
         <motion.div className="max-w-7xl mx-auto mt-10 px-4 sm:px-6">
           <div className="relative h-64 sm:h-80 md:h-96 rounded-lg overflow-hidden">
@@ -635,22 +791,63 @@ export default function HomePage() {
         </motion.div>
         {/* Call to Action Section */}
         <motion.section
-          className="py-32 px-4 sm:px-6 lg:px-8 relative overflow-hidden"
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          transition={{ duration: 1 }}
+          className="py-32 px-4 sm:px-6 lg:px-8 relative"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          variants={{
+            hidden: { opacity: 0 },
+            visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
+          }}
         >
-          {/* Background effects */}
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20 align-middle justify-center">
-            <h2 className="text-4xl font-bold mb-8">FAQs</h2>
-            <Accordion type="single" collapsible>
-              {faqs.map((faq, index) => (
-                <AccordionItem key={index} value={`item-${index + 1}`}>
-                  <AccordionTrigger className="text-2xl">{faq.question}</AccordionTrigger>
-                  <AccordionContent>{faq.answer}</AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
+          <div className="max-w-4xl mx-auto relative z-10">
+            <motion.div
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                visible: { opacity: 1, y: 0, transition: { duration: 0.8 } }
+              }}
+              className="text-center mb-16"
+            >
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.03] border border-white/10 mb-6 backdrop-blur-sm">
+                <HelpCircle className="h-3 w-3 text-orange-500" />
+                <span className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Support</span>
+              </div>
+              <h2 className="text-4xl md:text-5xl font-bold text-white mb-4 tracking-tight">
+                Frequently Asked <span className="text-orange-500">Questions</span>
+              </h2>
+            </motion.div>
+
+            <motion.div
+              variants={{
+                hidden: { opacity: 0 },
+                visible: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.3 } }
+              }}
+              className="space-y-4"
+            >
+              <Accordion type="single" collapsible className="w-full space-y-4">
+                {faqs.map((faq, index) => (
+                  <motion.div
+                    key={index}
+                    variants={{
+                      hidden: { opacity: 0, x: -10 },
+                      visible: { opacity: 1, x: 0, transition: { type: "spring", stiffness: 200, damping: 20 } }
+                    }}
+                  >
+                    <AccordionItem
+                      value={`item-${index + 1}`}
+                      className="border border-white/[0.08] bg-white/[0.02] rounded-2xl px-6 backdrop-blur-sm overflow-hidden transition-all duration-300 hover:bg-white/[0.04] hover:border-white/20 data-[state=open]:bg-white/[0.05] data-[state=open]:border-orange-500/30"
+                    >
+                      <AccordionTrigger className="text-lg md:text-xl font-semibold text-white/90 hover:no-underline py-6">
+                        {faq.question}
+                      </AccordionTrigger>
+                      <AccordionContent className="text-neutral-400 text-base leading-relaxed pb-6">
+                        {faq.answer}
+                      </AccordionContent>
+                    </AccordionItem>
+                  </motion.div>
+                ))}
+              </Accordion>
+            </motion.div>
           </div>
         </motion.section>
         <Footer />

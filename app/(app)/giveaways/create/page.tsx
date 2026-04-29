@@ -38,6 +38,23 @@ import { toast } from "sonner"
 import FileUpload from "@/componentss/shared/file-upload"
 import { DateTimePicker } from "@/componentss/ui/date-time-picker"
 
+// Helper functions to convert between local and UTC
+const convertLocalToUTC = (localDate: Date): Date => {
+  return new Date(localDate.getTime() - localDate.getTimezoneOffset() * 60000)
+}
+
+const convertUTCToLocal = (utcDate: string | Date): Date => {
+  const date = typeof utcDate === 'string' ? new Date(utcDate) : utcDate
+  return new Date(date.getTime() + date.getTimezoneOffset() * 60000)
+}
+
+// Helper function to format dates to local time string
+const formatLocalDateTime = (utcDate: string | Date | undefined): string => {
+  if (!utcDate) return "Not set"
+  const localDate = convertUTCToLocal(utcDate)
+  return localDate.toLocaleDateString() + " " + localDate.toLocaleTimeString()
+}
+
 // Animated background particles
 const AnimatedParticles = () => {
   return (
@@ -327,6 +344,9 @@ export default function CreateGiveawayPage() {
 
     setSubmitting(true);
     try {
+      // Convert local times to UTC for storage
+      const utcStartDate = formData.startDate ? convertLocalToUTC(formData.startDate) : null
+      const utcEndDate = formData.endDate ? convertLocalToUTC(formData.endDate) : null
 
       const payload = {
         giveaway: {
@@ -336,7 +356,7 @@ export default function CreateGiveawayPage() {
           currency: formData.currency || "USD",
           currency_symbol: formData.currencySymbol || "$",
           end_date: formData.endDate ? formData.endDate.toISOString() : "",
-          start_date: isScheduled && formData.startDate ? formData.startDate.toISOString() : null,
+          start_date: isScheduled && utcStartDate ? utcStartDate.toISOString() : null,
           featured: formData.featured,
           auto_announce: true,
           creator_name: formData.creatorName,
@@ -415,6 +435,8 @@ export default function CreateGiveawayPage() {
       formData.append("type", type)
       formData.append("purpose", purpose)
 
+      console.log(`Uploading ${type}: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB) for purpose: ${purpose}`)
+
       const response = await fetch("/api/upload", {
         method: "POST",
         body: formData,
@@ -428,14 +450,19 @@ export default function CreateGiveawayPage() {
           // Try to parse as JSON
           const error = JSON.parse(textError)
           errorMessage = error.error || errorMessage
+          if (error.details) {
+            errorMessage += `: ${error.details}`
+          }
         } catch {
           // If JSON parsing fails, use the text as error message
           errorMessage = textError || errorMessage
         }
+        console.error(`Upload error (${response.status}): ${errorMessage}`)
         throw new Error(errorMessage)
       }
 
       const result = await response.json()
+      console.log(`Upload successful: ${result.url}`)
       return result.url
     } catch (error) {
       console.error("Upload error:", error)
@@ -1022,7 +1049,7 @@ export default function CreateGiveawayPage() {
                           </div>
 
                           <div>
-                            <Label className="text-white text-sm">Value</Label>
+                            <Label className="text-white text-sm">Value (optional)</Label>
                             <Input
                               value={prize.value}
                               onChange={(e) => updatePrize(prize.id, "value", e.target.value)}
@@ -1045,7 +1072,7 @@ export default function CreateGiveawayPage() {
                         </div>
 
                         <div className="mt-4">
-                          <Label className="text-white text-sm">Description</Label>
+                          <Label className="text-white text-sm">Description (optional)</Label>
                           <Textarea
                             value={prize.description}
                             onChange={(e) => updatePrize(prize.id, "description", e.target.value)}
@@ -1409,7 +1436,7 @@ export default function CreateGiveawayPage() {
                           <span className="text-yellow-400">
                             {formData.currencySymbol || "$"}
                           </span>
-                          <span>{formData.value || "0"} Value</span>
+                          <span>{formData.value || "TBD"} Value</span>
                         </Badge>
                       </div>
 

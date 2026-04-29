@@ -142,7 +142,7 @@ export const giveawayPrizes = pgTable('giveaway_prizes', {
   position: integer('position').notNull(),
   name: text('name').notNull(),
   description: text('description'),
-  value: text('value').notNull(),
+  value: text('value'),
   numberOfWinners: integer('number_of_winners').default(1).notNull(),
   winnerName: text('winner_name'), // Deprecated - kept for backward compatibility
   winnerEmail: text('winner_email'), // Deprecated - kept for backward compatibility

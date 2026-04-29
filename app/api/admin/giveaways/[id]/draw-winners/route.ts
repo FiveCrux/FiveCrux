@@ -111,7 +111,7 @@ export async function POST(
       userName: string | null
       userEmail: string | null
       prizeName: string
-      prizeValue: string
+      prizeValue: string | null
     }> = []
 
     for (const prize of prizes) {
@@ -160,7 +160,7 @@ export async function POST(
           userName: w.userName ?? 'Unknown',
           userId: w.userId,
           prizeName: w.prizeName,
-          prizeValue: w.prizeValue,
+          prizeValue: w.prizeValue ?? '',
         })),
       )
     }
@@ -173,7 +173,7 @@ export async function POST(
         userName: w.userName,
         userEmail: w.userEmail,
         prizeName: w.prizeName,
-        prizeValue: w.prizeValue,
+        prizeValue: w.prizeValue ?? '',
       })),
       announced: Boolean(announce && giveaway.autoAnnounce),
     })

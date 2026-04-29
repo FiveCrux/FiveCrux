@@ -298,10 +298,16 @@ const MediaSlider = ({
   )
 }
 
+// Helper function to convert UTC to Local time
+function convertUTCToLocal(utcDate: string | Date): Date {
+  const date = typeof utcDate === 'string' ? new Date(utcDate) : utcDate
+  return new Date(date.getTime() + date.getTimezoneOffset() * 60000)
+}
+
 // Helper function to calculate time left
 function calculateTimeLeft(endDate: string): string {
   const now = new Date()
-  const end = new Date(endDate)
+  const end = convertUTCToLocal(endDate)
   const diff = end.getTime() - now.getTime()
   
   if (diff <= 0) return "Ended"
@@ -313,6 +319,13 @@ function calculateTimeLeft(endDate: string): string {
   if (days > 0) return `${days}d ${hours}h`
   if (hours > 0) return `${hours}h ${minutes}m`
   return `${minutes}m`
+}
+
+// Helper function to format dates to local time string
+function formatLocalDateTime(utcDate: string | Date | undefined): string {
+  if (!utcDate) return "Not set"
+  const localDate = convertUTCToLocal(utcDate)
+  return localDate.toLocaleDateString() + " " + localDate.toLocaleTimeString()
 }
 
 export default function GiveawayDetailPage() {
@@ -524,14 +537,14 @@ export default function GiveawayDetailPage() {
   const isGiveawayEnded = useMemo(() => {
     if (!giveaway?.endDate) return false
     const now = new Date()
-    const end = new Date(giveaway.endDate)
+    const end = convertUTCToLocal(giveaway.endDate)
     return end.getTime() <= now.getTime()
   }, [giveaway?.endDate])
 
   const isGiveawayUpcoming = useMemo(() => {
     if (!giveaway?.start_date && !giveaway?.startDate) return false
     const now = new Date()
-    const startDate = new Date(giveaway.start_date || giveaway.startDate)
+    const startDate = convertUTCToLocal(giveaway.start_date || giveaway.startDate)
     return startDate.getTime() > now.getTime()
   }, [giveaway?.start_date, giveaway?.startDate])
 
