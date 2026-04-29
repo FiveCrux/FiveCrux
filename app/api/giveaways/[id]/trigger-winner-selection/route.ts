@@ -7,7 +7,7 @@ import { announceGiveawayWinners } from '@/lib/discord'
 function shuffleInPlace<T>(array: T[]): void {
   for (let i = array.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1))
-    ;[array[i], array[j]] = [array[j], array[i]]
+      ;[array[i], array[j]] = [array[j], array[i]]
   }
 }
 
@@ -65,11 +65,11 @@ export async function POST(
       .from(giveawayPrizeWinners)
       .where(eq(giveawayPrizeWinners.prizeId, prizes[0].id))
       .limit(1)
-    
+
     if (existingWinners.length > 0) {
-      return NextResponse.json({ 
+      return NextResponse.json({
         message: 'Winners already selected',
-        alreadyProcessed: true 
+        alreadyProcessed: true
       }, { status: 200 })
     }
 
@@ -125,9 +125,9 @@ export async function POST(
       for (let i = 0; i < numberOfWinners; i++) {
         const winner = ranked.find((e) => !assignedUserIds.has(e.userId))
         if (!winner) break // No more available winners
-        
+
         assignedUserIds.add(winner.userId)
-        
+
         const winnerData = {
           prizeId: prize.id,
           position: prize.position,
@@ -137,7 +137,7 @@ export async function POST(
           prizeName: prize.name,
           prizeValue: prize.value,
         }
-        
+
         prizeWinners.push(winnerData)
         winnersForPrizes.push(winnerData)
 
