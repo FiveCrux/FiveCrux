@@ -1,8 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ['localhost',
+    domains: [
+      'localhost',
       'crux-marketplace-s3.s3.ap-south-1.amazonaws.com',
+      'cdn.discordapp.com',
+      'discordapp.com',
     ],
   },
   serverExternalPackages: ['drizzle-orm', 'pg', 'postgres'],

@@ -1,111 +1,91 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
-import { motion, useInView, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useInView } from "framer-motion";
 import {
   Search,
   Filter,
-  Star,
-  Eye,
-  Grid,
-  List,
   ChevronDown,
   X,
-  Sparkles,
   Zap,
   Code,
   DollarSign,
-  Sliders,
+  Grid,
+  List,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/componentss/ui/button";
-import { Input } from "@/componentss/ui/input";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/componentss/ui/card";
-import { Badge } from "@/componentss/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/componentss/ui/avatar";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/componentss/ui/select";
 import { Checkbox } from "@/componentss/ui/checkbox";
 import { Slider } from "@/componentss/ui/slider";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/componentss/ui/collapsible";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
+import Image from "next/image";
+import dynamic from "next/dynamic";
+
 import Navbar from "@/componentss/shared/navbar";
 import Footer from "@/componentss/shared/footer";
 import AdCard, { useRandomAds } from "@/componentss/ads/ad-card";
 import { VerifiedIcon } from "@/componentss/shared/verified-icon";
 import { isVerifiedCreator } from "@/lib/utils";
-import Image from "next/image";
-import { InfiniteMovingCards } from "@/componentss/ui/infinite-moving-cards";
-import FeaturedScriptCard from "@/componentss/featured-scripts/featured-script-card";
-// Animated background particles - Client only to avoid hydration issues
-const AnimatedParticles = () => {
-  const [mounted, setMounted] = useState(false);
+import FeaturedScriptsSection from "@/componentss/home/FeaturedScriptsSection";
+import { cn } from "@/lib/utils";
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+// Lazy-load Three.js canvas to avoid SSR issues
+const ParticleCanvas = dynamic(() => import("@/componentss/home/ParticleCanvas"), { ssr: false });
 
-  if (!mounted) return null;
+// ── Types ───────────────────────────────────────────────────────────────────
+interface UIScript {
+  id: number;
+  title: string;
+  description: string;
+  price: number;
+  originalPrice?: number;
+  currency?: string;
+  currency_symbol?: string;
+  rating: number;
+  reviews: number;
+  image: string;
+  category: string;
+  categoryName: string;
+  seller: string;
+  seller_id?: string;
+  seller_image?: string | null;
+  seller_roles?: string[] | null;
+  discount: number;
+  framework?: string[];
+  priceCategory: string;
+  tags: string[];
+  lastUpdated: string;
+  featured?: boolean;
+  free?: boolean;
+}
 
-  return (
-    <div className="fixed inset-0 pointer-events-none overflow-hidden">
-      {[...Array(5)].map((_, i) => (
-        <motion.div
-          key={i}
-          className="absolute w-1 h-1 bg-orange-500/30 rounded-full"
-          animate={{
-            x: [0, i * 40 - 100],
-            y: [0, i * 30 - 75],
-            opacity: [0, 1, 0],
-            scale: [0, 1, 0],
-          }}
-          transition={{
-            duration: 15 + i * 2,
-            repeat: Number.POSITIVE_INFINITY,
-            delay: i * 0.5,
-          }}
-          style={{
-            left: `${20 + i * 15}%`,
-            top: `${25 + i * 12}%`,
-          }}
-        />
-      ))}
-    </div>
-  );
-};
-
+// ── Page ─────────────────────────────────────────────────────────────────────
 export default function ScriptsPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const filtersRef = useRef(null);
-  const scriptsRef = useRef(null);
   const filterContainerRef = useRef<HTMLDivElement>(null);
+  const scriptsRef = useRef(null);
+  const scriptsInView = useInView(scriptsRef, { once: true, margin: "-100px" });
 
-  const filtersInView = useInView(filtersRef, { once: true });
-  const scriptsInView = useInView(scriptsRef, { once: true });
-  const priceRangeInitialized = useRef(false);
-  const scriptsShuffled = useRef(false);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
+  // ── State ──────────────────────────────────────────────────────────────────
+  const [allScripts, setAllScripts] = useState<UIScript[]>([]);
+  const [featuredScripts, setFeaturedScripts] = useState<any[]>([]);
+  const [ads, setAds] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [scriptsLoading, setScriptsLoading] = useState(true);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [priceRange, setPriceRange] = useState<number[]>([0, 1000]);
   const [sortBy, setSortBy] = useState("popular");
-  const categoryParam = searchParams.get("category") ?? "";
+  const [searchQuery, setSearchQuery] = useState("");
+  const [openFilter, setOpenFilter] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 12;
 
+  const categoryParam = searchParams.get("category") ?? "";
   const [selectedCategories, setSelectedCategories] = useState<string[]>(() =>
     categoryParam ? [categoryParam] : []
   );
@@ -115,55 +95,17 @@ export default function ScriptsPage() {
   }, [categoryParam]);
 
   const [selectedFrameworks, setSelectedFrameworks] = useState<string[]>([]);
-  const [selectedPriceCategories, setSelectedPriceCategories] = useState<
-    string[]
-  >([]);
   const [onSaleOnly, setOnSaleOnly] = useState(false);
   const [freeOnly, setFreeOnly] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [openFilter, setOpenFilter] = useState<string | null>(null);
 
-  type UIScript = {
-    id: number;
-    title: string;
-    description: string;
-    price: number;
-    originalPrice?: number;
-    currency?: string;
-    currency_symbol?: string;
-    rating: number;
-    reviews: number;
-    image: string;
-    category: string;
-    categoryName: string;
-    seller: string;
-    seller_id?: string;
-    seller_image?: string | null;
-    seller_roles?: string[] | null;
-    discount: number;
-    framework?: string[];
-    priceCategory: string;
-    tags: string[];
-    lastUpdated: string;
-    featured?: boolean;
-    free?: boolean;
-  };
+  const scriptsShuffled = useRef(false);
+  const priceRangeInitialized = useRef(false);
 
-  type GridItem = UIScript | (any & { isAd: boolean });
-
-  const [allScripts, setAllScripts] = useState<UIScript[]>([]);
-  const [ads, setAds] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [featuredScripts, setFeaturedScripts] = useState<any[]>([]);
-  const [scriptsLoading, setScriptsLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 12;
-
+  // ── Fetch Data ─────────────────────────────────────────────────────────────
   useEffect(() => {
     const load = async () => {
       try {
         setLoading(true);
-        console.log("Loading scripts...");
         const [scriptsRes, adsRes] = await Promise.all([
           fetch(`/api/scripts`, { cache: "no-store" }),
           fetch(`/api/ads/scripts`, { cache: "no-store" }),
@@ -171,32 +113,18 @@ export default function ScriptsPage() {
 
         if (scriptsRes.ok) {
           const data = await scriptsRes.json();
-          console.log("Scripts API data:", data);
-          console.log("Scripts count:", data.scripts?.length || 0);
-
           const mappedScripts = (data.scripts || []).map((s: any) => {
             const image =
               s.cover_image ||
               (s.images && s.images[0]) ||
               (s.screenshots && s.screenshots[0]) ||
               "/placeholder.jpg";
-            console.log(
-              `Script ${s.id} (${s.title}): cover_image=${
-                s.cover_image
-              }, images=${JSON.stringify(
-                s.images
-              )}, screenshots=${JSON.stringify(
-                s.screenshots
-              )}, final image=${image}`
-            );
             return {
               id: s.id,
               title: s.title,
               description: s.description,
               price: Number(s.price) || 0,
-              originalPrice: s.original_price
-                ? Number(s.original_price)
-                : undefined,
+              originalPrice: s.original_price ? Number(s.original_price) : undefined,
               currency: s.currency,
               currency_symbol: s.currency_symbol,
               rating: s.rating || 0,
@@ -209,41 +137,21 @@ export default function ScriptsPage() {
               seller_image: s.seller_image || null,
               seller_roles: s.seller_roles || null,
               discount: s.original_price
-                ? Math.max(
-                    0,
-                    Math.round(
-                      ((Number(s.original_price) - Number(s.price)) /
-                        Number(s.original_price)) *
-                        100
-                    )
-                  )
+                ? Math.max(0, Math.round(((Number(s.original_price) - Number(s.price)) / Number(s.original_price)) * 100))
                 : 0,
-              framework: Array.isArray(s.framework)
-                ? s.framework
-                : s.framework
-                ? [s.framework]
-                : [],
-              priceCategory:
-                Number(s.price) <= 15
-                  ? "Budget"
-                  : Number(s.price) <= 30
-                  ? "Standard"
-                  : "Premium",
+              framework: Array.isArray(s.framework) ? s.framework : s.framework ? [s.framework] : [],
+              priceCategory: Number(s.price) <= 15 ? "Budget" : Number(s.price) <= 30 ? "Standard" : "Premium",
               tags: (s.tags || []) as string[],
               lastUpdated: s.updated_at,
               featured: s.featured || false,
               free: s.free || false,
             };
           });
-          console.log("Mapped scripts:", mappedScripts);
-          
-          // Shuffle the array to randomize order only on initial page load
+
           if (!scriptsShuffled.current) {
-            const shuffledScripts = [...mappedScripts].sort(() => Math.random() - 0.5);
-            setAllScripts(shuffledScripts);
+            setAllScripts([...mappedScripts].sort(() => Math.random() - 0.5));
             scriptsShuffled.current = true;
           } else {
-            // If already shuffled, just set the scripts without shuffling again
             setAllScripts(mappedScripts);
           }
         }
@@ -261,20 +169,16 @@ export default function ScriptsPage() {
     load();
   }, []);
 
-  // Fetch featured scripts
   useEffect(() => {
     const fetchFeaturedScripts = async () => {
       try {
         setScriptsLoading(true);
         const response = await fetch("/api/featured-scripts?status=active", { cache: "no-store" });
-
         if (response.ok) {
           const data = await response.json();
-          const featuredScriptsData = data.featuredScripts || [];
-          // Map API response to match the expected format
-          const mappedScripts = featuredScriptsData.map((item: any) => ({
+          const mapped = (data.featuredScripts || []).map((item: any) => ({
             id: item.scriptId,
-            featuredScriptId: item.id, // Store the featured script ID for tracking
+            featuredScriptId: item.id,
             title: item.scriptTitle || "",
             description: item.scriptDescription || "",
             cover_image: item.scriptCoverImage || "/placeholder.jpg",
@@ -288,10 +192,7 @@ export default function ScriptsPage() {
             seller_image: item.scriptSellerImage || null,
             seller_roles: item.scriptSellerRoles || null,
           }));
-          
-          // Shuffle the array to randomize starting position
-          const shuffledScripts = [...mappedScripts].sort(() => Math.random() - 0.5);
-          setFeaturedScripts(shuffledScripts);
+          setFeaturedScripts([...mapped].sort(() => Math.random() - 0.5));
         }
       } catch (error) {
         console.error("Error fetching featured scripts:", error);
@@ -299,10 +200,114 @@ export default function ScriptsPage() {
         setScriptsLoading(false);
       }
     };
-
     fetchFeaturedScripts();
   }, []);
 
+  // ── Logic ─────────────────────────────────────────────────────────────────
+  const priceBounds = useMemo(() => {
+    if (allScripts.length === 0) return { min: 0, max: 1000 };
+    const prices = allScripts.map((s) => s.price).filter((p) => p > 0);
+    if (prices.length === 0) return { min: 0, max: 1000 };
+    const min = Math.floor(Math.min(...prices) / 10) * 10;
+    const max = Math.ceil(Math.max(...prices) / 10) * 10;
+    return { min, max };
+  }, [allScripts]);
+
+  useEffect(() => {
+    if (allScripts.length > 0 && !priceRangeInitialized.current && priceBounds.max > 0) {
+      setPriceRange([priceBounds.min, priceBounds.max]);
+      priceRangeInitialized.current = true;
+    }
+  }, [allScripts.length, priceBounds.min, priceBounds.max]);
+
+  const filteredScripts = useMemo(() => {
+    return allScripts.filter((script) => {
+      if (searchQuery && !script.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
+        !script.description.toLowerCase().includes(searchQuery.toLowerCase()) &&
+        !script.tags.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase()))) return false;
+      if (selectedCategories.length > 0 && !selectedCategories.includes(script.category)) return false;
+      if (selectedFrameworks.length > 0) {
+        if (!script.framework || !script.framework.some((fw: string) => selectedFrameworks.includes(fw))) return false;
+      }
+      if (priceRange && priceRange.length === 2) {
+        const isAtFullRange = priceRange[0] === priceBounds.min && priceRange[1] === priceBounds.max;
+        if (!isAtFullRange && (script.price < priceRange[0] || script.price > priceRange[1])) return false;
+      }
+      if (onSaleOnly && script.discount === 0) return false;
+      if (freeOnly && !script.free) return false;
+      return true;
+    });
+  }, [allScripts, searchQuery, selectedCategories, selectedFrameworks, priceRange, priceBounds, onSaleOnly, freeOnly]);
+
+  const sortedScripts = useMemo(() => {
+    const scripts = [...filteredScripts];
+    switch (sortBy) {
+      case "price-low": return scripts.sort((a, b) => a.price - b.price);
+      case "price-high": return scripts.sort((a, b) => b.price - a.price);
+      case "rating": return scripts.sort((a, b) => b.rating - a.rating);
+      case "newest": return scripts.sort((a, b) => new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime());
+      default: return scripts.sort((a, b) => b.reviews - a.reviews);
+    }
+  }, [filteredScripts, sortBy]);
+
+  const totalPages = Math.ceil(sortedScripts.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedScripts = sortedScripts.slice(startIndex, endIndex);
+
+  useEffect(() => { setCurrentPage(1); }, [filteredScripts, sortBy]);
+
+  const clearAllFilters = useCallback(() => {
+    setSelectedCategories([]);
+    setSelectedFrameworks([]);
+    setPriceRange([priceBounds.min, priceBounds.max]);
+    setOnSaleOnly(false);
+    setFreeOnly(false);
+    setSearchQuery("");
+    router.push("/scripts");
+  }, [router, priceBounds]);
+
+  const removeFilter = useCallback((type: string, value: string) => {
+    if (type === "category") setSelectedCategories(prev => prev.filter(c => c !== value));
+    if (type === "framework") setSelectedFrameworks(prev => prev.filter(f => f !== value));
+  }, []);
+
+  const activeFiltersCount = useMemo(() =>
+    selectedCategories.length + selectedFrameworks.length +
+    (priceRange[0] !== priceBounds.min || priceRange[1] !== priceBounds.max ? 1 : 0) +
+    (onSaleOnly ? 1 : 0) + (freeOnly ? 1 : 0),
+    [selectedCategories.length, selectedFrameworks.length, priceRange, priceBounds, onSaleOnly, freeOnly]
+  );
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (filterContainerRef.current && !filterContainerRef.current.contains(e.target as Node) && openFilter !== null) {
+        setOpenFilter(null);
+      }
+    };
+    if (openFilter !== null) {
+      document.addEventListener("mousedown", handler);
+      return () => document.removeEventListener("mousedown", handler);
+    }
+  }, [openFilter]);
+
+  const randomAds = useRandomAds(ads, 2);
+  const memoizedAdPositions = useMemo(() => {
+    if (randomAds.length === 0 || sortedScripts.length === 0) return [];
+    const positions: number[] = [];
+    const used = new Set<number>();
+    for (let i = 0; i < randomAds.length; i++) {
+      let attempts = 0, pos;
+      do { pos = Math.floor(Math.random() * sortedScripts.length); attempts++; }
+      while (used.has(pos) && attempts < 100);
+      if (used.has(pos)) { for (let j = 0; j < sortedScripts.length; j++) { if (!used.has(j)) { pos = j; break; } } }
+      used.add(pos);
+      positions.push(pos);
+    }
+    return positions.sort((a, b) => a - b);
+  }, [randomAds.map(ad => ad.id).join(','), sortedScripts.length]);
+
+  // ── Render Helpers ────────────────────────────────────────────────────────
   const categories = [
     { id: "scripts", name: "Scripts" },
     { id: "maps", name: "Maps" },
@@ -312,7 +317,6 @@ export default function ScriptsPage() {
     { id: "vehicles", name: "Vehicles" },
   ];
 
-
   const frameworks = [
     { value: "qbcore", label: "QBCore" },
     { value: "qbox", label: "Qbox" },
@@ -320,1353 +324,566 @@ export default function ScriptsPage() {
     { value: "ox", label: "OX" },
     { value: "vrp", label: "VRP" },
     { value: "standalone", label: "Standalone" },
-  ]
-  const priceCategories = ["Budget", "Standard", "Premium"];
-
-  // Calculate min and max prices from scripts for dynamic slider range
-  const priceBounds = useMemo(() => {
-    if (allScripts.length === 0) return { min: 0, max: 1000 };
-    const prices = allScripts.map((s) => s.price).filter((p) => p > 0);
-    if (prices.length === 0) return { min: 0, max: 1000 };
-    const min = Math.floor(Math.min(...prices));
-    const max = Math.ceil(Math.max(...prices));
-    // Round to nice numbers
-    const roundedMin = Math.floor(min / 10) * 10; // Round down to nearest 10
-    const roundedMax = Math.ceil(max / 10) * 10; // Round up to nearest 10
-    return { min: roundedMin, max: roundedMax };
-  }, [allScripts]);
-
-  // Initialize price range when scripts are loaded (only once)
-  useEffect(() => {
-    if (allScripts.length > 0 && !priceRangeInitialized.current && priceBounds.max > 0) {
-      setPriceRange([priceBounds.min, priceBounds.max]);
-      priceRangeInitialized.current = true;
-    }
-  }, [allScripts.length, priceBounds.min, priceBounds.max]);
-
-  // Real-time filtering logic
-  const filteredScripts = useMemo(() => {
-    return allScripts.filter((script) => {
-      if (
-        searchQuery &&
-        !script.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
-        !script.description.toLowerCase().includes(searchQuery.toLowerCase()) &&
-        !script.tags.some((tag) =>
-          tag.toLowerCase().includes(searchQuery.toLowerCase())
-        )
-      ) {
-        return false;
-      }
-
-      if (
-        selectedCategories.length > 0 &&
-        !selectedCategories.includes(script.category)
-      ) {
-        return false;
-      }
-
-      if (
-        selectedFrameworks.length > 0 &&
-        !selectedFrameworks.includes("All Frameworks")
-      ) {
-        if (!script.framework || script.framework.length === 0) return false;
-        const hasMatch = script.framework.some((fw: string) =>
-          selectedFrameworks.includes(fw)
-        );
-        if (!hasMatch) return false;
-      }
-
-      // Only apply price filter if range is not at full bounds
-      if (priceRange && priceRange.length === 2) {
-        const isAtFullRange = 
-          priceRange[0] === priceBounds.min && 
-          priceRange[1] === priceBounds.max;
-        if (!isAtFullRange) {
-          if (script.price < priceRange[0] || script.price > priceRange[1]) {
-            return false;
-          }
-        }
-      }
-
-      if (onSaleOnly && script.discount === 0) {
-        return false;
-      }
-
-      if (freeOnly && !script.free) {
-        return false;
-      }
-
-      return true;
-    });
-  }, [
-    allScripts,
-    searchQuery,
-    selectedCategories,
-    selectedFrameworks,
-    priceRange,
-    priceBounds,
-    onSaleOnly,
-    freeOnly,
-  ]);
-
-  // Sorting logic
-  const sortedScripts = useMemo(() => {
-    const scripts = [...filteredScripts];
-    switch (sortBy) {
-      case "price-low":
-        return scripts.sort((a, b) => a.price - b.price);
-      case "price-high":
-        return scripts.sort((a, b) => b.price - a.price);
-      case "rating":
-        return scripts.sort((a, b) => b.rating - a.rating);
-      case "newest":
-        return scripts.sort(
-          (a, b) =>
-            new Date(b.lastUpdated).getTime() -
-            new Date(a.lastUpdated).getTime()
-        );
-      default:
-        return scripts.sort((a, b) => b.reviews - a.reviews);
-    }
-  }, [filteredScripts, sortBy]);
-
-  // Pagination logic
-  const totalPages = Math.ceil(sortedScripts.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedScripts = sortedScripts.slice(startIndex, endIndex);
-
-  // Reset to page 1 when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [filteredScripts, sortBy]);
-
-  // Debug logging removed for production
-
-  const handleCategoryChange = useCallback(
-    (category: string, checked: boolean) => {
-      if (checked) {
-        setSelectedCategories((prev) => [...prev, category]);
-      } else {
-        setSelectedCategories((prev) => prev.filter((c) => c !== category));
-      }
-    },
-    []
-  );
-
-  const handleFrameworkChange = useCallback(
-    (framework: string, checked: boolean) => {
-      if (checked) {
-        setSelectedFrameworks((prev) => [...prev, framework]);
-      } else {
-        setSelectedFrameworks((prev) => prev.filter((f) => f !== framework));
-      }
-    },
-    []
-  );
-
-  const handlePriceCategoryChange = useCallback(
-    (category: string, checked: boolean) => {
-      if (checked) {
-        setSelectedPriceCategories((prev) => [...prev, category]);
-      } else {
-        setSelectedPriceCategories((prev) =>
-          prev.filter((c) => c !== category)
-        );
-      }
-    },
-    []
-  );
-
-  const clearAllFilters = useCallback(() => {
-    setSelectedCategories([]);
-    setSelectedFrameworks([]);
-    setSelectedPriceCategories([]);
-    setPriceRange([priceBounds.min, priceBounds.max]);
-    setOnSaleOnly(false);
-    setFreeOnly(false);
-    setSearchQuery("");
-    router.push("/scripts");
-  }, [router, priceBounds]);
-
-  const removeFilter = useCallback(
-    (type: string, value: string | number) => {
-      switch (type) {
-        case "category":
-          handleCategoryChange(value as string, false);
-          break;
-        case "framework":
-          handleFrameworkChange(value as string, false);
-          break;
-        case "priceCategory":
-          handlePriceCategoryChange(value as string, false);
-          break;
-      }
-    },
-    [handleCategoryChange, handleFrameworkChange, handlePriceCategoryChange]
-  );
-
-  const activeFiltersCount = useMemo(
-    () =>
-      selectedCategories.length +
-      selectedFrameworks.length +
-      (priceRange[0] !== priceBounds.min || priceRange[1] !== priceBounds.max ? 1 : 0) +
-      (onSaleOnly ? 1 : 0) +
-      (freeOnly ? 1 : 0),
-    [
-      selectedCategories.length,
-      selectedFrameworks.length,
-      priceRange,
-      priceBounds,
-      onSaleOnly,
-      freeOnly,
-    ]
-  );
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Node;
-      if (
-        filterContainerRef.current &&
-        !filterContainerRef.current.contains(target) &&
-        openFilter !== null
-      ) {
-        setOpenFilter(null);
-      }
-    };
-
-    if (openFilter !== null) {
-      document.addEventListener("mousedown", handleClickOutside);
-      return () => {
-        document.removeEventListener("mousedown", handleClickOutside);
-      };
-    }
-  }, [openFilter]);
-
-  // Get random ads for scripts page
-  const randomAds = useRandomAds(ads, 2);
-  
-  // Memoize ad positions based on current sorted scripts and ads
-  // This ensures positions are stable when filters change (only recalculates when scripts or ads actually change)
-  const memoizedAdPositions = useMemo(() => {
-    if (randomAds.length === 0 || sortedScripts.length === 0) {
-      return [];
-    }
-    
-    const positions: number[] = [];
-    const usedPositions = new Set<number>();
-    
-    // Generate random positions for each ad based on current sorted scripts
-    for (let i = 0; i < randomAds.length; i++) {
-      let attempts = 0;
-      let position: number;
-      
-      do {
-        position = Math.floor(Math.random() * sortedScripts.length);
-        attempts++;
-      } while (usedPositions.has(position) && attempts < 100);
-      
-      if (usedPositions.has(position)) {
-        for (let j = 0; j < sortedScripts.length; j++) {
-          if (!usedPositions.has(j)) {
-            position = j;
-            break;
-          }
-        }
-      }
-      
-      usedPositions.add(position);
-      positions.push(position);
-    }
-    
-    return positions.sort((a, b) => a - b);
-  }, [randomAds.map(ad => ad.id).join(','), sortedScripts.length]); // Only recalculate when ads or total count changes, not when filters change
+  ];
 
   return (
-    <>
+    <div className="min-h-screen text-white overflow-x-hidden" style={{ background: "#000000" }}>
       <Navbar />
-      <div className="min-h-screen text-white relative overflow-hidden">
-        <AnimatedParticles />
 
-        {/* Animated background */}
-        <div className="fixed inset-0 -z-10">
-          <motion.div
-            className="absolute inset-0 bg-gradient-to-br from-gray-300 via-gray-600 to-gray-300"
-            animate={{
-              background: [
-                "radial-gradient(circle at 20% 50%, rgba(249, 115, 22, 0.05) 0%, transparent 50%)",
-                "radial-gradient(circle at 80% 20%, rgba(234, 179, 8, 0.05) 0%, transparent 50%)",
-                "radial-gradient(circle at 40% 80%, rgba(249, 115, 22, 0.05) 0%, transparent 50%)",
-              ],
-            }}
-            transition={{
-              duration: 8,
-              repeat: Number.POSITIVE_INFINITY,
-              repeatType: "reverse",
-            }}
-          />
-        </div>
+      {/* ── Background & Particles ─────────────────────────────────── */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        {mounted && <ParticleCanvas />}
+        {/* Glows */}
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-orange-500/5 blur-[120px] rounded-full" />
+        <div className="absolute bottom-[10%] right-[-10%] w-[40%] h-[40%] bg-orange-500/5 blur-[100px] rounded-full" />
+      </div>
 
-        {/* Header */}
-        <motion.div
-          className="bg-neutral-850 backdrop-blur-xl py-8 px-4 sm:px-6 lg:px-8 border-b border-neutral-800/50 mt-11"
-          initial={{ opacity: 0, y: -50 }}
+      {/* ── Perspective Grid Floor (Hero context) ──────────────────── */}
+      <div
+        aria-hidden="true"
+        className="absolute top-0 left-0 right-0 pointer-events-none z-0 overflow-hidden"
+        style={{ height: "400px", perspective: "1000px" }}
+      >
+        <div
+          style={{
+            width: "100%",
+            height: "100%",
+            transform: "rotateX(75deg)",
+            transformOrigin: "top center",
+            backgroundImage: `
+              linear-gradient(rgba(249,115,22,0.08) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(249,115,22,0.08) 1px, transparent 1px)
+            `,
+            backgroundSize: "60px 60px",
+            backgroundPosition: "center top",
+            maskImage: "linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, transparent 100%)",
+            WebkitMaskImage: "linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, transparent 100%)",
+          }}
+        />
+      </div>
+
+      {/* ── Page Header (Hero) ──────────────────────────────────────── */}
+      <header className="relative z-10 pt-40 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <motion.nav
+          initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
+          className="flex items-center gap-2 mb-6 text-xs font-semibold text-neutral-500 uppercase tracking-widest"
         >
-          <div className="max-w-7xl mx-auto">
-            <motion.nav
-              className="flex items-center space-x-2 text-sm text-gray-400 mb-4"
+          <Link href="/" className="hover:text-orange-500 transition-colors">Home</Link>
+          <span className="text-neutral-700">/</span>
+          <span className="text-orange-500">Marketplace</span>
+        </motion.nav>
+
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
+          <div className="flex flex-col gap-4">
+            <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 }}
+              className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-orange-500/20 bg-orange-500/5 w-fit"
             >
-              <Link
-                href="/"
-                className="hover:text-orange-500 transition-colors"
-              >
-                Home
-              </Link>
-              <span>/</span>
-              <span className="text-white">All Scripts</span>
-            </motion.nav>
+              <span className="h-1.5 w-1.5 rounded-full bg-orange-500 animate-pulse" />
+              <span className="text-[10px] font-bold text-orange-400 uppercase tracking-widest">Premium Marketplace</span>
+            </motion.div>
 
             <motion.h1
-              className="text-4xl md:text-5xl font-bold mb-4"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
+              className="text-5xl sm:text-6xl md:text-7xl font-black tracking-tighter"
             >
-              <span className="bg-gradient-to-r from-orange-500 to-yellow-400 bg-clip-text text-transparent">
-                All Scripts
-              </span>
+              All <span className="gradient-text">Scripts</span>
             </motion.h1>
 
             <motion.p
-              className="text-gray-400 mb-4 text-lg"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
+              transition={{ delay: 0.1 }}
+              className="text-neutral-500 max-w-lg text-lg leading-relaxed"
             >
-              Browse our complete collection of premium FiveM scripts
+              Explore our curated selection of high-performance FiveM resources,
+              engineered for excellence.
             </motion.p>
+          </div>
 
+          {!loading && (
             <motion.div
-              className="flex items-center gap-4"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="flex items-center gap-6"
             >
-              {!loading && (
-                <div className="text-sm text-gray-500 flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-orange-500" />
-                  {sortedScripts.length} scripts found
-                </div>
-              )}
-              {activeFiltersCount > 0 && (
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="flex items-center gap-2"
+              <div className="flex flex-col">
+                <span className="text-3xl font-black text-white">{allScripts.length}</span>
+                <span className="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Available</span>
+              </div>
+              <div className="h-10 w-px bg-neutral-800" />
+              <div className="flex flex-col">
+                <span className="text-3xl font-black text-orange-500">{activeFiltersCount}</span>
+                <span className="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Active Filters</span>
+              </div>
+            </motion.div>
+          )}
+        </div>
+      </header>
+
+      {/* ── Featured Section ────────────────────────────────────────── */}
+      <FeaturedScriptsSection scripts={featuredScripts} loading={scriptsLoading} />
+
+      {/* ── Main Marketplace Content ────────────────────────────────── */}
+      <main className="relative z-10 py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto" ref={scriptsRef}>
+
+        {/* Horizontal Rule with glow */}
+        <div className="w-full h-px bg-neutral-900 relative mb-12">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-px bg-orange-500/50 shadow-[0_0_15px_rgba(249,115,22,0.3)]" />
+        </div>
+
+        {/* Filter & Search Toolbar */}
+        <div className="flex flex-col gap-6 mb-10">
+          <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between">
+
+            {/* Filter Buttons Group */}
+            <div ref={filterContainerRef} className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-2 mr-4 text-xs font-bold text-neutral-500 uppercase tracking-widest border-r border-neutral-800 pr-4">
+                <Filter className="h-3 w-3 text-orange-500" />
+                Filter by
+              </div>
+
+              {/* Category Dropdown */}
+              <div className="relative">
+                <Button
+                  onClick={() => setOpenFilter(openFilter === "categories" ? null : "categories")}
+                  className={cn(
+                    "bg-neutral-900/50 border text-white border-neutral-800 hover:border-orange-500/50 hover:text-black  text-xs font-semibold h-10 px-4",
+                    (selectedCategories.length > 0 || openFilter === "categories") && "border-orange-500/40 bg-orange-500/5 text-orange-400 hover:text-black"
+                  )}
                 >
-                  <Zap className="h-4 w-4 text-yellow-400" />
-                  <span className="text-sm text-yellow-400">
-                    {activeFiltersCount} filters active
-                  </span>
-                </motion.div>
-              )}
-            </motion.div>
-          </div>
-        </motion.div>
-
-        {/* Featured scripts Section */}
-        <motion.section className="py-20 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-7xl mx-auto relative z-10">
-            <motion.div
-              initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1 }}
-              className="text-center mb-12"
-            >
-              <Badge className="bg-gradient-to-r from-orange-500/20 to-yellow-400/20 text-orange-400 border-orange-500/30 mb-6 px-4 py-2 text-sm font-semibold">
-                Featured Scripts
-              </Badge>
-              <h2 className="text-4xl md:text-5xl font-bold text-white mb-4 flex items-center gap-0 justify-center sm:gap-3">
-                <Zap className="h-10 w-10 text-orange-500" />
-                Featured Scripts
-              </h2>
-              <p className="text-gray-400 max-w-2xl mx-auto">
-                Check out our most popular and featured scripts
-              </p>
-            </motion.div>
-
-            {scriptsLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="bg-neutral-900 border-2 border-neutral-700/50 rounded-xl h-96 animate-pulse" />
-                ))}
-              </div>
-            ) : featuredScripts.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-gray-400">No featured scripts available at the moment.</p>
-              </div>
-            ) : featuredScripts.length > 3 ? (
-              <InfiniteMovingCards
-                items={featuredScripts}
-                direction="left"
-                speed="fast"
-                pauseOnHover={true}
-                className="max-w-7xl"
-                renderItem={(item, index) => (
-                  <FeaturedScriptCard
-                    item={item}
-                    index={index}
-                    style={{
-                      width: "calc((100vw - 8rem) / 3)",
-                      minWidth: "320px",
-                      maxWidth: "400px",
-                    }}
-                  />
-                )}
-              />
-            ) : (
-              <div className="overflow-x-auto -mx-4 sm:-mx-6 px-4 sm:px-6 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                <div className="flex md:grid md:grid-cols-2 xl:grid-cols-3 gap-6 md:gap-6 min-w-max md:min-w-0">
-                  {featuredScripts.map((item, index) => (
-                    <FeaturedScriptCard
-                      key={item.id}
-                      item={item}
-                      index={index}
-                      className="flex-shrink-0 w-[320px] md:w-auto"
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </motion.section>
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex flex-col gap-8">
-            {/* Main Content */}
-            <motion.div
-              ref={scriptsRef}
-              className="flex-1"
-              initial={{ opacity: 0, x: 50 }}
-              animate={scriptsInView ? { opacity: 1, x: 0 } : {}}
-              transition={{ duration: 0.8 }}
-            >
-              {/* Filters Bar */}
-              <motion.div
-                ref={filtersRef}
-                className="mb-6 relative z-50"
-                initial={{ opacity: 0, y: -20 }}
-                animate={filtersInView ? { opacity: 1, y: 0 } : {}}
-                transition={{ duration: 0.8 }}
-              >
-                <Card className="bg-neutral-800/30 border-neutral-700/50 backdrop-blur-xl relative z-50">
-                  <CardContent className="p-4">
-                    <div className="flex flex-col gap-4">
-                      {/* Filter Header */}
-                      <div className="flex items-center justify-between flex-wrap gap-4">
-                        <motion.div
-                          className="flex items-center gap-2"
-                          whileHover={{ scale: 1.05 }}
-                        >
-                          <Filter className="h-5 w-5 text-orange-500" />
-                          <span className="text-white font-semibold">
-                            Filters
-                          </span>
-                          {activeFiltersCount > 0 && (
-                            <motion.div
-                              initial={{ scale: 0 }}
-                              animate={{ scale: 1 }}
-                              whileHover={{ scale: 1.1 }}
-                            >
-                              <Badge className="bg-orange-500 text-white">
-                                {activeFiltersCount}
-                              </Badge>
-                            </motion.div>
-                          )}
-                        </motion.div>
-                        {activeFiltersCount > 0 && (
-                          <motion.div
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                          >
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={clearAllFilters}
-                              className="text-orange-500 hover:text-orange-400 hover:bg-orange-500/10"
-                            >
-                              Clear All
-                            </Button>
-                          </motion.div>
-                        )}
-                      </div>
-
-                      {/* Horizontal Filters */}
-                      <div
-                        ref={filterContainerRef}
-                        className="flex flex-wrap gap-3 items-start relative z-50"
-                      >
-                        {/* Categories Filter */}
-                        <Collapsible
-                          open={openFilter === "categories"}
-                          onOpenChange={(open) =>
-                            setOpenFilter(open ? "categories" : null)
-                          }
-                        >
-                          <div className="relative z-[60]">
-                            <CollapsibleTrigger asChild>
-                              <motion.div
-                                whileHover={{ scale: 1.05, y: -2 }}
-                                whileTap={{ scale: 0.95 }}
-                              >
-                                <Button
-                                  variant="outline"
-                                  className={`bg-gradient-to-br from-gray-800 to-gray-900 border-2 text-white font-bold px-5 py-2.5 rounded-lg shadow-lg transition-all duration-300 ${
-                                    openFilter === "categories" ||
-                                    selectedCategories.length > 0
-                                      ? "border-orange-500 bg-gradient-to-br from-orange-500/20 to-orange-600/20 shadow-orange-500/50"
-                                      : "border-neutral-600/50 hover:border-orange-500/70"
-                                  }`}
-                                >
-                                  <span className="text-sm font-semibold flex items-center gap-2">
-                                    <Filter className="h-4 w-4 text-orange-400" />
-                                    Categories
-                                    {selectedCategories.length > 0 && (
-                                      <span className="ml-1 bg-orange-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
-                                        {selectedCategories.length}
-                                      </span>
-                                    )}
-                                  </span>
-                                  <ChevronDown
-                                    className={`ml-2 h-4 w-4 transition-transform duration-300 text-orange-400 ${
-                                      openFilter === "categories"
-                                        ? "rotate-180"
-                                        : ""
-                                    }`}
-                                  />
-                                </Button>
-                              </motion.div>
-                            </CollapsibleTrigger>
-                            <CollapsibleContent className="absolute z-[200] mt-2 left-0 bg-neutral-900 border border-neutral-700/50 rounded-lg p-4 shadow-xl min-w-[200px]">
-                              <div className="space-y-2">
-                                {categories.map((category) => (
-                                  <motion.div
-                                    key={category.id}
-                                    className="flex items-center space-x-2"
-                                    whileHover={{ x: 5 }}
-                                  >
-                                    <Checkbox
-                                      id={`category-${category.id}`}
-                                      checked={selectedCategories.includes(
-                                        category.id
-                                      )}
-                                      onCheckedChange={(checked) =>
-                                        handleCategoryChange(
-                                          category.id,
-                                          checked as boolean
-                                        )
-                                      }
-                                    />
-                                    <label
-                                      htmlFor={`category-${category.id}`}
-                                      className="text-sm text-gray-300 hover:text-white transition-colors cursor-pointer"
-                                    >
-                                      {category.name}
-                                    </label>
-                                  </motion.div>
-                                ))}
-                              </div>
-                            </CollapsibleContent>
-                          </div>
-                        </Collapsible>
-
-                        {/* Framework Filter */}
-                        <Collapsible
-                          open={openFilter === "framework"}
-                          onOpenChange={(open) =>
-                            setOpenFilter(open ? "framework" : null)
-                          }
-                        >
-                          <div className="relative z-[60]">
-                            <CollapsibleTrigger asChild>
-                              <motion.div
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                              >
-                                <Button
-                                  variant="outline"
-                                  className={`bg-gradient-to-r from-gray-800/80 to-gray-900/80 border-2 text-white font-semibold px-4 py-2 rounded-lg shadow-lg transition-all duration-300 ${
-                                    openFilter === "framework"
-                                      ? "border-orange-500 bg-gradient-to-r from-orange-500/20 to-orange-600/20 shadow-orange-500/50"
-                                      : "border-neutral-600/50 hover:border-orange-500/70 hover:from-gray-700/80 hover:to-gray-800/80"
-                                  }`}
-                                >
-                                  <span className="text-sm font-medium flex items-center gap-2">
-                                    <Code className="h-4 w-4" />
-                                    Framework
-                                  </span>
-                                  <ChevronDown
-                                    className={`ml-2 h-4 w-4 transition-transform duration-300 ${
-                                      openFilter === "framework"
-                                        ? "rotate-180"
-                                        : ""
-                                    }`}
-                                  />
-                                </Button>
-                              </motion.div>
-                            </CollapsibleTrigger>
-                            <CollapsibleContent className="absolute z-[200] mt-2 left-0 bg-neutral-900 border border-neutral-700/50 rounded-lg p-4 shadow-xl min-w-[200px]">
-                              <div className="space-y-2">
-                                {frameworks.map((framework) => (
-                                  <motion.div
-                                    key={framework.value}
-                                    className="flex items-center space-x-2"
-                                    whileHover={{ x: 5 }}
-                                  >
-                                    <Checkbox
-                                      id={`framework-${framework.value}`}
-                                      checked={selectedFrameworks.includes(
-                                        framework.value
-                                      )}
-                                      onCheckedChange={(checked) =>
-                                        handleFrameworkChange(
-                                          framework.value,
-                                          checked as boolean
-                                        )
-                                      }
-                                    />
-                                    <label
-                                      htmlFor={`framework-${framework.value}`}
-                                      className="text-sm text-gray-300 hover:text-white transition-colors cursor-pointer"
-                                    >
-                                      {framework.label}
-                                    </label>
-                                  </motion.div>
-                                ))}
-                              </div>
-                            </CollapsibleContent>
-                          </div>
-                        </Collapsible>
-
-                        {/* Price Filter - Combined */}
-                        <Collapsible
-                          open={openFilter === "price"}
-                          onOpenChange={(open) =>
-                            setOpenFilter(open ? "price" : null)
-                          }
-                        >
-                          <div className="relative z-[60]">
-                            <CollapsibleTrigger asChild>
-                              <motion.div
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                              >
-                                <Button
-                                  variant="outline"
-                                  className={`bg-gradient-to-r from-gray-800/80 to-gray-900/80 border-2 text-white font-semibold px-4 py-2 rounded-lg shadow-lg transition-all duration-300 ${
-                                    openFilter === "price" ||
-                                    priceRange[0] !== priceBounds.min ||
-                                    priceRange[1] !== priceBounds.max ||
-                                    freeOnly
-                                      ? "border-orange-500 bg-gradient-to-r from-orange-500/20 to-orange-600/20 shadow-orange-500/50"
-                                      : "border-neutral-600/50 hover:border-orange-500/70 hover:from-gray-700/80 hover:to-gray-800/80"
-                                  }`}
-                                >
-                                  <span className="text-sm font-medium flex items-center gap-2">
-                                    <DollarSign className="h-4 w-4" />
-                                    Price
-                                    {(priceRange[0] !== priceBounds.min ||
-                                      priceRange[1] !== priceBounds.max) && (
-                                      <span className="text-orange-400">
-                                        {` ${priceRange[0]}-${priceRange[1]}`}
-                                      </span>
-                                    )}
-                                    {freeOnly && (
-                                      <span className="text-orange-400">
-                                        {priceRange[0] !== priceBounds.min || priceRange[1] !== priceBounds.max ? ", " : " "}Free
-                                      </span>
-                                    )}
-                                  </span>
-                                  <ChevronDown
-                                    className={`ml-2 h-4 w-4 transition-transform duration-300 ${
-                                      openFilter === "price" ? "rotate-180" : ""
-                                    }`}
-                                  />
-                                </Button>
-                              </motion.div>
-                            </CollapsibleTrigger>
-                            <CollapsibleContent className="absolute z-[200] mt-2 left-0 bg-neutral-900 border border-neutral-700/50 rounded-lg p-4 shadow-xl min-w-[250px]">
-                              <div className="space-y-4">
-                                {/* Price Range */}
-                                <div>
-                                  <h4 className="text-white font-semibold mb-3 text-sm">
-                                    Price Range
-                                  </h4>
-                                  <Slider
-                                    value={priceRange}
-                                    onValueChange={setPriceRange}
-                                    max={priceBounds.max}
-                                    min={priceBounds.min}
-                                    step={1}
-                                    className="w-full mb-2"
-                                  />
-                                  <div className="flex justify-between text-sm text-gray-400">
-                                    <span>{priceRange[0]}</span>
-                                    <span>{priceRange[1]}</span>
-                                  </div>
-                                </div>
-                                
-                                {/* Free Toggle */}
-                                <div className="border-t border-neutral-700/50 pt-4">
-                                  <motion.div
-                                    className="flex items-center space-x-2"
-                                    whileHover={{ x: 5 }}
-                                  >
-                                    <Checkbox
-                                      id="free-only"
-                                      checked={freeOnly}
-                                      onCheckedChange={(checked) =>
-                                        setFreeOnly(checked as boolean)
-                                      }
-                                    />
-                                    <label
-                                      htmlFor="free-only"
-                                      className="text-sm text-gray-300 hover:text-white transition-colors cursor-pointer flex items-center gap-2"
-                                    >
-                                      <Zap className="h-4 w-4 text-orange-400" />
-                                      Free Only
-                                    </label>
-                                  </motion.div>
-                                </div>
-                              </div>
-                            </CollapsibleContent>
-                          </div>
-                        </Collapsible>
-
-                        {/* On Sale Only Filter */}
-                        <motion.div
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                        >
-                          <label
-                            className={`flex items-center cursor-pointer bg-gradient-to-r from-gray-800/80 to-gray-900/80 border-2 text-white font-semibold px-4 py-2 rounded-lg shadow-lg transition-all duration-300 ${
-                              onSaleOnly
-                                ? "border-orange-500 bg-gradient-to-r from-orange-500/20 to-orange-600/20 shadow-orange-500/50"
-                                : "border-neutral-600/50 hover:border-orange-500/70 hover:from-gray-700/80 hover:to-gray-800/80"
-                            }`}
-                          >
+                  Categories
+                  {selectedCategories.length > 0 && (
+                    <span className="ml-2 px-1.5 py-0.5 rounded bg-orange-500 text-black text-[10px] font-black">{selectedCategories.length}</span>
+                  )}
+                  <ChevronDown className={cn("ml-2 h-3 w-3 transition-transform duration-200", openFilter === "categories" && "rotate-180")} />
+                </Button>
+                <AnimatePresence>
+                  {openFilter === "categories" && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 8 }}
+                      className="absolute top-full left-0 mt-2 w-56 bg-neutral-900 border border-neutral-800 rounded-xl p-4 z-[100] shadow-2xl"
+                    >
+                      <div className="flex flex-col gap-2">
+                        {categories.map((c) => (
+                          <label key={c.id} className="flex items-center gap-3 cursor-pointer group py-1">
                             <Checkbox
-                              id="on-sale"
-                              checked={onSaleOnly}
-                              onCheckedChange={(checked) =>
-                                setOnSaleOnly(checked as boolean)
-                              }
-                              className="mr-2"
+                              checked={selectedCategories.includes(c.id)}
+                              onCheckedChange={(checked) => {
+                                if (checked) setSelectedCategories([...selectedCategories, c.id]);
+                                else setSelectedCategories(selectedCategories.filter(x => x !== c.id));
+                              }}
                             />
-                            <span className="text-sm font-medium flex items-center gap-2">
-                              <Zap className="h-4 w-4" />
-                              On Sale Only
-                            </span>
+                            <span className="text-sm text-neutral-400 group-hover:text-white transition-colors">{c.name}</span>
                           </label>
-                        </motion.div>
+                        ))}
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-              {/* Search and Sort Bar */}
-              <motion.div
-                className="flex flex-col sm:flex-row gap-4 mb-6 relative z-10"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-              >
-                <div className="flex-1 relative group">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4  " />
-                  <Input
-                    type="search"
-                    placeholder="Search scripts..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 bg-neutral-900/30 border-neutral-700/50 text-white placeholder-gray-400 focus:border-orange-500 focus:bg-neutral-900/50 transition-all duration-300"
-                  />
-                </div>
-                <motion.div whileHover={{ scale: 1.02 }}>
-                  <Select value={sortBy} onValueChange={setSortBy}>
-                    <SelectTrigger className="w-48 bg-neutral-900/30 border-neutral-700/50 text-white backdrop-blur-sm">
-                      <SelectValue placeholder="Sort by" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-neutral-900/95 border-neutral-700/50 backdrop-blur-xl">
-                      <SelectItem value="popular" className="text-white">
-                        Most Popular
-                      </SelectItem>
-                      <SelectItem value="newest" className="text-white">
-                        Newest First
-                      </SelectItem>
-                      <SelectItem value="price-low" className="text-white">
-                        Price: Low to High
-                      </SelectItem>
-                      <SelectItem value="price-high" className="text-white">
-                        Price: High to Low
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </motion.div>
-                {/* <div className="hidden sm:flex border border-neutral-700/50 rounded-md backdrop-blur-sm">
-                  <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <Button
-                      variant={viewMode === "grid" ? "default" : "ghost"}
-                      size="sm"
-                      onClick={() => setViewMode("grid")}
-                      className={
-                        viewMode === "grid"
-                          ? "bg-orange-500 text-white"
-                          : "text-gray-400 hover:text-white"
-                      }
-                    >
-                      <Grid className="h-4 w-4" />
-                    </Button>
-                  </motion.div>
-                  <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <Button
-                      variant={viewMode === "list" ? "default" : "ghost"}
-                      size="sm"
-                      onClick={() => setViewMode("list")}
-                      className={
-                        viewMode === "list"
-                          ? "bg-orange-500 text-white"
-                          : "text-gray-400 hover:text-white"
-                      }
-                    >
-                      <List className="h-4 w-4" />
-                    </Button>
-                  </motion.div>
-                </div> */}
-              </motion.div>
-
-              {/* Active Filters */}
-              <AnimatePresence>
-                {activeFiltersCount > 0 && (
-                  <motion.div
-                    className="mb-6"
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <motion.div
-                      className="flex flex-wrap gap-2"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ staggerChildren: 0.05 }}
-                    >
-                      {selectedCategories.map((category, index) => (
-                        <motion.div
-                          key={category}
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.8 }}
-                          transition={{ delay: index * 0.05 }}
-                          whileHover={{ scale: 1.05 }}
-                        >
-                          <Badge
-                            variant="secondary"
-                            className="bg-orange-500/20 text-orange-400 border-orange-500/30 flex items-center gap-1 backdrop-blur-sm"
-                          >
-                            {categories.find((c) => c.id === category)?.name}
-                            <motion.button
-                              onClick={() => removeFilter("category", category)}
-                              className="hover:text-white transition-colors"
-                              whileHover={{ scale: 1.2 }}
-                              whileTap={{ scale: 0.8 }}
-                            >
-                              <X className="h-3 w-3" />
-                            </motion.button>
-                          </Badge>
-                        </motion.div>
-                      ))}
-                      {selectedFrameworks.map((framework, index) => {
-                        const frameworkObj = frameworks.find(
-                          (f) => f.value === framework
-                        );
-                        return (
-                          <motion.div
-                            key={framework}
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.8 }}
-                            transition={{ delay: index * 0.05 }}
-                            whileHover={{ scale: 1.05 }}
-                          >
-                            <Badge
-                              variant="secondary"
-                              className="bg-blue-500/20 text-blue-400 border-blue-500/30 flex items-center gap-1 backdrop-blur-sm"
-                            >
-                              {frameworkObj?.label || framework}
-                              <motion.button
-                                onClick={() =>
-                                  removeFilter("framework", framework)
-                                }
-                                className="hover:text-white transition-colors"
-                                whileHover={{ scale: 1.2 }}
-                                whileTap={{ scale: 0.8 }}
-                              >
-                                <X className="h-3 w-3" />
-                              </motion.button>
-                            </Badge>
-                          </motion.div>
-                        );
-                      })}
-                      {(priceRange[0] !== priceBounds.min || priceRange[1] !== priceBounds.max) && (
-                        <motion.div
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.8 }}
-                          whileHover={{ scale: 1.05 }}
-                        >
-                          <Badge
-                            variant="secondary"
-                            className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 flex items-center gap-1 backdrop-blur-sm"
-                          >
-                            Price: {priceRange[0]}-{priceRange[1]}
-                            <motion.button
-                              onClick={() => setPriceRange([priceBounds.min, priceBounds.max])}
-                              className="hover:text-white transition-colors"
-                              whileHover={{ scale: 1.2 }}
-                              whileTap={{ scale: 0.8 }}
-                            >
-                              <X className="h-3 w-3" />
-                            </motion.button>
-                          </Badge>
-                        </motion.div>
-                      )}
-                      {onSaleOnly && (
-                        <motion.div
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.8 }}
-                          whileHover={{ scale: 1.05 }}
-                        >
-                          <Badge
-                            variant="secondary"
-                            className="bg-red-500/20 text-red-400 border-red-500/30 flex items-center gap-1 backdrop-blur-sm"
-                          >
-                            On Sale
-                            <motion.button
-                              onClick={() => setOnSaleOnly(false)}
-                              className="hover:text-white transition-colors"
-                              whileHover={{ scale: 1.2 }}
-                              whileTap={{ scale: 0.8 }}
-                            >
-                              <X className="h-3 w-3" />
-                            </motion.button>
-                          </Badge>
-                        </motion.div>
-                      )}
-                      {freeOnly && (
-                        <motion.div
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.8 }}
-                          whileHover={{ scale: 1.05 }}
-                        >
-                          <Badge
-                            variant="secondary"
-                            className="bg-green-500/20 text-green-400 border-green-500/30 flex items-center gap-1 backdrop-blur-sm"
-                          >
-                            Free
-                            <motion.button
-                              onClick={() => setFreeOnly(false)}
-                              className="hover:text-white transition-colors"
-                              whileHover={{ scale: 1.2 }}
-                              whileTap={{ scale: 0.8 }}
-                            >
-                              <X className="h-3 w-3" />
-                            </motion.button>
-                          </Badge>
-                        </motion.div>
-                      )}
                     </motion.div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                  )}
+                </AnimatePresence>
+              </div>
 
-              {/* Results Count */}
-              {!loading && (
-                <motion.div
-                  className="mb-6"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
+              {/* Framework Dropdown */}
+              <div className="relative">
+                <Button
+                  onClick={() => setOpenFilter(openFilter === "framework" ? null : "framework")}
+                  className={cn(
+                    "bg-neutral-900/50 border text-white border-neutral-800 hover:border-orange-500/50 hover:text-black  text-xs font-semibold h-10 px-4",
+                    (selectedFrameworks.length > 0 || openFilter === "framework") && "border-orange-500/40 bg-orange-500/5 text-orange-400 hover:text-black"
+                  )}
                 >
-                  <p className="text-gray-400 flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-orange-500" />
-                    Showing {sortedScripts.length} of {allScripts.length} scripts
-                    {searchQuery && (
-                      <span className="text-orange-500">
-                        for <span className="font-semibold">{searchQuery}</span>
-                      </span>
-                    )}
-                  </p>
-                </motion.div>
-              )}
-
-              {/* Scripts Grid/List */}
-              <AnimatePresence mode="wait">
-                {loading ? (
-                  <motion.div
-                    className={
-                      viewMode === "grid"
-                        ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
-                        : "space-y-4"
-                    }
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.5, staggerChildren: 0.1 }}
-                  >
-                    {Array.from({ length: 6 }).map((_, index) => (
-                      <motion.div
-                        key={index}
-                        className={`bg-neutral-900 border-2 border-neutral-700/50 backdrop-blur-sm rounded-lg overflow-hidden ${
-                          viewMode === "list"
-                            ? "flex flex-row"
-                            : "flex flex-col"
-                        }`}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                      >
-                        {/* Image Skeleton */}
-                        <div
-                          className={`bg-neutral-800/50 animate-pulse ${
-                            viewMode === "list"
-                              ? "w-56 flex-shrink-0 h-full"
-                              : "w-full h-52"
-                          }`}
-                        />
-                        {/* Content Skeleton */}
-                        <div className="flex flex-col flex-1 p-3 space-y-3">
-                          <div className="space-y-2">
-                            <div className="h-5 bg-neutral-800/50 rounded animate-pulse w-3/4" />
-                            <div className="h-4 bg-neutral-800/50 rounded animate-pulse w-1/2" />
-                          </div>
-                          <div className="flex gap-2">
-                            <div className="h-5 w-16 bg-neutral-800/50 rounded animate-pulse" />
-                            <div className="h-5 w-16 bg-neutral-800/50 rounded animate-pulse" />
-                          </div>
-                          <div className="h-4 bg-neutral-800/50 rounded animate-pulse w-2/3" />
-                          <div className="h-6 bg-neutral-800/50 rounded animate-pulse w-20" />
-                          <div className="mt-auto pt-2">
-                            <div className="h-8 bg-neutral-800/50 rounded animate-pulse w-full" />
-                          </div>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </motion.div>
-                ) : sortedScripts.length === 0 ? (
-                  <motion.div
-                    className="text-center py-20"
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.9 }}
-                    transition={{ duration: 0.5 }}
-                  >
+                  Framework
+                  {selectedFrameworks.length > 0 && (
+                    <span className="ml-2 px-1.5 py-0.5 rounded bg-orange-500 text-black text-[10px] font-black">{selectedFrameworks.length}</span>
+                  )}
+                  <ChevronDown className={cn("ml-2 h-3 w-3 transition-transform duration-200", openFilter === "framework" && "rotate-180")} />
+                </Button>
+                <AnimatePresence>
+                  {openFilter === "framework" && (
                     <motion.div
-                      className="mb-6"
-                      animate={{ rotate: [0, 10, -10, 0] }}
-                      transition={{
-                        duration: 2,
-                        repeat: Number.POSITIVE_INFINITY,
-                      }}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 8 }}
+                      className="absolute top-full left-0 mt-2 w-56 bg-neutral-900 border border-neutral-800 rounded-xl p-4 z-[100] shadow-2xl"
                     >
-                      <Search className="h-16 w-16 text-gray-600 mx-auto" />
-                    </motion.div>
-                    <p className="text-gray-400 text-xl mb-6">
-                      No scripts found matching your criteria
-                    </p>
-                    <motion.div
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      <Button
-                        onClick={clearAllFilters}
-                        className="bg-gradient-to-r from-orange-500 to-yellow-400 hover:from-orange-600 hover:to-yellow-500 text-black font-semibold"
-                      >
-                        <Sparkles className="mr-2 h-4 w-4" />
-                        Clear All Filters
-                      </Button>
-                    </motion.div>
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    className={
-                      viewMode === "grid"
-                        ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
-                        : "space-y-4"
-                    }
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.5, staggerChildren: 0.1 }}
-                  >
-                    {(() => {
-                      const items: GridItem[] = [...paginatedScripts];
-                      // Insert ads at memoized positions (only if they fall within current page)
-                      if (randomAds.length > 0 && items.length > 0 && memoizedAdPositions.length > 0) {
-                        const adPositions: Array<{ ad: any; position: number }> = [];
-                        
-                        // Find which ads should appear on this page based on memoized positions
-                        for (let i = 0; i < randomAds.length && i < memoizedAdPositions.length; i++) {
-                          const globalPosition = memoizedAdPositions[i];
-                          // Check if this ad position falls within the current page
-                          if (globalPosition >= startIndex && globalPosition < endIndex) {
-                            // Convert global position to local page position
-                            const localPosition = globalPosition - startIndex;
-                            adPositions.push({ 
-                              ad: randomAds[i], 
-                              position: localPosition 
-                            });
-                          }
-                        }
-                        
-                        // Sort by position in descending order to avoid index shifting when inserting
-                        adPositions.sort((a, b) => b.position - a.position);
-                        adPositions.forEach(({ ad, position }) => {
-                          items.splice(position, 0, {
-                            ...ad,
-                            isAd: true,
-                          } as GridItem);
-                        });
-                      }
-                      return items.map((item: GridItem, index) => {
-                        // If it's an ad, render AdCard
-                        if ("isAd" in item && item.isAd) {
-                          return (
-                            <AdCard
-                              key={`ad-${item.id}`}
-                              ad={item as any}
-                              variant="script"
+                      <div className="flex flex-col gap-2">
+                        {frameworks.map((f) => (
+                          <label key={f.value} className="flex items-center gap-3 cursor-pointer group py-1">
+                            <Checkbox
+                              checked={selectedFrameworks.includes(f.value)}
+                              onCheckedChange={(checked) => {
+                                if (checked) setSelectedFrameworks([...selectedFrameworks, f.value]);
+                                else setSelectedFrameworks(selectedFrameworks.filter(x => x !== f.value));
+                              }}
                             />
-                          );
-                        }
+                            <span className="text-sm text-neutral-400 group-hover:text-white transition-colors">{f.label}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
 
-                        // Otherwise render script
-                        const script = item as UIScript;
-                        return (
-                          <motion.div key={script.id} className="group" whileHover={{ y: -5, scale: 1.02 }}>
-                            <Link href={`/script/${script.id}`}>
-                              <Card
-                                className={`bg-neutral-900 border-neutral-700/50 hover:border-white cursor-pointer h-full backdrop-blur-sm relative overflow-hidden shadow-2xl rounded-lg transition-all duration-300 ${
-                                  viewMode === "list"
-                                    ? "flex flex-row"
-                                    : "flex flex-col"
-                                }`}
-                              >
-                                {/* Image Section */}
-                                <CardHeader
-                                  className={`p-0 overflow-hidden relative ${
-                                    viewMode === "list"
-                                      ? "w-56 flex-shrink-0 rounded-l-lg"
-                                      : "rounded-t-lg"
-                                  }`}
-                                >
-                                  <Image
-                                    src={script.image || "/placeholder.jpg"}
-                                    alt={script.title}
-                                    width={400}
-                                    height={256}
-                                    className={`object-cover w-full ${
-                                      viewMode === "list" ? "h-full" : "h-52"
-                                    }`}
-                                  />
-                                  {script.featured && (
-                                    <Badge className="absolute top-2 left-2 bg-yellow-500 text-black font-semibold shadow-lg">
-                                      Featured
-                                    </Badge>
-                                  )}
-                                </CardHeader>
-
-                                {/* Content Section */}
-                                <div className="flex flex-col flex-1">
-                                  <CardContent className="p-3 flex-1 space-y-2">
-                                    {/* Title */}
-                                    <CardTitle className="text-base font-bold text-white leading-tight line-clamp-2">
-                                      {script.title}
-                                    </CardTitle>
-
-
-                                    {/* Framework Badges */}
-                                    {script.framework &&
-                                      script.framework.length > 0 && (
-                                        <motion.div
-                                          className="flex flex-wrap gap-1"
-                                          // initial={{ scale: 0, rotate: 180 }}
-                                          // animate={{ scale: 1, rotate: 0 }}
-                                        >
-                                          {script.framework.map((fw, idx) => (
-                                            <motion.div
-                                              key={idx}
-                                              
-                                            >
-                                              <Badge className="bg-neutral-800/95 text-white backdrop-blur-sm text-[10px] font-bold border border-neutral-600/50 rounded px-1.5 py-0.5 uppercase tracking-wide shadow-lg hover:bg-neutral-800/95 hover:text-white">
-                                                <span className="mr-1 text-xs">
-                                                  •
-                                                </span>
-                                                {fw}
-                                              </Badge>
-                                            </motion.div>
-                                          ))}
-                                        </motion.div>
-                                      )}
-                                      
-                                    {/* Description */}
-                                    <CardDescription className="text-neutral-400 text-xs leading-snug flex items-center gap-1.5 flex-row">
-                                      <Avatar className="h-4 w-4 flex-shrink-0">
-                                        <AvatarImage
-                                          src={script.seller_image || "/placeholder-user.jpg"}
-                                          alt={script.seller}
-                                        />
-                                        <AvatarFallback className="bg-orange-500 text-white text-[8px] font-bold">
-                                          {script.seller ? script.seller[0].toUpperCase() : "?"}
-                                        </AvatarFallback>
-                                      </Avatar>
-                                      <span className="whitespace-nowrap">By {script.seller}</span>
-                                      {isVerifiedCreator(script.seller_roles) && (
-                                        <VerifiedIcon size="sm" className="flex-shrink-0" />
-                                      )}
-                                    </CardDescription>
-                                    {/* Price */}
-                                    <div className="flex items-center gap-2 pt-1 flex-wrap">
-                                      {script.free ? (
-                                        <span className="text-orange-500 text-xl font-bold">Free</span>
-                                      ) : (
-                                        <>
-                                          {script.discount > 0 && script.originalPrice ? (
-                                            <>
-                                              <span className="text-gray-500 text-sm line-through">
-                                                {script.currency_symbol || "$"}{script.originalPrice}
-                                              </span>
-                                              <Badge className="bg-red-500/20 text-red-400 border-red-500/30 text-xs font-semibold px-2 py-0.5">
-                                                -{script.discount}%
-                                              </Badge>
-                                            </>
-                                          ) : null}
-                                          <span className="text-orange-500 text-xl font-bold">
-                                            {script.currency_symbol || "$"}{script.price}
-                                          </span>
-                                        </>
-                                      )}
-                                    </div>
-                                  </CardContent>
-
-                                  {/* Button Section */}
-                                  <div className="px-3 pb-3 mt-auto">
-                                    <Button
-                                      variant="outline"
-                                      className="w-full bg-white text-black hover:bg-gray-300 hover:border-gray-300 hover:text-black transition-colors duration-200 font-semibold text-xs py-1.5 h-auto"
-                                    >
-                                      View Details
-                                    </Button>
-                                  </div>
-                                </div>
-                              </Card>
-                            </Link>
-                          </motion.div>
-                        );
-                      });
-                    })()}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {/* Pagination */}
-              {sortedScripts.length > 0 && totalPages > 1 && (
-                <motion.div
-                  className="flex justify-center mt-12"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5 }}
+              {/* Price Dropdown */}
+              <div className="relative">
+                <Button
+                  onClick={() => setOpenFilter(openFilter === "price" ? null : "price")}
+                  className={cn(
+                    "bg-neutral-900/50 border text-white border-neutral-800 hover:border-orange-500/50 hover:text-black  text-xs font-semibold h-10 px-4",
+                    (priceRange[0] !== priceBounds.min || priceRange[1] !== priceBounds.max || freeOnly) && "border-orange-500/40 bg-orange-500/5 text-orange-400 hover:text-black"
+                  )}
                 >
-                  <div className="flex space-x-2">
-                    {/* Previous Button */}
+                  Price
+                  <ChevronDown className={cn("ml-2 h-3 w-3 transition-transform duration-200", openFilter === "price" && "rotate-180")} />
+                </Button>
+                <AnimatePresence>
+                  {openFilter === "price" && (
                     <motion.div
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.05 }}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 8 }}
+                      className="absolute top-full left-0 mt-2 w-64 bg-neutral-900 border border-neutral-800 rounded-xl p-6 z-[100] shadow-2xl"
                     >
-                      <Button
-                        variant="outline"
-                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                        disabled={currentPage === 1}
-                        className="bg-neutral-900/30 border-neutral-700/50 text-white hover:bg-orange-500 hover:border-orange-500 backdrop-blur-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        Previous
-                      </Button>
+                      <div className="flex flex-col gap-6">
+                        <div className="space-y-4">
+                          <p className="text-[10px] font-black text-neutral-500 uppercase tracking-widest">Range: ${priceRange[0]} - ${priceRange[1]}</p>
+                          <Slider
+                            value={priceRange}
+                            onValueChange={setPriceRange}
+                            max={priceBounds.max}
+                            min={priceBounds.min}
+                            step={1}
+                            className="py-4"
+                          />
+                        </div>
+                        <div className="h-px bg-neutral-800" />
+                        <label className="flex items-center gap-3 cursor-pointer group">
+                          <Checkbox
+                            checked={freeOnly}
+                            onCheckedChange={(v) => setFreeOnly(!!v)}
+                          />
+                          <span className="text-sm text-neutral-400 group-hover:text-white transition-colors">Free Scripts Only</span>
+                        </label>
+                      </div>
                     </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
 
-                    {/* Page Numbers */}
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
-                      <motion.div
-                        key={pageNum}
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: pageNum * 0.05 }}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        <Button
-                          variant={currentPage === pageNum ? "default" : "outline"}
-                          onClick={() => setCurrentPage(pageNum)}
-                          className={
-                            currentPage === pageNum
-                              ? "bg-orange-500 text-white"
-                              : "bg-neutral-900/30 border-neutral-700/50 text-white hover:bg-orange-500 hover:border-orange-500 backdrop-blur-sm"
-                          }
-                        >
-                          {pageNum}
-                        </Button>
-                      </motion.div>
-                    ))}
+              {/* On Sale toggle */}
+              <Button
+                onClick={() => setOnSaleOnly(!onSaleOnly)}
+                className={cn(
+                  "bg-neutral-900/50 border text-white border-neutral-800 hover:border-orange-500/50 hover:text-black  text-xs font-semibold h-10 px-4",
+                  onSaleOnly && "border-orange-500/40 bg-orange-500/5 text-orange-400 hover:text-black"
+                )}
+              >
+                <Zap className={cn("mr-2 h-3 w-3", onSaleOnly ? "text-orange-500" : "text-neutral-500")} />
+                On Sale
+              </Button>
 
-                    {/* Next Button */}
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: (totalPages + 1) * 0.05 }}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      <Button
-                        variant="outline"
-                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                        disabled={currentPage === totalPages}
-                        className="bg-neutral-900/30 border-neutral-700/50 text-white hover:bg-orange-500 hover:border-orange-500 backdrop-blur-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        Next
-                      </Button>
-                    </motion.div>
-                  </div>
-                </motion.div>
+              {activeFiltersCount > 0 && (
+                <Button
+                  variant="ghost"
+                  onClick={clearAllFilters}
+                  className="text-[10px] font-black text-orange-500 hover:text-orange-400 uppercase tracking-widest px-4"
+                >
+                  Clear all
+                </Button>
               )}
-            </motion.div>
+            </div>
+
+            {/* Search and Sort */}
+            <div className="flex items-center gap-3">
+              <div className="relative group flex-1 md:w-64 lg:w-80">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-600 group-focus-within:text-orange-500 transition-colors" />
+                <input
+                  type="text"
+                  placeholder="Search scripts..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-neutral-900/40 border text-white border-neutral-800 rounded-xl pl-10 pr-4 py-2.5 text-sm outline-none focus:border-orange-500/50 transition-all placeholder:text-neutral-700"
+                />
+              </div>
+
+              <div className="relative">
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="appearance-none bg-neutral-900/40 border border-neutral-800 rounded-xl px-4 py-2.5 text-xs font-bold text-neutral-400 outline-none focus:border-orange-500/50 transition-all pr-10 cursor-pointer"
+                >
+                  <option value="popular">Most Popular</option>
+                  <option value="newest">Newest First</option>
+                  <option value="price-low">Price: Low to High</option>
+                  <option value="price-high">Price: High to Low</option>
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-3 w-3 text-neutral-600 pointer-events-none" />
+              </div>
+            </div>
+          </div>
+
+          {/* Active Filter Chips */}
+          <AnimatePresence>
+            {activeFiltersCount > 0 && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="flex flex-wrap gap-2 pt-2"
+              >
+                {selectedCategories.map(c => (
+                  <FilterChip key={c} label={categories.find(x => x.id === c)?.name || c} onRemove={() => removeFilter("category", c)} />
+                ))}
+                {selectedFrameworks.map(f => (
+                  <FilterChip key={f} label={frameworks.find(x => x.value === f)?.label || f} onRemove={() => removeFilter("framework", f)} />
+                ))}
+                {(priceRange[0] !== priceBounds.min || priceRange[1] !== priceBounds.max) && (
+                  <FilterChip label={`$${priceRange[0]}-${priceRange[1]}`} onRemove={() => setPriceRange([priceBounds.min, priceBounds.max])} />
+                )}
+                {onSaleOnly && <FilterChip label="On Sale" onRemove={() => setOnSaleOnly(false)} />}
+                {freeOnly && <FilterChip label="Free" onRemove={() => setFreeOnly(false)} />}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Results Bar */}
+        {!loading && (
+          <div className="flex items-center justify-between mb-8 text-xs font-bold text-neutral-600 uppercase tracking-widest">
+            <div className="flex items-center gap-2">
+              <span className="h-1 w-1 rounded-full bg-orange-500" />
+              Showing <span className="text-white">{sortedScripts.length}</span> scripts
+            </div>
+            <div className="flex items-center gap-4">
+              <button onClick={() => setViewMode("grid")} className={cn("p-1.5 rounded transition-colors", viewMode === "grid" ? "text-orange-500 bg-orange-500/10" : "text-neutral-700 hover:text-neutral-400")}><Grid className="h-4 w-4" /></button>
+              <button onClick={() => setViewMode("list")} className={cn("p-1.5 rounded transition-colors", viewMode === "list" ? "text-orange-500 bg-orange-500/10" : "text-neutral-700 hover:text-neutral-400")}><List className="h-4 w-4" /></button>
+            </div>
+          </div>
+        )}
+
+        {/* ── Scripts Grid ───────────────────────────────────────────── */}
+        <div className={cn(
+          "grid gap-6",
+          viewMode === "grid" ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "grid-cols-1"
+        )}>
+          {loading ? (
+            Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} viewMode={viewMode} />)
+          ) : (
+            <>
+              {paginatedScripts.length > 0 ? (
+                <>
+                  {/* Insert Ads logic */}
+                  {(() => {
+                    const items: any[] = [...paginatedScripts];
+                    if (randomAds.length > 0 && memoizedAdPositions.length > 0) {
+                      const toInsert: any[] = [];
+                      for (let i = 0; i < randomAds.length; i++) {
+                        const gp = memoizedAdPositions[i];
+                        if (gp >= startIndex && gp < endIndex) toInsert.push({ ad: randomAds[i], pos: gp - startIndex });
+                      }
+                      toInsert.sort((a, b) => b.pos - a.pos).forEach(({ ad, pos }) => {
+                        items.splice(pos, 0, { ...ad, isAd: true });
+                      });
+                    }
+                    return items.map((item, idx) => (
+                      <motion.div
+                        key={item.isAd ? `ad-${item.id}` : item.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={scriptsInView ? { opacity: 1, y: 0 } : {}}
+                        transition={{ duration: 0.5, delay: (idx % 4) * 0.1 }}
+                      >
+                        {item.isAd ? (
+                          <AdCard ad={item} variant="script" />
+                        ) : (
+                          <ScriptCard script={item} viewMode={viewMode} />
+                        )}
+                      </motion.div>
+                    ));
+                  })()}
+                </>
+              ) : (
+                <div className="col-span-full py-32 text-center">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-neutral-900 border border-neutral-800 mb-6">
+                    <Search className="h-6 w-6 text-neutral-700" />
+                  </div>
+                  <h3 className="text-xl font-bold text-white mb-2">No scripts found</h3>
+                  <p className="text-neutral-500 mb-8 max-w-xs mx-auto">We couldn&apos;t find any scripts matching your current filters.</p>
+                  <Button onClick={clearAllFilters} className="bg-orange-500 hover:bg-orange-400 text-black font-bold px-8">Clear All Filters</Button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* ── Pagination ─────────────────────────────────────────────── */}
+        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+      </main>
+
+      <Footer />
+    </div>
+  );
+}
+
+// ── Internal Components ──────────────────────────────────────────────────────
+
+function FilterChip({ label, onRemove }: { label: string; onRemove: () => void }) {
+  return (
+    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-orange-500/10 border border-orange-500/20 text-[10px] font-black text-orange-400 uppercase tracking-widest group">
+      {label}
+      <button onClick={onRemove} className="hover:text-white transition-colors">
+        <X className="h-3 w-3" />
+      </button>
+    </div>
+  );
+}
+
+function ScriptCard({ script, viewMode }: { script: UIScript; viewMode: "grid" | "list" }) {
+  return (
+    <Link href={`/script/${script.id}`} className="block group h-full">
+      <div className={cn(
+        "relative bg-[#080808] border border-neutral-800/60 rounded-2xl overflow-hidden transition-all duration-500 group-hover:border-orange-500/40 group-hover:shadow-[0_20px_40px_rgba(0,0,0,0.4),0_0_20px_rgba(249,115,22,0.05)] h-full flex",
+        viewMode === "grid" ? "flex-col" : "flex-row"
+      )}>
+        {/* Image Area */}
+        <div className={cn(
+          "relative overflow-hidden",
+          viewMode === "grid" ? "aspect-video w-full" : "w-64 flex-shrink-0"
+        )}>
+          <Image
+            src={script.image}
+            alt={script.title}
+            fill
+            className="object-cover transition-transform duration-700 group-hover:scale-110"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60" />
+
+          {script.featured && (
+            <div className="absolute top-3 left-3 px-2 py-0.5 rounded bg-orange-500 text-black text-[9px] font-black uppercase tracking-widest shadow-lg">
+              Featured
+            </div>
+          )}
+
+          {script.discount > 0 && (
+            <div className="absolute top-3 right-3 px-2 py-0.5 rounded bg-red-500 text-white text-[9px] font-black uppercase tracking-widest shadow-lg">
+              -{script.discount}%
+            </div>
+          )}
+        </div>
+
+        {/* Content Area */}
+        <div className="p-5 flex flex-col gap-4 flex-1">
+          <div className="flex flex-col gap-1.5">
+            <h3 className="text-white font-bold text-base leading-tight group-hover:text-orange-400 transition-colors line-clamp-1">
+              {script.title}
+            </h3>
+
+            <div className="flex items-center gap-2">
+              <div className="relative w-4 h-4 rounded-full overflow-hidden border border-neutral-800">
+                <Image src={script.seller_image || "/placeholder-user.jpg"} alt={script.seller} fill className="object-cover" />
+              </div>
+              <span className="text-[10px] text-neutral-500 font-semibold">{script.seller}</span>
+              {isVerifiedCreator(script.seller_roles) && <VerifiedIcon size="sm" className="h-3 w-3" />}
+            </div>
+          </div>
+
+          {/* Frameworks */}
+          <div className="flex flex-wrap gap-1.5">
+            {script.framework?.map((fw) => (
+              <span key={fw} className="text-[9px] font-black uppercase tracking-widest text-neutral-400 bg-neutral-900 border border-neutral-800 px-2 py-0.5 rounded">
+                {fw}
+              </span>
+            ))}
+          </div>
+
+          {/* Price & CTA */}
+          <div className="mt-auto flex items-center justify-between pt-4 border-t border-neutral-900">
+            <div className="flex flex-col">
+              {script.free ? (
+                <span className="text-lg font-black text-orange-500 uppercase tracking-tighter">Free</span>
+              ) : (
+                <div className="flex items-baseline gap-2">
+                  <span className="text-lg font-black text-white">{script.currency_symbol || "$"}{script.price}</span>
+                  {script.originalPrice && script.originalPrice > script.price && (
+                    <span className="text-[10px] text-neutral-600 line-through">${script.originalPrice}</span>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="w-8 h-8 rounded-lg bg-orange-500/10 border border-orange-500/20 flex items-center justify-center group-hover:bg-orange-500 group-hover:text-black transition-all duration-300">
+              <Sparkles className="h-3.5 w-3.5" />
+            </div>
           </div>
         </div>
       </div>
-      <Footer />
-    </>
+    </Link>
+  );
+}
+
+function SkeletonCard({ viewMode }: { viewMode: "grid" | "list" }) {
+  return (
+    <div className={cn(
+      "bg-[#080808] border border-neutral-800/60 rounded-2xl overflow-hidden h-[340px] flex",
+      viewMode === "grid" ? "flex-col" : "flex-row"
+    )}>
+      <div className={cn("bg-neutral-900 animate-pulse", viewMode === "grid" ? "aspect-video w-full" : "w-64 flex-shrink-0")} />
+      <div className="p-5 flex flex-col gap-4 flex-1">
+        <div className="h-5 w-3/4 bg-neutral-900 rounded animate-pulse" />
+        <div className="h-3 w-1/2 bg-neutral-900 rounded animate-pulse" />
+        <div className="flex gap-2">
+          <div className="h-4 w-12 bg-neutral-900 rounded animate-pulse" />
+          <div className="h-4 w-12 bg-neutral-900 rounded animate-pulse" />
+        </div>
+        <div className="mt-auto flex items-center justify-between pt-4">
+          <div className="h-6 w-16 bg-neutral-900 rounded animate-pulse" />
+          <div className="h-8 w-8 bg-neutral-900 rounded animate-pulse" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Pagination({ currentPage, totalPages, onPageChange }: { currentPage: number; totalPages: number; onPageChange: (p: number) => void }) {
+  if (totalPages <= 1) return null;
+  return (
+    <div className="flex items-center justify-center gap-2 mt-16">
+      <Button
+        variant="ghost"
+        disabled={currentPage === 1}
+        onClick={() => onPageChange(currentPage - 1)}
+        className="text-[10px] font-black uppercase tracking-widest text-neutral-500 hover:text-white"
+      >
+        Prev
+      </Button>
+      {Array.from({ length: totalPages }).map((_, i) => {
+        const page = i + 1;
+        return (
+          <button
+            key={page}
+            onClick={() => onPageChange(page)}
+            className={cn(
+              "w-8 h-8 rounded-lg text-xs font-black transition-all",
+              currentPage === page ? "bg-orange-500 text-black shadow-[0_0_15px_rgba(249,115,22,0.3)]" : "text-neutral-500 hover:bg-neutral-900 hover:text-white"
+            )}
+          >
+            {page}
+          </button>
+        );
+      })}
+      <Button
+        variant="ghost"
+        disabled={currentPage === totalPages}
+        onClick={() => onPageChange(currentPage + 1)}
+        className="text-[10px] font-black uppercase tracking-widest text-neutral-500 hover:text-white"
+      >
+        Next
+      </Button>
+    </div>
   );
 }

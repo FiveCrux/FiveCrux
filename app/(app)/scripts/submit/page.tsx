@@ -1,11 +1,9 @@
-"use client"
+"use client";
 
-import type React from "react"
-
-import { useState, useRef, useEffect } from "react"
-import { useSession } from "next-auth/react"
-import { useRouter, useSearchParams } from "next/navigation"
-import { motion, useInView } from "framer-motion"
+import { useState, useRef, useEffect, useMemo } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { motion, AnimatePresence, useInView } from "framer-motion";
 import {
   Upload,
   Plus,
@@ -24,77 +22,61 @@ import {
   DollarSign,
   Settings,
   Loader2,
-} from "lucide-react"
-import { Button } from "@/componentss/ui/button"
-import { Input } from "@/componentss/ui/input"
-import { Textarea } from "@/componentss/ui/textarea"
-import { Card, CardContent, CardHeader, CardTitle } from "@/componentss/ui/card"
-import { Badge } from "@/componentss/ui/badge"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/componentss/ui/select"
-import { Switch } from "@/componentss/ui/switch"
-import { Label } from "@/componentss/ui/label"
-import { Popover, PopoverContent, PopoverTrigger } from "@/componentss/ui/popover"
-import { Checkbox } from "@/componentss/ui/checkbox"
-import { ChevronDown } from "lucide-react"
-import { cn } from "@/lib/utils"
-import Navbar from "@/componentss/shared/navbar"
-import Footer from "@/componentss/shared/footer"
-import { toast } from "sonner"
-import { CurrencySelect, type Currency } from "@/componentss/currency-select"
-import * as countryData from "country-data-list"
+  ChevronDown,
+  Layout,
+  MousePointer2,
+} from "lucide-react";
+import { Button } from "@/componentss/ui/button";
+import { Input } from "@/componentss/ui/input";
+import { Textarea } from "@/componentss/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/componentss/ui/card";
+import { Badge } from "@/componentss/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/componentss/ui/select";
+import { Switch } from "@/componentss/ui/switch";
+import { Label } from "@/componentss/ui/label";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/componentss/ui/popover";
+import { Checkbox } from "@/componentss/ui/checkbox";
+import { cn } from "@/lib/utils";
+import Navbar from "@/componentss/shared/navbar";
+import Footer from "@/componentss/shared/footer";
+import { toast } from "sonner";
+import { CurrencySelect, type Currency } from "@/componentss/currency-select";
+import * as countryData from "country-data-list";
+import dynamic from "next/dynamic";
+import Image from "next/image";
+import Link from "next/link";
+// Lazy-load Three.js canvas to avoid SSR issues
+const ParticleCanvas = dynamic(() => import("@/componentss/home/ParticleCanvas"), { ssr: false });
 
-// Animated background particles
-const AnimatedParticles = () => {
-  return (
-    <div className="fixed inset-0 pointer-events-none overflow-hidden">
-      {[...Array(5)].map((_, i) => (
-        <motion.div
-          key={i}
-          className="absolute w-1 h-1 bg-orange-500/30 rounded-full"
-          animate={{
-            x: [0, Math.random() * 100 - 50],
-            y: [0, Math.random() * 100 - 50],
-            opacity: [0, 1, 0],
-            scale: [0, 1.5, 0],
-          }}
-          transition={{
-            duration: Math.random() * 8 + 12,
-            repeat: Number.POSITIVE_INFINITY,
-            delay: Math.random() * 3,
-          }}
-          style={{
-            left: `${Math.random() * 100}%`,
-            top: `${Math.random() * 100}%`,
-          }}
-        />
-      ))}
-    </div>
-  )
-}
-
+// ── Page ─────────────────────────────────────────────────────────────────────
 export default function SubmitScriptPage() {
-  const { data: session, status } = useSession()
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const scriptId = searchParams.get('edit')
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const scriptId = searchParams.get("edit");
 
-  // All hooks must be called at the top level, before any conditional returns
-  const formRef = useRef(null)
-  const previewRef = useRef(null)
-  const formInView = useInView(formRef, { once: true })
-  const previewInView = useInView(previewRef, { once: true })
-  
-  // State declarations
-  const [errors, setErrors] = useState({})
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isEditMode, setIsEditMode] = useState(false)
-  const [isLoadingScript, setIsLoadingScript] = useState(false)
-  const [isFree, setIsFree] = useState(false)
-  const [uploadingCoverImage, setUploadingCoverImage] = useState(false)
-  const [uploadingScreenshots, setUploadingScreenshots] = useState(false)
-  const [uploadingVideos, setUploadingVideos] = useState(false)
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
-  // Form state (must be declared before effects that reference setters)
+  // ── Form Logic & State ────────────────────────────────────────────────────
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [isLoadingScript, setIsLoadingScript] = useState(false);
+  const [isFree, setIsFree] = useState(false);
+  const [uploadingCoverImage, setUploadingCoverImage] = useState(false);
+  const [uploadingScreenshots, setUploadingScreenshots] = useState(false);
+  const [uploadingVideos, setUploadingVideos] = useState(false);
+
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -107,1343 +89,831 @@ export default function SubmitScriptPage() {
     featured: false,
     currency: "",
     currencySymbol: "",
-  })
+  });
 
-  const [selectedCurrency, setSelectedCurrency] = useState<Currency | null>(null)
-
-  const [features, setFeatures] = useState([{ id: 1, text: "" }])
-  const [requirements, setRequirements] = useState([{ id: 1, text: "" }])
-  const [otherLinks, setOtherLinks] = useState([{ id: 1, text: "" }])
-  const [link, setLink] = useState("")
-  const [youtubeVideoLink, setYoutubeVideoLink] = useState("")
-  const [youtubeLinkError, setYoutubeLinkError] = useState("")
+  const [selectedCurrency, setSelectedCurrency] = useState<Currency | null>(null);
+  const [features, setFeatures] = useState([{ id: 1, text: "" }]);
+  const [requirements, setRequirements] = useState([{ id: 1, text: "" }]);
+  const [otherLinks, setOtherLinks] = useState([{ id: 1, text: "" }]);
+  const [link, setLink] = useState("");
+  const [youtubeVideoLink, setYoutubeVideoLink] = useState("");
+  const [youtubeLinkError, setYoutubeLinkError] = useState("");
   const [media, setMedia] = useState<{
-    images: string[]
-    videos: string[]
-    screenshots: string[]
-    coverImage: string | null
-    thumbnail: string | null
+    images: string[];
+    videos: string[];
+    screenshots: string[];
+    coverImage: string | null;
+    thumbnail: string | null;
   }>({
     images: [],
     videos: [],
     screenshots: [],
     coverImage: null,
     thumbnail: null,
-  })
+  });
 
-  // Update form data when session loads
   useEffect(() => {
     if (session?.user && !isEditMode) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         sellerName: session.user?.name || "",
         sellerEmail: session.user?.email || "",
-      }))
+      }));
     }
-  }, [session, isEditMode])
+  }, [session, isEditMode]);
 
-  // Fetch script data for edit mode (runs after state is initialized)
   useEffect(() => {
     if (scriptId) {
-      setIsEditMode(true)
-      setIsLoadingScript(true)
-      
+      setIsEditMode(true);
+      setIsLoadingScript(true);
       const fetchScript = async () => {
         try {
-          const response = await fetch(`/api/scripts/${scriptId}`)
+          const response = await fetch(`/api/scripts/${scriptId}`);
           if (response.ok) {
-            const script = await response.json()
-            
-            // Populate form with existing script data
+            const script = await response.json();
             setFormData({
               title: script.title || "",
               description: script.description || "",
               price: script.price?.toString() || "",
               originalPrice: script.original_price?.toString() || "",
               category: script.category || "",
-              framework: Array.isArray(script.framework) ? script.framework : (script.framework ? [script.framework] : []),
+              framework: Array.isArray(script.framework) ? script.framework : script.framework ? [script.framework] : [],
               sellerName: script.seller_name || "",
               sellerEmail: script.seller_email || "",
               featured: script.featured || false,
               currency: script.currency || "",
               currencySymbol: script.currency_symbol || "",
-            })
-            
-            // Set selected currency if it exists
+            });
             if (script.currency) {
-              const currency = countryData.currencies.all.find((c: any) => c.code === script.currency)
+              const allCurrencies = (countryData as any).currencies?.all || [];
+              const currency = allCurrencies.find((c: any) => c.code === script.currency);
               if (currency) {
                 setSelectedCurrency({
                   code: currency.code || "",
                   name: currency.name || "",
                   symbol: (currency as any).symbol || currency.code || "",
-                })
+                });
               }
             }
-            
-            // Set features
-            if (script.features && script.features.length > 0) {
-              setFeatures(script.features.map((feature: string, index: number) => ({ id: index + 1, text: feature })))
-            }
-            
-            // Set requirements
-            if (script.requirements && script.requirements.length > 0) {
-              setRequirements(script.requirements.map((req: string, index: number) => ({ id: index + 1, text: req })))
-            }
-            
-            // Set link
-            if (script.link) {
-              setLink(script.link)
-            }
-            
-            // Set other links
-            if (script.other_links && script.other_links.length > 0) {
-              setOtherLinks(script.other_links.map((link: string, index: number) => ({ id: index + 1, text: link })))
-            } else {
-              setOtherLinks([{ id: 1, text: "" }])
-            }
-            
-            // Set YouTube video link
-            if (script.youtube_video_link) {
-              setYoutubeVideoLink(script.youtube_video_link)
-            }
-            
-            // Set media
-            setMedia({
-              images: script.images || [],
-              videos: script.videos || [],
-              screenshots: script.screenshots || [],
-              coverImage: script.cover_image || null,
-              thumbnail: null,
-            })
-            
-            // Set free status from database
-            setIsFree(script.free === true || script.free === 1)
+            if (script.features?.length > 0) setFeatures(script.features.map((f: string, i: number) => ({ id: i + 1, text: f })));
+            if (script.requirements?.length > 0) setRequirements(script.requirements.map((r: string, i: number) => ({ id: i + 1, text: r })));
+            if (script.link) setLink(script.link);
+            if (script.other_links?.length > 0) setOtherLinks(script.other_links.map((l: string, i: number) => ({ id: i + 1, text: l })));
+            else setOtherLinks([{ id: 1, text: "" }]);
+            if (script.youtube_video_link) setYoutubeVideoLink(script.youtube_video_link);
+            setMedia({ images: script.images || [], videos: script.videos || [], screenshots: script.screenshots || [], coverImage: script.cover_image || null, thumbnail: null });
+            setIsFree(script.free === true || script.free === 1);
           } else {
-            console.error('Failed to fetch script')
-            router.push('/scripts/submit')
+            router.push("/scripts/submit");
           }
         } catch (error) {
-          console.error('Error fetching script:', error)
-          router.push('/scripts/submit')
+          router.push("/scripts/submit");
         } finally {
-          setIsLoadingScript(false)
+          setIsLoadingScript(false);
         }
-      }
-      
-      fetchScript()
+      };
+      fetchScript();
     }
-  }, [scriptId, router])
+  }, [scriptId, router]);
 
-  // Redirect if not authenticated
-  if (status === "loading" || isLoadingScript) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>
-  }
+  if (status === "loading" || isLoadingScript) return <div className="min-h-screen flex items-center justify-center text-white bg-black">Loading...</div>;
+  if (!session) { router.push("/auth/signin"); return null; }
 
-  if (!session) {
-    router.push('/auth/signin')
-    return null
-  }
-
-  const scriptCategories = [
-    { value: "scripts", label: "Scripts" },
-    { value: "maps", label: "Maps" },
-    { value: "props", label: "Props" },
-    { value: "clothing", label: "Clothing" },
-    { value: "economy", label: "Economy" },
-    { value: "vehicles", label: "Vehicles" }
-  ]
-
-  const frameworks = [
-    { value: "qbcore", label: "QBCore" },
-    { value: "qbox", label: "Qbox" },
-    { value: "esx", label: "ESX" },
-    { value: "ox", label: "OX" },
-    { value: "vrp", label: "VRP" },
-    { value: "standalone", label: "Standalone" },
-  ]
-
-  const addFeature = () => {
-    const newId = Math.max(...features.map((f) => f.id)) + 1
-    setFeatures([...features, { id: newId, text: "" }])
-  }
-
-  const removeFeature = (id: number) => {
-    setFeatures(features.filter((f) => f.id !== id))
-  }
-
-  const updateFeature = (id: number, text: string) => {
-    setFeatures(features.map((f) => (f.id === id ? { ...f, text } : f)))
-  }
-
-  const addRequirement = () => {
-    const newId = Math.max(...requirements.map((r) => r.id)) + 1
-    setRequirements([...requirements, { id: newId, text: "" }])
-  }
-
-  const removeRequirement = (id: number) => {
-    setRequirements(requirements.filter((r) => r.id !== id))
-  }
-
-  const updateRequirement = (id: number, text: string) => {
-    setRequirements(requirements.map((r) => (r.id === id ? { ...r, text } : r)))
-  }
-
-  const addOtherLink = () => {
-    const newId = Math.max(...otherLinks.map((l) => l.id)) + 1
-    setOtherLinks([...otherLinks, { id: newId, text: "" }])
-  }
-
-  const removeOtherLink = (id: number) => {
-    setOtherLinks(otherLinks.filter((l) => l.id !== id))
-  }
-
-  const updateOtherLink = (id: number, text: string) => {
-    setOtherLinks(otherLinks.map((l) => (l.id === id ? { ...l, text } : l)))
-  }
-
-
+  // ── Handlers ──────────────────────────────────────────────────────────────
   const handleFileUpload = async (file: File, type: "image" | "video", purpose: string = "screenshot") => {
     try {
-      const formData = new FormData()
-      formData.append("file", file)
-      formData.append("type", type)
-      formData.append("purpose", purpose)
-
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      })
-
-      if (!response.ok) {
-        // Read response as text first (can only read once)
-        const textError = await response.text()
-        let errorMessage = "Upload failed"
-        try {
-          // Try to parse as JSON
-          const error = JSON.parse(textError)
-          errorMessage = error.error || errorMessage
-        } catch {
-          // If JSON parsing fails, use the text as error message
-          errorMessage = textError || errorMessage
-        }
-        throw new Error(errorMessage)
-      }
-
-      const result = await response.json()
-      return result.url
-    } catch (error) {
-      console.error("Upload error:", error)
-      toast.error(`Failed to upload ${type}: ${error instanceof Error ? error.message : "Unknown error"}`)
-      return null
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("type", type);
+      fd.append("purpose", purpose);
+      const res = await fetch("/api/upload", { method: "POST", body: fd });
+      if (!res.ok) throw new Error(await res.text());
+      return (await res.json()).url;
+    } catch (e) {
+      toast.error(`Upload failed: ${e instanceof Error ? e.message : "Unknown error"}`);
+      return null;
     }
-  }
+  };
 
-  const handleScreenshotUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files
-    if (!files) return
-
-    setUploadingScreenshots(true)
-    const newScreenshots: string[] = []
-    try {
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i]
-      if (media.screenshots.length + newScreenshots.length >= 10) {
-        toast.warning("Maximum 10 screenshots allowed")
-        break
-      }
-
-      const url = await handleFileUpload(file, "image", "screenshot")
-      if (url) {
-        newScreenshots.push(url)
-      }
-    }
-
-    if (newScreenshots.length > 0) {
-      setMedia(prev => ({
-        ...prev,
-        screenshots: [...prev.screenshots, ...newScreenshots]
-      }))
-      }
-    } finally {
-      setUploadingScreenshots(false)
-    }
-  }
-
-  const handleCoverImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files
-    if (!files || files.length === 0) return
-
-    setUploadingCoverImage(true)
-    try {
-    const file = files[0]
-    const url = await handleFileUpload(file, "image", "cover")
-    if (url) {
-      setMedia(prev => ({
-        ...prev,
-        coverImage: url
-      }))
-      }
-    } finally {
-      setUploadingCoverImage(false)
-    }
-  }
-
-  const handleVideoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files
-    if (!files) return
-
-    setUploadingVideos(true)
-    const newVideos: string[] = []
-    try {
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i]
-      const url = await handleFileUpload(file, "video", "demo")
-      if (url) {
-        newVideos.push(url)
-      }
-    }
-
-    if (newVideos.length > 0) {
-      setMedia(prev => ({
-        ...prev,
-        videos: [...prev.videos, ...newVideos]
-      }))
-      }
-    } finally {
-      setUploadingVideos(false)
-    }
-  }
-
-  const removeScreenshot = (index: number) => {
-    setMedia(prev => ({
-      ...prev,
-      screenshots: prev.screenshots.filter((_, i) => i !== index)
-    }))
-  }
-
-  const removeVideo = (index: number) => {
-    setMedia(prev => ({
-      ...prev,
-      videos: prev.videos.filter((_, i) => i !== index)
-    }))
-  }
-
-  const removeCoverImage = () => {
-    setMedia(prev => ({
-      ...prev,
-      coverImage: null
-    }))
-  }
-
-  // Validate YouTube URL
-  const validateYouTubeUrl = (url: string): boolean => {
-    if (!url.trim()) return true 
-    
-    const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+/
-    return youtubeRegex.test(url)
-  }
-
-  const handleYoutubeLinkChange = (value: string) => {
-    setYoutubeVideoLink(value)
-    if (value.trim() && !validateYouTubeUrl(value)) {
-      setYoutubeLinkError("Please enter a valid YouTube URL (youtube.com or youtu.be)")
-    } else {
-      setYoutubeLinkError("")
-    }
-  }
+  const handleYoutubeLinkChange = (v: string) => {
+    setYoutubeVideoLink(v);
+    if (v.trim() && !/^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+/.test(v)) setYoutubeLinkError("Invalid YouTube URL");
+    else setYoutubeLinkError("");
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    // Validate YouTube link if provided
-    if (youtubeVideoLink.trim() && !validateYouTubeUrl(youtubeVideoLink)) {
-      setYoutubeLinkError("Please enter a valid YouTube URL (youtube.com or youtu.be)")
-      toast.error("Please fix the YouTube video link before submitting")
-      return
-    }
-    
-    setIsSubmitting(true)
-
+    e.preventDefault();
+    if (youtubeVideoLink.trim() && youtubeLinkError) return toast.error("Fix YouTube link before submitting");
+    setIsSubmitting(true);
     try {
-      const scriptData = {
+      const data = {
         ...formData,
-        price: isFree ? 0 : Number.parseFloat(formData.price),
-        original_price: isFree ? null : (formData.originalPrice ? Number.parseFloat(formData.originalPrice) : null),
+        price: isFree ? 0 : (Number.parseFloat(formData.price) || 0),
+        original_price: isFree ? null : (formData.originalPrice ? (Number.parseFloat(formData.originalPrice) || 0) : null),
         currency: isFree ? null : (formData.currency || null),
         currency_symbol: isFree ? null : (formData.currencySymbol || null),
         free: isFree,
-        seller_name: formData.sellerName,
-        seller_email: formData.sellerEmail,
-        features: features.filter((f) => f.text.trim()).map((f) => f.text.trim()),
-        requirements: requirements.filter((r) => r.text.trim()).map((r) => r.text.trim()),
+        features: features.filter(f => f.text.trim()).map(f => f.text.trim()),
+        requirements: requirements.filter(r => r.text.trim()).map(r => r.text.trim()),
         link: link.trim() || null,
-        other_links: otherLinks.filter((l) => l.text.trim()).map((l) => l.text.trim()),
+        other_links: otherLinks.filter(l => l.text.trim()).map(l => l.text.trim()),
         images: media.images,
         videos: media.videos,
         screenshots: media.screenshots,
         cover_image: media.coverImage,
         youtube_video_link: youtubeVideoLink.trim() || null,
         status: "pending" as const,
-      }
-
-      let response
-      if (isEditMode && scriptId) {
-        // Update existing script
-        console.log('PATCH submit payload', scriptData)
-        response = await fetch(`/api/scripts/${scriptId}`, {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(scriptData),
-        })
-        const debugText = await response.clone().text().catch(() => '')
-        console.log('PATCH response status', response.status, debugText)
-      } else {
-        // Create new script
-        response = await fetch("/api/scripts", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(scriptData),
-        })
-      }
-
-      if (response.ok) {
-        if (isEditMode) {
-          toast.success("Script updated successfully!")
-          router.push('/profile')
-        } else {
-          toast.success("Script submitted successfully!", {
-            description: "It will be reviewed before being published."
-          })
-          router.push('/profile')
-        }
-      } else {
-        throw new Error(isEditMode ? "Failed to update script" : "Failed to submit script")
-      }
-    } catch (error) {
-      console.error("Error submitting script:", error)
-      toast.error(isEditMode ? "Error updating script. Please try again." : "Error submitting script. Please try again.")
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
-  const discount =
-    formData.originalPrice && formData.price
-      ? Math.round(
-          ((Number.parseFloat(formData.originalPrice) - Number.parseFloat(formData.price)) /
-            Number.parseFloat(formData.originalPrice)) *
-            100,
-        )
-      : 0
+      };
+      const res = await fetch(isEditMode ? `/api/scripts/${scriptId}` : "/api/scripts", {
+        method: isEditMode ? "PATCH" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (res.ok) {
+        toast.success(isEditMode ? "Updated successfully!" : "Submitted successfully!");
+        router.push("/profile");
+      } else throw new Error();
+    } catch {
+      toast.error("Submission failed. Try again.");
+    } finally { setIsSubmitting(false); }
+  };
 
   return (
-    <>
+    <div className="min-h-screen text-white overflow-x-hidden" style={{ background: "#000000" }}>
       <Navbar />
-      <div className="min-h-screen text-white relative overflow-hidden">
-        <AnimatedParticles />
 
-        {/* Animated background */}
-        <div className="fixed inset-0 -z-10">
+      {/* ── Background & Particles ─────────────────────────────────── */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        {mounted && <ParticleCanvas />}
+        {/* Subtle radial glows */}
+        <div className="absolute top-[-10%] right-[-10%] w-[60%] h-[60%] bg-orange-500/[0.03] blur-[140px] rounded-full" />
+        <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-orange-500/[0.02] blur-[120px] rounded-full" />
+      </div>
+
+      {/* ── Perspective Grid Floor ─────────────────────────────────── */}
+      <div
+        aria-hidden="true"
+        className="absolute top-0 left-0 right-0 pointer-events-none z-0 overflow-hidden"
+        style={{ height: "500px", perspective: "1000px" }}
+      >
+        <div
+          style={{
+            width: "100%",
+            height: "100%",
+            transform: "rotateX(75deg)",
+            transformOrigin: "top center",
+            backgroundImage: `
+              linear-gradient(rgba(249,115,22,0.06) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(249,115,22,0.06) 1px, transparent 1px)
+            `,
+            backgroundSize: "60px 60px",
+            backgroundPosition: "center top",
+            maskImage: "linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, transparent 100%)",
+            WebkitMaskImage: "linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, transparent 100%)",
+          }}
+        />
+      </div>
+
+      {/* ── Page Content ───────────────────────────────────────────── */}
+      <main className="relative z-10 pt-40 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+
+        {/* Hero Header */}
+        <header className="mb-16">
           <motion.div
-            className="absolute inset-0 bg-gradient-to-br from-black via-gray-900 to-black"
-            animate={{
-              background: [
-                "radial-gradient(circle at 20% 50%, rgba(249, 115, 22, 0.05) 0%, transparent 50%)",
-                "radial-gradient(circle at 80% 20%, rgba(234, 179, 8, 0.05) 0%, transparent 50%)",
-                "radial-gradient(circle at 40% 80%, rgba(249, 115, 22, 0.05) 0%, transparent 50%)",
-              ],
-            }}
-            transition={{
-              duration: 10,
-              repeat: Number.POSITIVE_INFINITY,
-              repeatType: "reverse",
-            }}
-          />
-        </div>
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center gap-2 mb-6 text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em]"
+          >
+            <Link href="/" className="hover:text-orange-500 transition-colors">Home</Link>
+            <span className="text-neutral-800">/</span>
+            <Link href="/scripts" className="hover:text-orange-500 transition-colors">Marketplace</Link>
+            <span className="text-neutral-800">/</span>
+            <span className="text-orange-500">Submit</span>
+          </motion.div>
 
-        {/* Header */}
-        <motion.div
-          className="bg-gradient-to-r from-orange-500/10 to-yellow-400/10 py-12 px-4 sm:px-6 lg:px-8 border-b border-gray-800/50"
-          initial={{ opacity: 0, y: -50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-        >
-          <div className="max-w-7xl mx-auto text-center py-12">
+          <div className="flex flex-col gap-4">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-orange-500/20 bg-orange-500/5 w-fit"
+            >
+              <Sparkles className="h-3 w-3 text-orange-500" />
+              <span className="text-[10px] font-bold text-orange-400 uppercase tracking-widest">CREATOR STUDIO</span>
+            </motion.div>
+
             <motion.h1
-              className="text-4xl md:text-5xl font-bold mb-4"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
+              className="text-5xl sm:text-6xl md:text-7xl font-black tracking-tighter"
             >
-              <Code className="inline mr-3 text-orange-500" />
-              <span className="bg-gradient-to-r from-orange-500 to-yellow-400 bg-clip-text text-transparent">
-                Submit Your Script
-              </span>
+              {isEditMode ? "Update" : "Submit"} <span className="gradient-text">Script</span>
             </motion.h1>
+
             <motion.p
-              className="text-xl text-gray-300 max-w-3xl mx-auto"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
+              transition={{ delay: 0.1 }}
+              className="text-neutral-500 max-w-2xl text-lg leading-relaxed"
             >
-              Share your amazing FiveM script with the community and start earning from your creations!
+              Showcase your engineering to thousands of server owners. High-quality submissions
+              gain 3x more visibility in our featured listings.
             </motion.p>
           </div>
-        </motion.div>
+        </header>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Form Section */}
-            <motion.div
-              ref={formRef}
-              className="lg:col-span-2 space-y-8"
-              initial={false}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <form onSubmit={handleSubmit} className="space-y-8">
-                {/* Basic Information */}
-                <Card className="bg-gray-800/30 border-gray-700/50 backdrop-blur-sm">
-                  <CardHeader>
-                    <CardTitle className="text-white flex items-center gap-2">
-                      <FileText className="h-5 w-5 text-orange-500" />
-                      Basic Information
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div>
-                      <Label htmlFor="title" className="text-white font-medium">
-                        Script Title *
-                      </Label>
-                      <Input
-                        id="title"
-                        value={formData.title}
-                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                        placeholder="Enter your script title"
-                        className="mt-2 bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-orange-500"
-                        required
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+
+          {/* Left Column: Form Sections */}
+          <div className="lg:col-span-8 space-y-10">
+            <form onSubmit={handleSubmit} className="space-y-10">
+
+              {/* Section 1: Identity */}
+              <FormSection title="Basic Information" icon={<FileText className="h-4 w-4" />}>
+                <div className="grid gap-6">
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black text-neutral-500 uppercase tracking-widest">Script Title</Label>
+                    <Input
+                      value={formData.title}
+                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                      placeholder="e.g. Advanced Banking System v2"
+                      className="bg-neutral-900/50 border-neutral-800 focus:border-orange-500/50 text-white placeholder:text-neutral-700 h-12 rounded-xl transition-all"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black text-neutral-500 uppercase tracking-widest">Description</Label>
+                    <Textarea
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      placeholder="Explain features, usage, and why it's better than alternatives..."
+                      className="bg-neutral-900/50 border-neutral-800 focus:border-orange-500/50 text-white placeholder:text-neutral-700 min-h-[160px] rounded-xl transition-all resize-none"
+                      required
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-black text-neutral-500 uppercase tracking-widest">Category</Label>
+                      <Select
+                        value={formData.category}
+                        onValueChange={(v) => setFormData({ ...formData, category: v })}
+                      >
+                        <SelectTrigger className="bg-neutral-900/50 border-neutral-800 h-12 rounded-xl text-neutral-300">
+                          <SelectValue placeholder="Select Category" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-neutral-900 border-neutral-800 text-white">
+                          <SelectItem value="scripts">Scripts</SelectItem>
+                          <SelectItem value="maps">Maps</SelectItem>
+                          <SelectItem value="props">Props</SelectItem>
+                          <SelectItem value="clothing">Clothing</SelectItem>
+                          <SelectItem value="economy">Economy</SelectItem>
+                          <SelectItem value="vehicles">Vehicles</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-black text-neutral-500 uppercase tracking-widest">Frameworks</Label>
+                      <FrameworkMultiSelect
+                        selected={formData.framework}
+                        onChange={(v) => setFormData({ ...formData, framework: v })}
                       />
                     </div>
+                  </div>
+                </div>
+              </FormSection>
 
-                    <div>
-                      <Label htmlFor="description" className="text-white font-medium">
-                        Description *
-                      </Label>
-                      <Textarea
-                        id="description"
-                        value={formData.description}
-                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                        placeholder="Describe your script in detail..."
-                        rows={4}
-                        className="mt-2 bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-orange-500"
-                        required
-                      />
+              {/* Section 2: Pricing */}
+              <FormSection title="Pricing Model" icon={<DollarSign className="h-4 w-4" />}>
+                <div className="space-y-8">
+                  <div className="flex items-center justify-between p-4 bg-orange-500/5 border border-orange-500/10 rounded-2xl">
+                    <div className="flex flex-col">
+                      <span className="text-sm font-bold text-white">Free Resource</span>
+                      <span className="text-[10px] text-neutral-500 font-medium">Make this script available to everyone for free</span>
                     </div>
+                    <Switch
+                      checked={isFree}
+                      onCheckedChange={(checked) => {
+                        setIsFree(checked);
+                        if (checked) setFormData({ ...formData, price: "0", originalPrice: "", currency: "", currencySymbol: "" });
+                        setSelectedCurrency(null);
+                      }}
+                    />
+                  </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="category" className="text-white font-medium">
-                          Category *
-                        </Label>
-                        <Select
-                          value={formData.category}
-                          onValueChange={(value) => setFormData({ ...formData, category: value })}
-                        >
-                          <SelectTrigger className="mt-2 bg-gray-900/50 border-gray-700 text-white">
-                            <SelectValue placeholder="Select category" />
-                          </SelectTrigger>
-                          <SelectContent className="bg-gray-900 border-gray-700">
-                            {scriptCategories.map((category) => (
-                              <SelectItem key={category.value} value={category.value}>
-                                {category.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div>
-                        <Label className="text-white font-medium">Frameworks *</Label>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              className={cn(
-                                "mt-2 w-full justify-between bg-gray-900/50 border-gray-700 text-white hover:bg-gray-800/50",
-                                formData.framework.length === 0 && "text-gray-400"
-                              )}
-                            >
-                              {formData.framework.length > 0
-                                ? `${formData.framework.length} framework${formData.framework.length > 1 ? 's' : ''} selected`
-                                : "Select frameworks"}
-                              <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-[200px] p-0 bg-gray-900 border-gray-700" align="start">
-                            <div className="p-2 space-y-2">
-                              {frameworks.map((fw) => {
-                                const checked = formData.framework.includes(fw.value)
-                                return (
-                                  <label
-                                    key={fw.value}
-                                    className="flex items-center gap-2 px-2 py-1.5 rounded-sm hover:bg-gray-800 cursor-pointer"
-                                  >
-                                    <Checkbox
-                                      checked={checked}
-                                      onCheckedChange={(checked) => {
-                                        const next = checked
-                                          ? [...formData.framework, fw.value]
-                                          : formData.framework.filter((v) => v !== fw.value)
-                                        setFormData({ ...formData, framework: next })
-                                      }}
-                                      className="border-gray-600 data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500"
-                                    />
-                                    <span className="text-sm text-white">{fw.label}</span>
-                                  </label>
-                                )
-                              })}
-                            </div>
-                          </PopoverContent>
-                        </Popover>
-                        {formData.framework.length > 0 && (
-                          <div className="mt-2 flex flex-wrap gap-2">
-                            {formData.framework.map((fwValue) => {
-                              const fw = frameworks.find((f) => f.value === fwValue)
-                              return fw ? (
-                                <Badge
-                                  key={fwValue}
-                                  className="bg-orange-500/20 text-orange-400 border-orange-500/30"
-                                >
-                                  {fw.label}
-                                </Badge>
-                              ) : null
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className=" grid-cols-1 hidden md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="sellerName" className="text-white font-medium">
-                          Your Name *
-                        </Label>
-                        <Input
-                          id="sellerName"
-                          value={formData.sellerName}
-                          readOnly
-                          className="mt-2 bg-gray-800/50 border-gray-600 text-gray-300 cursor-not-allowed"
-                        />
-                        <p className="text-xs text-gray-500 mt-1">Automatically filled from your Discord account</p>
-                      </div>
-
-                      <div>
-                        <Label htmlFor="sellerEmail" className="text-white font-medium">
-                          Email Address *
-                        </Label>
-                        <Input
-                          id="sellerEmail"
-                          type="email"
-                          value={formData.sellerEmail}
-                          readOnly
-                          className="mt-2 bg-gray-800/50 border-gray-600 text-gray-300 cursor-not-allowed"
-                        />
-                        <p className="text-xs text-gray-500 mt-1">Automatically filled from your Discord account</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Pricing */}
-                <Card className="bg-gray-800/30 border-gray-700/50 backdrop-blur-sm">
-                  <CardHeader>
-                    <CardTitle className="text-white flex items-center gap-2">
-                      <DollarSign className="h-5 w-5 text-orange-500" />
-                      Pricing
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    {/* Free Toggle */}
-                    <div className="flex items-center space-x-2 pb-4 border-b border-gray-700">
-                      <Switch
-                        id="isFree"
-                        checked={isFree}
-                        onCheckedChange={(checked) => {
-                          setIsFree(checked)
-                          if (checked) {
-                            // Clear price and currency when setting to free
-                            setFormData({ 
-                              ...formData, 
-                              price: "0",
-                              originalPrice: "",
-                              currency: "",
-                              currencySymbol: ""
-                            })
-                            setSelectedCurrency(null)
-                          }
-                        }}
-                      />
-                      <Label htmlFor="isFree" className="text-white font-medium cursor-pointer">
-                        Free Script
-                      </Label>
-                    </div>
-
-                    <div className="space-y-4">
-                      <div className={cn("transition-opacity", isFree && "opacity-50 pointer-events-none")}>
-                        <Label className="text-white font-medium">
-                          Currency *
-                        </Label>
-                        <div className="mt-2">
+                  <AnimatePresence>
+                    {!isFree && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="grid gap-6 overflow-hidden"
+                      >
+                        <div className="space-y-2">
+                          <Label className="text-[10px] font-black text-neutral-500 uppercase tracking-widest">Currency</Label>
                           <CurrencySelect
                             value={formData.currency}
-                            onValueChange={(value) => {
-                              const currency = countryData.currencies.all.find((c: any) => c.code === value)
-                              setFormData({ 
-                                ...formData, 
-                                currency: value,
-                                currencySymbol: (currency as any)?.symbol || currency?.code || ""
-                              })
+                            onValueChange={(v) => {
+                              const allCurrencies = (countryData as any).currencies?.all || [];
+                              const c = allCurrencies.find((curr: any) => curr.code === v);
+                              if (c) {
+                                setFormData({ 
+                                  ...formData, 
+                                  currency: v, 
+                                  currencySymbol: (c as any).symbol || c.code || "" 
+                                });
+                              }
                             }}
-                            onCurrencySelect={(currency) => {
-                              setSelectedCurrency(currency)
-                              setFormData({ 
-                                ...formData, 
-                                currency: currency.code,
-                                currencySymbol: currency.symbol
-                              })
+                            onCurrencySelect={(c) => {
+                              setSelectedCurrency(c);
+                              setFormData({ ...formData, currency: c.code, currencySymbol: c.symbol });
                             }}
-                            placeholder="Select currency"
+                            placeholder="Select Sale Currency"
                             disabled={isFree}
                             currencies="all"
                             variant="default"
-                            className={cn(
-                              "bg-gray-900/50 border-gray-700 text-white",
-                              isFree && "cursor-not-allowed opacity-50"
-                            )}
+                            className="bg-neutral-900/50 border-neutral-800 h-12 rounded-xl text-white"
                           />
                         </div>
-                      </div>
-
-                      <div className={cn("grid grid-cols-1 md:grid-cols-2 gap-4 transition-opacity", isFree && "opacity-50 pointer-events-none")}>
-                        <div>
-                          <Label htmlFor="price" className={cn("text-white font-medium", isFree && "text-gray-500")}>
-                            Price *
-                          </Label>
-                          <div className="relative mt-2">
-                            <Input
-                              id="price"
-                              type="number"
-                              step="0.01"
-                              min="0"
-                              value={formData.price}
-                              onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                              placeholder="25.99"
-                              className={cn(
-                                "pr-10 bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-orange-500",
-                                isFree && "cursor-not-allowed opacity-50 bg-gray-800/30"
-                              )}
-                              required={!isFree}
-                              disabled={isFree || !selectedCurrency}
-                            />
-                            {selectedCurrency && !isFree && (
-                              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">
-                                {selectedCurrency.symbol}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className="space-y-2">
+                            <Label className="text-[10px] font-black text-neutral-500 uppercase tracking-widest">Sale Price</Label>
+                            <div className="relative">
+                              <Input
+                                type="number"
+                                step="0.01"
+                                value={formData.price}
+                                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                                className="bg-neutral-900/50 border-neutral-800 h-12 rounded-xl pl-10"
+                                placeholder="0.00"
+                                required={!isFree}
+                                disabled={!selectedCurrency}
+                              />
+                              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-600 font-bold">
+                                {selectedCurrency?.symbol || "$"}
                               </span>
-                            )}
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-[10px] font-black text-neutral-500 uppercase tracking-widest">Original Price</Label>
+                            <div className="relative">
+                              <Input
+                                type="number"
+                                step="0.01"
+                                value={formData.originalPrice}
+                                onChange={(e) => setFormData({ ...formData, originalPrice: e.target.value })}
+                                className="bg-neutral-900/50 border-neutral-800 h-12 rounded-xl pl-10"
+                                placeholder="0.00"
+                                disabled={!selectedCurrency}
+                              />
+                              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-600 font-bold">
+                                {selectedCurrency?.symbol || "$"}
+                              </span>
+                            </div>
                           </div>
                         </div>
-
-                        <div>
-                          <Label htmlFor="originalPrice" className={cn("text-white font-medium", isFree && "text-gray-500")}>
-                            Original Price (Optional)
-                          </Label>
-                          <div className="relative mt-2">
-                            <Input
-                              id="originalPrice"
-                              type="number"
-                              step="0.01"
-                              min="0"
-                              value={formData.originalPrice}
-                              onChange={(e) => setFormData({ ...formData, originalPrice: e.target.value })}
-                              placeholder="35.99"
-                              className={cn(
-                                "pr-10 bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-orange-500",
-                                isFree && "cursor-not-allowed opacity-50 bg-gray-800/30"
-                              )}
-                              disabled={isFree || !selectedCurrency}
-                            />
-                            {selectedCurrency && !isFree && (
-                              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">
-                                {selectedCurrency.symbol}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {discount > 0 && !isFree && (
-                      <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
-                        <div className="flex items-center gap-2">
-                          <CheckCircle className="h-5 w-5 text-green-500" />
-                          <span className="text-green-400 font-semibold">
-                            {discount}% Discount - Save {selectedCurrency?.symbol || "$"}
-                            {(Number.parseFloat(formData.originalPrice) - Number.parseFloat(formData.price)).toFixed(2)}
-                          </span>
-                        </div>
-                      </div>
+                      </motion.div>
                     )}
-                  </CardContent>
-                </Card>
-                {/* Link */}
-                <Card className="bg-gray-800/30 border-gray-700/50 backdrop-blur-sm">
-                  <CardHeader>
-                    <CardTitle className="text-white flex items-center gap-2">
-                      <ExternalLink className="h-7 w-5 text-orange-500" />
-                      Link For Purchase
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <Input
-                      value={link}
-                      onChange={(e) => setLink(e.target.value)}
-                      placeholder="https://demo.example.com"
-                      className="bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-orange-500"
-                      type="url"
+                  </AnimatePresence>
+                </div>
+              </FormSection>
+
+              {/* Section 3: Media */}
+              <FormSection title="Visual Media" icon={<ImageIcon className="h-4 w-4" />}>
+                <div className="grid gap-8">
+                  <div className="space-y-4">
+                    <Label className="text-[10px] font-black text-neutral-500 uppercase tracking-widest">Cover Image (Listing View)</Label>
+                    <MediaUploadZone
+                      id="cover-upload"
+                      type="image"
+                      label="Drop cover image here"
+                      desc="PNG, JPG (1920x1080 recommended)"
+                      loading={uploadingCoverImage}
+                      onFileChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setUploadingCoverImage(true);
+                          const url = await handleFileUpload(file, "image", "cover");
+                          if (url) setMedia(prev => ({ ...prev, coverImage: url }));
+                          setUploadingCoverImage(false);
+                        }
+                      }}
+                      preview={media.coverImage}
+                      onRemove={() => setMedia(prev => ({ ...prev, coverImage: null }))}
                     />
-                    <p className="text-sm text-gray-400 mt-2">
-                      Add the link you want your customers to visit when they click <b className="text-orange-500">Buy Now</b>.
-                    </p>
-                  </CardContent>
-                </Card>
+                  </div>
 
-                {/* Features */}
-                <Card className="bg-gray-800/30 border-gray-700/50 backdrop-blur-sm">
-                  <CardHeader>
-                    <CardTitle className="text-white flex items-center gap-2">
-                      <Zap className="h-5 w-5 text-orange-500" />
-                      Features
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {features.map((feature, index) => (
-                      <motion.div
-                        key={feature.id}
-                        className="flex items-center gap-3"
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                      >
-                        <Input
-                          value={feature.text}
-                          onChange={(e) => updateFeature(feature.id, e.target.value)}
-                          placeholder="Describe a key feature..."
-                          className="flex-1 bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-orange-500"
-                        />
-                        {features.length > 1 && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeFeature(feature.id)}
-                            className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </motion.div>
-                    ))}
-
-                    <Button
-                      type="button"
-                      onClick={addFeature}
-                      variant="outline"
-                      className="w-full border-gray-600 text-gray-300 hover:text-white hover:border-orange-500"
-                    >
-                      <Plus className="mr-2 h-4 w-4" />
-                      Add Feature
-                    </Button>
-                  </CardContent>
-                </Card>
-
-                {/* Requirements */}
-                <Card className="bg-gray-800/30 border-gray-700/50 backdrop-blur-sm">
-                  <CardHeader>
-                    <CardTitle className="text-white flex items-center gap-2">
-                      <Package className="h-5 w-5 text-orange-500" />
-                      Requirements
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {requirements.map((requirement, index) => (
-                      <motion.div
-                        key={requirement.id}
-                        className="flex items-center gap-3"
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                      >
-                        <Input
-                          value={requirement.text}
-                          onChange={(e) => updateRequirement(requirement.id, e.target.value)}
-                          placeholder="e.g., QBCore Framework, MySQL Database..."
-                          className="flex-1 bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-orange-500"
-                        />
-                        {requirements.length > 1 && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeRequirement(requirement.id)}
-                            className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </motion.div>
-                    ))}
-
-                    <Button
-                      type="button"
-                      onClick={addRequirement}
-                      variant="outline"
-                      className="w-full border-gray-600 text-gray-300 hover:text-white hover:border-orange-500"
-                    >
-                      <Plus className="mr-2 h-4 w-4" />
-                      Add Requirement
-                    </Button>
-                  </CardContent>
-                </Card>
-
-                {/* Other Links */}
-                <Card className="bg-gray-800/30 border-gray-700/50 backdrop-blur-sm">
-                  <CardHeader>
-                    <CardTitle className="text-white flex items-center gap-2">
-                      <ExternalLink className="h-5 w-5 text-orange-500" />
-                      Other Links
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {otherLinks.map((otherLink, index) => (
-                      <motion.div
-                        key={otherLink.id}
-                        className="flex items-center gap-3"
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                      >
-                        <Input
-                          value={otherLink.text}
-                          onChange={(e) => updateOtherLink(otherLink.id, e.target.value)}
-                          placeholder="https://example.com/documentation"
-                          className="flex-1 bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-orange-500"
-                        />
-                        {otherLinks.length > 1 && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeOtherLink(otherLink.id)}
-                            className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </motion.div>
-                    ))}
-
-                    <Button
-                      type="button"
-                      onClick={addOtherLink}
-                      variant="outline"
-                      className="w-full border-gray-600 text-gray-300 hover:text-white hover:border-orange-500"
-                    >
-                      <Plus className="mr-2 h-4 w-4" />
-                      Add Link
-                    </Button>
-                  </CardContent>
-                </Card>
-
-                {/* Media Upload */}
-                <Card className="bg-gray-800/30 border-gray-700/50 backdrop-blur-sm">
-                  <CardHeader>
-                    <CardTitle className="text-white flex items-center gap-2">
-                      <ImageIcon className="h-5 w-5 text-orange-500" />
-                      Media & Screenshots
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div>
-                      <Label className="text-white font-medium">Cover Image *</Label>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleCoverImageUpload}
-                        className="hidden"
-                        id="cover-image-upload"
-                        disabled={uploadingCoverImage}
-                      />
-                      <label
-                        htmlFor="cover-image-upload"
-                        className={`mt-2 border-2 border-dashed border-gray-600 rounded-lg p-8 text-center transition-colors block ${
-                          uploadingCoverImage 
-                            ? "opacity-50 cursor-not-allowed" 
-                            : "hover:border-orange-500 cursor-pointer"
-                        }`}
-                      >
-                        {uploadingCoverImage ? (
-                          <>
-                            <Loader2 className="h-12 w-12 text-orange-500 mx-auto mb-4 animate-spin" />
-                            <p className="text-orange-400">Uploading cover image...</p>
-                          </>
-                        ) : (
-                          <>
-                        <ImageIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                        <p className="text-gray-400">Upload cover image</p>
-                        <p className="text-sm text-gray-500 mt-2">PNG, JPG up to 5MB (will be displayed on scripts listing)</p>
-                          </>
-                        )}
-                      </label>
-                      
-                      {/* Display uploaded cover image */}
-                      {media.coverImage && (
-                        <div className="mt-4">
-                          <div className="relative group">
-                            <img
-                              src={media.coverImage}
-                              alt="Cover image"
-                              className="w-full h-48 object-cover rounded-lg"
-                            />
+                  <div className="space-y-4">
+                    <Label className="text-[10px] font-black text-neutral-500 uppercase tracking-widest">Screenshots Gallery (Max 10)</Label>
+                    <MediaUploadZone
+                      id="screenshots-upload"
+                      type="image"
+                      multiple
+                      label="Upload Gallery"
+                      desc="Showcase the UI and features"
+                      loading={uploadingScreenshots}
+                      onFileChange={async (e) => {
+                        const files = e.target.files;
+                        if (!files) return;
+                        setUploadingScreenshots(true);
+                        const urls: string[] = [];
+                        for (let i = 0; i < files.length; i++) {
+                          const u = await handleFileUpload(files[i], "image", "screenshot");
+                          if (u) urls.push(u);
+                        }
+                        setMedia(prev => ({ ...prev, screenshots: [...prev.screenshots, ...urls] }));
+                        setUploadingScreenshots(false);
+                      }}
+                    />
+                    {media.screenshots.length > 0 && (
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-2">
+                        {media.screenshots.map((s, i) => (
+                          <div key={i} className="relative aspect-video rounded-xl overflow-hidden border border-neutral-800 group">
+                            <Image src={s} alt="Screenshot" fill className="object-cover" />
                             <button
                               type="button"
-                              onClick={removeCoverImage}
-                              className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => setMedia(prev => ({ ...prev, screenshots: prev.screenshots.filter((_, idx) => idx !== i) }))}
+                              className="absolute top-2 right-2 bg-red-500 text-white rounded-lg p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                             >
-                              <X className="w-4 h-4" />
+                              <X className="h-3 w-3" />
                             </button>
                           </div>
-                        </div>
-                      )}
-                    </div>
-
-                    <div>
-                      <Label className="text-white font-medium">Screenshots *</Label>
-                      <input
-                        type="file"
-                        multiple
-                        accept="image/*"
-                        onChange={handleScreenshotUpload}
-                        className="hidden"
-                        id="screenshot-upload"
-                        disabled={uploadingScreenshots}
-                      />
-                      <label
-                        htmlFor="screenshot-upload"
-                        className={`mt-2 border-2 border-dashed border-gray-600 rounded-lg p-8 text-center transition-colors block ${
-                          uploadingScreenshots 
-                            ? "opacity-50 cursor-not-allowed" 
-                            : "hover:border-orange-500 cursor-pointer"
-                        }`}
-                      >
-                        {uploadingScreenshots ? (
-                          <>
-                            <Loader2 className="h-12 w-12 text-orange-500 mx-auto mb-4 animate-spin" />
-                            <p className="text-orange-400">Uploading screenshots...</p>
-                          </>
-                        ) : (
-                          <>
-                        <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                        <p className="text-gray-400">Upload script screenshots</p>
-                        <p className="text-sm text-gray-500 mt-2">PNG, JPG up to 5MB each (max 10 images)</p>
-                          </>
-                        )}
-                      </label>
-                      
-                      {/* Display uploaded screenshots */}
-                      {media.screenshots.length > 0 && (
-                        <div className="mt-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                          {media.screenshots.map((screenshot, index) => (
-                            <div key={index} className="relative group">
-                              <img
-                                src={screenshot}
-                                alt={`Screenshot ${index + 1}`}
-                                className="w-full h-24 object-cover rounded-lg"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => removeScreenshot(index)}
-                                className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                              >
-                                <X className="w-4 h-4" />
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    <div>
-                      <Label className="text-white font-medium">Demo Videos (Optional)</Label>
-                      <input
-                        type="file"
-                        multiple
-                        accept="video/*"
-                        onChange={handleVideoUpload}
-                        className="hidden"
-                        id="video-upload"
-                        disabled={uploadingVideos}
-                      />
-                      <label
-                        htmlFor="video-upload"
-                        className={`mt-2 border-2 border-dashed border-gray-600 rounded-lg p-8 text-center transition-colors block ${
-                          uploadingVideos 
-                            ? "opacity-50 cursor-not-allowed" 
-                            : "hover:border-orange-500 cursor-pointer"
-                        }`}
-                      >
-                        {uploadingVideos ? (
-                          <>
-                            <Loader2 className="h-12 w-12 text-orange-500 mx-auto mb-4 animate-spin" />
-                            <p className="text-orange-400">Uploading videos...</p>
-                          </>
-                        ) : (
-                          <>
-                        <Video className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                        <p className="text-gray-400">Upload demo videos</p>
-                        <p className="text-sm text-gray-500 mt-2">MP4, MOV up to 4.5 mb each</p>
-                          </>
-                        )}
-                      </label>
-                      
-                      {/* Display uploaded videos */}
-                      {media.videos.length > 0 && (
-                        <div className="mt-4 space-y-4">
-                          {media.videos.map((video, index) => (
-                            <div key={index} className="relative group">
-                              <video
-                                src={video}
-                                controls
-                                className="w-full rounded-lg"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => removeVideo(index)}
-                                className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                              >
-                                <X className="w-4 h-4" />
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    <div>
-                      <Label htmlFor="youtube-video-link" className="text-white font-medium">
-                        YouTube Video Link (Optional)
-                      </Label>
-                      <Input
-                        id="youtube-video-link"
-                        type="url"
-                        value={youtubeVideoLink}
-                        onChange={(e) => handleYoutubeLinkChange(e.target.value)}
-                        placeholder="https://www.youtube.com/watch?v=..."
-                        className={`mt-2 bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-orange-500 ${
-                          youtubeLinkError ? "border-red-500 focus:border-red-500" : ""
-                        }`}
-                      />
-                      {youtubeLinkError && (
-                        <p className="mt-1 text-sm text-red-400">{youtubeLinkError}</p>
-                      )}
-                      <p className="text-sm text-gray-400 mt-2">
-                        Enter a YouTube video URL (youtube.com or youtu.be)
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Submit Button */}
-                <motion.div className="flex gap-4" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                  <Button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="flex-1 bg-gradient-to-r from-orange-500 to-yellow-400 hover:from-orange-600 hover:to-yellow-500 text-black font-bold py-3 text-lg shadow-lg disabled:opacity-50"
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <Settings className="mr-2 h-5 w-5 animate-spin" />
-                        {isEditMode ? 'Updating...' : 'Submitting...'}
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="mr-2 h-5 w-5" />
-                        {isEditMode ? 'Update Script' : 'Submit Script'}
-                      </>
+                        ))}
+                      </div>
                     )}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="px-8 border-gray-600 text-gray-300 hover:text-white hover:border-orange-500"
-                  >
-                    Save Draft
-                  </Button>
-                </motion.div>
-              </form>
-            </motion.div>
+                  </div>
 
-            {/* Preview Section */}
-            <motion.div
-              ref={previewRef}
-              className="lg:col-span-1"
-              initial={false}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <div className="sticky top-24 space-y-6">
-                <Card className="bg-gray-800/30 border-gray-700/50 backdrop-blur-sm">
-                  <CardHeader>
-                    <CardTitle className="text-white flex items-center gap-2">
-                      <Zap className="h-5 w-5 text-orange-500" />
-                      Live Preview
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {/* Cover Image / Screenshots Preview */}
-                      {media.coverImage || media.screenshots.length > 0 ? (
-                        <div className="aspect-video bg-gray-700 rounded-lg overflow-hidden">
-                          <img
-                            src={media.coverImage || media.screenshots[0]}
-                            alt={media.coverImage ? "Cover image" : "Main screenshot"}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      ) : (
-                        <div className="aspect-video bg-gray-700 rounded-lg flex items-center justify-center">
-                          <ImageIcon className="h-12 w-12 text-gray-500" />
-                        </div>
-                      )}
-                      
-                      {/* Additional Screenshots */}
-                      {media.screenshots.length > 1 && (
-                        <div className="grid grid-cols-3 gap-2">
-                          {media.screenshots.slice(1, 4).map((screenshot, index) => (
-                            <div key={index} className="aspect-square bg-gray-700 rounded-lg overflow-hidden">
-                              <img
-                                src={screenshot}
-                                alt={`Screenshot ${index + 2}`}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                          ))}
-                          {media.screenshots.length > 4 && (
-                            <div className="aspect-square bg-gray-700 rounded-lg flex items-center justify-center">
-                              <span className="text-gray-400 text-sm">+{media.screenshots.length - 4}</span>
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      <div>
-                        <h3 className="text-white font-bold text-lg">{formData.title || "Your Script Title"}</h3>
-                        <p className="text-gray-400 text-sm mt-2">
-                          {formData.description || "Your script description will appear here..."}
-                        </p>
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          {isFree ? (
-                            <span className="text-orange-500 font-bold text-xl">Free</span>
-                          ) : (
-                            <>
-                              <span className="text-orange-500 font-bold text-xl">{selectedCurrency?.symbol || "$"}{formData.price || "0.00"}</span>
-                              {formData.originalPrice && (
-                                <span className="text-gray-500 line-through text-sm">{selectedCurrency?.symbol || "$"}{formData.originalPrice}</span>
-                              )}
-                            </>
-                          )}
-                        </div>
-                        {discount > 0 && !isFree && <Badge className="bg-red-500 text-white">-{discount}%</Badge>}
-                      </div>
-
-                      <div className="flex flex-wrap gap-2">
-                        {formData.category && (
-                          <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30">
-                            {scriptCategories.find((c) => c.value === formData.category)?.label}
-                          </Badge>
-                        )}
-                        {formData.framework && formData.framework.length > 0 && (
-                          <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">
-                            {formData.framework.map(fw => frameworks.find((f) => f.value === fw)?.label).filter(Boolean).join(', ')}
-                          </Badge>
-                        )}
-                        {formData.featured && <Badge className="bg-yellow-500 text-black">Featured</Badge>}
-                      </div>
-
+                  <div className="space-y-4">
+                    <Label className="text-[10px] font-black text-neutral-500 uppercase tracking-widest">Video Showcase</Label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <MediaUploadZone
+                        id="video-upload"
+                        type="video"
+                        label="Direct Upload"
+                        desc="MP4, MOV (Max 4.5MB)"
+                        loading={uploadingVideos}
+                        onFileChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            setUploadingVideos(true);
+                            const url = await handleFileUpload(file, "video", "demo");
+                            if (url) setMedia(prev => ({ ...prev, videos: [...prev.videos, url] }));
+                            setUploadingVideos(false);
+                          }
+                        }}
+                      />
                       <div className="space-y-2">
-                        <h4 className="text-white font-semibold text-sm">Features:</h4>
-                        {features
-                          .filter((f) => f.text.trim())
-                          .map((feature, index) => (
-                            <div key={feature.id} className="flex items-center gap-2 text-sm">
-                              <CheckCircle className="h-4 w-4 text-green-500" />
-                              <span className="text-gray-300">{feature.text}</span>
-                            </div>
-                          ))}
-                      </div>
-
-                      <div className="pt-4 border-t border-gray-700">
-                        <div className="text-sm text-gray-400">
-                          <div className="flex items-center gap-2">
-                            <Star className="h-4 w-4" />
-                            <span>By {formData.sellerName || "Your Name"}</span>
-                          </div>
-                        </div>
+                        <Input
+                          value={youtubeVideoLink}
+                          onChange={(e) => handleYoutubeLinkChange(e.target.value)}
+                          placeholder="Or YouTube URL..."
+                          className={cn(
+                            "bg-neutral-900/50 border-neutral-800 h-[100px] rounded-xl text-center text-sm",
+                            youtubeLinkError && "border-red-500"
+                          )}
+                        />
+                        {youtubeLinkError && <p className="text-[10px] text-red-500 font-bold uppercase">{youtubeLinkError}</p>}
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
+              </FormSection>
 
-                <Card className="bg-gray-800/30 border-gray-700/50 backdrop-blur-sm">
-                  <CardHeader>
-                    <CardTitle className="text-white flex items-center gap-2">
-                      <AlertCircle className="h-5 w-5 text-orange-500" />
-                      Submission Guidelines
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3 text-sm text-gray-400">
-                    <div className="flex items-start gap-2">
-                      <Star className="h-4 w-4 text-yellow-400 mt-0.5 flex-shrink-0" />
-                      <span>All scripts are reviewed before publication</span>
+              {/* Section 4: Specifications */}
+              <FormSection title="Technical Specifications" icon={<Package className="h-4 w-4" />}>
+                <div className="grid gap-8">
+                  <DynamicList
+                    label="Core Features"
+                    items={features}
+                    onAdd={() => setFeatures([...features, { id: Math.random(), text: "" }])}
+                    onRemove={(id: number) => setFeatures(features.filter(f => f.id !== id))}
+                    onUpdate={(id: number, t: string) => setFeatures(features.map(f => f.id === id ? { ...f, text: t } : f))}
+                    placeholder="e.g. Real-time synchronization"
+                  />
+                  <DynamicList
+                    label="Dependencies"
+                    items={requirements}
+                    onAdd={() => setRequirements([...requirements, { id: Math.random(), text: "" }])}
+                    onRemove={(id: number) => setRequirements(requirements.filter(r => r.id !== id))}
+                    onUpdate={(id: number, t: string) => setRequirements(requirements.map(r => r.id === id ? { ...r, text: t } : r))}
+                    placeholder="e.g. ox_lib 2.0+"
+                  />
+                  <div className="space-y-4">
+                    <Label className="text-[10px] font-black text-neutral-500 uppercase tracking-widest">Purchase Link (External)</Label>
+                    <div className="relative">
+                      <ExternalLink className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-600" />
+                      <Input
+                        value={link}
+                        onChange={(e) => setLink(e.target.value)}
+                        className="bg-neutral-900/50 border-neutral-800 h-12 rounded-xl pl-12"
+                        placeholder="https://your-store.tebex.io/package/..."
+                      />
                     </div>
-                    <div className="flex items-start gap-2">
-                      <Star className="h-4 w-4 text-yellow-400 mt-0.5 flex-shrink-0" />
-                      <span>Include clear screenshots and documentation</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <Star className="h-4 w-4 text-yellow-400 mt-0.5 flex-shrink-0" />
-                      <span>Review process takes 1-3 business days</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <Star className="h-4 w-4 text-yellow-400 mt-0.5 flex-shrink-0" />
-                      <span>We take 15% commission on sales</span>
-                    </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
+              </FormSection>
+
+              {/* Submit Action */}
+              <div className="pt-10 flex flex-col sm:flex-row gap-4">
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="flex-1 bg-orange-500 hover:bg-orange-400 text-black font-black text-sm h-14 rounded-2xl shadow-[0_0_20px_rgba(249,115,22,0.3)] transition-all uppercase tracking-widest"
+                >
+                  {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : (
+                    <>
+                      <Zap className="mr-2 h-4 w-4" />
+                      {isEditMode ? "Update Repository" : "Publish to Marketplace"}
+                    </>
+                  )}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="px-10 border-neutral-800 hover:bg-neutral-900 h-14 rounded-2xl text-xs font-bold uppercase tracking-widest"
+                >
+                  Save Draft
+                </Button>
               </div>
-            </motion.div>
+            </form>
           </div>
+
+          {/* Right Column: Preview Sticky */}
+          <aside className="lg:col-span-4 lg:sticky lg:top-32 space-y-8">
+            <div className="flex items-center gap-2 mb-2 text-[10px] font-black text-neutral-500 uppercase tracking-widest">
+              <MousePointer2 className="h-3 w-3 text-orange-500" />
+              Live Preview
+            </div>
+
+            <Card className="bg-[#080808] border-neutral-800/60 rounded-3xl overflow-hidden shadow-2xl">
+              <div className="aspect-video relative bg-neutral-900">
+                {media.coverImage ? (
+                  <Image src={media.coverImage} alt="Preview" fill className="object-cover" />
+                ) : (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-neutral-700">
+                    <ImageIcon className="h-10 w-10 mb-2" />
+                    <span className="text-[10px] font-black uppercase tracking-tighter">No Preview Image</span>
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+
+                {formData.featured && (
+                  <div className="absolute top-4 left-4 px-3 py-1 rounded bg-orange-500 text-black text-[10px] font-black uppercase tracking-widest">
+                    Featured
+                  </div>
+                )}
+              </div>
+
+              <CardContent className="p-8 space-y-6">
+                <div>
+                  <h3 className="text-2xl font-black tracking-tight text-white line-clamp-1 mb-2">
+                    {formData.title || "Your Script Title"}
+                  </h3>
+                  <p className="text-sm text-neutral-500 line-clamp-2 leading-relaxed">
+                    {formData.description || "Enter a description to see how it looks in the marketplace listings..."}
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex flex-col">
+                    {isFree ? (
+                      <span className="text-2xl font-black text-orange-500 uppercase tracking-tighter italic">Free</span>
+                    ) : (
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-3xl font-black text-white">
+                          {selectedCurrency?.symbol || "$"}{formData.price || "0.00"}
+                        </span>
+                        {formData.originalPrice && (
+                          <span className="text-xs text-neutral-600 line-through">
+                            ${formData.originalPrice}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  {formData.price && formData.originalPrice && !isFree && (
+                    <Badge className="bg-red-500/10 text-red-500 border-red-500/20 font-black">
+                      -{Math.round(((Number(formData.originalPrice) - Number(formData.price)) / Number(formData.originalPrice)) * 100)}%
+                    </Badge>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {formData.category && (
+                    <span className="px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/20 text-[9px] font-black uppercase tracking-widest text-orange-400">
+                      {formData.category}
+                    </span>
+                  )}
+                  {formData.framework.slice(0, 2).map(f => (
+                    <span key={f} className="px-3 py-1 rounded-full bg-neutral-900 border border-neutral-800 text-[9px] font-black uppercase tracking-widest text-neutral-500">
+                      {f}
+                    </span>
+                  ))}
+                  {formData.framework.length > 2 && <span className="text-[9px] font-black text-neutral-700">+{formData.framework.length - 2}</span>}
+                </div>
+
+                <Button className="w-full h-12 bg-neutral-900 border border-neutral-800 hover:bg-orange-500 hover:text-black hover:border-orange-500 text-neutral-500 font-bold transition-all rounded-xl uppercase tracking-widest text-xs">
+                  Purchase Now
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-neutral-900/20 border-neutral-800/40 rounded-3xl p-8 space-y-6">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="h-5 w-5 text-orange-500" />
+                <h4 className="text-sm font-black uppercase tracking-widest text-white">Guidelines</h4>
+              </div>
+              <ul className="space-y-4">
+                <GuidelineItem icon={<CheckCircle className="h-3 w-3 text-green-500" />} text="Verified script ownership" />
+                <GuidelineItem icon={<CheckCircle className="h-3 w-3 text-green-500" />} text="Clean, commented code" />
+                <GuidelineItem icon={<CheckCircle className="h-3 w-3 text-green-500" />} text="1-3 Day review process" />
+              </ul>
+              <div className="pt-4 border-t border-neutral-800/50">
+                <p className="text-[10px] text-neutral-600 leading-relaxed italic">
+                  Note: FiveCrux maintains a 15% platform commission on all successful marketplace transactions.
+                </p>
+              </div>
+            </Card>
+          </aside>
         </div>
-      </div>
+      </main>
+
       <Footer />
-    </>
-  )
+    </div>
+  );
+}
+
+// ── Internal Components ──────────────────────────────────────────────────────
+
+function FormSection({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: "-50px" });
+
+  return (
+    <motion.section
+      ref={ref}
+      initial={{ opacity: 0, y: 30 }}
+      animate={inView ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+      className="bg-[#080808] border border-neutral-800/60 rounded-[2.5rem] p-10 overflow-hidden relative group"
+    >
+      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-orange-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+
+      <div className="flex items-center gap-4 mb-10">
+        <div className="w-10 h-10 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-orange-500 shadow-[0_0_15px_rgba(249,115,22,0.1)]">
+          {icon}
+        </div>
+        <h2 className="text-2xl font-black tracking-tight text-white">{title}</h2>
+      </div>
+
+      <div className="relative z-10">{children}</div>
+    </motion.section>
+  );
+}
+
+interface MediaUploadZoneProps {
+  id: string;
+  type: "image" | "video";
+  multiple?: boolean;
+  label: string;
+  desc: string;
+  loading: boolean;
+  onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  preview?: string | null;
+  onRemove?: () => void;
+}
+
+function MediaUploadZone({ id, type, multiple, label, desc, loading, onFileChange, preview, onRemove }: MediaUploadZoneProps) {
+  return (
+    <div className="relative group">
+      <input
+        type="file"
+        id={id}
+        multiple={multiple}
+        accept={type === "image" ? "image/*" : "video/*"}
+        onChange={onFileChange}
+        className="hidden"
+        disabled={loading}
+      />
+      <label
+        htmlFor={id}
+        className={cn(
+          "flex flex-col items-center justify-center w-full aspect-video md:aspect-[21/9] bg-neutral-900/30 border-2 border-dashed border-neutral-800 rounded-3xl cursor-pointer transition-all hover:border-orange-500/50 group-hover:bg-neutral-900/50",
+          loading && "opacity-50 cursor-wait",
+          preview && "border-none"
+        )}
+      >
+        {preview ? (
+          <div className="relative w-full h-full rounded-3xl overflow-hidden border border-orange-500/30 shadow-2xl">
+            <Image src={preview} alt="Upload" fill className="object-cover" />
+            {onRemove && (
+              <button
+                type="button"
+                onClick={(e) => { e.preventDefault(); onRemove(); }}
+                className="absolute top-4 right-4 w-8 h-8 rounded-xl bg-red-500 text-white flex items-center justify-center shadow-lg transition-transform hover:scale-110"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        ) : (
+          <>
+            <div className="w-14 h-14 rounded-2xl bg-neutral-900 border border-neutral-800 flex items-center justify-center mb-4 transition-all group-hover:scale-110 group-hover:bg-orange-500 group-hover:text-black">
+              {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : (type === "image" ? <ImageIcon className="h-6 w-6" /> : <Video className="h-6 w-6" />)}
+            </div>
+            <span className="text-sm font-bold text-white mb-1 uppercase tracking-widest">{label}</span>
+            <span className="text-[10px] text-neutral-600 font-bold uppercase tracking-widest">{desc}</span>
+          </>
+        )}
+      </label>
+    </div>
+  );
+}
+
+interface DynamicListProps {
+  label: string;
+  items: { id: number; text: string }[];
+  onAdd: () => void;
+  onRemove: (id: number) => void;
+  onUpdate: (id: number, text: string) => void;
+  placeholder: string;
+}
+
+function DynamicList({ label, items, onAdd, onRemove, onUpdate, placeholder }: DynamicListProps) {
+  return (
+    <div className="space-y-4">
+      <Label className="text-[10px] font-black text-neutral-500 uppercase tracking-widest">{label}</Label>
+      <div className="space-y-3">
+        {items.map((item: any, i: number) => (
+          <motion.div key={item.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} className="flex gap-3">
+            <Input
+              value={item.text}
+              onChange={(e) => onUpdate(item.id, e.target.value)}
+              placeholder={placeholder}
+              className="bg-neutral-900/50 border-neutral-800 h-12 rounded-xl"
+            />
+            {items.length > 1 && (
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => onRemove(item.id)}
+                className="w-12 h-12 rounded-xl hover:bg-red-500/10 hover:text-red-500 transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </motion.div>
+        ))}
+      </div>
+      <Button
+        type="button"
+        onClick={onAdd}
+        variant="outline"
+        className="w-full h-12 border-neutral-800 hover:border-orange-500/50 hover:bg-orange-500/5 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all"
+      >
+        <Plus className="mr-2 h-3 w-3" />
+        Add Item
+      </Button>
+    </div>
+  );
+}
+
+function FrameworkMultiSelect({ selected, onChange }: { selected: string[]; onChange: (v: string[]) => void }) {
+  const frameworks = ["qbcore", "qbox", "esx", "ox", "vrp", "standalone"];
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button className="w-full bg-neutral-900/50 border border-neutral-800 h-12 rounded-xl justify-between px-4 text-neutral-400 hover:text-white transition-all">
+          <span className="text-sm">{selected.length > 0 ? `${selected.length} Selected` : "Choose Frameworks"}</span>
+          <ChevronDown className="h-4 w-4" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[200px] bg-[#0d0d0d] border-neutral-800 p-2 rounded-2xl shadow-2xl">
+        <div className="grid gap-1">
+          {frameworks.map(f => (
+            <label key={f} className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-orange-500/5 cursor-pointer group">
+              <Checkbox
+                checked={selected.includes(f)}
+                onCheckedChange={(checked) => {
+                  const isChecked = checked === true;
+                  const next = isChecked 
+                    ? (selected.includes(f) ? selected : [...selected, f])
+                    : selected.filter(x => x !== f);
+                  onChange(next);
+                }}
+              />
+              <span className="text-xs font-bold text-neutral-500 group-hover:text-white uppercase tracking-widest">{f}</span>
+            </label>
+          ))}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function GuidelineItem({ icon, text }: { icon: React.ReactNode; text: string }) {
+  return (
+    <li className="flex items-center gap-3">
+      <div className="w-6 h-6 rounded-lg bg-neutral-800/50 flex items-center justify-center">{icon}</div>
+      <span className="text-xs font-medium text-neutral-400">{text}</span>
+    </li>
+  );
 }
