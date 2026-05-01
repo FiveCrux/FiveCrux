@@ -48,7 +48,7 @@ export default function Footer() {
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16"
         >
           {/* Brand section */}
-          <motion.div variants={itemVariants} className="lg:col-span-1">
+          <motion.div className="lg:col-span-1">
             <Link href="/" className="flex items-center gap-2 mb-6 group">
               <div className="relative">
                  <div className="absolute inset-0 bg-orange-500/20 blur-lg rounded-full group-hover:scale-150 transition-transform duration-500" />
@@ -123,7 +123,7 @@ export default function Footer() {
               ],
             },
           ].map((section) => (
-            <motion.div key={section.title} variants={itemVariants}>
+            <motion.div key={section.title}>
               <h4 className="text-white font-bold text-sm uppercase tracking-widest mb-6">{section.title}</h4>
               <ul className="space-y-4">
                 {section.links.map((link) => (
@@ -144,7 +144,6 @@ export default function Footer() {
 
         {/* Footer bottom */}
         <motion.div
-          variants={itemVariants}
           className="pt-8 border-t border-white/[0.05] flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left"
         >
           <p className="text-neutral-500 text-xs tracking-wide">

@@ -132,10 +132,10 @@ export async function POST(
           prizeId: prize.id,
           position: prize.position,
           userId: winner.userId,
-          userName: winner.userName ?? null,
-          userEmail: winner.userEmail ?? null,
+          userName: winner.userName,
+          userEmail: winner.userEmail,
           prizeName: prize.name,
-          prizeValue: prize.value,
+          prizeValue: prize.value ?? 'N/A',
         }
 
         prizeWinners.push(winnerData)
