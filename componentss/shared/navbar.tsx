@@ -28,11 +28,7 @@ import {
   ChevronDown,
   LayoutGrid,
   Upload,
-  Tag,
-  Star,
   Gift,
-  Trophy,
-  HelpCircle,
   Megaphone,
   LogOut,
   Shield,
@@ -50,8 +46,6 @@ const navItems = [
     dropdown: [
       { name: "Browse Scripts", link: "/scripts", description: "Explore all available scripts", icon: LayoutGrid },
       { name: "Submit a Script", link: "/scripts/submit", description: "Share your own creation", icon: Upload },
-      { name: "Categories", link: "/scripts/categories", description: "Browse by category", icon: Tag },
-      { name: "Top Rated", link: "/scripts/top", description: "Community favourites", icon: Star },
     ],
   },
   {
@@ -59,8 +53,6 @@ const navItems = [
     link: "/giveaways",
     dropdown: [
       { name: "Active Giveaways", link: "/giveaways", description: "Enter live giveaways now", icon: Gift },
-      { name: "Past Winners", link: "/giveaways/winners", description: "See who won before", icon: Trophy },
-      { name: "How It Works", link: "/giveaways/info", description: "Learn about our giveaways", icon: HelpCircle },
     ],
   },
   { name: "Advertise", link: "/advertise", icon: Megaphone },
@@ -217,7 +209,6 @@ function DesktopNavItem({ item, pathname }: { item: (typeof navItems)[0]; pathna
       <AnimatePresence>
         {open && (
           <motion.div
-            variants={dropdownVariants}
             initial="hidden"
             animate="visible"
             exit="exit"

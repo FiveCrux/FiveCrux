@@ -64,11 +64,11 @@
     @apply border-border;
   }
   html {
-    background-color: #131313;
+    background-color: #000000;
   }
   body {
     @apply text-foreground;
-    background-color: #131313;
+    background-color: #000000;
   }
 }
 
@@ -88,6 +88,12 @@
 
 ::-webkit-scrollbar-thumb:hover {
   background: #ea580c;
+}
+
+/* Shimmer for skeleton loaders */
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
 }
 
 /* Custom animations */
