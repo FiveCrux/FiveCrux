@@ -417,7 +417,7 @@ export default function GiveawaysPage() {
     return isEnded;
   });
 
-  
+
 
   return (
     <>
@@ -796,8 +796,8 @@ export default function GiveawaysPage() {
                                     disabled={enteredGiveaways.includes(giveaway.id)}
                                     variant="outline"
                                     className={`w-full bg-white text-black hover:bg-gray-300 hover:border-gray-300 hover:text-black transition-colors duration-200 font-semibold text-xs py-1.5 h-auto ${enteredGiveaways.includes(giveaway.id)
-                                        ? "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white"
-                                        : ""
+                                      ? "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white"
+                                      : ""
                                       }`}
                                   >
                                     {enteredGiveaways.includes(giveaway.id) ? (
@@ -1069,8 +1069,8 @@ export default function GiveawaysPage() {
                                     disabled={enteredGiveaways.includes(giveaway.id)}
                                     variant="outline"
                                     className={`w-full bg-white text-black hover:bg-gray-300 hover:border-gray-300 hover:text-black transition-colors duration-200 font-semibold text-xs py-1.5 h-auto ${enteredGiveaways.includes(giveaway.id)
-                                        ? "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white"
-                                        : ""
+                                      ? "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white"
+                                      : ""
                                       }`}
                                   >
                                     {enteredGiveaways.includes(giveaway.id) ? (

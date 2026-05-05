@@ -118,12 +118,12 @@ interface Giveaway {
   tags: string[];
   rules: string[];
   status:
-    | "active"
-    | "ended"
-    | "cancelled"
-    | "pending"
-    | "approved"
-    | "rejected";
+  | "active"
+  | "ended"
+  | "cancelled"
+  | "pending"
+  | "approved"
+  | "rejected";
   entries_count: number;
   created_at: string;
   updated_at: string;
@@ -452,8 +452,7 @@ export default function ProfilePage() {
     } catch (error) {
       console.error("Upload error:", error);
       toast.error(
-        `Failed to upload profile picture: ${
-          error instanceof Error ? error.message : "Unknown error"
+        `Failed to upload profile picture: ${error instanceof Error ? error.message : "Unknown error"
         }`
       );
     } finally {
@@ -522,8 +521,7 @@ export default function ProfilePage() {
     } catch (error) {
       console.error("Save name error:", error);
       toast.error(
-        `Failed to update name: ${
-          error instanceof Error ? error.message : "Unknown error"
+        `Failed to update name: ${error instanceof Error ? error.message : "Unknown error"
         }`
       );
       // Reset to original name on error
@@ -611,25 +609,24 @@ export default function ProfilePage() {
                       (session.user as any).roles.map((role: string) => (
                         <Badge
                           key={role}
-                          className={`${
-                            role === "founder"
+                          className={`${role === "founder"
                               ? "bg-purple-500/20 text-purple-400 border-purple-500/30"
                               : role === "admin"
-                              ? "bg-red-500/20 text-red-400 border-red-500/30"
-                              : role === "verified_creator"
-                              ? "bg-green-500/20 text-green-400 border-green-500/30"
-                              : role === "moderator"
-                              ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
-                              : role === "crew"
-                              ? "bg-blue-500/20 text-blue-400 border-blue-500/30"
-                              : "bg-gray-500/20 text-gray-400 border-gray-500/30"
-                          }`}
+                                ? "bg-red-500/20 text-red-400 border-red-500/30"
+                                : role === "verified_creator"
+                                  ? "bg-green-500/20 text-green-400 border-green-500/30"
+                                  : role === "moderator"
+                                    ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
+                                    : role === "crew"
+                                      ? "bg-blue-500/20 text-blue-400 border-blue-500/30"
+                                      : "bg-gray-500/20 text-gray-400 border-gray-500/30"
+                            }`}
                         >
                           {role === "verified_creator"
                             ? "Verified Creator"
                             : role === "moderator"
-                            ? "Moderator"
-                            : role.charAt(0).toUpperCase() + role.slice(1)}
+                              ? "Moderator"
+                              : role.charAt(0).toUpperCase() + role.slice(1)}
                         </Badge>
                       ))
                     ) : (
@@ -658,49 +655,49 @@ export default function ProfilePage() {
             {/* Mobile Tabs */}
             <div className="lg:hidden -mx-4 sm:-mx-6 px-4 sm:px-6 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               <TabsList className="flex w-max min-w-full bg-gray-800/50 gap-2 p-1">
-              <TabsTrigger
-                value="overview"
-                className="data-[state=active]:bg-orange-500 whitespace-nowrap px-3 py-2 text-xs flex-shrink-0"
-              >
-                Overview
-              </TabsTrigger>
-              <TabsTrigger
-                value="scripts"
-                className="data-[state=active]:bg-orange-500 whitespace-nowrap px-3 py-2 text-xs flex-shrink-0"
-              >
-                Scripts
-              </TabsTrigger>
-              <TabsTrigger
-                value="giveaways"
-                className="data-[state=active]:bg-orange-500 whitespace-nowrap px-3 py-2 text-xs flex-shrink-0"
-              >
-                Giveaways
-              </TabsTrigger>
-              <TabsTrigger
-                value="ads"
-                className="data-[state=active]:bg-orange-500 whitespace-nowrap px-3 py-2 text-xs flex-shrink-0"
-              >
-                Ads
-              </TabsTrigger>
-              <TabsTrigger
-                value="featured-scripts"
-                className="data-[state=active]:bg-purple-500 whitespace-nowrap px-3 py-2 text-xs flex-shrink-0"
-              >
-                Featured
-              </TabsTrigger>
-              <TabsTrigger
-                value="entries"
-                className="data-[state=active]:bg-orange-500 whitespace-nowrap px-3 py-2 text-xs flex-shrink-0"
-              >
-                Entries
-              </TabsTrigger>
-              <TabsTrigger
-                value="settings"
-                className="data-[state=active]:bg-orange-500 whitespace-nowrap px-3 py-2 text-xs flex-shrink-0"
-              >
-                Settings
-              </TabsTrigger>
-            </TabsList>
+                <TabsTrigger
+                  value="overview"
+                  className="data-[state=active]:bg-orange-500 whitespace-nowrap px-3 py-2 text-xs flex-shrink-0"
+                >
+                  Overview
+                </TabsTrigger>
+                <TabsTrigger
+                  value="scripts"
+                  className="data-[state=active]:bg-orange-500 whitespace-nowrap px-3 py-2 text-xs flex-shrink-0"
+                >
+                  Scripts
+                </TabsTrigger>
+                <TabsTrigger
+                  value="giveaways"
+                  className="data-[state=active]:bg-orange-500 whitespace-nowrap px-3 py-2 text-xs flex-shrink-0"
+                >
+                  Giveaways
+                </TabsTrigger>
+                <TabsTrigger
+                  value="ads"
+                  className="data-[state=active]:bg-orange-500 whitespace-nowrap px-3 py-2 text-xs flex-shrink-0"
+                >
+                  Ads
+                </TabsTrigger>
+                <TabsTrigger
+                  value="featured-scripts"
+                  className="data-[state=active]:bg-purple-500 whitespace-nowrap px-3 py-2 text-xs flex-shrink-0"
+                >
+                  Featured
+                </TabsTrigger>
+                <TabsTrigger
+                  value="entries"
+                  className="data-[state=active]:bg-orange-500 whitespace-nowrap px-3 py-2 text-xs flex-shrink-0"
+                >
+                  Entries
+                </TabsTrigger>
+                <TabsTrigger
+                  value="settings"
+                  className="data-[state=active]:bg-orange-500 whitespace-nowrap px-3 py-2 text-xs flex-shrink-0"
+                >
+                  Settings
+                </TabsTrigger>
+              </TabsList>
             </div>
 
             {/* Desktop Tabs */}
@@ -891,8 +888,8 @@ export default function ProfilePage() {
                         <CardContent className="p-6">
                           <div className="aspect-video bg-gray-700 rounded-lg mb-4 overflow-hidden">
                             {script.cover_image ||
-                            (script.screenshots &&
-                              script.screenshots.length > 0) ? (
+                              (script.screenshots &&
+                                script.screenshots.length > 0) ? (
                               <img
                                 src={
                                   script.cover_image || script.screenshots[0]
@@ -1047,7 +1044,7 @@ export default function ProfilePage() {
                         <CardContent className="p-6">
                           <div className="aspect-video bg-gray-700 rounded-lg mb-4 overflow-hidden">
                             {giveaway.cover_image ||
-                            (giveaway.images && giveaway.images.length > 0) ? (
+                              (giveaway.images && giveaway.images.length > 0) ? (
                               <img
                                 src={giveaway.cover_image || giveaway.images[0]}
                                 alt={giveaway.title}
@@ -1265,7 +1262,7 @@ export default function ProfilePage() {
                             <p className="text-gray-400 text-sm mb-4 line-clamp-3">
                               {ad.description}
                             </p>
-                            
+
                             {ad.status === "rejected" &&
                               ad.rejection_reason && (
                                 <div className="mt-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
@@ -1607,12 +1604,11 @@ export default function ProfilePage() {
                                 Featured Script
                               </Badge>
                               <Badge
-                                className={`text-xs ${
-                                  (featuredScript.featuredStatus ||
+                                className={`text-xs ${(featuredScript.featuredStatus ||
                                     featuredScript.status) === "active"
                                     ? "bg-green-500/20 text-green-400 border-green-500/30"
                                     : "bg-gray-500/20 text-gray-400 border-gray-500/30"
-                                }`}
+                                  }`}
                               >
                                 {(featuredScript.featuredStatus ||
                                   featuredScript.status) === "active"
@@ -1637,7 +1633,7 @@ export default function ProfilePage() {
                                   Created:{" "}
                                   {new Date(
                                     featuredScript.featuredCreatedAt ||
-                                      featuredScript.created_at
+                                    featuredScript.created_at
                                   ).toLocaleDateString()}
                                 </div>
                                 {featuredScript.featuredStatus === "active" && (
@@ -1999,13 +1995,12 @@ export default function ProfilePage() {
                               </div>
                               <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 flex-wrap">
                                 <Badge
-                                  className={`flex-shrink-0 ${
-                                    entry.status === "active"
+                                  className={`flex-shrink-0 ${entry.status === "active"
                                       ? "bg-green-500/20 text-green-400 border-green-500/30"
                                       : entry.status === "winner"
-                                      ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
-                                      : "bg-red-500/20 text-red-400 border-red-500/30"
-                                  }`}
+                                        ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
+                                        : "bg-red-500/20 text-red-400 border-red-500/30"
+                                    }`}
                                 >
                                   {entry.status.charAt(0).toUpperCase() +
                                     entry.status.slice(1)}
