@@ -1,10 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import Link from "next/link"
 import Image from "next/image"
 import { useSession, signIn, signOut } from "next-auth/react"
+import { ShoppingCart } from "lucide-react"
 import { Avatar, AvatarImage, AvatarFallback } from "@/componentss/ui/avatar"
 import { getSessionUserProfilePicture } from "@/lib/user-utils"
 import {
@@ -22,6 +23,45 @@ import {
 export default function NavbarComponent() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const { data: session, status } = useSession()
+  const [cartCount, setCartCount] = useState<number>(0)
+
+  const fetchCartCount = async () => {
+    try {
+      const response = await fetch("/api/cart")
+      if (!response.ok) {
+        setCartCount(0)
+        return
+      }
+
+      const data = await response.json()
+      const count = Array.isArray(data.items)
+        ? data.items.reduce((sum: number, item: any) => sum + Number(item.quantity || 0), 0)
+        : 0
+
+      setCartCount(count)
+    } catch (error) {
+      setCartCount(0)
+    }
+  }
+
+  useEffect(() => {
+    if (status === "authenticated") {
+      fetchCartCount()
+    } else {
+      setCartCount(0)
+    }
+  }, [status])
+
+  useEffect(() => {
+    const handleCartUpdated = () => {
+      if (status === "authenticated") {
+        fetchCartCount()
+      }
+    }
+
+    window.addEventListener("cartUpdated", handleCartUpdated)
+    return () => window.removeEventListener("cartUpdated", handleCartUpdated)
+  }, [status])
 
   const navItems = [
     { name: "Home", link: "/" },
@@ -73,6 +113,18 @@ export default function NavbarComponent() {
           <CustomLogo />
           <NavItems items={navItems} />
           <div className="flex items-center gap-2 ml-auto pl-6 flex-shrink-0">
+            <Link
+              href="/cart"
+              aria-label="Cart"
+              className="relative inline-flex h-9 w-9 items-center justify-center rounded-md text-neutral-700 transition hover:bg-gray-100 hover:text-orange-500 dark:text-neutral-200 dark:hover:bg-neutral-800"
+            >
+              <ShoppingCart className="h-5 w-5" />
+              {cartCount > 0 && (
+                <span className="absolute -top-1 -right-1 inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-orange-500 px-1.5 text-[10px] font-bold text-black">
+                  {cartCount}
+                </span>
+              )}
+            </Link>
             {status === "authenticated" ? (
               <>
                 <Link href="/profile" className="block">
@@ -111,10 +163,24 @@ export default function NavbarComponent() {
         <MobileNav>
           <MobileNavHeader>
             <CustomLogo />
-            <MobileNavToggle
-              isOpen={isMobileMenuOpen}
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            />
+            <div className="flex items-center gap-3">
+              <Link
+                href="/cart"
+                aria-label="Cart"
+                className="relative inline-flex h-9 w-9 items-center justify-center rounded-md text-neutral-700 transition hover:bg-gray-100 hover:text-orange-500 dark:text-neutral-200 dark:hover:bg-neutral-800"
+              >
+                <ShoppingCart className="h-5 w-5" />
+                {cartCount > 0 && (
+                  <span className="absolute -top-1 -right-1 inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-orange-500 px-1.5 text-[10px] font-bold text-black">
+                    {cartCount}
+                  </span>
+                )}
+              </Link>
+              <MobileNavToggle
+                isOpen={isMobileMenuOpen}
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              />
+            </div>
           </MobileNavHeader>
 
           <MobileNavMenu
