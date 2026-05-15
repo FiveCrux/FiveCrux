@@ -65,7 +65,8 @@ export default function NavbarComponent() {
 
   const navItems = [
     { name: "Home", link: "/" },
-    { name: "Marketplace", link: "/scripts" },
+    { name: "Scripts", link: "/scripts" },
+    { name: "Props", link: "/props" },
     { name: "Giveaways", link: "/giveaways" },
     { name: "Advertise", link: "/advertise" },
   ]

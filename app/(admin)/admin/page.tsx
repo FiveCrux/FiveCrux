@@ -212,6 +212,12 @@ const roleOptions = [
     icon: Shield,
     color: "bg-yellow-500",
   },
+  {
+    value: "prop_lister",
+    label: "Prop Lister",
+    icon: Package,
+    color: "bg-orange-500",
+  },
 ];
 
 export default function AdminPage() {

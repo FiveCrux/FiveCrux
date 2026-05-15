@@ -45,6 +45,7 @@ import Footer from "@/componentss/shared/footer";
 import AdsForm from "@/componentss/ads/ads-form";
 import ScriptSelectionPopup from "@/componentss/featured-scripts/script-selection-popup";
 import CouponsTab from "@/componentss/profile/coupons-tab";
+import PropsTab from "@/componentss/profile/props-tab";
 import {
   useUserScripts,
   useDeleteUserScript,
@@ -675,6 +676,12 @@ export default function ProfilePage() {
                 Scripts
               </TabsTrigger>
               <TabsTrigger
+                value="props"
+                className="data-[state=active]:bg-orange-500 whitespace-nowrap px-3 py-2 text-xs flex-shrink-0"
+              >
+                Props
+              </TabsTrigger>
+              <TabsTrigger
                 value="giveaways"
                 className="data-[state=active]:bg-orange-500 whitespace-nowrap px-3 py-2 text-xs flex-shrink-0"
               >
@@ -716,7 +723,7 @@ export default function ProfilePage() {
             </div>
 
             {/* Desktop Tabs */}
-            <TabsList className={`hidden lg:grid w-full ${canManageCoupons ? "grid-cols-8" : "grid-cols-7"} bg-gray-800/50 gap-2 p-1`}>
+            <TabsList className={`hidden lg:grid w-full ${canManageCoupons ? "grid-cols-9" : "grid-cols-8"} bg-gray-800/50 gap-2 p-1`}>
               <TabsTrigger
                 value="overview"
                 className="data-[state=active]:bg-orange-500"
@@ -730,6 +737,13 @@ export default function ProfilePage() {
               >
                 <Package className="h-4 w-4 mr-2" />
                 Scripts
+              </TabsTrigger>
+              <TabsTrigger
+                value="props"
+                className="data-[state=active]:bg-orange-500"
+              >
+                <Package className="h-4 w-4 mr-2" />
+                Props
               </TabsTrigger>
               <TabsTrigger
                 value="giveaways"
@@ -2106,6 +2120,17 @@ export default function ProfilePage() {
                 </motion.div>
               </TabsContent>
             )}
+
+            {/* Props Tab */}
+            <TabsContent value="props" className="space-y-6">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8 }}
+              >
+                <PropsTab />
+              </motion.div>
+            </TabsContent>
 
             {/* Settings Tab */}
             <TabsContent value="settings" className="space-y-6">

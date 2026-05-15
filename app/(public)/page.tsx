@@ -633,6 +633,43 @@ export default function HomePage() {
             </div>
           </div>
         </motion.div>
+
+        <motion.div className="max-w-7xl mx-auto mt-10 px-4 sm:px-6">
+          <div className="relative h-64 sm:h-80 md:h-96 rounded-lg overflow-hidden">
+            {/* Background Image */}
+            <img
+              src="/gtav_3.jpg"
+              alt="FiveCrux Props"
+              className="w-full h-full object-cover object-top opacity-60"
+            />
+
+            {/* Gradient Overlays */}
+            <div className="absolute inset-0 bg-gradient-to-br from-yellow-600/50 via-orange-600/40 to-red-900/60"></div>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
+
+            {/* Content */}
+            <div className="absolute inset-0 flex flex-col md:flex-row items-center md:items-center justify-center md:justify-between px-4 sm:px-6 z-10 gap-4 md:gap-8">
+              {/* Left Content */}
+              <div className="max-w-xl flex flex-col items-start gap-3 md:gap-4">
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white">Publish Your Prop</h2>
+                <p className="text-gray-300 text-xs sm:text-sm leading-relaxed text-left">
+                  Showcase your custom 3D models and props to the FiveM community. Join our growing marketplace of high-quality assets and reach thousands of server owners.
+                </p>
+                {status === "authenticated" ? (
+                  <Link href="/props/submit">
+                    <button className="bg-white text-black font-bold px-6 sm:px-8 py-2 sm:py-3 text-base sm:text-lg shadow-lg rounded-lg hover:bg-gray-300 transition-colors flex items-center gap-2">
+                      Submit Your Prop <MousePointerClick className="h-4 w-4 sm:h-5 sm:w-5" />
+                    </button>
+                  </Link>
+                ) : (
+                  <button onClick={() => signIn("discord")} className="bg-white text-black font-bold px-6 sm:px-8 py-2 sm:py-3 text-base sm:text-lg shadow-lg rounded-lg hover:bg-gray-300 transition-colors flex items-center gap-2">
+                    Submit Your Prop <MousePointerClick className="h-4 w-4 sm:h-5 sm:w-5" />
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </motion.div>
         {/* Call to Action Section */}
         <motion.section
           className="py-32 px-4 sm:px-6 lg:px-8 relative overflow-hidden"
