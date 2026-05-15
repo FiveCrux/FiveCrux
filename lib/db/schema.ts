@@ -121,9 +121,14 @@ export const subscriptions = pgTable('subscriptions', {
 
 export const props = pgTable('props', {
   id: text('id').primaryKey().notNull(),
-  title: text('title').notNull(),
+  name: text('name').notNull(),
+  description: text('description').notNull(),
   price: numeric('price', { precision: 10, scale: 2 }).notNull(),
-  metadata: json('metadata'),
+  discountPercentage: numeric('discount_percentage', { precision: 5, scale: 2 }).default('0'),
+  discountedPrice: numeric('discounted_price', { precision: 10, scale: 2 }),
+  images: text('images').array().default([]),
+  zipFile: text('zip_file').notNull(),
+  createdBy: text('created_by').notNull().references(() => users.id),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 });
@@ -529,3 +534,5 @@ export type FeaturedScript = typeof featuredScripts.$inferSelect;
 export type NewFeaturedScript = typeof featuredScripts.$inferInsert;
 export type UserFeaturedScriptSlot = typeof userFeaturedScriptSlots.$inferSelect;
 export type NewUserFeaturedScriptSlot = typeof userFeaturedScriptSlots.$inferInsert;
+export type Prop = typeof props.$inferSelect;
+export type NewProp = typeof props.$inferInsert;

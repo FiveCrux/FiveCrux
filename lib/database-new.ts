@@ -18,7 +18,7 @@ import { validateFrameworks, isValidFramework } from './constants';
 import { announceScriptFeatured } from './discord';
 
 // Valid roles in the system
-export const VALID_ROLES = ['founder', 'verified_creator', 'crew', 'admin', 'moderator', 'user'] as const;
+export const VALID_ROLES = ['founder', 'verified_creator', 'crew', 'admin', 'moderator', 'prop_lister', 'user'] as const;
 export type ValidRole = typeof VALID_ROLES[number];
 
 // Helper function to validate roles
