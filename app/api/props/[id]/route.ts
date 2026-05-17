@@ -2,9 +2,40 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
 import { db } from "@/lib/db/client";
-import { props } from "@/lib/db/schema";
+import { approvedProps, pendingProps, rejectedProps, users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { hasRole } from "@/lib/database-new";
+
+async function findPropById(id: string) {
+  const approved = await db
+    .select({ prop: approvedProps, user: users })
+    .from(approvedProps)
+    .leftJoin(users, eq(approvedProps.createdBy, users.id))
+    .where(eq(approvedProps.id, id))
+    .limit(1);
+
+  if (approved[0]) return { ...approved[0].prop, user: approved[0].user, status: "approved" as const };
+
+  const pending = await db
+    .select({ prop: pendingProps, user: users })
+    .from(pendingProps)
+    .leftJoin(users, eq(pendingProps.createdBy, users.id))
+    .where(eq(pendingProps.id, id))
+    .limit(1);
+
+  if (pending[0]) return { ...pending[0].prop, user: pending[0].user, status: "pending" as const };
+
+  const rejected = await db
+    .select({ prop: rejectedProps, user: users })
+    .from(rejectedProps)
+    .leftJoin(users, eq(rejectedProps.createdBy, users.id))
+    .where(eq(rejectedProps.id, id))
+    .limit(1);
+
+  if (rejected[0]) return { ...rejected[0].prop, user: rejected[0].user, status: "rejected" as const };
+
+  return null;
+}
 
 export async function GET(
   request: NextRequest,
@@ -12,12 +43,21 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const prop = await db.query.props.findFirst({
-      where: eq(props.id, id),
-    });
+    const prop = await findPropById(id);
 
     if (!prop) {
       return NextResponse.json({ error: "Prop not found" }, { status: 404 });
+    }
+
+    if (prop.status !== "approved") {
+      const session = await getServerSession(authOptions);
+      const userRoles = (session?.user as any)?.roles || [];
+      const isAdmin = hasRole(userRoles, 'admin') || hasRole(userRoles, 'founder');
+      const isOwner = prop.createdBy === (session?.user as any)?.id;
+
+      if (!isAdmin && !isOwner) {
+        return NextResponse.json({ error: "Prop not found" }, { status: 404 });
+      }
     }
 
     return NextResponse.json(prop);
@@ -38,9 +78,7 @@ export async function PATCH(
     }
 
     const { id } = await params;
-    const existingProp = await db.query.props.findFirst({
-      where: eq(props.id, id),
-    });
+    const existingProp = await findPropById(id);
 
     if (!existingProp) {
       return NextResponse.json({ error: "Prop not found" }, { status: 404 });
@@ -83,9 +121,16 @@ export async function PATCH(
 
     updates.updatedAt = new Date();
 
-    const updatedProp = await db.update(props)
+    const targetTable =
+      existingProp.status === "pending"
+        ? pendingProps
+        : existingProp.status === "rejected"
+        ? rejectedProps
+        : approvedProps;
+
+    const updatedProp = await db.update(targetTable)
       .set(updates)
-      .where(eq(props.id, id))
+      .where(eq(targetTable.id, id))
       .returning();
 
     return NextResponse.json({ success: true, prop: updatedProp[0] });
@@ -106,9 +151,7 @@ export async function DELETE(
     }
 
     const { id } = await params;
-    const existingProp = await db.query.props.findFirst({
-      where: eq(props.id, id),
-    });
+    const existingProp = await findPropById(id);
 
     if (!existingProp) {
       return NextResponse.json({ error: "Prop not found" }, { status: 404 });
@@ -122,7 +165,14 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
-    await db.delete(props).where(eq(props.id, id));
+    const targetTable =
+      existingProp.status === "pending"
+        ? pendingProps
+        : existingProp.status === "rejected"
+        ? rejectedProps
+        : approvedProps;
+
+    await db.delete(targetTable).where(eq(targetTable.id, id));
 
     return NextResponse.json({ success: true, message: "Prop deleted successfully" });
   } catch (error) {

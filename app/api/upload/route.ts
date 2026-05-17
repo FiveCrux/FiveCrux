@@ -17,6 +17,9 @@ const SIZE_LIMITS = {
   // Video limits (uploaded as-is)
   demoVideo: 4.5 * 1024 * 1024,  // 4.5MB
   trailerVideo: 4.5 * 1024 * 1024, // 4.5MB
+  
+  // Zip limits
+  propZip: 200 * 1024 * 1024, // 200MB
 }
 
 // Dimension limits
@@ -37,8 +40,9 @@ export async function POST(request: NextRequest) {
 
     const formData = await request.formData()
     const file = formData.get("file") as File
-    const type = formData.get("type") as string // "image" or "video"
-    const purpose = formData.get("purpose") as string // "cover", "screenshot", "demo", "trailer"
+    const type = formData.get("type") as string // "image", "video", or "zip"
+    const purpose = formData.get("purpose") as string // "cover", "screenshot", "demo", "trailer", "prop_zip"
+    const userId = formData.get("userId") as string | null
 
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 })
@@ -57,6 +61,12 @@ export async function POST(request: NextRequest) {
     if (type === "video" && !allowedVideoTypes.includes(file.type)) {
       return NextResponse.json({ 
         error: "Invalid video format. Use MP4, MOV, AVI, or WebM" 
+      }, { status: 400 })
+    }
+
+    if (type === "zip" && file.type !== "application/zip" && file.type !== "application/x-zip-compressed" && !file.name.toLowerCase().endsWith(".zip")) {
+      return NextResponse.json({ 
+        error: "Invalid file format. Use ZIP" 
       }, { status: 400 })
     }
 
@@ -82,7 +92,7 @@ export async function POST(request: NextRequest) {
           maxSize = SIZE_LIMITS.screenshot
           maxDimensions = DIMENSION_LIMITS.screenshot
       }
-    } else {
+    } else if (type === "video") {
       switch (purpose) {
         case "demo":
           maxSize = SIZE_LIMITS.demoVideo
@@ -96,6 +106,10 @@ export async function POST(request: NextRequest) {
           maxSize = SIZE_LIMITS.demoVideo
           maxDimensions = DIMENSION_LIMITS.demoVideo
       }
+    } else {
+      // zip
+      maxSize = SIZE_LIMITS.propZip
+      maxDimensions = { width: 0, height: 0 }
     }
 
     // Check file size
@@ -111,7 +125,7 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(bytes)
 
     // Generate S3 key
-    const s3Key = generateS3Key(type as 'image' | 'video', purpose, file.name)
+    const s3Key = generateS3Key(type as 'image' | 'video' | 'zip', purpose, file.name, userId)
 
     // Upload to S3 (images are automatically optimized)
     const publicUrl = await uploadToS3(buffer, s3Key, file.type)
