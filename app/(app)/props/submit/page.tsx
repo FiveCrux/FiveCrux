@@ -24,6 +24,7 @@ export default function SubmitPropPage() {
   const [isEditMode, setIsEditMode] = useState(false)
   const [isLoadingProp, setIsLoadingProp] = useState(false)
   const [uploadingImages, setUploadingImages] = useState(false)
+  const [uploadingZip, setUploadingZip] = useState(false)
 
   const [formData, setFormData] = useState({
     name: "",
@@ -77,12 +78,15 @@ export default function SubmitPropPage() {
     return null
   }
 
-  const handleFileUpload = async (file: File, type: "image" | "zip", purpose: string) => {
+  const handleFileUpload = async (file: File, type: "image" | "zip", purpose: string, userId?: string) => {
     try {
       const formData = new FormData()
       formData.append("file", file)
       formData.append("type", type)
       formData.append("purpose", purpose)
+      if (userId) {
+        formData.append("userId", userId)
+      }
 
       const response = await fetch("/api/upload", {
         method: "POST",
@@ -129,6 +133,23 @@ export default function SubmitPropPage() {
     setMedia(prev => ({
       images: prev.images.filter((_, i) => i !== index)
     }))
+  }
+
+  const handleZipUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    setUploadingZip(true)
+    try {
+      const userId = (session?.user as any)?.id
+      const url = await handleFileUpload(file, "zip", "prop_zip", userId)
+      if (url) {
+        setFormData(prev => ({ ...prev, zipFile: url }))
+        toast.success("ZIP file uploaded successfully")
+      }
+    } finally {
+      setUploadingZip(false)
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -233,14 +254,47 @@ export default function SubmitPropPage() {
                     </div>
                   </div>
                   <div>
-                    <Label className="text-white">File URL *</Label>
-                    <Input
-                      value={formData.zipFile}
-                      onChange={(e) => setFormData({ ...formData, zipFile: e.target.value })}
-                      placeholder="https://example.com/prop.zip"
-                      className="mt-2 bg-gray-900 border-gray-700 text-white"
-                      required
-                    />
+                    <Label className="text-white">Prop ZIP File *</Label>
+                    <div className="mt-2 flex items-center gap-4">
+                      <label className="flex-1 max-w-xs border-2 border-dashed border-gray-600 hover:border-orange-500 rounded-lg p-4 cursor-pointer bg-gray-900/50 hover:bg-gray-800/50 transition-colors flex flex-col items-center justify-center text-center h-32">
+                        <input
+                          type="file"
+                          accept=".zip,application/zip,application/x-zip-compressed"
+                          className="hidden"
+                          onChange={handleZipUpload}
+                          disabled={uploadingZip}
+                        />
+                        {uploadingZip ? (
+                          <div className="flex flex-col items-center gap-2">
+                            <div className="animate-spin w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full" />
+                            <span className="text-sm text-gray-400">Uploading...</span>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center gap-2">
+                            <Package className="w-6 h-6 text-gray-400" />
+                            <span className="text-sm text-gray-400">
+                              {formData.zipFile ? "Change ZIP File" : "Upload ZIP File"}
+                            </span>
+                          </div>
+                        )}
+                      </label>
+                      {formData.zipFile && (
+                        <div className="flex-1 min-w-0 flex flex-col justify-center h-32 text-sm text-green-400 bg-green-400/10 p-4 rounded-lg border border-green-400/20">
+                          <span className="font-semibold mb-1">File ready:</span>
+                          <a href={formData.zipFile} target="_blank" rel="noopener noreferrer" className="text-white font-medium hover:underline truncate block" title={formData.zipFile.split('/').pop()}>
+                            {formData.zipFile.split('/').pop()}
+                          </a>
+                          <div className="mt-2">
+                            <Input 
+                              value={formData.zipFile} 
+                              readOnly 
+                              className="h-8 text-xs bg-gray-900 border-gray-700 text-gray-300" 
+                              onClick={(e) => e.currentTarget.select()}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>

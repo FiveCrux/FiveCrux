@@ -8,7 +8,7 @@ import { db } from "@/lib/db/client";
 import {
     carts,
     cartItems,
-    props,
+    approvedProps,
     subscriptions,
 } from "@/lib/db/schema";
 
@@ -106,8 +106,8 @@ export async function POST(request: NextRequest) {
                 metadata: metadata ?? null,
             } as any;
         } else {
-            item = await db.query.props.findFirst({
-                where: eq(props.id, itemId),
+            item = await db.query.approvedProps.findFirst({
+                where: eq(approvedProps.id, itemId),
             });
         }
 

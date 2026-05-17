@@ -2,18 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
 import { db } from "@/lib/db/client";
-import { props } from "@/lib/db/schema";
-import { desc } from "drizzle-orm";
-import { hasRole } from "@/lib/database-new";
-
-// Generate unique ID for props
-function generateId(): string {
-  return "prop_" + Math.floor(Date.now() / 1000) + "_" + Math.floor(Math.random() * 10000);
-}
+import { approvedProps, users } from "@/lib/db/schema";
+import { desc, eq } from "drizzle-orm";
+import { createProp, hasRole } from "@/lib/database-new";
 
 export async function GET(request: NextRequest) {
   try {
-    const allProps = await db.select().from(props).orderBy(desc(props.createdAt));
+    const rows = await db
+      .select({ prop: approvedProps, user: users })
+      .from(approvedProps)
+      .leftJoin(users, eq(approvedProps.createdBy, users.id))
+      .orderBy(desc(approvedProps.createdAt));
+    const allProps = rows.map(({ prop, user }) => ({ ...prop, user }));
+
     return NextResponse.json({ props: allProps });
   } catch (error) {
     console.error("Error fetching props:", error);
@@ -54,8 +55,7 @@ export async function POST(request: NextRequest) {
       discountedPrice = priceNum - (priceNum * discountNum / 100);
     }
 
-    const newProp = await db.insert(props).values({
-      id: generateId(),
+    const propId = await createProp({
       name,
       description,
       price: priceNum.toString(),
@@ -64,9 +64,14 @@ export async function POST(request: NextRequest) {
       images: images || [],
       zipFile,
       createdBy: (session.user as any).id,
-    }).returning();
+    });
 
-    return NextResponse.json({ success: true, prop: newProp[0] });
+    return NextResponse.json({
+      success: true,
+      status: "pending",
+      prop: { id: propId },
+      message: "Prop submitted for admin approval",
+    });
   } catch (error) {
     console.error("Error creating prop:", error);
     return NextResponse.json({ error: "Failed to create prop" }, { status: 500 });

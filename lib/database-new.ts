@@ -3,6 +3,7 @@ import { eq, and, or, like, gte, lte, sql, desc, asc, getTableColumns, ne, lt, i
 import { 
   users, pendingScripts, approvedScripts, rejectedScripts, 
   pendingGiveaways, approvedGiveaways, rejectedGiveaways, 
+  pendingProps, approvedProps, rejectedProps,
   giveawayEntries, 
   giveawayRequirements, giveawayPrizes, giveawayPrizeWinners, pendingAds, approvedAds, rejectedAds,
   userAdSlots, featuredScripts,
@@ -12,7 +13,7 @@ import {
 import type { 
   NewUser, NewScript, NewGiveaway, NewGiveawayEntry, 
   NewAd, 
-  NewGiveawayRequirement, NewGiveawayPrize, NewFeaturedScript
+  NewGiveawayRequirement, NewGiveawayPrize, NewFeaturedScript, NewPendingProp
 } from './db/schema';
 import { validateFrameworks, isValidFramework } from './constants';
 import { announceScriptFeatured } from './discord';
@@ -861,6 +862,123 @@ export async function getScriptById(id: number) {
   }
 }
 
+// Prop functions
+export async function createProp(propData: Omit<NewPendingProp, 'id'> & { id?: string }): Promise<string> {
+  const timestamp = Math.floor(Date.now() / 1000);
+  const randomSuffix = Math.floor(Math.random() * 10000);
+  const id = propData.id || `prop_${timestamp}_${randomSuffix}`;
+
+  const result = await db
+    .insert(pendingProps)
+    .values({
+      ...propData,
+      id,
+      images: propData.images || [],
+    })
+    .returning({ id: pendingProps.id });
+
+  return result[0]?.id ?? id;
+}
+
+export async function getApprovedProps(limit?: number) {
+  const base = db
+    .select()
+    .from(approvedProps)
+    .orderBy(desc(approvedProps.createdAt));
+  return await (limit ? base.limit(limit) : base);
+}
+
+export async function getPendingProps(limit?: number) {
+  const base = db
+    .select()
+    .from(pendingProps)
+    .orderBy(desc(pendingProps.submittedAt));
+  return await (limit ? base.limit(limit) : base);
+}
+
+export async function getRejectedProps(limit?: number) {
+  const base = db
+    .select()
+    .from(rejectedProps)
+    .orderBy(desc(rejectedProps.rejectedAt));
+  return await (limit ? base.limit(limit) : base);
+}
+
+export async function approveProp(propId: string, adminId: string, adminNotes?: string) {
+  const pendingProp = await db
+    .select()
+    .from(pendingProps)
+    .where(eq(pendingProps.id, propId))
+    .limit(1);
+
+  if (!pendingProp[0]) {
+    throw new Error('Prop not found in pending props');
+  }
+
+  const approvedProp = await db
+    .insert(approvedProps)
+    .values({
+      ...pendingProp[0],
+      approvedAt: new Date(),
+      approvedBy: adminId,
+      adminNotes: adminNotes || null,
+    })
+    .returning();
+
+  await db.delete(pendingProps).where(eq(pendingProps.id, propId));
+
+  return approvedProp[0];
+}
+
+export async function rejectProp(propId: string, adminId: string, rejectionReason: string, adminNotes?: string) {
+  let prop = await db
+    .select()
+    .from(pendingProps)
+    .where(eq(pendingProps.id, propId))
+    .limit(1);
+  let sourceTable: 'pending' | 'approved' = 'pending';
+
+  if (!prop[0]) {
+    const approvedProp = await db
+      .select()
+      .from(approvedProps)
+      .where(eq(approvedProps.id, propId))
+      .limit(1);
+
+    if (approvedProp[0]) {
+      prop = [{
+        ...approvedProp[0],
+        submittedAt: approvedProp[0].createdAt,
+        adminNotes: approvedProp[0].adminNotes,
+      } as any];
+      sourceTable = 'approved';
+    }
+  }
+
+  if (!prop[0]) {
+    throw new Error('Prop not found in pending or approved props');
+  }
+
+  const rejectedProp = await db
+    .insert(rejectedProps)
+    .values({
+      ...prop[0],
+      rejectedAt: new Date(),
+      rejectedBy: adminId,
+      rejectionReason,
+      adminNotes: adminNotes || null,
+    })
+    .returning();
+
+  if (sourceTable === 'pending') {
+    await db.delete(pendingProps).where(eq(pendingProps.id, propId));
+  } else {
+    await db.delete(approvedProps).where(eq(approvedProps.id, propId));
+  }
+
+  return rejectedProp[0];
+}
+
 // Admin functions for script management
 export async function getPendingScripts(limit?: number) {
   try {
@@ -1337,7 +1455,7 @@ export async function createGiveaway(giveawayData: NewGiveaway) {
     // Map snake_case input to camelCase schema fields
     totalValue: giveawayData.totalValue || (giveawayData as any).total_value || '0',
     endDate: giveawayData.endDate || (giveawayData as any).end_date || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-    startDate: giveawayData.startDate || (giveawayData as any).start_date || null,
+    startDate: (giveawayData as any).startDate || (giveawayData as any).start_date || null,
     creatorName: giveawayData.creatorName || (giveawayData as any).creator_name || 'Unknown Creator',
     creatorEmail: giveawayData.creatorEmail || (giveawayData as any).creator_email || 'unknown@example.com',
     creatorId: giveawayData.creatorId || (giveawayData as any).creator_id || 'unknown',

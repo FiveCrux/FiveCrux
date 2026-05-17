@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
 import { db } from "@/lib/db/client";
-import { props } from "@/lib/db/schema";
+import { approvedProps } from "@/lib/db/schema";
 import { hasPurchasedProp } from "@/lib/prop-utils";
 import { eq } from "drizzle-orm";
 import { hasRole } from "@/lib/database-new";
@@ -18,8 +18,8 @@ export async function GET(
     }
 
     const { id } = await params;
-    const prop = await db.query.props.findFirst({
-      where: eq(props.id, id),
+    const prop = await db.query.approvedProps.findFirst({
+      where: eq(approvedProps.id, id),
     });
 
     if (!prop) {

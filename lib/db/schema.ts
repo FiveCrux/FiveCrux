@@ -119,7 +119,8 @@ export const subscriptions = pgTable('subscriptions', {
   updatedAt: timestamp('updated_at').defaultNow(),
 });
 
-export const props = pgTable('props', {
+// Base prop fields (common to all prop approval states)
+const basePropFields = {
   id: text('id').primaryKey().notNull(),
   name: text('name').notNull(),
   description: text('description').notNull(),
@@ -131,7 +132,34 @@ export const props = pgTable('props', {
   createdBy: text('created_by').notNull().references(() => users.id),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
+};
+
+// Pending props table (new submissions)
+export const pendingProps = pgTable('pending_props', {
+  ...basePropFields,
+  submittedAt: timestamp('submitted_at').defaultNow(),
+  adminNotes: text('admin_notes'),
 });
+
+// Approved props table (live props)
+export const approvedProps = pgTable('approved_props', {
+  ...basePropFields,
+  approvedAt: timestamp('approved_at').defaultNow(),
+  approvedBy: text('approved_by'),
+  adminNotes: text('admin_notes'),
+});
+
+// Rejected props table
+export const rejectedProps = pgTable('rejected_props', {
+  ...basePropFields,
+  rejectedAt: timestamp('rejected_at').defaultNow(),
+  rejectedBy: text('rejected_by'),
+  rejectionReason: text('rejection_reason').notNull(),
+  adminNotes: text('admin_notes'),
+});
+
+// Backward-compatible live props export.
+export const props = approvedProps;
 
 // Base script fields (common to all script types)
 const baseScriptFields = {
@@ -197,7 +225,7 @@ const baseGiveawayFields = {
   currency: text('currency'),
   currencySymbol: text('currency_symbol'),
   endDate: text('end_date').notNull(),
-  startDate: text('start_date'),
+  // startDate: text('start_date'),
   maxEntries: integer('max_entries'),
   featured: boolean('featured').default(false),
   autoAnnounce: boolean('auto_announce').default(true),
@@ -390,6 +418,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   featuredScriptSlots: many(userFeaturedScriptSlots),
   carts: many(carts),
   orders: many(orders),
+  props: many(approvedProps),
 }));
 
 export const cartsRelations = relations(carts, ({ one, many }) => ({
@@ -509,6 +538,27 @@ export const giveawayPrizeWinnersRelations = relations(giveawayPrizeWinners, ({ 
   // No direct foreign key relation - handled by application logic
 }));
 
+export const approvedPropsRelations = relations(approvedProps, ({ one }) => ({
+  user: one(users, {
+    fields: [approvedProps.createdBy],
+    references: [users.id],
+  }),
+}));
+
+export const pendingPropsRelations = relations(pendingProps, ({ one }) => ({
+  user: one(users, {
+    fields: [pendingProps.createdBy],
+    references: [users.id],
+  }),
+}));
+
+export const rejectedPropsRelations = relations(rejectedProps, ({ one }) => ({
+  user: one(users, {
+    fields: [rejectedProps.createdBy],
+    references: [users.id],
+  }),
+}));
+
 // Type exports
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
@@ -534,5 +584,7 @@ export type FeaturedScript = typeof featuredScripts.$inferSelect;
 export type NewFeaturedScript = typeof featuredScripts.$inferInsert;
 export type UserFeaturedScriptSlot = typeof userFeaturedScriptSlots.$inferSelect;
 export type NewUserFeaturedScriptSlot = typeof userFeaturedScriptSlots.$inferInsert;
-export type Prop = typeof props.$inferSelect;
-export type NewProp = typeof props.$inferInsert;
+export type Prop = typeof approvedProps.$inferSelect;
+export type NewProp = typeof approvedProps.$inferInsert;
+export type PendingProp = typeof pendingProps.$inferSelect;
+export type NewPendingProp = typeof pendingProps.$inferInsert;

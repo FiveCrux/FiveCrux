@@ -25,6 +25,12 @@ export default function NavbarComponent() {
   const { data: session, status } = useSession()
   const [cartCount, setCartCount] = useState<number>(0)
 
+  const userRoles = (session?.user as any)?.roles || []
+  const hasAdminAccess =
+    userRoles.includes("admin") ||
+    userRoles.includes("founder") ||
+    userRoles.includes("moderator")
+
   const fetchCartCount = async () => {
     try {
       const response = await fetch("/api/cart")

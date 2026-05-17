@@ -154,8 +154,6 @@ export default function PropsPage() {
   const [allProps, setAllProps] = useState<UIProp[]>([]);
   const [ads, setAds] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [featuredProps, setFeaturedProps] = useState<any[]>([]);
-  const [propsLoading, setPropsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12;
 
@@ -189,7 +187,9 @@ export default function PropsPage() {
               image: image,
               category: "props",
               categoryName: "Props",
-              seller: "FiveCrux",
+              seller: s.user?.name || s.user?.username || "FiveCrux",
+              seller_image: s.user?.profilePicture || s.user?.image || null,
+              seller_roles: s.user?.roles || null,
               discount: Number(s.discountPercentage) || 0,
               framework: [],
               priceCategory:
@@ -230,47 +230,7 @@ export default function PropsPage() {
     load();
   }, []);
 
-  // Fetch featured props
-  useEffect(() => {
-    const fetchFeaturedProps = async () => {
-      try {
-        setPropsLoading(true);
-        const response = await fetch("/api/featured-props?status=active", { cache: "no-store" });
 
-        if (response.ok) {
-          const data = await response.json();
-          const featuredPropsData = data.featuredProps || [];
-          // Map API response to match the expected format
-          const mappedProps = featuredPropsData.map((item: any) => ({
-            id: item.propId,
-            featuredPropId: item.id, // Store the featured prop ID for tracking
-            title: item.propTitle || "",
-            description: item.propDescription || "",
-            cover_image: item.propCoverImage || "/placeholder.jpg",
-            framework: Array.isArray(item.propFramework) ? item.propFramework : item.propFramework ? [item.propFramework] : [],
-            price: item.propPrice || 0,
-            original_price: item.propPrice || 0,
-            currency_symbol: item.propCurrencySymbol || "$",
-            free: item.propFree || false,
-            seller: item.propSellerName || "",
-            seller_name: item.propSellerName || "",
-            seller_image: item.propSellerImage || null,
-            seller_roles: item.propSellerRoles || null,
-          }));
-          
-          // Shuffle the array to randomize starting position
-          const shuffledProps = [...mappedProps].sort(() => Math.random() - 0.5);
-          setFeaturedProps(shuffledProps);
-        }
-      } catch (error) {
-        console.error("Error fetching featured props:", error);
-      } finally {
-        setPropsLoading(false);
-      }
-    };
-
-    fetchFeaturedProps();
-  }, []);
 
   const categories = [
     { id: "props", name: "Props" },
@@ -649,72 +609,7 @@ export default function PropsPage() {
           </div>
         </motion.div>
 
-        {/* Featured props Section */}
-        <motion.section className="py-20 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-7xl mx-auto relative z-10">
-            <motion.div
-              initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1 }}
-              className="text-center mb-12"
-            >
-              <Badge className="bg-gradient-to-r from-orange-500/20 to-yellow-400/20 text-orange-400 border-orange-500/30 mb-6 px-4 py-2 text-sm font-semibold">
-                Featured Props
-              </Badge>
-              <h2 className="text-4xl md:text-5xl font-bold text-white mb-4 flex items-center gap-0 justify-center sm:gap-3">
-                <Zap className="h-10 w-10 text-orange-500" />
-                Featured Props
-              </h2>
-              <p className="text-gray-400 max-w-2xl mx-auto">
-                Check out our most popular and featured props
-              </p>
-            </motion.div>
 
-            {propsLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="bg-neutral-900 border-2 border-neutral-700/50 rounded-xl h-96 animate-pulse" />
-                ))}
-              </div>
-            ) : featuredProps.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-gray-400">No featured props available at the moment.</p>
-              </div>
-            ) : featuredProps.length > 3 ? (
-              <InfiniteMovingCards
-                items={featuredProps}
-                direction="left"
-                speed="slow"
-                pauseOnHover={true}
-                className="max-w-7xl"
-                renderItem={(item, index) => (
-                  <FeaturedScriptCard
-                    item={item}
-                    index={index}
-                    style={{
-                      width: "calc((100vw - 8rem) / 3)",
-                      minWidth: "320px",
-                      maxWidth: "400px",
-                    }}
-                  />
-                )}
-              />
-            ) : (
-              <div className="overflow-x-auto -mx-4 sm:-mx-6 px-4 sm:px-6 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                <div className="flex md:grid md:grid-cols-2 xl:grid-cols-3 gap-6 md:gap-6 min-w-max md:min-w-0">
-                  {featuredProps.map((item, index) => (
-                    <FeaturedScriptCard
-                      key={item.id}
-                      item={item}
-                      index={index}
-                      className="flex-shrink-0 w-[320px] md:w-auto"
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </motion.section>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col gap-8">
@@ -1435,7 +1330,7 @@ export default function PropsPage() {
                         const prop = item as UIProp;
                         return (
                           <motion.div key={prop.id} className="group" whileHover={{ y: -5, scale: 1.02 }}>
-                            <Link href={`/prop/${prop.id}`}>
+                            <Link href={`/props/${prop.id}`}>
                               <Card
                                 className={`bg-neutral-900 border-neutral-700/50 hover:border-white cursor-pointer h-full backdrop-blur-sm relative overflow-hidden shadow-2xl rounded-lg transition-all duration-300 ${
                                   viewMode === "list"
@@ -1508,7 +1403,7 @@ export default function PropsPage() {
                                           alt={prop.seller}
                                         />
                                         <AvatarFallback className="bg-orange-500 text-white text-[8px] font-bold">
-                                          {prop.seller ? prop.seller[0].toUpperCase() : "?"}
+                                          {(prop.seller && prop.seller !== "FiveCrux") ? prop.seller[0].toUpperCase() : "5"}
                                         </AvatarFallback>
                                       </Avatar>
                                       <span className="whitespace-nowrap">By {prop.seller}</span>

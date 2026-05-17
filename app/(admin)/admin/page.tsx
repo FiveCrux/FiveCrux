@@ -90,10 +90,12 @@ import {
   useAdminScripts,
   useAdminGiveaways,
   useAdminAds,
+  useAdminProps,
   useUpdateUserRoles,
   useUpdateScript,
   useUpdateGiveaway,
   useUpdateAd,
+  useUpdateAdminProp,
   useCreateAd,
   useDeleteAd,
 } from "@/hooks/use-admin-queries";
@@ -195,6 +197,21 @@ interface Ad {
   category?: string;
 }
 
+interface Prop {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  discountPercentage?: number;
+  discountedPrice?: number | null;
+  images: string[];
+  zipFile: string;
+  createdBy: string;
+  status: string;
+  created_at: string;
+  rejection_reason?: string;
+}
+
 // Updated role options to the requested set. Values should match DB enum (lowercase/underscored).
 const roleOptions = [
   { value: "founder", label: "Founder", icon: Crown, color: "bg-indigo-500" },
@@ -281,12 +298,21 @@ export default function AdminPage() {
     isFetchingNextPage: loadingMoreAds,
   } = useAdminAds();
 
+  const {
+    data: propsData,
+    isLoading: propsLoading,
+    fetchNextPage: fetchNextProps,
+    hasNextPage: hasMoreProps,
+    isFetchingNextPage: loadingMoreProps,
+  } = useAdminProps();
+
   // Flatten paginated data
   const users = usersData?.pages.flatMap((page) => page.users) || [];
   const scripts: Script[] = scriptsData?.pages.flatMap((page) => page.scripts) || [];
   const giveaways =
     giveawaysData?.pages.flatMap((page) => page.giveaways) || [];
   const ads = adsData?.pages.flatMap((page) => page.ads) || [];
+  const props: Prop[] = propsData?.pages.flatMap((page) => page.props) || [];
 
   // Debug logging for ads
   console.log("Admin Dashboard - Ads:", ads.length, "Loading:", adsLoading);
@@ -296,12 +322,13 @@ export default function AdminPage() {
   const updateScriptMutation = useUpdateScript();
   const updateGiveawayMutation = useUpdateGiveaway();
   const updateAdMutation = useUpdateAd();
+  const updatePropMutation = useUpdateAdminProp();
   const createAdMutation = useCreateAd();
   const deleteAdMutation = useDeleteAd();
 
   // Combined loading state
   const loading =
-    usersLoading || scriptsLoading || giveawaysLoading || adsLoading;
+    usersLoading || scriptsLoading || giveawaysLoading || adsLoading || propsLoading;
 
   const [activeTab, setActiveTab] = useState("dashboard");
 
@@ -340,6 +367,11 @@ export default function AdminPage() {
   const [rejectingAd, setRejectingAd] = useState<number | null>(null);
   const [rejectingAdLoading, setRejectingAdLoading] = useState(false);
   const [adRejectionReason, setAdRejectionReason] = useState("");
+  const [activePropFilter, setActivePropFilter] = useState("all");
+  const [rejectingProp, setRejectingProp] = useState<string | null>(null);
+  const [rejectingPropLoading, setRejectingPropLoading] = useState(false);
+  const [approvingProp, setApprovingProp] = useState<string | null>(null);
+  const [propRejectionReason, setPropRejectionReason] = useState("");
 
   const handleRoleChange = (role: string, checked: boolean) => {
     // Prevent moderators from assigning moderator or founder roles
@@ -438,6 +470,7 @@ export default function AdminPage() {
     totalUsers: users.length,
     totalScripts: scripts.length,
     totalGiveaways: giveaways.length,
+    totalProps: props.length,
     totalAds: ads.length,
     pendingScripts: scripts.filter((s) => s.status === "pending").length,
     activeAds: ads.filter((a) => a.status === "active").length,
@@ -453,6 +486,11 @@ export default function AdminPage() {
   const filteredGiveaways = giveaways.filter((giveaway) => {
     if (activeGiveawayFilter === "all") return true;
     return giveaway.status === activeGiveawayFilter;
+  });
+
+  const filteredProps = props.filter((prop) => {
+    if (activePropFilter === "all") return true;
+    return prop.status === activePropFilter;
   });
 
   // Handle script approval/rejection
@@ -546,6 +584,40 @@ export default function AdminPage() {
         onSettled: () => {
           if (status === "rejected") {
             setRejectingAdLoading(false);
+          }
+        },
+      }
+    );
+  };
+
+  const handlePropAction = async (
+    propId: string,
+    status: "approved" | "rejected"
+  ) => {
+    if (status === "rejected") {
+      setRejectingPropLoading(true);
+    } else {
+      setApprovingProp(propId);
+    }
+
+    updatePropMutation.mutate(
+      {
+        propId,
+        status,
+        reason: status === "rejected" ? propRejectionReason : undefined,
+      },
+      {
+        onSuccess: () => {
+          if (status === "rejected") {
+            setRejectingProp(null);
+            setPropRejectionReason("");
+          }
+        },
+        onSettled: () => {
+          if (status === "rejected") {
+            setRejectingPropLoading(false);
+          } else {
+            setApprovingProp(null);
           }
         },
       }
@@ -713,6 +785,12 @@ export default function AdminPage() {
                 >
                   Giveaways
                 </TabsTrigger>
+                <TabsTrigger
+                  value="props"
+                  className="data-[state=active]:bg-orange-500 data-[state=active]:text-white whitespace-nowrap px-3 py-2 text-xs flex-shrink-0"
+                >
+                  Props
+                </TabsTrigger>
                 {(isModerator || isFounder) && (
                   <TabsTrigger
                     value="ads"
@@ -727,7 +805,7 @@ export default function AdminPage() {
             {/* Desktop Tabs */}
             <TabsList
               className={`hidden lg:grid w-full ${
-                isModerator || isFounder ? "grid-cols-5" : "grid-cols-3"
+                isModerator || isFounder ? "grid-cols-6" : "grid-cols-4"
               } bg-gray-800/30 border border-gray-700/50`}
             >
               <TabsTrigger
@@ -755,6 +833,12 @@ export default function AdminPage() {
                 className="data-[state=active]:bg-orange-500 data-[state=active]:text-white"
               >
                 Giveaways
+              </TabsTrigger>
+              <TabsTrigger
+                value="props"
+                className="data-[state=active]:bg-orange-500 data-[state=active]:text-white"
+              >
+                Props
               </TabsTrigger>
               {(isModerator || isFounder) && (
                 <TabsTrigger
@@ -1438,6 +1522,146 @@ export default function AdminPage() {
               </Card>
             </TabsContent>
 
+            <TabsContent value="props" className="mt-6">
+              <Card className="bg-gray-800/30 border-gray-700/50">
+                <CardHeader>
+                  <CardTitle className="text-white flex items-center gap-2">
+                    <Package className="h-5 w-5 text-orange-500" />
+                    Prop Management
+                  </CardTitle>
+                  <CardDescription className="text-gray-400">
+                    Review and manage pending props
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto -mx-4 sm:-mx-6 px-4 sm:px-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                    <div className="flex gap-2 mb-4 w-max min-w-full">
+                      {["all", "pending", "approved", "rejected"].map((filter) => (
+                        <Button
+                          key={filter}
+                          variant={activePropFilter === filter ? "default" : "outline"}
+                          onClick={() => setActivePropFilter(filter)}
+                          className="whitespace-nowrap flex-shrink-0 capitalize"
+                        >
+                          {filter} ({filter === "all" ? props.length : props.filter((p) => p.status === filter).length})
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    {filteredProps.map((prop) => (
+                      <div
+                        key={prop.id}
+                        className="border border-gray-700/50 rounded-lg p-4 bg-gray-700/20"
+                      >
+                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-lg font-semibold text-white mb-2 truncate">
+                              {prop.name}
+                            </h3>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                              <div className="min-w-0">
+                                <span className="text-gray-400">Creator ID:</span>
+                                <p className="text-white truncate">{prop.createdBy}</p>
+                              </div>
+                              <div className="min-w-0">
+                                <span className="text-gray-400">Price:</span>
+                                <p className="text-white">${String(prop.discountedPrice || prop.price)}</p>
+                              </div>
+                              <div className="min-w-0">
+                                <span className="text-gray-400">Images:</span>
+                                <p className="text-white">{prop.images?.length || 0}</p>
+                              </div>
+                            </div>
+                            <div className="mt-3">
+                              <span className="text-gray-400">Description:</span>
+                              <p className="text-white text-sm mt-1 line-clamp-2">
+                                {prop.description}
+                              </p>
+                            </div>
+                            {prop.status === "rejected" && prop.rejection_reason && (
+                              <div className="mt-3 p-3 bg-red-900/20 border border-red-500/30 rounded-lg">
+                                <span className="text-red-400 text-sm font-medium">
+                                  Rejection Reason:
+                                </span>
+                                <p className="text-red-200 text-sm mt-1 break-words">
+                                  {prop.rejection_reason}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex flex-col items-start sm:items-end gap-2 flex-shrink-0">
+                            <Badge
+                              className={
+                                prop.status === "pending"
+                                  ? "bg-yellow-500 text-white"
+                                  : prop.status === "approved"
+                                  ? "bg-green-500 text-white"
+                                  : "bg-red-500 text-white"
+                              }
+                            >
+                              {prop.status}
+                            </Badge>
+                            <span className="text-xs text-gray-400 whitespace-nowrap">
+                              {new Date(prop.created_at).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap gap-2 mt-4">
+                          {(prop.status === "pending" || prop.status === "approved") && (
+                            <>
+                              {prop.status === "pending" && (
+                                <Button
+                                  onClick={() => handlePropAction(prop.id, "approved")}
+                                  disabled={approvingProp === prop.id}
+                                  className="bg-green-500 hover:bg-green-600 flex-shrink-0"
+                                  size="sm"
+                                >
+                                  <CheckCircle className="mr-2 h-4 w-4" />
+                                  {approvingProp === prop.id ? "Approving..." : "Approve"}
+                                </Button>
+                              )}
+                              <Button
+                                onClick={() => setRejectingProp(prop.id)}
+                                variant="destructive"
+                                size="sm"
+                                className="flex-shrink-0"
+                              >
+                                <XCircle className="mr-2 h-4 w-4" />
+                                Reject
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+
+                    {filteredProps.length === 0 && (
+                      <div className="text-center py-8 text-gray-400">
+                        <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p>No props found with the selected filter.</p>
+                      </div>
+                    )}
+
+                    {filteredProps.length > 0 && hasMoreProps && (
+                      <div className="flex justify-center pt-6">
+                        <Button
+                          onClick={() => fetchNextProps()}
+                          disabled={loadingMoreProps}
+                          variant="outline"
+                          className="border-gray-600 text-gray-300 hover:text-white hover:bg-gray-700"
+                        >
+                          {loadingMoreProps ? "Loading..." : "Load More Props"}
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
             {(isModerator || isFounder) && (
               <TabsContent value="ads" className="mt-6">
                 <div className="space-y-6">
@@ -1973,6 +2197,58 @@ export default function AdminPage() {
                 <Button
                   variant="outline"
                   onClick={() => setRejectingScript(null)}
+                  className="border-gray-600 text-gray-300"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Prop Rejection Dialog */}
+        <Dialog
+          open={!!rejectingProp}
+          onOpenChange={() => setRejectingProp(null)}
+        >
+          <DialogContent className="bg-gray-800 border-gray-700">
+            <DialogHeader>
+              <DialogTitle className="text-white">Reject Prop</DialogTitle>
+              <DialogDescription className="text-gray-400">
+                Please provide a reason for rejecting this prop
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm text-gray-300">
+                  Rejection Reason
+                </label>
+                <Textarea
+                  value={propRejectionReason}
+                  onChange={(e) => setPropRejectionReason(e.target.value)}
+                  placeholder="Enter reason for rejection..."
+                  className="bg-gray-700 border-gray-600 text-white"
+                  rows={3}
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => handlePropAction(rejectingProp!, "rejected")}
+                  className="bg-red-500 hover:bg-red-600"
+                  disabled={!propRejectionReason.trim() || rejectingPropLoading}
+                >
+                  {rejectingPropLoading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                      Rejecting...
+                    </>
+                  ) : (
+                    "Reject Prop"
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setRejectingProp(null)}
                   className="border-gray-600 text-gray-300"
                 >
                   Cancel
