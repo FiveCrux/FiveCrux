@@ -104,7 +104,7 @@ export interface Ad extends BaseEntity {
   createdBy: string;
 }
 
-export type CouponScope = "Packages" | "Categories" | "Everything";
+export type CouponScope = "Ad Slots" | "Featured Script Slots" | "Props" | "all";
 export type CouponDiscountType = "Percentage" | "Amount";
 export type CouponApplicationRule =
   | "individual"

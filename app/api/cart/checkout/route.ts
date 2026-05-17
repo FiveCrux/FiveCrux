@@ -57,6 +57,37 @@ async function getPayPalAccessToken(): Promise<string> {
     return data.access_token;
 }
 
+function getMatchingItemsTotal(items: any[], scope: string) {
+    const isTargetedScope = ["Ad Slots", "Featured Script Slots", "Props"].includes(scope);
+
+    const matchingItems = items.filter((item) => {
+        if (!isTargetedScope) return true;
+
+        const metadata = typeof item.metadata === "string"
+            ? (() => { try { return JSON.parse(item.metadata) } catch { return null } })()
+            : item.metadata;
+
+        if (scope === "Props") {
+            return item.itemType === "prop";
+        }
+        if (scope === "Ad Slots") {
+            return metadata?.couponScope === "Ad Slots" || metadata?.category === "Ad Slots" || metadata?.packageType === "ads";
+        }
+        if (scope === "Featured Script Slots") {
+            return metadata?.couponScope === "Featured Script Slots" || metadata?.category === "Featured Script Slots" || metadata?.packageType === "featured-scripts";
+        }
+        return false;
+    });
+
+    return {
+        items: matchingItems,
+        total: matchingItems.reduce(
+            (sum, item) => sum + Number(item.price) * item.quantity,
+            0
+        ),
+    };
+}
+
 function calculateDiscount(total: number, coupon: typeof coupons.$inferSelect) {
     const value = Number(coupon.discountValue);
 
@@ -67,7 +98,7 @@ function calculateDiscount(total: number, coupon: typeof coupons.$inferSelect) {
     return Math.min(total, value);
 }
 
-async function validateCoupon(couponCode: string, userId: string, total: number) {
+async function validateCoupon(couponCode: string, userId: string, total: number, items: any[]) {
     const code = couponCode.trim().toUpperCase();
 
     if (!code) {
@@ -111,9 +142,15 @@ async function validateCoupon(couponCode: string, userId: string, total: number)
         return { error: "This coupon cannot be used again" };
     }
 
+    const { items: matchingItems, total: matchingTotal } = getMatchingItemsTotal(items, coupon.scope);
+
+    if (matchingItems.length === 0 && ["Ad Slots", "Featured Script Slots", "Props"].includes(coupon.scope)) {
+        return { error: `This coupon is only valid for items of type "${coupon.scope}"` };
+    }
+
     return {
         coupon,
-        discountAmount: calculateDiscount(total, coupon),
+        discountAmount: calculateDiscount(matchingTotal, coupon),
     };
 }
 
@@ -165,7 +202,7 @@ export async function POST(request: NextRequest) {
                 item.quantity;
         }
 
-        const couponResult = await validateCoupon(couponCode, user.id, total);
+        const couponResult = await validateCoupon(couponCode, user.id, total, cart.items);
 
         if (couponResult && "error" in couponResult) {
             return NextResponse.json(

@@ -16,7 +16,7 @@ function calculateDiscount(total: number, coupon: typeof coupons.$inferSelect) {
   return Math.min(total, value)
 }
 
-async function getActiveCartTotal(userId: string) {
+async function getActiveCart(userId: string) {
   const cart = await db.query.carts.findFirst({
     where: and(eq(carts.userId, userId), eq(carts.status, "active")),
     with: { items: true },
@@ -27,11 +27,43 @@ async function getActiveCartTotal(userId: string) {
   }
 
   return {
+    items: cart.items,
     total: cart.items.reduce(
       (sum, item) => sum + Number(item.price) * item.quantity,
       0
     ),
   }
+}
+
+function getMatchingItemsTotal(items: any[], scope: string) {
+  const isTargetedScope = ["Ad Slots", "Featured Script Slots", "Props"].includes(scope);
+
+  const matchingItems = items.filter((item) => {
+    if (!isTargetedScope) return true;
+
+    const metadata = typeof item.metadata === "string"
+      ? (() => { try { return JSON.parse(item.metadata) } catch { return null } })()
+      : item.metadata;
+
+    if (scope === "Props") {
+      return item.itemType === "prop";
+    }
+    if (scope === "Ad Slots") {
+      return metadata?.couponScope === "Ad Slots" || metadata?.category === "Ad Slots" || metadata?.packageType === "ads";
+    }
+    if (scope === "Featured Script Slots") {
+      return metadata?.couponScope === "Featured Script Slots" || metadata?.category === "Featured Script Slots" || metadata?.packageType === "featured-scripts";
+    }
+    return false;
+  });
+
+  return {
+    items: matchingItems,
+    total: matchingItems.reduce(
+      (sum, item) => sum + Number(item.price) * item.quantity,
+      0
+    ),
+  };
 }
 
 export async function POST(request: NextRequest) {
@@ -50,10 +82,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Coupon code is required" }, { status: 400 })
     }
 
-    const cartTotal = await getActiveCartTotal(userId)
+    const cart = await getActiveCart(userId)
 
-    if ("error" in cartTotal) {
-      return NextResponse.json({ error: cartTotal.error }, { status: 400 })
+    if ("error" in cart) {
+      return NextResponse.json({ error: cart.error }, { status: 400 })
     }
 
     const coupon = await db.query.coupons.findFirst({
@@ -74,7 +106,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Coupon has expired" }, { status: 400 })
     }
 
-    if (Number(coupon.minCartValue) > cartTotal.total) {
+    if (Number(coupon.minCartValue) > cart.total) {
       return NextResponse.json(
         { error: `Minimum cart value for this coupon is ${Number(coupon.minCartValue).toFixed(2)}` },
         { status: 400 }
@@ -99,8 +131,17 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const discountAmount = calculateDiscount(cartTotal.total, coupon)
-    const payableAmount = Math.max(0, cartTotal.total - discountAmount)
+    const { items: matchingItems, total: matchingTotal } = getMatchingItemsTotal(cart.items, coupon.scope)
+
+    if (matchingItems.length === 0 && ["Ad Slots", "Featured Script Slots", "Props"].includes(coupon.scope)) {
+      return NextResponse.json(
+        { error: `This coupon is only valid for items of type "${coupon.scope}"` },
+        { status: 400 }
+      )
+    }
+
+    const discountAmount = calculateDiscount(matchingTotal, coupon)
+    const payableAmount = Math.max(0, cart.total - discountAmount)
 
     return NextResponse.json({
       success: true,
@@ -109,7 +150,7 @@ export async function POST(request: NextRequest) {
         code: coupon.code,
         discountAmount,
       },
-      totalAmount: cartTotal.total,
+      totalAmount: cart.total,
       payableAmount,
     })
   } catch (error) {

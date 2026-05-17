@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState, useEffect } from "react"
+import { useRef, useState } from "react"
 import { motion, useInView, AnimatePresence } from "framer-motion"
 import { Button } from "@/componentss/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/componentss/ui/card"
@@ -26,12 +26,11 @@ import {
   Award,
   Crown,
   Loader2,
-  Tag
+  Tag,
+  ShoppingCart
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useTheme } from "next-themes"
-import { PayPalScriptProvider, PayPalButtons, usePayPalScriptReducer } from "@paypal/react-paypal-js"
-import { useRouter, useSearchParams } from "next/navigation"
 import { toast } from "sonner"
 
 interface PricingDuration {
@@ -173,208 +172,11 @@ const benefits = [
   }
 ]
 
-// PayPal Button Wrapper Component for Ad Slots
-function PayPalButtonWrapper({
-  pkg,
-  durationIndex,
-  onSuccess,
-  onError,
-}: {
-  pkg: PricingPackage
-  durationIndex: number
-  onSuccess: () => void
-  onError: (error: string) => void
-}) {
-  const [{ isPending }] = usePayPalScriptReducer()
-  const duration = pkg.durations[durationIndex]
-  const totalSlots = pkg.slotsPerMonth
-
-  const createOrder = async () => {
-    try {
-      const response = await fetch("/api/paypal/create-order", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          packageId: pkg.packageId,
-          durationMonths: duration.months,
-          price: duration.price,
-          slotsToAdd: totalSlots,
-        }),
-      })
-
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || "Failed to create order")
-      }
-
-      const data = await response.json()
-      return data.orderId
-    } catch (error) {
-      console.error("Error creating order:", error)
-      onError(error instanceof Error ? error.message : "Failed to create order")
-      throw error
-    }
-  }
-
-  const onApprove = async (data: { orderID: string }) => {
-    try {
-      const response = await fetch("/api/paypal/capture-order", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          orderId: data.orderID,
-        }),
-      })
-
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || "Failed to capture order")
-      }
-
-      const result = await response.json()
-      toast.success(result.message || "Payment successful! Your ad slots have been activated.")
-      onSuccess()
-    } catch (error) {
-      console.error("Error capturing order:", error)
-      onError(error instanceof Error ? error.message : "Failed to process payment")
-    }
-  }
-
-  if (isPending) {
-    return (
-      <div className="flex items-center justify-center py-4">
-        <Loader2 className="h-6 w-6 animate-spin text-orange-500" />
-      </div>
-    )
-  }
-
-  return (
-    <PayPalButtons
-      createOrder={createOrder}
-      onApprove={onApprove}
-      onError={(err) => {
-        console.error("PayPal error:", err)
-        onError("Payment was canceled or failed")
-      }}
-      style={{
-        layout: "vertical",
-        color: "gold",
-        shape: "rect",
-        label: "paypal",
-      }}
-    />
-  )
-}
-
-// PayPal Button Wrapper Component for Featured Script Slots
-function FeaturedScriptPayPalButtonWrapper({
-  pkg,
-  durationIndex,
-  onSuccess,
-  onError,
-}: {
-  pkg: PricingPackage
-  durationIndex: number
-  onSuccess: () => void
-  onError: (error: string) => void
-}) {
-  const [{ isPending }] = usePayPalScriptReducer()
-  const duration = pkg.durations[durationIndex]
-  const totalSlots = pkg.slotsPerMonth
-
-  const createOrder = async () => {
-    try {
-      const response = await fetch("/api/paypal/create-featured-script-order", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          packageId: pkg.packageId,
-          durationWeeks: duration.weeks || Math.round(duration.months * 4),
-          price: duration.price,
-          slotsToAdd: totalSlots,
-        }),
-      })
-
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || "Failed to create order")
-      }
-
-      const data = await response.json()
-      return data.orderId
-    } catch (error) {
-      console.error("Error creating order:", error)
-      onError(error instanceof Error ? error.message : "Failed to create order")
-      throw error
-    }
-  }
-
-  const onApprove = async (data: { orderID: string }) => {
-    try {
-      const response = await fetch("/api/paypal/capture-featured-script-order", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          orderId: data.orderID,
-        }),
-      })
-
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || "Failed to capture order")
-      }
-
-      const result = await response.json()
-      toast.success(result.message || "Payment successful! Your featured script slots have been activated.")
-      onSuccess()
-    } catch (error) {
-      console.error("Error capturing order:", error)
-      onError(error instanceof Error ? error.message : "Failed to process payment")
-    }
-  }
-
-  if (isPending) {
-    return (
-      <div className="flex items-center justify-center py-4">
-        <Loader2 className="h-6 w-6 animate-spin text-purple-500" />
-      </div>
-    )
-  }
-
-  return (
-    <PayPalButtons
-      createOrder={createOrder}
-      onApprove={onApprove}
-      onError={(err) => {
-        console.error("PayPal error:", err)
-        onError("Payment was canceled or failed")
-      }}
-      style={{
-        layout: "vertical",
-        color: "gold",
-        shape: "rect",
-        label: "paypal",
-        tagline: false,
-      }}
-    />
-  )
-}
-
 export default function AdvertisePage() {
   const heroRef = useRef(null)
   const pricingRef = useRef(null)
   const benefitsRef = useRef(null)
   const { resolvedTheme } = useTheme()
-  const router = useRouter()
-  const searchParams = useSearchParams()
 
   // State for selected tab (ad slots or featured script slots)
   const [activeTab, setActiveTab] = useState<"ads" | "featured-scripts">("ads")
@@ -382,55 +184,64 @@ export default function AdvertisePage() {
   // State for selected duration index (shared across all packages)
   const [selectedDurationIndex, setSelectedDurationIndex] = useState<number>(0)
 
-  // State for PayPal client ID
-  const [paypalClientId, setPaypalClientId] = useState<string | null>(null)
-  const [isLoadingPaypal, setIsLoadingPaypal] = useState(true)
-
-  // Get PayPal client ID from server
-  useEffect(() => {
-    const fetchPaypalClientId = async () => {
-      try {
-        const response = await fetch("/api/paypal/client-id")
-        if (response.ok) {
-          const data = await response.json()
-          setPaypalClientId(data.clientId)
-        } else {
-          console.error("Failed to fetch PayPal client ID")
-        }
-      } catch (error) {
-        console.error("Error loading PayPal:", error)
-      } finally {
-        setIsLoadingPaypal(false)
-      }
-    }
-    fetchPaypalClientId()
-  }, [])
-
-  // Handle success/cancel from PayPal redirect
-  useEffect(() => {
-    const success = searchParams.get("success")
-    const canceled = searchParams.get("canceled")
-
-    if (success) {
-      toast.success("Payment successful! Your ad slots have been activated.")
-      router.replace("/advertise")
-    } else if (canceled) {
-      toast.info("Payment was canceled")
-      router.replace("/advertise")
-    }
-  }, [searchParams, router])
+  const [addingCartItemId, setAddingCartItemId] = useState<string | null>(null)
 
   const heroInView = useInView(heroRef, { once: true })
   const pricingInView = useInView(pricingRef, { once: true })
   const benefitsInView = useInView(benefitsRef, { once: true })
 
-  const handlePurchaseSuccess = () => {
-    // Refresh the page or update UI as needed
-    router.refresh()
-  }
+  const handleAddToCart = async (pkg: PricingPackage, durationIndex: number) => {
+    const duration = pkg.durations[durationIndex]
+    const packageType = activeTab === "ads" ? "ads" : "featured-scripts"
+    const couponScope = activeTab === "ads" ? "Ad Slots" : "Featured Script Slots"
+    const durationAmount = activeTab === "ads"
+      ? duration.months
+      : duration.weeks || Math.round(duration.months * 4)
+    const itemId = `${packageType}:${pkg.packageId}:${durationAmount}`
 
-  const handlePurchaseError = (error: string) => {
-    toast.error(error)
+    setAddingCartItemId(itemId)
+
+    try {
+      const response = await fetch("/api/cart/add", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          itemType: "subscription",
+          itemId,
+          title: `${couponScope} - ${pkg.name} (${duration.label})`,
+          price: duration.price,
+          metadata: {
+            packageType,
+            couponScope,
+            category: couponScope,
+            packageId: pkg.packageId,
+            packageName: pkg.name,
+            durationLabel: duration.label,
+            durationMonths: duration.months,
+            durationWeeks: activeTab === "featured-scripts" ? durationAmount : undefined,
+            slotsPerMonth: pkg.slotsPerMonth,
+            slotsToAdd: pkg.slotsPerMonth,
+            originalPrice: duration.originalPrice,
+          },
+        }),
+      })
+
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to add item to cart")
+      }
+
+      toast.success("Added to cart")
+      window.dispatchEvent(new CustomEvent("cartUpdated"))
+    } catch (error) {
+      console.error("Add to cart error:", error)
+      toast.error(error instanceof Error ? error.message : "Failed to add item to cart")
+    } finally {
+      setAddingCartItemId(null)
+    }
   }
 
   // Get current packages based on active tab
@@ -615,6 +426,11 @@ export default function AdvertisePage() {
               const Icon = pkg.icon
               const selectedDuration = pkg.durations[selectedDurationIndex]
               const discount = Math.round(((selectedDuration.originalPrice - selectedDuration.price) / selectedDuration.originalPrice) * 100)
+              const durationAmount = activeTab === "ads"
+                ? selectedDuration.months
+                : selectedDuration.weeks || Math.round(selectedDuration.months * 4)
+              const cartItemId = `${activeTab === "ads" ? "ads" : "featured-scripts"}:${pkg.packageId}:${durationAmount}`
+              const isAddingToCart = addingCartItemId === cartItemId
 
               return (
                 <motion.div
@@ -775,59 +591,24 @@ export default function AdvertisePage() {
                       </ul>
 
                       <div className="w-full">
-                        {isLoadingPaypal ? (
-                          <div className="flex items-center justify-center py-6">
-                            <Loader2 className={cn(
-                              "h-6 w-6 animate-spin",
-                              activeTab === "ads" ? "text-orange-500" : "text-purple-500"
-                            )} />
-                          </div>
-                        ) : paypalClientId ? (
-                          <PayPalScriptProvider
-                            options={{
-                              clientId: paypalClientId,
-                              currency: "EUR",
-                              intent: "capture",
-                            }}
-                          >
-                            {activeTab === "ads" ? (
-                              <PayPalButtonWrapper
-                                pkg={pkg}
-                                durationIndex={selectedDurationIndex}
-                                onSuccess={handlePurchaseSuccess}
-                                onError={handlePurchaseError}
-                              />
-                            ) : (
-                              <FeaturedScriptPayPalButtonWrapper
-                                pkg={pkg}
-                                durationIndex={selectedDurationIndex}
-                                onSuccess={handlePurchaseSuccess}
-                                onError={handlePurchaseError}
-                              />
-                            )}
-                          </PayPalScriptProvider>
-                        ) : (
-                          <motion.div
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            className="w-full"
-                          >
-                            <Button
-                              disabled
-                              className={cn(
-                                "w-full py-6 text-lg font-bold rounded-full transition-all duration-300",
-                                pkg.popular
-                                  ? activeTab === "ads"
-                                    ? "bg-gradient-to-r from-orange-500 via-yellow-400 to-orange-500 hover:from-orange-600 hover:via-yellow-500 hover:to-orange-600 text-black shadow-2xl shadow-orange-500/30"
-                                    : "bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500 hover:from-purple-600 hover:via-pink-600 hover:to-purple-600 text-white shadow-2xl shadow-purple-500/30"
-                                  : "bg-neutral-800 hover:bg-neutral-700 text-white border border-gray-700",
-                                activeTab === "ads" ? "hover:border-orange-500/50" : "hover:border-purple-500/50"
-                              )}
-                            >
-                              PayPal Not Configured
-                            </Button>
-                          </motion.div>
-                        )}
+                        <Button
+                          type="button"
+                          onClick={() => handleAddToCart(pkg, selectedDurationIndex)}
+                          disabled={isAddingToCart}
+                          className={cn(
+                            "w-full py-6 text-lg font-bold rounded-full border transition-all duration-300",
+                            activeTab === "ads"
+                              ? "bg-orange-500/10 text-orange-300 border-orange-500/40 hover:bg-orange-500/20 hover:text-orange-200"
+                              : "bg-purple-500/10 text-purple-200 border-purple-500/40 hover:bg-purple-500/20 hover:text-purple-100"
+                          )}
+                        >
+                          {isAddingToCart ? (
+                            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                          ) : (
+                            <ShoppingCart className="mr-2 h-5 w-5" />
+                          )}
+                          {isAddingToCart ? "Adding..." : "Add to Cart"}
+                        </Button>
                       </div>
                     </CardContent>
                   </Card>
