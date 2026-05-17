@@ -22,6 +22,48 @@ function generateNumericId() {
     return Math.floor(Date.now() / 1000) + Math.floor(Math.random() * 10000);
 }
 
+function normalizeMetadata(metadata: unknown) {
+    if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) {
+        return null;
+    }
+
+    return metadata as Record<string, unknown>;
+}
+
+function getCustomPackageItem(
+    itemType: string,
+    title: unknown,
+    price: unknown,
+    metadata: unknown
+) {
+    const normalizedMetadata = normalizeMetadata(metadata);
+    const packageType = normalizedMetadata?.packageType;
+    const couponScope = normalizedMetadata?.couponScope;
+
+    if (
+        itemType !== "subscription" ||
+        typeof title !== "string" ||
+        price === undefined ||
+        !normalizedMetadata ||
+        !["ads", "featured-scripts"].includes(String(packageType)) ||
+        !["Ad Slots", "Featured Script Slots"].includes(String(couponScope))
+    ) {
+        return null;
+    }
+
+    const parsedPrice = Number(price);
+
+    if (Number.isNaN(parsedPrice) || parsedPrice < 0) {
+        return { error: "Invalid price" } as const;
+    }
+
+    return {
+        title,
+        price: parsedPrice,
+        metadata: normalizedMetadata,
+    };
+}
+
 export async function POST(request: NextRequest) {
 
     try {
@@ -83,10 +125,21 @@ export async function POST(request: NextRequest) {
             cart = newCart;
         }
 
-        // 3. Fetch actual item or use provided ad package data
+        // 3. Fetch actual item or use provided package data
         let item;
 
-        if (itemType === "subscription") {
+        const customPackageItem = getCustomPackageItem(itemType, title, price, metadata);
+
+        if (customPackageItem && "error" in customPackageItem) {
+            return NextResponse.json(
+                { error: customPackageItem.error },
+                { status: 400 }
+            );
+        }
+
+        if (customPackageItem) {
+            item = customPackageItem;
+        } else if (itemType === "subscription") {
             item = await db.query.subscriptions.findFirst({
                 where: eq(subscriptions.id, itemId),
             });

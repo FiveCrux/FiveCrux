@@ -7,9 +7,9 @@ import { db } from "@/lib/db/client"
 import { coupons } from "@/lib/db/schema"
 import { hasAnyRole } from "@/lib/database-new"
 
-const validScopes = ["Ad Slots", "Featured Script Slots", "Props"] as const
+const validScopes = ["Ad Slots", "Featured Script Slots", "Props", "all"] as const
 const validDiscountTypes = ["Percentage", "Amount"] as const
-const validApplicationRules = ["Individual", "Basket (Before Sales)", "Basket (After Sales)"] as const
+const validApplicationRules = ["individual", "basket_before_sales", "basket_after_sales"] as const
 
 function generateNumericId() {
   return Math.floor(Date.now() / 1000) + Math.floor(Math.random() * 10000)

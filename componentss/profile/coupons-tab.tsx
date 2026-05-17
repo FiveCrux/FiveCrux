@@ -61,7 +61,7 @@ type CouponFormState = {
 
 const emptyForm: CouponFormState = {
   code: "",
-  effectiveOn: "Everything",
+  effectiveOn: "Ad Slots",
   discountType: "Percentage",
   discountValue: "",
   redeemLimit: "",
@@ -188,7 +188,7 @@ export default function CouponsTab() {
           <h2 className="text-2xl font-bold text-white">Coupons</h2>
           <p className="text-sm text-gray-400">
             Manage discount codes for checkout.
-          </p>
+          </p>ef
         </div>
         <Button onClick={openCreateDialog} className="bg-orange-500 hover:bg-orange-600">
           <Plus className="mr-2 h-4 w-4" />
@@ -331,9 +331,10 @@ export default function CouponsTab() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Everything">Everything</SelectItem>
-                    <SelectItem value="Packages">Packages</SelectItem>
-                    <SelectItem value="Categories">Categories</SelectItem>
+                    <SelectItem value="Ad Slots">Ad Slots</SelectItem>
+                    <SelectItem value="Featured Script Slots">Featured Script Slots</SelectItem>
+                    <SelectItem value="Props">Props</SelectItem>
+                    <SelectItem value="all">All</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

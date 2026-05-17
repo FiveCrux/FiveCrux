@@ -22,6 +22,10 @@ export const couponScopeEnum = pgEnum('coupon_scope', [
   'Packages',
   'Categories',
   'Everything',
+  'Ad Slots',
+  'Featured Script Slots',
+  'Props',
+  'all',
 ]);
 
 export const discountTypeEnum = pgEnum('discount_type', [
