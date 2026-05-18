@@ -20,6 +20,7 @@ export default function PropDetailPage() {
   const [prop, setProp] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [addingToCart, setAddingToCart] = useState(false)
+  const [downloading, setDownloading] = useState(false)
   const [activeImage, setActiveImage] = useState(0)
 
   useEffect(() => {
@@ -92,6 +93,34 @@ export default function PropDetailPage() {
       toast.error("An unexpected error occurred")
     } finally {
       setAddingToCart(false)
+    }
+  }
+
+  const handleDownload = async () => {
+    try {
+      setDownloading(true)
+      const res = await fetch(`/api/props/${prop.id}/download`)
+      if (!res.ok) {
+        const error = await res.json()
+        toast.error(error.error || "Failed to download prop")
+        return
+      }
+      const data = await res.json()
+      if (data.downloadUrl) {
+        const link = document.createElement('a')
+        link.href = data.downloadUrl
+        link.setAttribute('download', `${prop.name}.zip`)
+        document.body.appendChild(link)
+        link.click()
+        link.remove()
+        toast.success("Download started!")
+      } else {
+        toast.error("Download URL not found")
+      }
+    } catch (err) {
+      toast.error("Failed to start download")
+    } finally {
+      setDownloading(false)
     }
   }
 
@@ -213,13 +242,23 @@ export default function PropDetailPage() {
                   </div>
 
                   <div className="space-y-4 mb-8">
-                    <Button 
-                      className="w-full py-6 text-lg font-bold rounded-xl transition-all shadow-xl shadow-orange-500/20 bg-gradient-to-r from-orange-500 to-yellow-400 hover:from-orange-600 hover:to-yellow-500 text-black hover:scale-[1.02]"
-                      onClick={handleAddToCart}
-                      disabled={addingToCart}
-                    >
-                      {addingToCart ? "Adding..." : isFree ? "Add to Library" : "Add to Cart"}
-                    </Button>
+                    {prop.hasPurchased ? (
+                      <Button 
+                        className="w-full py-6 text-lg font-bold rounded-xl transition-all shadow-xl shadow-green-500/20 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-black hover:scale-[1.02]"
+                        onClick={handleDownload}
+                        disabled={downloading}
+                      >
+                        {downloading ? "Downloading..." : "Download Prop File"}
+                      </Button>
+                    ) : (
+                      <Button 
+                        className="w-full py-6 text-lg font-bold rounded-xl transition-all shadow-xl shadow-orange-500/20 bg-gradient-to-r from-orange-500 to-yellow-400 hover:from-orange-600 hover:to-yellow-500 text-black hover:scale-[1.02]"
+                        onClick={handleAddToCart}
+                        disabled={addingToCart}
+                      >
+                        {addingToCart ? "Adding..." : isFree ? "Add to Library" : "Add to Cart"}
+                      </Button>
+                    )}
                     
                     <div className="flex gap-4">
                       <Button variant="outline" className="flex-1 border-gray-700 bg-gray-900/50 hover:bg-gray-800">
