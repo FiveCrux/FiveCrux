@@ -60,7 +60,13 @@ export async function GET(
       }
     }
 
-    return NextResponse.json(prop);
+    const session = await getServerSession(authOptions);
+    let hasPurchased = false;
+    if (session?.user) {
+      const { hasPurchasedProp } = await import("@/lib/prop-utils");
+      hasPurchased = await hasPurchasedProp((session.user as any).id, prop.id);
+    }
+    return NextResponse.json({ ...prop, hasPurchased });
   } catch (error) {
     console.error("Error fetching prop:", error);
     return NextResponse.json({ error: "Failed to fetch prop" }, { status: 500 });
