@@ -80,12 +80,14 @@ export const cartItems = pgTable('cart_items', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
+export const orderStatusEnum = pgEnum('order_status', ['pending', 'paid', 'failed']);
+
 export const orders = pgTable('orders', {
   id: integer('id').primaryKey().notNull(),
   userId: text('user_id').references(() => users.id),
   cartId: integer('cart_id').references(() => carts.id),
   couponId: integer('coupon_id').references(() => coupons.id),
-  status: text('status').default('pending'),
+  status: orderStatusEnum('status').default('pending'),
   totalAmount: numeric('total_amount').notNull(),
   discountAmount: numeric('discount_amount').default('0'),
   payableAmount: numeric('payable_amount').notNull(),

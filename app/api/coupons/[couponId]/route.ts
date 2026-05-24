@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth"
 import { eq } from "drizzle-orm"
 
 import { authOptions } from "@/auth"
+import { parseCouponDate } from "@/lib/coupon-utils"
 import { db } from "@/lib/db/client"
 import { coupons } from "@/lib/db/schema"
 import { hasAnyRole } from "@/lib/database-new"
@@ -14,24 +15,6 @@ const validApplicationRules = ["individual", "basket_before_sales", "basket_afte
 function hasCouponAccess(session: any) {
   const user = session?.user as any
   return Boolean(user?.roles && hasAnyRole(user.roles, ["founder", "admin"]))
-}
-
-function parseDate(value: unknown, field: string) {
-  if (value === null || value === undefined || value === "") {
-    return null
-  }
-
-  if (typeof value !== "string") {
-    return { error: `${field} must be a date string` }
-  }
-
-  const date = new Date(value)
-
-  if (Number.isNaN(date.getTime())) {
-    return { error: `${field} must be a valid date` }
-  }
-
-  return date
 }
 
 function parseCouponId(couponId: string) {
@@ -77,10 +60,10 @@ function buildCouponValues(body: any) {
   }
   if (note && note.length > 500) return { error: "Note cannot exceed 500 characters" }
 
-  const startDate = parseDate(body.startDate, "Start date")
+  const startDate = parseCouponDate(body.startDate, "Start date", "start")
   if (startDate && "error" in startDate) return { error: startDate.error }
 
-  const expiryDate = parseDate(body.expiryDate, "Expiry date")
+  const expiryDate = parseCouponDate(body.expiryDate, "Expiry date", "expiry")
   if (expiryDate && "error" in expiryDate) return { error: expiryDate.error }
 
   if (startDate instanceof Date && expiryDate instanceof Date && expiryDate <= startDate) {
