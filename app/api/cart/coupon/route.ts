@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth"
 import { and, eq } from "drizzle-orm"
 
 import { authOptions } from "@/auth"
+import { validateCouponSchedule } from "@/lib/coupon-utils"
 import { db } from "@/lib/db/client"
 import { carts, couponRedemptions, coupons } from "@/lib/db/schema"
 
@@ -96,14 +97,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid coupon code" }, { status: 404 })
     }
 
-    const now = new Date()
-
-    if (coupon.startDate && coupon.startDate > now) {
-      return NextResponse.json({ error: "Coupon is not active yet" }, { status: 400 })
-    }
-
-    if (coupon.expiryDate && coupon.expiryDate < now) {
-      return NextResponse.json({ error: "Coupon has expired" }, { status: 400 })
+    const scheduleError = validateCouponSchedule(coupon.startDate, coupon.expiryDate)
+    if (scheduleError) {
+      return NextResponse.json({ error: scheduleError.error }, { status: 400 })
     }
 
     if (Number(coupon.minCartValue) > cart.total) {

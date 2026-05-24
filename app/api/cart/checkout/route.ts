@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/auth";
+import { validateCouponSchedule } from "@/lib/coupon-utils";
 import { env } from "@/lib/env";
 
 import { db } from "@/lib/db/client";
@@ -113,14 +114,9 @@ async function validateCoupon(couponCode: string, userId: string, total: number,
         return { error: "Invalid coupon code" };
     }
 
-    const now = new Date();
-
-    if (coupon.startDate && coupon.startDate > now) {
-        return { error: "Coupon is not active yet" };
-    }
-
-    if (coupon.expiryDate && coupon.expiryDate < now) {
-        return { error: "Coupon has expired" };
+    const scheduleError = validateCouponSchedule(coupon.startDate, coupon.expiryDate);
+    if (scheduleError) {
+        return scheduleError;
     }
 
     if (Number(coupon.minCartValue) > total) {
@@ -310,14 +306,6 @@ export async function POST(request: NextRequest) {
                 { status: 500 }
             );
         }
-
-        // 5. Mark cart checked out
-        await db.update(carts)
-            .set({
-                status: "checked_out",
-                updatedAt: new Date(),
-            })
-            .where(eq(carts.id, cart.id));
 
         return NextResponse.json({
             success: true,

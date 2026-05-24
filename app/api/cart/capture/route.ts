@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
 import { env } from "@/lib/env";
 import { db } from "@/lib/db/client";
-import { orders, orderItems, carts } from "@/lib/db/schema";
+import { orders, orderItems, carts, cartItems } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { createAdSlots, createFeaturedScriptSlots } from "@/lib/database-new";
 
@@ -49,6 +49,40 @@ function generateNumericId() {
   return Math.floor(Date.now() / 1000) + Math.floor(Math.random() * 10000);
 }
 
+function isPayPalOrderCompleted(order: any): boolean {
+  if (order.status === "COMPLETED") return true;
+
+  const captures = order.purchase_units?.[0]?.payments?.captures;
+  return Array.isArray(captures) && captures.some((capture: any) => capture.status === "COMPLETED");
+}
+
+async function fetchPayPalOrder(token: string, accessToken: string, baseUrl: string) {
+  const orderResponse = await fetch(`${baseUrl}/v2/checkout/orders/${token}`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!orderResponse.ok) {
+    const errorText = await orderResponse.text();
+    console.error("Failed to fetch PayPal order:", errorText);
+    throw new Error("Failed to fetch PayPal order");
+  }
+
+  return orderResponse.json();
+}
+
+function isOrderAlreadyCapturedError(errorText: string): boolean {
+  try {
+    const errorData = JSON.parse(errorText);
+    return Array.isArray(errorData.details)
+      && errorData.details.some((detail: any) => detail.issue === "ORDER_ALREADY_CAPTURED");
+  } catch {
+    return false;
+  }
+}
+
 // POST - Capture cart PayPal payment and provision items/subscriptions
 export async function POST(request: NextRequest) {
   try {
@@ -69,20 +103,7 @@ export async function POST(request: NextRequest) {
     const baseUrl = getPayPalBaseUrl();
 
     // 1. Fetch the PayPal order to extract custom metadata
-    const orderResponse = await fetch(`${baseUrl}/v2/checkout/orders/${token}`, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
-
-    if (!orderResponse.ok) {
-      const errorText = await orderResponse.text();
-      console.error("Failed to fetch PayPal order:", errorText);
-      return NextResponse.json({ error: "Failed to fetch PayPal order" }, { status: 500 });
-    }
-
-    const order = await orderResponse.json();
+    const order = await fetchPayPalOrder(token, accessToken, baseUrl);
 
     const customId = order.purchase_units?.[0]?.custom_id;
     if (!customId) {
@@ -108,9 +129,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Order not found in database" }, { status: 404 });
     }
 
+    const existingOrderItems = await db.query.orderItems.findMany({
+      where: eq(orderItems.orderId, dbOrderId),
+      limit: 1,
+    });
+
+    if (dbOrder.status === "paid" && existingOrderItems.length > 0) {
+      return NextResponse.json({
+        success: true,
+        message: "Order already processed",
+      });
+    }
+
     // 2. Capture the PayPal payment if not already done
     let captureData = order;
-    if (order.status !== "COMPLETED") {
+    if (!isPayPalOrderCompleted(order)) {
       const captureResponse = await fetch(`${baseUrl}/v2/checkout/orders/${token}/capture`, {
         method: "POST",
         headers: {
@@ -121,25 +154,34 @@ export async function POST(request: NextRequest) {
 
       if (!captureResponse.ok) {
         const errorText = await captureResponse.text();
-        console.error("PayPal cart order capture error:", errorText);
-        return NextResponse.json({ error: "Failed to capture payment" }, { status: 500 });
-      }
 
-      captureData = await captureResponse.json();
+        if (isOrderAlreadyCapturedError(errorText)) {
+          captureData = await fetchPayPalOrder(token, accessToken, baseUrl);
+        } else {
+          console.error("PayPal cart order capture error:", errorText);
+          return NextResponse.json({ error: "Failed to capture payment" }, { status: 500 });
+        }
+      } else {
+        captureData = await captureResponse.json();
+      }
     }
 
-    if (captureData.status !== "COMPLETED") {
+    if (!isPayPalOrderCompleted(captureData)) {
       return NextResponse.json({ error: `Payment not completed. Status: ${captureData.status}` }, { status: 400 });
     }
 
-    // 3. Update the database order to completed
-    if (dbOrder.status !== "completed") {
-      await db.update(orders)
-        .set({
-          status: "completed",
-          updatedAt: new Date(),
-        })
-        .where(eq(orders.id, dbOrderId));
+    // 3. Update the database order and provision items
+    const needsProcessing = dbOrder.status !== "paid" || existingOrderItems.length === 0;
+
+    if (needsProcessing) {
+      if (dbOrder.status !== "paid") {
+        await db.update(orders)
+          .set({
+            status: "paid",
+            updatedAt: new Date(),
+          })
+          .where(eq(orders.id, dbOrderId));
+      }
 
       // 4. Retrieve cart items to populate order_items and provision
       const cart = await db.query.carts.findFirst({
@@ -149,7 +191,7 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      if (cart && cart.items.length > 0) {
+      if (cart && existingOrderItems.length === 0) {
         for (const item of cart.items) {
           // Insert into order_items
           await db.insert(orderItems)
@@ -197,6 +239,14 @@ export async function POST(request: NextRequest) {
             }
           }
         }
+
+        await db.delete(cartItems).where(eq(cartItems.cartId, cartId));
+        await db.update(carts)
+          .set({
+            status: "completed",
+            updatedAt: new Date(),
+          })
+          .where(eq(carts.id, cartId));
       }
     }
 

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth"
 import { desc } from "drizzle-orm"
 
 import { authOptions } from "@/auth"
+import { parseCouponDate } from "@/lib/coupon-utils"
 import { db } from "@/lib/db/client"
 import { coupons } from "@/lib/db/schema"
 import { hasAnyRole } from "@/lib/database-new"
@@ -18,24 +19,6 @@ function generateNumericId() {
 function hasCouponAccess(session: any) {
   const user = session?.user as any
   return Boolean(user?.roles && hasAnyRole(user.roles, ["founder", "admin"]))
-}
-
-function parseDate(value: unknown, field: string) {
-  if (value === null || value === undefined || value === "") {
-    return null
-  }
-
-  if (typeof value !== "string") {
-    return { error: `${field} must be a date string` }
-  }
-
-  const date = new Date(value)
-
-  if (Number.isNaN(date.getTime())) {
-    return { error: `${field} must be a valid date` }
-  }
-
-  return date
 }
 
 export async function GET() {
@@ -131,12 +114,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Note cannot exceed 500 characters" }, { status: 400 })
     }
 
-    const startDate = parseDate(body.startDate, "Start date")
+    const startDate = parseCouponDate(body.startDate, "Start date", "start")
     if (startDate && "error" in startDate) {
       return NextResponse.json({ error: startDate.error }, { status: 400 })
     }
 
-    const expiryDate = parseDate(body.expiryDate, "Expiry date")
+    const expiryDate = parseCouponDate(body.expiryDate, "Expiry date", "expiry")
     if (expiryDate && "error" in expiryDate) {
       return NextResponse.json({ error: expiryDate.error }, { status: 400 })
     }

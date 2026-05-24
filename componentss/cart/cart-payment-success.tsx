@@ -33,10 +33,8 @@ export default function CartPaymentSuccess({ token }: CartPaymentSuccessProps) {
           throw new Error(data.error || "Failed to complete payment capture")
         }
 
-        if (active) {
-          setStatus("success")
-          window.dispatchEvent(new CustomEvent("cartUpdated"))
-        }
+        setStatus("success")
+        window.dispatchEvent(new CustomEvent("cartUpdated"))
       } catch (err) {
         if (active) {
           setStatus("error")
