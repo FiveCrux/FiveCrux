@@ -113,31 +113,30 @@ export default function NavbarComponent() {
   }
 
   return (
-    <div className="relative w-full">
-      <Navbar className="top-0 z-[60]">
+    <Navbar className="top-0 z-[60]">
         {/* Desktop Navigation */}
         <NavBody>
           <CustomLogo />
           <NavItems items={navItems} />
-          <div className="flex items-center gap-2 ml-auto pl-6 flex-shrink-0">
+          <div className="flex items-center gap-2 ml-auto pl-4 flex-shrink-0">
             <Link
               href="/cart"
               aria-label="Cart"
-              className="relative inline-flex h-9 w-9 items-center justify-center rounded-md text-neutral-700 transition hover:bg-gray-100 hover:text-orange-500 dark:text-neutral-200 dark:hover:bg-neutral-800"
+              className="relative inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.07] text-neutral-300 transition-all duration-200 hover:bg-white/[0.12] hover:text-orange-400"
             >
-              <ShoppingCart className="h-5 w-5" />
+              <ShoppingCart className="h-4 w-4" />
               {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-orange-500 px-1.5 text-[10px] font-bold text-black">
+                <span className="absolute -top-1 -right-1 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-orange-500 px-1 text-[9px] font-bold text-black">
                   {cartCount}
                 </span>
               )}
             </Link>
             {status === "authenticated" ? (
               <>
-                <Link href="/profile" className="block">
-                  <Avatar className="h-9 w-9 ring-1 ring-gray-700/60">
+                <Link href="/profile" className="block transition-transform duration-200 hover:-translate-y-0.5">
+                  <Avatar className="h-8 w-8 ring-1 ring-orange-500/30 hover:ring-orange-500/60 transition-all duration-200">
                     <AvatarImage src={String(getSessionUserProfilePicture(session) || "")} alt={String(session?.user?.name || "User")} />
-                    <AvatarFallback className="bg-gray-800 text-white text-sm">
+                    <AvatarFallback className="bg-neutral-800 text-white text-xs">
                       {String(session?.user?.name || "U").charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
@@ -172,15 +171,15 @@ export default function NavbarComponent() {
         <MobileNav>
           <MobileNavHeader>
             <CustomLogo />
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               <Link
                 href="/cart"
                 aria-label="Cart"
-                className="relative inline-flex h-9 w-9 items-center justify-center rounded-md text-neutral-700 transition hover:bg-gray-100 hover:text-orange-500 dark:text-neutral-200 dark:hover:bg-neutral-800"
+                className="relative inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.07] text-neutral-300 transition-all duration-200 hover:bg-white/[0.12] hover:text-orange-400"
               >
-                <ShoppingCart className="h-5 w-5" />
+                <ShoppingCart className="h-4 w-4" />
                 {cartCount > 0 && (
-                  <span className="absolute -top-1 -right-1 inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-orange-500 px-1.5 text-[10px] font-bold text-black">
+                  <span className="absolute -top-1 -right-1 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-orange-500 px-1 text-[9px] font-bold text-black">
                     {cartCount}
                   </span>
                 )}
@@ -209,16 +208,16 @@ export default function NavbarComponent() {
 
             {status === "authenticated" ? (
               <div className="flex w-full flex-col gap-4">
-                <div className="flex items-center space-x-3 pb-4 border-b border-gray-700">
-                  <Avatar className="h-10 w-10 ring-1 ring-gray-700/60">
+                <div className="flex items-center space-x-3 pb-4 border-b border-white/[0.08]">
+                  <Avatar className="h-10 w-10 ring-1 ring-orange-500/30">
                     <AvatarImage src={String(getSessionUserProfilePicture(session) || "")} alt={String(session?.user?.name || "User")} />
-                    <AvatarFallback className="bg-gray-800 text-white text-sm">
+                    <AvatarFallback className="bg-neutral-800 text-white text-sm">
                       {String(session?.user?.name || "U").charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="text-neutral-600 dark:text-neutral-300 font-medium">{session?.user?.name}</p>
-                    <p className="text-neutral-500 dark:text-neutral-400 text-sm">{session?.user?.email}</p>
+                    <p className="text-neutral-200 font-medium">{session?.user?.name}</p>
+                    <p className="text-neutral-400 text-sm">{session?.user?.email}</p>
                   </div>
                 </div>
                 <Link
@@ -261,6 +260,5 @@ export default function NavbarComponent() {
           </MobileNavMenu>
         </MobileNav>
       </Navbar>
-    </div>
   )
 }
