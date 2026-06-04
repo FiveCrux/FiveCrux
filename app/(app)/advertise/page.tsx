@@ -27,12 +27,15 @@ import {
   Crown,
   Loader2,
   Tag,
-  ShoppingCart
+  ShoppingCart,
+  LayoutGrid,
+  MessageSquare,
+  Sliders,
+  Trophy,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useTheme } from "next-themes"
 import { toast } from "sonner"
-
 interface PricingDuration {
   label: string
   months: number
@@ -145,30 +148,38 @@ const featuredScriptPackages: PricingPackage[] = [
   }
 ]
 
-const benefits = [
+const benefitsData = [
   {
     title: "Maximum Visibility",
-    description: "Reach thousands of active FiveM server owners and developers",
+    description: "Reach thousands of active FiveM server owners and developers directly.",
+    metric: "500K+ monthly impressions",
     icon: Eye,
-    gradient: "from-orange-500 to-orange-600"
+    iconBg: "rgba(249,115,22,0.12)",
+    iconColor: "#f97316"
   },
   {
     title: "High Click-Through Rates",
-    description: "Targeted audience ensures better engagement and conversions",
+    description: "Targeted audience ensures optimal engagement and conversions.",
+    metric: "8.4% average click-through rate",
     icon: MousePointerClick,
-    gradient: "from-yellow-400 to-yellow-500"
+    iconBg: "rgba(29,158,117,0.12)",
+    iconColor: "#1d9e75"
   },
   {
     title: "Flexible Campaigns",
-    description: "Choose your duration and adjust your strategy as needed",
-    icon: Calendar,
-    gradient: "from-orange-500 to-red-500"
+    description: "Choose your own duration and adjust your slot count dynamically.",
+    metric: "1 week to 12 months",
+    icon: Sliders,
+    iconBg: "rgba(74,140,230,0.12)",
+    iconColor: "#4a8ce6"
   },
   {
     title: "Proven Results",
-    description: "Join hundreds of satisfied advertisers growing their reach",
-    icon: Award,
-    gradient: "from-yellow-400 to-orange-500"
+    description: "Join hundreds of sellers who have scaled their FiveM script sales.",
+    metric: "2.5x average ROI increase",
+    icon: Trophy,
+    iconBg: "rgba(140,90,220,0.12)",
+    iconColor: "#8c5adc"
   }
 ]
 
@@ -185,10 +196,6 @@ export default function AdvertisePage() {
   const [selectedDurationIndex, setSelectedDurationIndex] = useState<number>(0)
 
   const [addingCartItemId, setAddingCartItemId] = useState<string | null>(null)
-
-  const heroInView = useInView(heroRef, { once: true })
-  const pricingInView = useInView(pricingRef, { once: true })
-  const benefitsInView = useInView(benefitsRef, { once: true })
 
   const handleAddToCart = async (pkg: PricingPackage, durationIndex: number) => {
     const duration = pkg.durations[durationIndex]
@@ -248,488 +255,346 @@ export default function AdvertisePage() {
   const currentPackages = activeTab === "ads" ? pricingPackages : featuredScriptPackages
 
   return (
-    <div className="min-h-screen text-white overflow-hidden">
+    <>
       <Navbar />
-
-      {/* Hero Section */}
-      <motion.section
-        ref={heroRef}
-        className="relative py-20 px-4 sm:px-6 lg:px-8 min-h-[60vh] flex items-center"
+      <div
+        className="min-h-screen text-white relative overflow-hidden pb-16"
+        style={{
+          backgroundColor: "#0d0d0f",
+          backgroundImage: `
+            linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+            radial-gradient(circle at 50% 0%, rgba(249, 115, 22, 0.07) 0%, transparent 60%)
+          `,
+          backgroundSize: "60px 100%, 100% 100%",
+        }}
       >
-        <StarsBackground
-          starColor={resolvedTheme === 'dark' ? '#FFF' : '#000'}
-          className={cn(
-            'absolute inset-0 flex items-center justify-center rounded-xl',
-            'bg-[#131313]',
-          )}
-        />
-        <div className="max-w-7xl mx-auto text-center relative z-10">
-          <AnimatePresence>
-            {heroInView && (
-              <>
-                <motion.div
-                  initial={{ opacity: 0, y: 50 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 1, ease: "easeOut" }}
-                  className="mb-8"
-                >
-                  <Badge className="bg-gradient-to-r from-orange-500/20 to-yellow-400/20 text-orange-400 border-orange-500/30 mb-6 px-4 py-2 text-sm font-semibold">
-                    Advertise with Us
-                  </Badge>
-                  <motion.h1
-                    className="text-5xl md:text-7xl font-bold mb-6 leading-tight"
-                    animate={{
-                      backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
-                    }}
-                    transition={{ duration: 5, repeat: Number.POSITIVE_INFINITY }}
-                    style={{
-                      background: "linear-gradient(45deg, #f97316, #eab308, #f59e0b, #fb923c, #f97316)",
-                      backgroundSize: "400% 400%",
-                      WebkitBackgroundClip: "text",
-                      WebkitTextFillColor: "transparent",
-                      backgroundClip: "text",
-                    }}
-                  >
-                    Grow Your Reach
-                    <br />
-                    <span className="text-4xl md:text-6xl">With Premium Advertising</span>
-                  </motion.h1>
-                </motion.div>
+        {/* Hero Section */}
+        <div
+          ref={heroRef}
+          className="max-w-7xl mx-auto pt-24 pb-8 px-10 flex flex-col items-center text-center gap-6"
+        >
+          {/* Eyebrow Pill */}
+          <div className="inline-flex items-center gap-1 bg-[#f97316]/10 border border-[#f97316]/20 text-[#f97316] text-[11px] font-bold uppercase tracking-wider px-4 py-1.5 rounded-full">
+            <Zap className="w-3 h-3 mr-1" />
+            Advertising plans
+          </div>
 
-                <motion.p
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 1, delay: 0.4 }}
-                  className="text-xl md:text-2xl text-gray-300 mb-12 max-w-4xl mx-auto leading-relaxed"
-                >
-                  Reach thousands of active FiveM server owners, developers, and enthusiasts.
-                  Our premium advertising platform delivers targeted visibility and proven results.
-                </motion.p>
+          {/* Title */}
+          <h1 className="text-[34px] font-bold text-white tracking-tight leading-tight max-w-2xl">
+            <span className="text-[#f97316]">Grow</span> Your Reach With Premium Advertising
+          </h1>
 
-                <motion.div
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 1, delay: 0.6 }}
-                  className="flex flex-col sm:flex-row gap-6 justify-center items-center"
-                >
-                  <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <Button
-                      size="lg"
-                      className="!bg-gradient-to-r from-orange-500 via-yellow-400 to-orange-500 hover:!from-orange-600 hover:!via-yellow-500 hover:!to-orange-600 text-black font-bold px-10 py-4 text-xl rounded-full shadow-2xl transition-all duration-300 border-none"
-                      onClick={() => {
-                        document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })
-                      }}
-                    >
-                      View Pricing
-                      <ArrowRight className="ml-2 h-5 w-5" />
-                    </Button>
-                  </motion.div>
-                </motion.div>
-              </>
-            )}
-          </AnimatePresence>
+          {/* Subtitle */}
+          <p className="text-[14px] text-white/35 max-w-[420px] leading-relaxed">
+            Reach thousands of active FiveM server owners, developers, and players with our premium targeted advertising placements.
+          </p>
         </div>
-      </motion.section>
 
-
-      {/* Pricing Section */}
-      <motion.section
-        id="pricing"
-        ref={pricingRef}
-        className="pt-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden"
-        initial={{ opacity: 0 }}
-        animate={pricingInView ? { opacity: 1 } : {}}
-        transition={{ duration: 1 }}
-      >
-        <HexagonBackground
-          className="absolute bg-[#131313]"
-          hexagonProps={{
-            className: "before:!bg-[#0f0f0f] after:!bg-[#131313] dark:!before:bg-[#0f0f0f] dark:!after:bg-[#131313] hover:!before:bg-[#252525] dark:hover:!before:bg-[#252525] hover:!after:bg-[#2a2a2a] dark:hover:!after:bg-[#2a2a2a]"
-          }}
-        />
-        <div className="max-w-7xl mx-auto relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            animate={pricingInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 1 }}
-            className="text-center mb-16"
-          >
-            <Badge className="bg-gradient-to-r from-orange-500/20 to-yellow-400/20 text-orange-400 border-orange-500/30 mb-6 px-4 py-2 text-sm font-semibold">
-              Pricing Plans
-            </Badge>
-            <h2 className="text-4xl md:text-6xl font-bold text-white mb-6">
-              Choose Your{" "}
-              <span className="bg-gradient-to-r from-orange-500 to-yellow-400 bg-clip-text text-transparent">
-                Advertising Plan
-              </span>
-            </h2>
-            <p className="text-xl text-gray-300 max-w-2xl mx-auto leading-relaxed mb-8">
-              Flexible pricing options to suit businesses of all sizes
-            </p>
-
-            {/* Tabs for Ad Slots vs Featured Script Slots */}
-            <Tabs value={activeTab} onValueChange={(value) => {
-              setActiveTab(value as "ads" | "featured-scripts")
-              setSelectedDurationIndex(0) // Reset duration when switching tabs
-            }} className="w-full max-w-2xl mx-auto mb-8">
-              <TabsList className="grid w-full grid-cols-2 bg-neutral-800/50 border border-gray-700/50">
-                <TabsTrigger
-                  value="ads"
-                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-yellow-400 data-[state=active]:text-black data-[state=active]:font-bold"
-                >
-                  <Tag className="h-4 w-4 mr-2" />
-                  Ad Slots
-                </TabsTrigger>
-                <TabsTrigger
-                  value="featured-scripts"
-                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white data-[state=active]:font-bold"
-                >
-                  <Star className="h-4 w-4 mr-2" />
-                  Featured Script Slots
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-
-            {/* Duration Selection - Now at the top */}
-            <div className="mb-12">
-              <Tabs
-                value={selectedDurationIndex.toString()}
-                onValueChange={(value) => setSelectedDurationIndex(parseInt(value))}
-                className="w-full max-w-2xl mx-auto"
-              >
-                <TabsList className="grid w-full grid-cols-4 bg-neutral-800/50 border border-gray-700/50">
-                  {currentPackages[0].durations.map((duration, durIndex) => (
-                    <TabsTrigger
-                      key={durIndex}
-                      value={durIndex.toString()}
-                      className={cn(
-                        "text-sm data-[state=active]:font-bold",
-                        activeTab === "ads"
-                          ? "data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-yellow-400 data-[state=active]:text-black"
-                          : "data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white"
-                      )}
-                    >
-                      {duration.label}
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
-              </Tabs>
+        {/* Trust Bar */}
+        <div className="flex flex-wrap items-center justify-center gap-3 mt-4 mb-16 max-w-5xl mx-auto px-10">
+          <div className="flex items-center gap-3 bg-white/[0.04] border border-white/[0.08] rounded-lg p-[8px_16px]">
+            <Users className="w-5 h-5 text-[#f97316]" />
+            <div className="flex flex-col items-start leading-tight">
+              <span className="text-lg font-bold text-white">2,400+</span>
+              <span className="text-[12px] text-white/35">active buyers</span>
             </div>
-          </motion.div>
+          </div>
+          <div className="w-[1px] h-8 bg-white/[0.07] hidden md:block" />
+          
+          <div className="flex items-center gap-3 bg-white/[0.04] border border-white/[0.08] rounded-lg p-[8px_16px]">
+            <Award className="w-5 h-5 text-[#f97316]" />
+            <div className="flex flex-col items-start leading-tight">
+              <span className="text-lg font-bold text-white">500+</span>
+              <span className="text-[12px] text-white/35">advertisers served</span>
+            </div>
+          </div>
+          <div className="w-[1px] h-8 bg-white/[0.07] hidden md:block" />
 
-          {/* Pricing Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-10">
+          <div className="flex items-center gap-3 bg-white/[0.04] border border-white/[0.08] rounded-lg p-[8px_16px]">
+            <TrendingUp className="w-5 h-5 text-[#f97316]" />
+            <div className="flex flex-col items-start leading-tight">
+              <span className="text-lg font-bold text-white">8.4%</span>
+              <span className="text-[12px] text-white/35">avg click-through rate</span>
+            </div>
+          </div>
+          <div className="w-[1px] h-8 bg-white/[0.07] hidden md:block" />
+
+          <div className="flex items-center gap-3 bg-white/[0.04] border border-white/[0.08] rounded-lg p-[8px_16px]">
+            <Zap className="w-5 h-5 text-[#f97316]" />
+            <div className="flex flex-col items-start leading-tight">
+              <span className="text-lg font-bold text-white">Live</span>
+              <span className="text-[12px] text-white/35">instantly on purchase</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Controls and Pricing Section */}
+        <div ref={pricingRef} className="max-w-7xl mx-auto mb-16">
+          {/* Controls Section */}
+          <div className="flex flex-col items-center gap-[14px] mb-12">
+            {/* Slot Type Toggle */}
+            <div className="flex items-center bg-white/[0.04] border border-white/[0.08] rounded-[10px] p-1">
+              <button
+                onClick={() => {
+                  setActiveTab("ads");
+                  setSelectedDurationIndex(0);
+                }}
+                className={cn(
+                  "px-4 py-1.5 rounded-[7px] text-xs font-semibold transition-all duration-200",
+                  activeTab === "ads"
+                    ? "bg-[#f97316] text-white shadow-sm"
+                    : "text-white/40 hover:text-white/80"
+                )}
+              >
+                Ad slots
+              </button>
+              <button
+                onClick={() => {
+                  setActiveTab("featured-scripts");
+                  setSelectedDurationIndex(0);
+                }}
+                className={cn(
+                  "px-4 py-1.5 rounded-[7px] text-xs font-semibold transition-all duration-200",
+                  activeTab === "featured-scripts"
+                    ? "bg-[#f97316] text-white shadow-sm"
+                    : "text-white/40 hover:text-white/80"
+                )}
+              >
+                Featured script slots
+              </button>
+            </div>
+
+            {/* Duration Selector */}
+            <div className="flex items-center gap-2">
+              {currentPackages[0].durations.map((duration, durIndex) => {
+                const isActive = selectedDurationIndex === durIndex;
+                const savingsBadges = [null, "-43%", "-52%", "-57%"];
+                const badge = savingsBadges[durIndex];
+
+                return (
+                  <button
+                    key={durIndex}
+                    onClick={() => setSelectedDurationIndex(durIndex)}
+                    className={cn(
+                      "relative px-4 py-2 rounded-lg text-xs font-semibold border transition-all duration-200",
+                      isActive
+                        ? "bg-[#f97316]/[0.08] border-[#f97316]/40 text-white"
+                        : "bg-white/[0.02] border-white/[0.08] text-white/45 hover:text-white/80"
+                    )}
+                  >
+                    {duration.label}
+                    {badge && (
+                      <span
+                        className="absolute bg-[#f97316] text-white font-bold"
+                        style={{
+                          top: "-8px",
+                          right: "-6px",
+                          fontSize: "9px",
+                          borderRadius: "4px",
+                          padding: "1px 4px",
+                          lineHeight: "1",
+                        }}
+                      >
+                        {badge}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Pricing Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 px-10">
             {currentPackages.map((pkg, index) => {
-              const Icon = pkg.icon
-              const selectedDuration = pkg.durations[selectedDurationIndex]
-              const discount = Math.round(((selectedDuration.originalPrice - selectedDuration.price) / selectedDuration.originalPrice) * 100)
+              const selectedDuration = pkg.durations[selectedDurationIndex];
+              const discount = Math.round(((selectedDuration.originalPrice - selectedDuration.price) / selectedDuration.originalPrice) * 100);
               const durationAmount = activeTab === "ads"
                 ? selectedDuration.months
-                : selectedDuration.weeks || Math.round(selectedDuration.months * 4)
-              const cartItemId = `${activeTab === "ads" ? "ads" : "featured-scripts"}:${pkg.packageId}:${durationAmount}`
-              const isAddingToCart = addingCartItemId === cartItemId
+                : selectedDuration.weeks || Math.round(selectedDuration.months * 4);
+              const cartItemId = `${activeTab === "ads" ? "ads" : "featured-scripts"}:${pkg.packageId}:${durationAmount}`;
+              const isAddingToCart = addingCartItemId === cartItemId;
+
+              // Features list
+              const packageFeatures = activeTab === "ads" ? [
+                { text: `${pkg.slotsPerMonth} ad slot${pkg.slotsPerMonth > 1 ? 's' : ''} (unlocked instantly)`, icon: Check },
+                { text: "Featured placement in marketplace", icon: Star },
+                { text: "Real-time analytics dashboard", icon: BarChart3 },
+                { text: "24/7 Discord support access", icon: MessageSquare }
+              ] : [
+                { text: `${pkg.slotsPerMonth} featured script slot${pkg.slotsPerMonth > 1 ? 's' : ''}`, icon: Check },
+                { text: "Premium homepage placement", icon: Star },
+                { text: "Real-time analytics dashboard", icon: BarChart3 },
+                { text: "24/7 Discord support access", icon: MessageSquare }
+              ];
+
+              const isPopular = pkg.popular;
 
               return (
-                <motion.div
+                <div
                   key={pkg.packageId}
-                  initial={{ opacity: 0, y: 50 }}
-                  animate={pricingInView ? { opacity: 1, y: 0 } : {}}
-                  transition={{ duration: 0.8, delay: index * 0.15 }}
-                  whileHover={{ scale: 1.02, y: -5 }}
-                  className="relative"
-                >
-                  {pkg.popular && (
-                    <motion.div
-                      className="absolute -top-4 left-1/2 -translate-x-1/2 z-20"
-                      animate={{
-                        scale: [1, 1.05, 1],
-                      }}
-                      transition={{
-                        duration: 2,
-                        repeat: Number.POSITIVE_INFINITY,
-                      }}
-                    >
-                      <Badge className={cn(
-                        "font-bold px-4 py-1 text-sm flex items-center gap-1",
-                        activeTab === "ads"
-                          ? "bg-gradient-to-r from-orange-500 to-yellow-400 text-black"
-                          : "bg-gradient-to-r from-purple-500 to-pink-500 text-white"
-                      )}>
-                        <Star className="h-3 w-3 fill-current" />
-                        Most Popular
-                      </Badge>
-                    </motion.div>
+                  className={cn(
+                    "relative bg-[#16161a] rounded-[14px] p-[24px_22px] flex flex-col justify-between transition-all duration-200",
+                    isPopular
+                      ? "border-2 border-[#f97316]"
+                      : "border border-white/5 hover:border-[#f97316]/25"
                   )}
-                  <Card className={cn(
-                    "bg-neutral-900/60 border-gray-700/50 backdrop-blur-sm h-full relative overflow-hidden transition-all duration-500",
-                    pkg.popular
-                      ? activeTab === "ads"
-                        ? "border-2 border-orange-500/50 shadow-2xl shadow-orange-500/20"
-                        : "border-2 border-purple-500/50 shadow-2xl shadow-purple-500/20"
-                      : activeTab === "ads"
-                        ? "hover:border-orange-500/50"
-                        : "hover:border-purple-500/50"
-                  )}>
-                    <CardHeader className="p-8 pb-4 relative z-10">
-                      <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br ${pkg.gradient} mb-6`}>
-                        <Icon className="h-8 w-8 text-white" />
-                      </div>
-                      <CardTitle className="text-2xl font-bold text-white mb-2">
-                        {pkg.name}
-                      </CardTitle>
-                      <CardDescription className="text-gray-400 text-base mb-4">
-                        {pkg.description}
-                      </CardDescription>
-                      <div className="flex items-center gap-2 mb-4 flex-wrap">
-                        <Badge className={cn(
-                          "border-opacity-30",
-                          activeTab === "ads"
-                            ? "bg-orange-500/20 text-orange-400 border-orange-500/30"
-                            : "bg-purple-500/20 text-purple-400 border-purple-500/30"
-                        )}>
-                          {pkg.slotsPerMonth} Slot{pkg.slotsPerMonth > 1 ? 's' : ''}{activeTab === "ads" ? " per Month" : ""}
-                        </Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="p-8 pt-4 relative z-10">
-                      {/* Pricing Display */}
-                      <div className="mb-6">
-                        <div className="flex items-baseline gap-2 mb-2">
-                          <motion.span
-                            className="text-5xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent"
-                            animate={pricingInView ? { scale: [1, 1.1, 1] } : {}}
-                            transition={{ delay: index * 0.15 + 0.3, duration: 0.5 }}
-                            key={selectedDuration.price}
-                          >
-                            €{selectedDuration.price}
-                          </motion.span>
-                        </div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="text-gray-400 text-sm line-through">
-                            €{selectedDuration.originalPrice}
-                          </span>
-                          <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-xs">
-                            Save {discount}%
-                          </Badge>
-                        </div>
-                        <div className="text-gray-400 text-sm mt-2">
-                          No recurring charges
-                        </div>
-                        <div className={cn(
-                          "text-sm font-semibold mt-1",
-                          activeTab === "ads" ? "text-orange-400" : "text-purple-400"
-                        )}>
-                          {activeTab === "ads" ? (
-                            <>Get {pkg.slotsPerMonth} slot{pkg.slotsPerMonth > 1 ? 's' : ''} immediately for {selectedDuration.months} month{selectedDuration.months > 1 ? 's' : ''}</>
-                          ) : (
-                            <>Get {pkg.slotsPerMonth} slot{pkg.slotsPerMonth > 1 ? 's' : ''} for {selectedDuration.weeks || Math.round(selectedDuration.months * 4)} week{selectedDuration.weeks !== 1 ? 's' : ''}</>
-                          )}
-                        </div>
-                      </div>
+                  style={{
+                    boxShadow: isPopular ? "0 0 20px rgba(249, 115, 22, 0.15)" : "none",
+                  }}
+                >
+                  {isPopular && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#f97316] text-white text-[10px] font-bold uppercase tracking-wider px-3 py-0.5 rounded-full">
+                      Most popular
+                    </div>
+                  )}
 
-                      {/* Features */}
-                      <ul className="space-y-3 mb-6">
-                        <motion.li
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={pricingInView ? { opacity: 1, x: 0 } : {}}
-                          transition={{ delay: index * 0.15 }}
-                          className="flex items-start gap-3"
-                        >
-                          <div className={`flex-shrink-0 w-5 h-5 rounded-full bg-gradient-to-br ${pkg.gradient} flex items-center justify-center mt-0.5`}>
-                            <Check className="h-3 w-3 text-white" />
-                          </div>
-                          <span className="text-gray-300 text-sm leading-relaxed">
-                            {activeTab === "ads" ? (
-                              <>{pkg.slotsPerMonth} ad slot{pkg.slotsPerMonth > 1 ? 's' : ''} (all slots unlocked immediately)</>
-                            ) : (
-                              <>{pkg.slotsPerMonth} featured script slot{pkg.slotsPerMonth > 1 ? 's' : ''} (all slots unlocked immediately)</>
-                            )}
-                          </span>
-                        </motion.li>
-                        <motion.li
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={pricingInView ? { opacity: 1, x: 0 } : {}}
-                          transition={{ delay: index * 0.15 + 0.1 }}
-                          className="flex items-start gap-3"
-                        >
-                          <div className={`flex-shrink-0 w-5 h-5 rounded-full bg-gradient-to-br ${pkg.gradient} flex items-center justify-center mt-0.5`}>
-                            <Check className="h-3 w-3 text-white" />
-                          </div>
-                          <span className="text-gray-300 text-sm leading-relaxed">
-                            {activeTab === "ads" ? "Featured placement in marketplace" : "Featured placement on homepage"}
-                          </span>
-                        </motion.li>
-                        <motion.li
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={pricingInView ? { opacity: 1, x: 0 } : {}}
-                          transition={{ delay: index * 0.15 + 0.2 }}
-                          className="flex items-start gap-3"
-                        >
-                          <div className={`flex-shrink-0 w-5 h-5 rounded-full bg-gradient-to-br ${pkg.gradient} flex items-center justify-center mt-0.5`}>
-                            <Check className="h-3 w-3 text-white" />
-                          </div>
-                          <span className="text-gray-300 text-sm leading-relaxed">
-                            Analytics dashboard
-                          </span>
-                        </motion.li>
-                        <motion.li
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={pricingInView ? { opacity: 1, x: 0 } : {}}
-                          transition={{ delay: index * 0.15 + 0.3 }}
-                          className="flex items-start gap-3"
-                        >
-                          <div className={`flex-shrink-0 w-5 h-5 rounded-full bg-gradient-to-br ${pkg.gradient} flex items-center justify-center mt-0.5`}>
-                            <Check className="h-3 w-3 text-white" />
-                          </div>
-                          <span className="text-gray-300 text-sm leading-relaxed">
-                            Discord support
-                          </span>
-                        </motion.li>
-                      </ul>
+                  <div>
+                    {/* Plan label */}
+                    <div className="text-[10px] uppercase font-semibold text-white/25 mb-1">
+                      {activeTab === "ads" ? "Ad Slots" : "Featured Script"}
+                    </div>
 
-                      <div className="w-full">
-                        <Button
-                          type="button"
-                          onClick={() => handleAddToCart(pkg, selectedDurationIndex)}
-                          disabled={isAddingToCart}
-                          className={cn(
-                            "w-full py-6 text-lg font-bold rounded-full border transition-all duration-300",
-                            activeTab === "ads"
-                              ? "bg-orange-500/10 text-orange-300 border-orange-500/40 hover:bg-orange-500/20 hover:text-orange-200"
-                              : "bg-purple-500/10 text-purple-200 border-purple-500/40 hover:bg-purple-500/20 hover:text-purple-100"
-                          )}
-                        >
-                          {isAddingToCart ? (
-                            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                          ) : (
-                            <ShoppingCart className="mr-2 h-5 w-5" />
-                          )}
-                          {isAddingToCart ? "Adding..." : "Add to Cart"}
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              )
+                    {/* Plan name */}
+                    <div className="text-lg font-bold text-white mb-2">
+                      {pkg.name}
+                    </div>
+
+                    {/* Description */}
+                    <div className="text-[12px] text-white/35 leading-normal mb-4">
+                      {pkg.description}
+                    </div>
+
+                    {/* Slots badge */}
+                    <div className="inline-flex items-center gap-1.5 bg-[#f97316]/[0.08] border border-[#f97316]/15 text-[#f97316] text-xs font-semibold px-2 py-0.5 rounded-md mb-6">
+                      <LayoutGrid className="w-3.5 h-3.5" />
+                      <span>
+                        {pkg.slotsPerMonth} slot{pkg.slotsPerMonth > 1 ? 's' : ''} {activeTab === "ads" ? "per month" : "per week"}
+                      </span>
+                    </div>
+
+                    {/* Old Price */}
+                    <div className="text-[12px] line-through text-white/25 mb-0.5">
+                      €{selectedDuration.originalPrice}
+                    </div>
+
+                    {/* Main Price */}
+                    <div className="flex items-baseline gap-1 mb-2">
+                      <span className="text-3xl font-bold text-white">€{selectedDuration.price}</span>
+                      <span className="text-xs text-white/35 font-normal">
+                        / {activeTab === "ads" ? `${selectedDuration.months} mo` : `${selectedDuration.weeks || Math.round(selectedDuration.months * 4)} wk`}
+                      </span>
+                    </div>
+
+                    {/* Savings line */}
+                    <div className="flex items-center gap-1 text-[11px] font-semibold text-[#1d9e75] mb-6">
+                      <Check className="w-3.5 h-3.5" />
+                      <span>Save €{selectedDuration.originalPrice - selectedDuration.price} ({discount}%)</span>
+                    </div>
+
+                    {/* Divider */}
+                    <div className="h-[1px] bg-white/[0.06] my-5" />
+
+                    {/* Feature list */}
+                    <ul className="space-y-3 mb-8">
+                      {packageFeatures.map((feat, fidx) => {
+                        const FeatIcon = feat.icon;
+                        return (
+                          <li key={fidx} className="flex items-center gap-2">
+                            <FeatIcon className="w-[15px] h-[15px] text-[#1d9e75] flex-shrink-0" />
+                            <span className="text-[12px] text-white/[0.55] leading-none">
+                              {feat.text}
+                            </span>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+
+                  {/* CTA Button */}
+                  <Button
+                    type="button"
+                    onClick={() => handleAddToCart(pkg, selectedDurationIndex)}
+                    disabled={isAddingToCart}
+                    className={cn(
+                      "w-full h-10 rounded-[9px] text-[13px] font-semibold transition-all duration-200",
+                      isPopular
+                        ? "bg-[#f97316] hover:bg-[#ea6c0a] text-white border-none shadow-sm"
+                        : "bg-white/[0.06] border border-white/[0.1] text-white/70 hover:bg-white/[0.1] hover:text-white"
+                    )}
+                  >
+                    {isAddingToCart ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <ShoppingCart className="w-4 h-4 mr-2" />
+                    )}
+                    {isAddingToCart ? "Adding..." : "Add to Cart"}
+                  </Button>
+                </div>
+              );
             })}
           </div>
         </div>
-      </motion.section>
-      
-      
-      {/* Benefits Section */}
-      <motion.section
-        ref={benefitsRef}
-        className="pb-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden"
-        initial={{ opacity: 0 }}
-        animate={benefitsInView ? { opacity: 1 } : {}}
-        transition={{ duration: 1 }}
-      >
-        <HexagonBackground
-          className="absolute bg-[#131313]"
-          hexagonProps={{
-            className: "before:!bg-[#0f0f0f] after:!bg-[#131313] dark:!before:bg-[#0f0f0f] dark:!after:bg-[#131313] hover:!before:bg-[#252525] dark:hover:!before:bg-[#252525] hover:!after:bg-[#2a2a2a] dark:hover:!after:bg-[#2a2a2a]"
-          }}
-        />
-        <div className="max-w-7xl mx-auto relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            animate={benefitsInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 1 }}
-            className="text-center mt-16 mb-16"
-          >
-            <Badge className="bg-gradient-to-r from-orange-500/20 to-yellow-400/20 text-orange-400 border-orange-500/30 mb-6 px-4 py-2 text-sm font-semibold">
+
+        {/* Why Advertise Section */}
+        <div ref={benefitsRef} className="max-w-7xl mx-auto mb-16">
+          {/* Centered header */}
+          <div className="text-center mb-10">
+            <div className="text-[11px] font-bold text-[#f97316] uppercase tracking-wider mb-2">
               Why Advertise Here
-            </Badge>
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 bg-gradient-to-r from-white via-orange-200 to-yellow-200 bg-clip-text text-transparent">
+            </div>
+            <h2 className="text-[22px] font-bold text-white mb-2">
               Reach Your Target Audience
             </h2>
-            <p className="text-xl text-gray-300 max-w-2xl mx-auto leading-relaxed">
-              Connect with the most engaged FiveM community members
+            <p className="text-[13px] text-white/35 max-w-md mx-auto">
+              Connect with the most active and engaged FiveM community owners
             </p>
-          </motion.div>
+          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {benefits.map((benefit, index) => {
-              const Icon = benefit.icon
+          {/* 2x2 Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-[14px] px-10">
+            {benefitsData.map((benefit, index) => {
+              const BenefitIcon = benefit.icon;
               return (
-                <motion.div
+                <div
                   key={index}
-                  initial={{ opacity: 0, y: 50 }}
-                  animate={benefitsInView ? { opacity: 1, y: 0 } : {}}
-                  transition={{ duration: 0.8, delay: index * 0.1 }}
-                  whileHover={{ scale: 1.05, y: -10 }}
-                  className="group"
+                  className="bg-[#16161a] border border-white/5 rounded-xl p-[20px_18px] flex gap-4 items-start"
                 >
-                  <Card className="bg-neutral-900/40 border-gray-700/50 hover:border-orange-500/50 transition-all duration-500 backdrop-blur-sm h-full relative overflow-hidden">
-                    <CardContent className="p-8 text-center relative z-10">
-                      <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br ${benefit.gradient} mb-6 group-hover:scale-110 transition-transform duration-300`}>
-                        <Icon className="h-8 w-8 text-white" />
-                      </div>
-                      <h3 className="text-white font-bold text-xl mb-3 group-hover:text-orange-400 transition-colors">
-                        {benefit.title}
-                      </h3>
-                      <p className="text-gray-400 text-sm leading-relaxed">{benefit.description}</p>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              )
+                  {/* Icon Block */}
+                  <div
+                    className="flex-shrink-0 w-[38px] h-[38px] rounded-[9px] flex items-center justify-center"
+                    style={{
+                      backgroundColor: benefit.iconBg,
+                      color: benefit.iconColor
+                    }}
+                  >
+                    <BenefitIcon className="w-[18px] h-[18px]" />
+                  </div>
+
+                  {/* Text details */}
+                  <div className="flex flex-col">
+                    <h3 className="text-[13px] font-semibold text-[#f0f0f2] mb-1">
+                      {benefit.title}
+                    </h3>
+                    <p className="text-[12px] text-white/35 leading-[1.55] mb-2">
+                      {benefit.description}
+                    </p>
+                    {/* Supporting metric stat text */}
+                    <span
+                      className="text-[10px] font-bold uppercase tracking-wider"
+                      style={{ color: benefit.iconColor }}
+                    >
+                      {benefit.metric}
+                    </span>
+                  </div>
+                </div>
+              );
             })}
           </div>
         </div>
-      </motion.section>
 
-      {/* Stats Section */}
-      {/* <motion.section
-        className="py-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden"
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        transition={{ duration: 1 }}
-      >
-        <div className="max-w-7xl mx-auto">
-          <motion.div
-            className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center"
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, staggerChildren: 0.1 }}
-          >
-            {[
-              { number: "500K+", label: "Monthly Impressions", gradient: "from-orange-500 to-orange-600" },
-              { number: "25K+", label: "Active Advertisers", gradient: "from-yellow-400 to-yellow-500" },
-              { number: "98%", label: "Satisfaction Rate", gradient: "from-orange-500 to-red-500" },
-              { number: "2.5x", label: "Avg. ROI Increase", gradient: "from-yellow-400 to-orange-500" },
-            ].map((stat, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 30, scale: 0.8 }}
-                whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ duration: 0.8, delay: index * 0.1 }}
-                whileHover={{ scale: 1.05, y: -10 }}
-                className="group"
-              >
-                <Card className="bg-neutral-900/40 border-gray-700/50 hover:border-orange-500/50 transition-all duration-500 backdrop-blur-sm h-full relative overflow-hidden">
-                  <CardContent className="p-8 relative z-10">
-                    <motion.div
-                      className={`text-5xl md:text-6xl font-bold mb-3 bg-gradient-to-r ${stat.gradient} bg-clip-text text-transparent`}
-                      animate={pricingInView ? { scale: [1, 1.1, 1] } : {}}
-                      transition={{ delay: index * 0.1 + 0.3, duration: 0.5 }}
-                    >
-                      {stat.number}
-                    </motion.div>
-                    <div className="text-gray-400 font-semibold text-sm group-hover:text-orange-400 transition-colors uppercase tracking-wider">
-                      {stat.label}
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </motion.section> */}
-      <Footer />
-    </div>
+        <Footer />
+      </div>
+    </>
   )
 }
