@@ -1544,8 +1544,11 @@ export async function getGiveaways(filters?: {
   const giveaways = await (offseted as any);
 
   const now = new Date().toISOString();
+
+  const now = new Date().toISOString();
   
   // Fetch creator images and roles for each giveaway with priority: profile_picture first, then Discord image
+  // Include all giveaways (both active and upcoming)
   // Include all giveaways (both active and upcoming)
   const giveawaysWithImages = await Promise.all(
     giveaways.map(async (giveaway: any) => {
@@ -1567,10 +1570,20 @@ export async function getGiveaways(filters?: {
         isUpcoming = startDate > nowTime;
       }
       
+      
+      // Determine if giveaway is upcoming (scheduled for future)
+      let isUpcoming = false;
+      if (giveaway.startDate) {
+        const startDate = new Date(giveaway.startDate).getTime();
+        const nowTime = new Date(now).getTime();
+        isUpcoming = startDate > nowTime;
+      }
+      
       return {
         ...giveaway,
         creatorImage,
         creatorRoles,
+        isUpcoming, // Mark scheduled giveaways as upcoming
         isUpcoming, // Mark scheduled giveaways as upcoming
       };
     })
@@ -1774,6 +1787,7 @@ export async function updateGiveawayForReapproval(id: number, updateData: any) {
     if (updateData.total_value !== undefined) assignIfDefined('totalValue', updateData.total_value);
     if (updateData.end_date !== undefined) assignIfDefined('endDate', updateData.end_date);
     if (updateData.start_date !== undefined) assignIfDefined('startDate', updateData.start_date);
+    if (updateData.start_date !== undefined) assignIfDefined('startDate', updateData.start_date);
     assignIfDefined('currency', updateData.currency);
     if (updateData.currency_symbol !== undefined) assignIfDefined('currencySymbol', updateData.currency_symbol);
     if (updateData.currencySymbol !== undefined) assignIfDefined('currencySymbol', updateData.currencySymbol);
@@ -1855,6 +1869,7 @@ export async function updateGiveaway(id: number, updateData: Partial<NewGiveaway
       totalValue: giveaway.totalValue,
       endDate: giveaway.endDate,
       startDate: giveaway.startDate,
+      startDate: giveaway.startDate,
       maxEntries: giveaway.maxEntries,
       currency: giveaway.currency || 'USD',
       currencySymbol: giveaway.currencySymbol || '$',
@@ -1891,6 +1906,8 @@ export async function updateGiveaway(id: number, updateData: Partial<NewGiveaway
     if (data.totalValue !== undefined) updateObject.totalValue = data.totalValue;
     if (data.end_date !== undefined) updateObject.endDate = data.end_date;
     if (data.endDate !== undefined) updateObject.endDate = data.endDate;
+    if (data.start_date !== undefined) updateObject.startDate = data.start_date;
+    if (data.startDate !== undefined) updateObject.startDate = data.startDate;
     if (data.start_date !== undefined) updateObject.startDate = data.start_date;
     if (data.startDate !== undefined) updateObject.startDate = data.startDate;
     if (data.currency !== undefined) updateObject.currency = data.currency;
