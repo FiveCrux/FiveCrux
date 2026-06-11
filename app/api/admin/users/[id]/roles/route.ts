@@ -115,6 +115,7 @@ export async function GET(
         crew: "Team member with special privileges",
         admin: "Administrative access",
         moderator: "Basic moderation privileges",
+        prop_lister: "Can create and manage props",
         user: "Basic user access (default for new users)"
       },
       adCategories: {
