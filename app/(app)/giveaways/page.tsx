@@ -61,6 +61,7 @@ import { VerifiedIcon } from "@/componentss/shared/verified-icon";
 import { isVerifiedCreator } from "@/lib/utils";
 import Link from "next/link";
 import AdCard, { useRandomAds } from "@/componentss/ads/ad-card";
+import { ProductCard } from "@/componentss/ui/product-card";
 import {
   useGiveaways,
   usePromotedGiveaways,
@@ -419,148 +420,111 @@ export default function GiveawaysPage() {
 
   
 
+  
+
   return (
     <>
       <Navbar />
-      <div className="min-h-screen text-white relative overflow-hidden">
-
-        {/* Header */}
+      <div
+        className="min-h-screen text-white relative overflow-hidden pb-16"
+        style={{
+          backgroundColor: "#0d0d0f",
+          backgroundImage: `
+            linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+            radial-gradient(circle at 50% 0%, rgba(249, 115, 22, 0.07) 0%, transparent 60%)
+          `,
+          backgroundSize: "60px 100%, 100% 100%",
+        }}
+      >
+        {/* Hero Section */}
         <motion.div
-          className="bg-neutral-850 backdrop-blur-xl py-8 px-4 sm:px-6 lg:px-8 border-b border-neutral-800/50 mt-11"
-          initial={{ opacity: 0, y: -50 }}
+          className="max-w-7xl mx-auto pt-24 pb-8 px-10 flex flex-col md:flex-row md:items-end md:justify-between gap-6 border-b border-white/5"
+          initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
-          <div className="max-w-7xl mx-auto">
-            <motion.nav
-              className="flex items-center space-x-2 text-sm text-gray-400 mb-4"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 }}
-            >
-              <Link
-                href="/"
-                className="hover:text-orange-500 transition-colors"
-              >
+          <div className="space-y-1">
+            <nav className="flex items-center space-x-2 text-[12px] font-medium tracking-wide mb-3">
+              <Link href="/" className="text-white/25 hover:text-white transition-colors">
                 Home
               </Link>
-              <span>/</span>
-              <span className="text-white">All Giveaways</span>
-            </motion.nav>
-
-            <motion.h1
-              className="text-4xl md:text-5xl font-bold mb-4"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-            >
-              <span className="bg-gradient-to-r from-orange-500 to-yellow-400 bg-clip-text text-transparent">
-                All Giveaways
-              </span>
-            </motion.h1>
-
-            <motion.p
-              className="text-gray-400 mb-4 text-lg"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-            >
+              <span className="text-white/25">/</span>
+              <span className="text-white/45">Giveaways</span>
+            </nav>
+            <h1 className="text-[36px] font-bold tracking-tight text-white" style={{ letterSpacing: "-0.5px" }}>
+              <span className="text-[#f97316]">All</span> Giveaways
+            </h1>
+            <p className="text-[14px] text-white/35 font-medium">
               Browse our complete collection of premium FiveM giveaways
-            </motion.p>
-
-            <motion.div
-              className="flex items-center gap-4"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-            >
-              {/* {!loading && (
-                <div className="text-sm text-gray-500 flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-orange-500" />
-                  {sortedScripts.length} scripts found
-                </div>
-              )} */}
-              {/* {activeFiltersCount > 0 && (
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="flex items-center gap-2"
-                >
-                  <Zap className="h-4 w-4 text-yellow-400" />
-                  <span className="text-sm text-yellow-400">
-                    {activeFiltersCount} filters active
-                  </span>
-                </motion.div>
-              )} */}
-            </motion.div>
+            </p>
+          </div>
+          <div className="flex items-center gap-4">
+            {!loading && (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold text-[#f97316] bg-[#f97316]/10 border border-[#f97316]/15">
+                <Zap className="h-3.5 w-3.5 fill-[#f97316]" />
+                <span>{activeGiveaways.length} giveaways found</span>
+              </div>
+            )}
           </div>
         </motion.div>
 
         {/* Main Content */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-7xl mx-auto px-10 py-8">
           {/* Search and Filter Bar */}
-          <motion.div
-            className="mb-8"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-          >
-            <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-              <div className="flex flex-col sm:flex-row gap-4 flex-1">
-                <div className="relative flex-1 max-w-md">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                  <Input
-                    type="search"
-                    placeholder="Search giveaways..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 bg-gray-900/50 border-gray-700/50 text-white placeholder-gray-400 focus:border-yellow-500 backdrop-blur-sm"
-                  />
-                </div>
-                <Select value={filterBy} onValueChange={setFilterBy}>
-                  <SelectTrigger className="w-48 bg-gray-900/50 border-gray-700/50 text-white backdrop-blur-sm">
-                    <Filter className="mr-2 h-4 w-4" />
-                    <SelectValue placeholder="Filter by" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-gray-900/95 border-gray-700/50 backdrop-blur-xl">
-                    <SelectItem value="all">All Giveaways</SelectItem>
-                    <SelectItem value="featured">Featured</SelectItem>
-                    <SelectItem value="trending">Trending</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="w-48 bg-gray-900/50 border-gray-700/50 text-white backdrop-blur-sm">
-                    <SortAsc className="mr-2 h-4 w-4" />
-                    <SelectValue placeholder="Sort by" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-gray-900/95 border-gray-700/50 backdrop-blur-xl">
-                    <SelectItem value="ending-soon">Ending Soon</SelectItem>
-                    <SelectItem value="highest-value">Highest Value</SelectItem>
-                    <SelectItem value="most-entries">Most Entries</SelectItem>
-                    <SelectItem value="newest">Newest</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 py-4 border-b border-white/5 mb-8 relative z-50">
+            {/* Left: Search input */}
+            <div className="relative flex-1 md:w-[240px] max-w-[300px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 h-3.5 w-3.5" />
+              <input
+                type="text"
+                placeholder="Search giveaways..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-4 py-1.5 bg-white/[0.04] border border-white/[0.08] text-white placeholder-white/30 text-[12px] focus:outline-none focus:border-[#f97316]/50 transition-colors"
+                style={{ borderRadius: "9px" }}
+              />
             </div>
-          </motion.div>
+
+            {/* Right: Selects */}
+            <div className="flex items-center gap-3 w-full md:w-auto md:justify-end">
+              <Select value={filterBy} onValueChange={setFilterBy}>
+                <SelectTrigger className="bg-white/[0.03] border-white/10 text-white/50 text-[12px] rounded-full px-3.5 py-1.5 flex items-center gap-1.5 focus:ring-0 focus:ring-offset-0 focus:outline-none h-8 w-fit [&>span]:line-clamp-1 border">
+                  <SelectValue placeholder="Filter by" />
+                </SelectTrigger>
+                <SelectContent className="bg-[#111113] border-white/10 text-white">
+                  <SelectItem value="all">All Giveaways</SelectItem>
+                  <SelectItem value="featured">Featured</SelectItem>
+                  <SelectItem value="trending">Trending</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="bg-white/[0.03] border-white/10 text-white/50 text-[12px] rounded-full px-3.5 py-1.5 flex items-center gap-1.5 focus:ring-0 focus:ring-offset-0 focus:outline-none h-8 w-fit [&>span]:line-clamp-1 border">
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent className="bg-[#111113] border-[#1f1f23] text-white">
+                  <SelectItem value="ending-soon">Ending Soon</SelectItem>
+                  <SelectItem value="highest-value">Highest Value</SelectItem>
+                  <SelectItem value="most-entries">Most Entries</SelectItem>
+                  <SelectItem value="newest">Newest</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
 
           <Tabs defaultValue="active" className="w-full">
-            <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-              <TabsList className="flex sm:grid sm:grid-cols-3 w-max sm:w-full min-w-full sm:min-w-0 bg-gray-800/30 border border-gray-700/50 overflow-visible sm:overflow-hidden backdrop-blur-sm rounded-2xl h-auto items-stretch p-1 gap-1.5 sm:gap-1">
+            <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] mb-6">
+              <TabsList className="bg-transparent border-0 gap-2.5 p-0 h-auto w-fit flex">
                 {tabs.map((tab) => {
                   const Icon = tab.icon;
-                  const labelParts = tab.label.split(" ");
-                  const shortLabel = labelParts[0];
-                  const suffix = labelParts.slice(1).join(" ");
                   return (
                     <TabsTrigger
                       key={tab.value}
                       value={tab.value}
-                      className="flex-none sm:flex-none h-10 inline-flex items-center justify-center rounded-xl font-bold text-xs sm:text-sm py-2 px-3 sm:px-3 whitespace-nowrap shrink-0 data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-400 data-[state=active]:to-orange-500 data-[state=active]:text-black data-[state=active]:shadow-none data-[state=active]:translate-y-0"
+                      className="rounded-full border px-4 py-2 text-xs font-semibold transition-all duration-200 data-[state=active]:bg-[#f97316] data-[state=active]:border-[#f97316] data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-[#f97316]/20 bg-white/[0.03] border-white/[0.08] text-white/40 hover:text-white"
                     >
-                      <Icon className="mr-1.5 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
-                      <span className="hidden sm:inline">{tab.label}</span>
-                      <span className="sm:hidden">{shortLabel}</span>
+                      <Icon className="mr-2 h-3.5 w-3.5 flex-shrink-0" />
+                      <span>{tab.label}</span>
                     </TabsTrigger>
                   );
                 })}
@@ -570,7 +534,7 @@ export default function GiveawaysPage() {
             <TabsContent value="active" className="mt-8">
               <motion.div
                 ref={giveawaysRef}
-                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+                className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-[18px]"
                 initial={{ opacity: 0 }}
                 animate={giveawaysInView ? { opacity: 1 } : {}}
                 transition={{ duration: 0.8, staggerChildren: 0.1 }}
@@ -698,129 +662,113 @@ export default function GiveawaysPage() {
                       new Date(giveaway.endDate).getTime() <=
                       new Date().getTime();
                     const isUpcoming = giveaway.is_upcoming || (giveaway.start_date && new Date(giveaway.start_date).getTime() > new Date().getTime());
+
+                    // Build image overlay for ended/upcoming states
+                    const giveawayImageOverlay = isEnded ? (
+                      <div className="absolute inset-0 z-50 pointer-events-none flex items-center justify-center bg-[#0a0a0c]/65">
+                        <span className="px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-white/30 border border-white/15 rounded-[6px]">
+                          Ended
+                        </span>
+                      </div>
+                    ) : isUpcoming ? (
+                      <div className="absolute top-2.5 left-2.5 z-50 flex items-center gap-1 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-bold text-[10px] px-2 py-1 rounded-full uppercase tracking-wider shadow-lg">
+                        ⏰ Upcoming
+                      </div>
+                    ) : null;
+
+                    // Build custom action button
+                    const giveawayAction = isUpcoming ? (
+                      <button
+                        disabled
+                        style={{
+                          fontSize: "11px",
+                          fontWeight: 600,
+                          color: "#60a5fa",
+                          background: "rgba(59,130,246,0.1)",
+                          border: "1px solid rgba(59,130,246,0.3)",
+                          borderRadius: "7px",
+                          padding: "6px 10px",
+                          cursor: "not-allowed",
+                          whiteSpace: "nowrap",
+                          lineHeight: 1.2,
+                          opacity: 0.7,
+                        }}
+                      >
+                        Starting Soon
+                      </button>
+                    ) : !isEnded ? (
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          enterGiveaway(giveaway.id);
+                        }}
+                        disabled={enteredGiveaways.includes(giveaway.id)}
+                        style={{
+                          fontSize: "11px",
+                          fontWeight: 600,
+                          color: enteredGiveaways.includes(giveaway.id) ? "#34d399" : "#f97316",
+                          background: enteredGiveaways.includes(giveaway.id)
+                            ? "rgba(52,211,153,0.12)"
+                            : "rgba(249,115,22,0.1)",
+                          border: enteredGiveaways.includes(giveaway.id)
+                            ? "1px solid rgba(52,211,153,0.3)"
+                            : "1px solid rgba(249,115,22,0.25)",
+                          borderRadius: "7px",
+                          padding: "6px 12px",
+                          cursor: enteredGiveaways.includes(giveaway.id) ? "default" : "pointer",
+                          whiteSpace: "nowrap",
+                          lineHeight: 1.2,
+                        }}
+                      >
+                        {enteredGiveaways.includes(giveaway.id) ? "🏆 Registered!" : "Enter"}
+                      </button>
+                    ) : (
+                      <button
+                        disabled
+                        style={{
+                          fontSize: "11px",
+                          fontWeight: 600,
+                          color: "rgba(255,255,255,0.25)",
+                          background: "rgba(255,255,255,0.04)",
+                          border: "1px solid rgba(255,255,255,0.08)",
+                          borderRadius: "7px",
+                          padding: "6px 12px",
+                          cursor: "not-allowed",
+                          whiteSpace: "nowrap",
+                          lineHeight: 1.2,
+                        }}
+                      >
+                        Ended
+                      </button>
+                    );
+
                     return (
                       <motion.div
                         key={giveaway.id}
-                        className="group"
-                        whileHover={{ y: -5, scale: 1.02 }}
                         initial={{ opacity: 0, y: 50 }}
                         animate={giveawaysInView ? { opacity: 1, y: 0 } : {}}
                         transition={{ duration: 0.8, delay: index * 0.1 }}
+                        style={{ opacity: isEnded ? 0.6 : 1, filter: isEnded ? "grayscale(1)" : "none" }}
                       >
-                        <Link href={`/giveaway/${giveaway.id}`}>
-                          <Card
-                            className={`bg-neutral-900 hover:border-white cursor-pointer h-full backdrop-blur-sm relative overflow-hidden shadow-2xl rounded-lg transition-all duration-300 flex flex-col ${isEnded ? "grayscale opacity-60" : ""
-                              }`}
-                          >
-                            {/* Image Section */}
-                            <CardHeader className="p-0 overflow-hidden rounded-t-lg relative">
-                              <Image
-                                src={giveaway.image || "/cat.jpg"}
-                                alt={giveaway.title}
-                                width={400}
-                                height={256}
-                                className="object-cover w-full h-52"
-                              />
-                              {/* Ended Overlay */}
-                              {isEnded && (
-                                <div className="absolute inset-0 z-50 pointer-events-none rounded-t-lg overflow-hidden flex items-center justify-center bg-black/50">
-                                  <img
-                                    src="/ended.png"
-                                    alt="Ended"
-                                    className="w-24 h-24 object-contain opacity-90"
-                                  />
-                                </div>
-                              )}
-                              {/* Upcoming Badge */}
-                              {isUpcoming && (
-                                <div className="absolute top-2 left-2 z-50">
-                                  <Badge className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-bold shadow-lg">
-                                    <Clock className="h-3 w-3 mr-1" />
-                                    Upcoming
-                                  </Badge>
-                                </div>
-                              )}
-                            </CardHeader>
-
-                            {/* Content Section */}
-                            <div className="flex flex-col flex-1">
-                              <CardContent className="p-3 flex-1 space-y-2">
-                                {/* Title */}
-                                <CardTitle className="text-base font-bold text-white leading-tight line-clamp-2">
-                                  {giveaway.title}
-                                </CardTitle>
-
-                                {/* Category Badge */}
-                                {giveaway.category && (
-                                  <div className="flex flex-wrap gap-1">
-                                    <Badge className="bg-neutral-800/95 text-white backdrop-blur-sm text-[10px] font-bold border border-neutral-600/50 rounded px-1.5 py-0.5 uppercase tracking-wide shadow-lg">
-                                      <span className="mr-1 text-xs">•</span>
-                                      {giveaway.category}
-                                    </Badge>
-                                  </div>
-                                )}
-
-                                {/* Description */}
-                                <CardDescription className="text-neutral-400 text-xs leading-snug line-clamp-2 flex items-center gap-1.5">
-                                  <span>By {giveaway.creator || "Unknown Creator"}</span>
-                                  {isVerifiedCreator(giveaway.creator_roles) && (
-                                    <VerifiedIcon size="sm" />
-                                  )}
-                                </CardDescription>
-
-                                {/* Value */}
-                                <CardDescription className="text-orange-500 text-xl font-bold pt-1">
-                                  {giveaway.currency_symbol || "$"}
-                                  {giveaway.totalValue}
-                                </CardDescription>
-                              </CardContent>
-
-                              {/* Button Section */}
-                              <div className="px-3 pb-3 mt-auto">
-                                {isUpcoming ? (
-                                  <Button
-                                    variant="outline"
-                                    disabled
-                                    className="w-full bg-blue-500/20 text-blue-400 border-blue-500/50 cursor-not-allowed font-semibold text-xs py-1.5 h-auto"
-                                  >
-                                    <Clock className="mr-1.5 h-3.5 w-3.5" />
-                                    Starting Soon
-                                  </Button>
-                                ) : !isEnded ? (
-                                  <Button
-                                    onClick={(e) => {
-                                      e.preventDefault();
-                                      e.stopPropagation();
-                                      enterGiveaway(giveaway.id);
-                                    }}
-                                    disabled={enteredGiveaways.includes(giveaway.id)}
-                                    variant="outline"
-                                    className={`w-full bg-white text-black hover:bg-gray-300 hover:border-gray-300 hover:text-black transition-colors duration-200 font-semibold text-xs py-1.5 h-auto ${enteredGiveaways.includes(giveaway.id)
-                                        ? "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white"
-                                        : ""
-                                      }`}
-                                  >
-                                    {enteredGiveaways.includes(giveaway.id) ? (
-                                      <>
-                                        <Trophy className="mr-1.5 h-3.5 w-3.5" />
-                                        Registered!
-                                      </>
-                                    ) : (
-                                      "View Details"
-                                    )}
-                                  </Button>
-                                ) : (
-                                  <Button
-                                    variant="outline"
-                                    disabled
-                                    className="w-full bg-neutral-800 text-neutral-500 cursor-not-allowed font-semibold text-xs py-1.5 h-auto"
-                                  >
-                                    Ended
-                                  </Button>
-                                )}
-                              </div>
-                            </div>
-                          </Card>
+                        <Link href={`/giveaway/${giveaway.id}`} style={{ display: "block" }}>
+                          <ProductCard
+                            image={giveaway.image || "/cat.jpg"}
+                            imageAlt={giveaway.title}
+                            imageOverlay={giveawayImageOverlay}
+                            tags={giveaway.category ? [giveaway.category] : []}
+                            title={giveaway.title}
+                            author={`By ${giveaway.creator || "Unknown Creator"}`}
+                            authorImage={giveaway.creatorImage}
+                            authorInitials={giveaway.creator?.charAt(0).toUpperCase() || "U"}
+                            verified={isVerifiedCreator(giveaway.creator_roles)}
+                            rating={0}
+                            reviewCount={giveaway.entries || 0}
+                            reviewLabel="entries"
+                            price={`${giveaway.currency_symbol || "$"}${giveaway.totalValue}`}
+                            customAction={giveawayAction}
+                            onViewDetails={() => {}}
+                          />
                         </Link>
                       </motion.div>
                     );
@@ -833,7 +781,7 @@ export default function GiveawaysPage() {
             <TabsContent value="ended" className="mt-8">
               <motion.div
                 ref={giveawaysRef}
-                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+                className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-[18px]"
                 initial={{ opacity: 0 }}
                 animate={giveawaysInView ? { opacity: 1 } : {}}
                 transition={{ duration: 0.8, staggerChildren: 0.1 }}
@@ -961,139 +909,113 @@ export default function GiveawaysPage() {
                       new Date(giveaway.endDate).getTime() <=
                       new Date().getTime();
                     const isUpcoming = giveaway.is_upcoming || (giveaway.start_date && new Date(giveaway.start_date).getTime() > new Date().getTime());
+
+                    // Build image overlay for ended/upcoming states
+                    const giveawayImageOverlay = isEnded ? (
+                      <div className="absolute inset-0 z-50 pointer-events-none flex items-center justify-center bg-[#0a0a0c]/65">
+                        <span className="px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-white/30 border border-white/15 rounded-[6px]">
+                          Ended
+                        </span>
+                      </div>
+                    ) : isUpcoming ? (
+                      <div className="absolute top-2.5 left-2.5 z-50 flex items-center gap-1 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-bold text-[10px] px-2 py-1 rounded-full uppercase tracking-wider shadow-lg">
+                        ⏰ Upcoming
+                      </div>
+                    ) : null;
+
+                    // Build custom action button
+                    const giveawayAction = isUpcoming ? (
+                      <button
+                        disabled
+                        style={{
+                          fontSize: "11px",
+                          fontWeight: 600,
+                          color: "#60a5fa",
+                          background: "rgba(59,130,246,0.1)",
+                          border: "1px solid rgba(59,130,246,0.3)",
+                          borderRadius: "7px",
+                          padding: "6px 10px",
+                          cursor: "not-allowed",
+                          whiteSpace: "nowrap",
+                          lineHeight: 1.2,
+                          opacity: 0.7,
+                        }}
+                      >
+                        Starting Soon
+                      </button>
+                    ) : !isEnded ? (
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          enterGiveaway(giveaway.id);
+                        }}
+                        disabled={enteredGiveaways.includes(giveaway.id)}
+                        style={{
+                          fontSize: "11px",
+                          fontWeight: 600,
+                          color: enteredGiveaways.includes(giveaway.id) ? "#34d399" : "#f97316",
+                          background: enteredGiveaways.includes(giveaway.id)
+                            ? "rgba(52,211,153,0.12)"
+                            : "rgba(249,115,22,0.1)",
+                          border: enteredGiveaways.includes(giveaway.id)
+                            ? "1px solid rgba(52,211,153,0.3)"
+                            : "1px solid rgba(249,115,22,0.25)",
+                          borderRadius: "7px",
+                          padding: "6px 12px",
+                          cursor: enteredGiveaways.includes(giveaway.id) ? "default" : "pointer",
+                          whiteSpace: "nowrap",
+                          lineHeight: 1.2,
+                        }}
+                      >
+                        {enteredGiveaways.includes(giveaway.id) ? "🏆 Registered!" : "Enter"}
+                      </button>
+                    ) : (
+                      <button
+                        disabled
+                        style={{
+                          fontSize: "11px",
+                          fontWeight: 600,
+                          color: "rgba(255,255,255,0.25)",
+                          background: "rgba(255,255,255,0.04)",
+                          border: "1px solid rgba(255,255,255,0.08)",
+                          borderRadius: "7px",
+                          padding: "6px 12px",
+                          cursor: "not-allowed",
+                          whiteSpace: "nowrap",
+                          lineHeight: 1.2,
+                        }}
+                      >
+                        Ended
+                      </button>
+                    );
+
                     return (
                       <motion.div
                         key={giveaway.id}
-                        className="group"
-                        whileHover={{ y: -5, scale: 1.02 }}
                         initial={{ opacity: 0, y: 50 }}
                         animate={giveawaysInView ? { opacity: 1, y: 0 } : {}}
                         transition={{ duration: 0.8, delay: index * 0.1 }}
+                        style={{ opacity: isEnded ? 0.6 : 1, filter: isEnded ? "grayscale(1)" : "none" }}
                       >
-                        <Link href={`/giveaway/${giveaway.id}`}>
-                          <Card
-                            className={`bg-neutral-900 border-2 border-neutral-700/50 cursor-pointer h-full backdrop-blur-sm relative overflow-hidden shadow-2xl rounded-lg transition-all duration-300 flex flex-col ${isEnded ? "grayscale opacity-60" : ""
-                              }`}
-                          >
-                            {/* Image Section */}
-                            <CardHeader className="p-0 overflow-hidden rounded-t-lg relative">
-                              <Image
-                                src={giveaway.image || "/cat.jpg"}
-                                alt={giveaway.title}
-                                width={400}
-                                height={256}
-                                className="object-cover w-full h-52"
-                              />
-                              {/* Ended Overlay */}
-                              {isEnded && (
-                                <div className="absolute inset-0 z-50 pointer-events-none rounded-t-lg overflow-hidden flex items-center justify-center bg-black/50">
-                                  <img
-                                    src="/ended.png"
-                                    alt="Ended"
-                                    className="w-24 h-24 object-contain opacity-90"
-                                  />
-                                </div>
-                              )}
-                              {/* Upcoming Badge */}
-                              {isUpcoming && (
-                                <div className="absolute top-2 left-2 z-50">
-                                  <Badge className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-bold shadow-lg">
-                                    <Clock className="h-3 w-3 mr-1" />
-                                    Upcoming
-                                  </Badge>
-                                </div>
-                              )}
-                            </CardHeader>
-
-                            {/* Content Section */}
-                            <div className="flex flex-col flex-1">
-                              <CardContent className="p-3 flex-1 space-y-2">
-                                {/* Title */}
-                                <CardTitle className="text-base font-bold text-white leading-tight line-clamp-2">
-                                  {giveaway.title}
-                                </CardTitle>
-
-                                {/* Category Badge */}
-                                {giveaway.category && (
-                                  <div className="flex flex-wrap gap-1">
-                                    <Badge className="bg-neutral-800/95 text-white backdrop-blur-sm text-[10px] font-bold border border-neutral-600/50 rounded px-1.5 py-0.5 uppercase tracking-wide shadow-lg">
-                                      <span className="mr-1 text-xs">•</span>
-                                      {giveaway.category}
-                                    </Badge>
-                                  </div>
-                                )}
-
-                                {/* Description */}
-                                <CardDescription className="text-neutral-400 text-xs  flex flex-row items-center gap-1.5">
-                                  <Avatar className="h-4 w-4">
-                                    <AvatarImage
-                                      src={
-                                        giveaway.creatorImage || "/placeholder-user.jpg"
-                                      }
-                                    />
-                                    <AvatarFallback className="text-[8px]">
-                                      {giveaway.creator?.charAt(0).toUpperCase() || "U"}
-                                    </AvatarFallback>
-                                  </Avatar>
-                                  <span>By {giveaway.creator || "Unknown Creator"}</span>
-                                  {isVerifiedCreator(giveaway.creator_roles) && (
-                                    <VerifiedIcon size="sm" />
-                                  )}
-                                </CardDescription>
-
-                                {/* Value */}
-                                <CardDescription className="text-orange-500 text-xl font-bold pt-1">
-                                  {giveaway.currency_symbol || "$"}
-                                  {giveaway.totalValue}
-                                </CardDescription>
-                              </CardContent>
-
-                              {/* Button Section */}
-                              <div className="px-3 pb-3 mt-auto">
-                                {isUpcoming ? (
-                                  <Button
-                                    variant="outline"
-                                    disabled
-                                    className="w-full bg-blue-500/20 text-blue-400 border-blue-500/50 cursor-not-allowed font-semibold text-xs py-1.5 h-auto"
-                                  >
-                                    <Clock className="mr-1.5 h-3.5 w-3.5" />
-                                    Starting Soon
-                                  </Button>
-                                ) : !isEnded ? (
-                                  <Button
-                                    onClick={(e) => {
-                                      e.preventDefault();
-                                      e.stopPropagation();
-                                      enterGiveaway(giveaway.id);
-                                    }}
-                                    disabled={enteredGiveaways.includes(giveaway.id)}
-                                    variant="outline"
-                                    className={`w-full bg-white text-black hover:bg-gray-300 hover:border-gray-300 hover:text-black transition-colors duration-200 font-semibold text-xs py-1.5 h-auto ${enteredGiveaways.includes(giveaway.id)
-                                        ? "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white"
-                                        : ""
-                                      }`}
-                                  >
-                                    {enteredGiveaways.includes(giveaway.id) ? (
-                                      <>
-                                        <Trophy className="mr-1.5 h-3.5 w-3.5" />
-                                        Registered!
-                                      </>
-                                    ) : (
-                                      "View Details"
-                                    )}
-                                  </Button>
-                                ) : (
-                                  <Button
-                                    variant="outline"
-                                    disabled
-                                    className="w-full bg-neutral-800 text-neutral-500 cursor-not-allowed font-semibold text-xs py-1.5 h-auto"
-                                  >
-                                    Ended
-                                  </Button>
-                                )}
-                              </div>
-                            </div>
-                          </Card>
+                        <Link href={`/giveaway/${giveaway.id}`} style={{ display: "block" }}>
+                          <ProductCard
+                            image={giveaway.image || "/cat.jpg"}
+                            imageAlt={giveaway.title}
+                            imageOverlay={giveawayImageOverlay}
+                            tags={giveaway.category ? [giveaway.category] : []}
+                            title={giveaway.title}
+                            author={`By ${giveaway.creator || "Unknown Creator"}`}
+                            authorImage={giveaway.creatorImage}
+                            authorInitials={giveaway.creator?.charAt(0).toUpperCase() || "U"}
+                            verified={isVerifiedCreator(giveaway.creator_roles)}
+                            rating={0}
+                            reviewCount={0}
+                            reviewLabel="entries"
+                            price={`${giveaway.currency_symbol || "$"}${giveaway.totalValue}`}
+                            customAction={giveawayAction}
+                            onViewDetails={() => {}}
+                          />
                         </Link>
                       </motion.div>
                     );

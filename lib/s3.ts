@@ -113,10 +113,16 @@ export async function deleteFromS3(key: string): Promise<void> {
 }
 
 export function generateS3Key(
-  type: 'image' | 'video',
+  type: 'image' | 'video' | 'zip',
   purpose: string,
-  originalName: string
+  originalName: string,
+  userId?: string | null
 ): string {
+  if (type === 'zip' && userId) {
+    const filenameBase = originalName.replace(/\.[^/.]+$/, "");
+    return `props/${filenameBase}/${userId}/${originalName}`;
+  }
+
   const timestamp = Date.now()
   const randomString = Math.random().toString(36).substring(2, 15)
   // Preserve original file extension to avoid content-type/extension mismatch

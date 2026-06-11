@@ -104,6 +104,43 @@ export interface Ad extends BaseEntity {
   createdBy: string;
 }
 
+export type CouponScope = "Ad Slots" | "Featured Script Slots" | "Props" | "all";
+export type CouponDiscountType = "Percentage" | "Amount";
+export type CouponApplicationRule =
+  | "individual"
+  | "basket_before_sales"
+  | "basket_after_sales";
 
+export interface Coupon extends BaseEntity {
+  code: string;
+  discountType: CouponDiscountType;
+  discountValue: string;
+  scope: CouponScope;
+  minCartValue: string;
+  maxUses: number | null;
+  usedCount: number;
+  perUserLimit: number;
+  couponApplicationRule: CouponApplicationRule;
+  username: string | null;
+  note: string | null;
+  createdBy: string | null;
+  startDate: string | null;
+  expiryDate: string | null;
+  isActive: boolean | null;
+}
 
+export interface CouponPayload {
+  code: string;
+  effectiveOn: CouponScope;
+  discountType: CouponDiscountType;
+  discountValue: number;
+  redeemLimit: number | null;
+  minimumBasketValue: number;
+  redeemLimitPerCustomer: number;
+  couponApplicationRule: CouponApplicationRule;
+  startDate: string | null;
+  expiryDate: string | null;
+  isActive?: boolean;
+  note?: string | null;
+}
 

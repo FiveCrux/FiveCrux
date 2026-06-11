@@ -96,6 +96,22 @@ interface Ad {
   category?: string
 }
 
+interface Prop {
+  id: string
+  name: string
+  description: string
+  price: number
+  discountPercentage?: number
+  discountedPrice?: number | null
+  images: string[]
+  zipFile: string
+  createdBy: string
+  status: string
+  created_at: string
+  updatedAt?: string
+  rejection_reason?: string
+}
+
 // Fetch Users with pagination
 export function useAdminUsers() {
   const { data: session } = useSession()
@@ -196,6 +212,33 @@ export function useAdminAds() {
     getNextPageParam: (lastPage, pages) => {
       if (lastPage.hasMore) {
         return pages.reduce((acc, page) => acc + page.ads.length, 0)
+      }
+      return undefined
+    },
+    enabled: !!session?.user && hasAccess,
+    staleTime: 30000,
+    refetchOnWindowFocus: true,
+    initialPageParam: 0,
+  })
+}
+
+// Fetch Props with pagination
+export function useAdminProps() {
+  const { data: session } = useSession()
+  const userRoles = (session?.user as any)?.roles || []
+  const hasAccess = userRoles.includes('admin') || userRoles.includes('founder')
+
+  return useInfiniteQuery<{ props: Prop[], hasMore: boolean }>({
+    queryKey: ['admin-props'],
+    queryFn: async ({ pageParam = 0 }) => {
+      const res = await fetch(`/api/admin/props?limit=10&offset=${pageParam}`, { credentials: 'include' })
+      if (!res.ok) throw new Error('Failed to fetch props')
+      const data = await res.json()
+      return { props: data.props || [], hasMore: data.hasMore || false }
+    },
+    getNextPageParam: (lastPage, pages) => {
+      if (lastPage.hasMore) {
+        return pages.reduce((acc, page) => acc + page.props.length, 0)
       }
       return undefined
     },
@@ -452,6 +495,36 @@ export function useUpdateAd() {
     onSettled: () => {
       // Refetch in the background to ensure consistency
       queryClient.invalidateQueries({ queryKey: ['admin-ads'] })
+    }
+  })
+}
+
+// Approve/Reject Prop
+export function useUpdateAdminProp() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ propId, status, reason }: { propId: string, status: string, reason?: string }) => {
+      const updateData: any = { propId, status }
+      if (reason) updateData.reason = reason
+
+      const res = await fetch('/api/admin/props', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(updateData)
+      })
+      if (!res.ok) throw new Error('Failed to update prop')
+      return res.json()
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['admin-props'] })
+      queryClient.invalidateQueries({ queryKey: ['props'] })
+      queryClient.invalidateQueries({ queryKey: ['user-props'] })
+      toast.success(variables.status === 'approved' ? 'Prop approved successfully!' : 'Prop rejected')
+    },
+    onError: (_error: any, variables) => {
+      toast.error(variables.status === 'approved' ? 'Failed to approve prop' : 'Failed to reject prop')
     }
   })
 }

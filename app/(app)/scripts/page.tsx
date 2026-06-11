@@ -16,6 +16,8 @@ import {
   Code,
   DollarSign,
   Sliders,
+  LayoutGrid,
+  Tag,
 } from "lucide-react";
 import { Button } from "@/componentss/ui/button";
 import { Input } from "@/componentss/ui/input";
@@ -48,6 +50,7 @@ import Navbar from "@/componentss/shared/navbar";
 import Footer from "@/componentss/shared/footer";
 import AdCard, { useRandomAds } from "@/componentss/ads/ad-card";
 import { VerifiedIcon } from "@/componentss/shared/verified-icon";
+import { ProductCard } from "@/componentss/ui/product-card";
 import { isVerifiedCreator } from "@/lib/utils";
 import Image from "next/image";
 import { InfiniteMovingCards } from "@/componentss/ui/infinite-moving-cards";
@@ -122,6 +125,7 @@ export default function ScriptsPage() {
   const [freeOnly, setFreeOnly] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [openFilter, setOpenFilter] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"all" | "featured" | "onsale">("all");
 
   type UIScript = {
     id: number;
@@ -181,8 +185,7 @@ export default function ScriptsPage() {
               (s.screenshots && s.screenshots[0]) ||
               "/placeholder.jpg";
             console.log(
-              `Script ${s.id} (${s.title}): cover_image=${
-                s.cover_image
+              `Script ${s.id} (${s.title}): cover_image=${s.cover_image
               }, images=${JSON.stringify(
                 s.images
               )}, screenshots=${JSON.stringify(
@@ -210,25 +213,25 @@ export default function ScriptsPage() {
               seller_roles: s.seller_roles || null,
               discount: s.original_price
                 ? Math.max(
-                    0,
-                    Math.round(
-                      ((Number(s.original_price) - Number(s.price)) /
-                        Number(s.original_price)) *
-                        100
-                    )
+                  0,
+                  Math.round(
+                    ((Number(s.original_price) - Number(s.price)) /
+                      Number(s.original_price)) *
+                    100
                   )
+                )
                 : 0,
               framework: Array.isArray(s.framework)
                 ? s.framework
                 : s.framework
-                ? [s.framework]
-                : [],
+                  ? [s.framework]
+                  : [],
               priceCategory:
                 Number(s.price) <= 15
                   ? "Budget"
                   : Number(s.price) <= 30
-                  ? "Standard"
-                  : "Premium",
+                    ? "Standard"
+                    : "Premium",
               tags: (s.tags || []) as string[],
               lastUpdated: s.updated_at,
               featured: s.featured || false,
@@ -236,7 +239,7 @@ export default function ScriptsPage() {
             };
           });
           console.log("Mapped scripts:", mappedScripts);
-          
+
           // Shuffle the array to randomize order only on initial page load
           if (!scriptsShuffled.current) {
             const shuffledScripts = [...mappedScripts].sort(() => Math.random() - 0.5);
@@ -288,7 +291,7 @@ export default function ScriptsPage() {
             seller_image: item.scriptSellerImage || null,
             seller_roles: item.scriptSellerRoles || null,
           }));
-          
+
           // Shuffle the array to randomize starting position
           const shuffledScripts = [...mappedScripts].sort(() => Math.random() - 0.5);
           setFeaturedScripts(shuffledScripts);
@@ -378,8 +381,8 @@ export default function ScriptsPage() {
 
       // Only apply price filter if range is not at full bounds
       if (priceRange && priceRange.length === 2) {
-        const isAtFullRange = 
-          priceRange[0] === priceBounds.min && 
+        const isAtFullRange =
+          priceRange[0] === priceBounds.min &&
           priceRange[1] === priceBounds.max;
         if (!isAtFullRange) {
           if (script.price < priceRange[0] || script.price > priceRange[1]) {
@@ -396,6 +399,14 @@ export default function ScriptsPage() {
         return false;
       }
 
+      if (activeTab === "featured" && !script.featured) {
+        return false;
+      }
+
+      if (activeTab === "onsale" && script.discount === 0) {
+        return false;
+      }
+
       return true;
     });
   }, [
@@ -407,6 +418,7 @@ export default function ScriptsPage() {
     priceBounds,
     onSaleOnly,
     freeOnly,
+    activeTab,
   ]);
 
   // Sorting logic
@@ -486,6 +498,7 @@ export default function ScriptsPage() {
     setOnSaleOnly(false);
     setFreeOnly(false);
     setSearchQuery("");
+    setActiveTab("all");
     router.push("/scripts");
   }, [router, priceBounds]);
 
@@ -546,27 +559,27 @@ export default function ScriptsPage() {
 
   // Get random ads for scripts page
   const randomAds = useRandomAds(ads, 2);
-  
+
   // Memoize ad positions based on current sorted scripts and ads
   // This ensures positions are stable when filters change (only recalculates when scripts or ads actually change)
   const memoizedAdPositions = useMemo(() => {
     if (randomAds.length === 0 || sortedScripts.length === 0) {
       return [];
     }
-    
+
     const positions: number[] = [];
     const usedPositions = new Set<number>();
-    
+
     // Generate random positions for each ad based on current sorted scripts
     for (let i = 0; i < randomAds.length; i++) {
       let attempts = 0;
       let position: number;
-      
+
       do {
         position = Math.floor(Math.random() * sortedScripts.length);
         attempts++;
       } while (usedPositions.has(position) && attempts < 100);
-      
+
       if (usedPositions.has(position)) {
         for (let j = 0; j < sortedScripts.length; j++) {
           if (!usedPositions.has(j)) {
@@ -575,108 +588,57 @@ export default function ScriptsPage() {
           }
         }
       }
-      
+
       usedPositions.add(position);
       positions.push(position);
     }
-    
+
     return positions.sort((a, b) => a - b);
   }, [randomAds.map(ad => ad.id).join(','), sortedScripts.length]); // Only recalculate when ads or total count changes, not when filters change
 
   return (
     <>
       <Navbar />
-      <div className="min-h-screen text-white relative overflow-hidden">
-        <AnimatedParticles />
-
-        {/* Animated background */}
-        <div className="fixed inset-0 -z-10">
-          <motion.div
-            className="absolute inset-0 bg-gradient-to-br from-gray-300 via-gray-600 to-gray-300"
-            animate={{
-              background: [
-                "radial-gradient(circle at 20% 50%, rgba(249, 115, 22, 0.05) 0%, transparent 50%)",
-                "radial-gradient(circle at 80% 20%, rgba(234, 179, 8, 0.05) 0%, transparent 50%)",
-                "radial-gradient(circle at 40% 80%, rgba(249, 115, 22, 0.05) 0%, transparent 50%)",
-              ],
-            }}
-            transition={{
-              duration: 8,
-              repeat: Number.POSITIVE_INFINITY,
-              repeatType: "reverse",
-            }}
-          />
-        </div>
-
-        {/* Header */}
+      <div
+        className="min-h-screen text-white relative overflow-hidden pb-16"
+        style={{
+          backgroundColor: "#0d0d0f",
+          backgroundImage: `
+            linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+            radial-gradient(circle at 50% 0%, rgba(249, 115, 22, 0.07) 0%, transparent 60%)
+          `,
+          backgroundSize: "60px 100%, 100% 100%",
+        }}
+      >
+        {/* Hero Section */}
         <motion.div
-          className="bg-neutral-850 backdrop-blur-xl py-8 px-4 sm:px-6 lg:px-8 border-b border-neutral-800/50 mt-11"
-          initial={{ opacity: 0, y: -50 }}
+          className="max-w-7xl mx-auto pt-24 pb-8 px-10 flex flex-col md:flex-row md:items-end md:justify-between gap-6 border-b border-white/5"
+          initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
-          <div className="max-w-7xl mx-auto">
-            <motion.nav
-              className="flex items-center space-x-2 text-sm text-gray-400 mb-4"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 }}
-            >
-              <Link
-                href="/"
-                className="hover:text-orange-500 transition-colors"
-              >
+          <div className="space-y-1">
+            <nav className="flex items-center space-x-2 text-[12px] font-medium tracking-wide mb-3">
+              <Link href="/" className="text-white/25 hover:text-white transition-colors">
                 Home
               </Link>
-              <span>/</span>
-              <span className="text-white">All Scripts</span>
-            </motion.nav>
-
-            <motion.h1
-              className="text-4xl md:text-5xl font-bold mb-4"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-            >
-              <span className="bg-gradient-to-r from-orange-500 to-yellow-400 bg-clip-text text-transparent">
-                All Scripts
-              </span>
-            </motion.h1>
-
-            <motion.p
-              className="text-gray-400 mb-4 text-lg"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-            >
+              <span className="text-white/25">/</span>
+              <span className="text-white/45">Scripts</span>
+            </nav>
+            <h1 className="text-[36px] font-bold tracking-tight text-white" style={{ letterSpacing: "-0.5px" }}>
+              <span className="text-[#f97316]">All</span> Scripts
+            </h1>
+            <p className="text-[14px] text-white/35 font-medium">
               Browse our complete collection of premium FiveM scripts
-            </motion.p>
-
-            <motion.div
-              className="flex items-center gap-4"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-            >
-              {!loading && (
-                <div className="text-sm text-gray-500 flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-orange-500" />
-                  {sortedScripts.length} scripts found
-                </div>
-              )}
-              {activeFiltersCount > 0 && (
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="flex items-center gap-2"
-                >
-                  <Zap className="h-4 w-4 text-yellow-400" />
-                  <span className="text-sm text-yellow-400">
-                    {activeFiltersCount} filters active
-                  </span>
-                </motion.div>
-              )}
-            </motion.div>
+            </p>
+          </div>
+          <div className="flex items-center gap-4">
+            {!loading && (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold text-[#f97316] bg-[#f97316]/10 border border-[#f97316]/15">
+                <Zap className="h-3.5 w-3.5 fill-[#f97316]" />
+                <span>{sortedScripts.length} scripts found</span>
+              </div>
+            )}
           </div>
         </motion.div>
 
@@ -747,580 +709,434 @@ export default function ScriptsPage() {
           </div>
         </motion.section>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex flex-col gap-8">
+        {/* Tabs Row */}
+        <div className="max-w-7xl mx-auto px-10 pt-8 flex gap-2.5">
+          <button
+            onClick={() => setActiveTab("all")}
+            className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-full border transition-all duration-200 ${
+              activeTab === "all"
+                ? "bg-[#f97316] border-[#f97316] text-white shadow-lg shadow-[#f97316]/20"
+                : "bg-white/[0.03] border-white/[0.08] text-white/40 hover:text-white"
+            }`}
+          >
+            <LayoutGrid className="h-3.5 w-3.5" />
+            All Scripts
+          </button>
+          <button
+            onClick={() => setActiveTab("featured")}
+            className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-full border transition-all duration-200 ${
+              activeTab === "featured"
+                ? "bg-[#f97316] border-[#f97316] text-white shadow-lg shadow-[#f97316]/20"
+                : "bg-white/[0.03] border-white/[0.08] text-white/40 hover:text-white"
+            }`}
+          >
+            <Zap className="h-3.5 w-3.5" />
+            Featured
+          </button>
+          <button
+            onClick={() => setActiveTab("onsale")}
+            className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-full border transition-all duration-200 ${
+              activeTab === "onsale"
+                ? "bg-[#f97316] border-[#f97316] text-white shadow-lg shadow-[#f97316]/20"
+                : "bg-white/[0.03] border-white/[0.08] text-white/40 hover:text-white"
+            }`}
+          >
+            <Tag className="h-3.5 w-3.5" />
+            On Sale
+          </button>
+        </div>
+
+        <div className="max-w-7xl mx-auto px-10 py-8">
+          <div className="flex flex-col gap-6">
             {/* Main Content */}
             <motion.div
               ref={scriptsRef}
               className="flex-1"
-              initial={{ opacity: 0, x: 50 }}
-              animate={scriptsInView ? { opacity: 1, x: 0 } : {}}
+              initial={{ opacity: 0, y: 20 }}
+              animate={scriptsInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.8 }}
             >
-              {/* Filters Bar */}
-              <motion.div
-                ref={filtersRef}
-                className="mb-6 relative z-50"
-                initial={{ opacity: 0, y: -20 }}
-                animate={filtersInView ? { opacity: 1, y: 0 } : {}}
-                transition={{ duration: 0.8 }}
-              >
-                <Card className="bg-neutral-800/30 border-neutral-700/50 backdrop-blur-xl relative z-50">
-                  <CardContent className="p-4">
-                    <div className="flex flex-col gap-4">
-                      {/* Filter Header */}
-                      <div className="flex items-center justify-between flex-wrap gap-4">
-                        <motion.div
-                          className="flex items-center gap-2"
-                          whileHover={{ scale: 1.05 }}
+              {/* Filters Bar & Search/Sort */}
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 py-4 border-y border-white/5 mb-6 relative z-50">
+                {/* Left: Filter dropdown pills */}
+                <div ref={filterContainerRef} className="flex flex-wrap gap-2.5 items-center relative z-50">
+                  {/* Categories Filter */}
+                  <Collapsible
+                    open={openFilter === "categories"}
+                    onOpenChange={(open) =>
+                      setOpenFilter(open ? "categories" : null)
+                    }
+                  >
+                    <div className="relative z-[60]">
+                      <CollapsibleTrigger asChild>
+                        <button
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[12px] font-medium transition-all duration-200 ${
+                            selectedCategories.length > 0
+                              ? "border-[#f97316]/40 bg-[#f97316]/5 text-white"
+                              : "border-white/10 bg-white/[0.03] text-white/50 hover:text-white"
+                          }`}
                         >
-                          <Filter className="h-5 w-5 text-orange-500" />
-                          <span className="text-white font-semibold">
-                            Filters
-                          </span>
-                          {activeFiltersCount > 0 && (
-                            <motion.div
-                              initial={{ scale: 0 }}
-                              animate={{ scale: 1 }}
-                              whileHover={{ scale: 1.1 }}
-                            >
-                              <Badge className="bg-orange-500 text-white">
-                                {activeFiltersCount}
-                              </Badge>
-                            </motion.div>
-                          )}
-                        </motion.div>
-                        {activeFiltersCount > 0 && (
-                          <motion.div
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                          >
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={clearAllFilters}
-                              className="text-orange-500 hover:text-orange-400 hover:bg-orange-500/10"
-                            >
-                              Clear All
-                            </Button>
-                          </motion.div>
-                        )}
-                      </div>
-
-                      {/* Horizontal Filters */}
-                      <div
-                        ref={filterContainerRef}
-                        className="flex flex-wrap gap-3 items-start relative z-50"
-                      >
-                        {/* Categories Filter */}
-                        <Collapsible
-                          open={openFilter === "categories"}
-                          onOpenChange={(open) =>
-                            setOpenFilter(open ? "categories" : null)
-                          }
-                        >
-                          <div className="relative z-[60]">
-                            <CollapsibleTrigger asChild>
-                              <motion.div
-                                whileHover={{ scale: 1.05, y: -2 }}
-                                whileTap={{ scale: 0.95 }}
-                              >
-                                <Button
-                                  variant="outline"
-                                  className={`bg-gradient-to-br from-gray-800 to-gray-900 border-2 text-white font-bold px-5 py-2.5 rounded-lg shadow-lg transition-all duration-300 ${
-                                    openFilter === "categories" ||
-                                    selectedCategories.length > 0
-                                      ? "border-orange-500 bg-gradient-to-br from-orange-500/20 to-orange-600/20 shadow-orange-500/50"
-                                      : "border-neutral-600/50 hover:border-orange-500/70"
-                                  }`}
-                                >
-                                  <span className="text-sm font-semibold flex items-center gap-2">
-                                    <Filter className="h-4 w-4 text-orange-400" />
-                                    Categories
-                                    {selectedCategories.length > 0 && (
-                                      <span className="ml-1 bg-orange-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
-                                        {selectedCategories.length}
-                                      </span>
-                                    )}
-                                  </span>
-                                  <ChevronDown
-                                    className={`ml-2 h-4 w-4 transition-transform duration-300 text-orange-400 ${
-                                      openFilter === "categories"
-                                        ? "rotate-180"
-                                        : ""
-                                    }`}
-                                  />
-                                </Button>
-                              </motion.div>
-                            </CollapsibleTrigger>
-                            <CollapsibleContent className="absolute z-[200] mt-2 left-0 bg-neutral-900 border border-neutral-700/50 rounded-lg p-4 shadow-xl min-w-[200px]">
-                              <div className="space-y-2">
-                                {categories.map((category) => (
-                                  <motion.div
-                                    key={category.id}
-                                    className="flex items-center space-x-2"
-                                    whileHover={{ x: 5 }}
-                                  >
-                                    <Checkbox
-                                      id={`category-${category.id}`}
-                                      checked={selectedCategories.includes(
-                                        category.id
-                                      )}
-                                      onCheckedChange={(checked) =>
-                                        handleCategoryChange(
-                                          category.id,
-                                          checked as boolean
-                                        )
-                                      }
-                                    />
-                                    <label
-                                      htmlFor={`category-${category.id}`}
-                                      className="text-sm text-gray-300 hover:text-white transition-colors cursor-pointer"
-                                    >
-                                      {category.name}
-                                    </label>
-                                  </motion.div>
-                                ))}
-                              </div>
-                            </CollapsibleContent>
-                          </div>
-                        </Collapsible>
-
-                        {/* Framework Filter */}
-                        <Collapsible
-                          open={openFilter === "framework"}
-                          onOpenChange={(open) =>
-                            setOpenFilter(open ? "framework" : null)
-                          }
-                        >
-                          <div className="relative z-[60]">
-                            <CollapsibleTrigger asChild>
-                              <motion.div
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                              >
-                                <Button
-                                  variant="outline"
-                                  className={`bg-gradient-to-r from-gray-800/80 to-gray-900/80 border-2 text-white font-semibold px-4 py-2 rounded-lg shadow-lg transition-all duration-300 ${
-                                    openFilter === "framework"
-                                      ? "border-orange-500 bg-gradient-to-r from-orange-500/20 to-orange-600/20 shadow-orange-500/50"
-                                      : "border-neutral-600/50 hover:border-orange-500/70 hover:from-gray-700/80 hover:to-gray-800/80"
-                                  }`}
-                                >
-                                  <span className="text-sm font-medium flex items-center gap-2">
-                                    <Code className="h-4 w-4" />
-                                    Framework
-                                  </span>
-                                  <ChevronDown
-                                    className={`ml-2 h-4 w-4 transition-transform duration-300 ${
-                                      openFilter === "framework"
-                                        ? "rotate-180"
-                                        : ""
-                                    }`}
-                                  />
-                                </Button>
-                              </motion.div>
-                            </CollapsibleTrigger>
-                            <CollapsibleContent className="absolute z-[200] mt-2 left-0 bg-neutral-900 border border-neutral-700/50 rounded-lg p-4 shadow-xl min-w-[200px]">
-                              <div className="space-y-2">
-                                {frameworks.map((framework) => (
-                                  <motion.div
-                                    key={framework.value}
-                                    className="flex items-center space-x-2"
-                                    whileHover={{ x: 5 }}
-                                  >
-                                    <Checkbox
-                                      id={`framework-${framework.value}`}
-                                      checked={selectedFrameworks.includes(
-                                        framework.value
-                                      )}
-                                      onCheckedChange={(checked) =>
-                                        handleFrameworkChange(
-                                          framework.value,
-                                          checked as boolean
-                                        )
-                                      }
-                                    />
-                                    <label
-                                      htmlFor={`framework-${framework.value}`}
-                                      className="text-sm text-gray-300 hover:text-white transition-colors cursor-pointer"
-                                    >
-                                      {framework.label}
-                                    </label>
-                                  </motion.div>
-                                ))}
-                              </div>
-                            </CollapsibleContent>
-                          </div>
-                        </Collapsible>
-
-                        {/* Price Filter - Combined */}
-                        <Collapsible
-                          open={openFilter === "price"}
-                          onOpenChange={(open) =>
-                            setOpenFilter(open ? "price" : null)
-                          }
-                        >
-                          <div className="relative z-[60]">
-                            <CollapsibleTrigger asChild>
-                              <motion.div
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                              >
-                                <Button
-                                  variant="outline"
-                                  className={`bg-gradient-to-r from-gray-800/80 to-gray-900/80 border-2 text-white font-semibold px-4 py-2 rounded-lg shadow-lg transition-all duration-300 ${
-                                    openFilter === "price" ||
-                                    priceRange[0] !== priceBounds.min ||
-                                    priceRange[1] !== priceBounds.max ||
-                                    freeOnly
-                                      ? "border-orange-500 bg-gradient-to-r from-orange-500/20 to-orange-600/20 shadow-orange-500/50"
-                                      : "border-neutral-600/50 hover:border-orange-500/70 hover:from-gray-700/80 hover:to-gray-800/80"
-                                  }`}
-                                >
-                                  <span className="text-sm font-medium flex items-center gap-2">
-                                    <DollarSign className="h-4 w-4" />
-                                    Price
-                                    {(priceRange[0] !== priceBounds.min ||
-                                      priceRange[1] !== priceBounds.max) && (
-                                      <span className="text-orange-400">
-                                        {` ${priceRange[0]}-${priceRange[1]}`}
-                                      </span>
-                                    )}
-                                    {freeOnly && (
-                                      <span className="text-orange-400">
-                                        {priceRange[0] !== priceBounds.min || priceRange[1] !== priceBounds.max ? ", " : " "}Free
-                                      </span>
-                                    )}
-                                  </span>
-                                  <ChevronDown
-                                    className={`ml-2 h-4 w-4 transition-transform duration-300 ${
-                                      openFilter === "price" ? "rotate-180" : ""
-                                    }`}
-                                  />
-                                </Button>
-                              </motion.div>
-                            </CollapsibleTrigger>
-                            <CollapsibleContent className="absolute z-[200] mt-2 left-0 bg-neutral-900 border border-neutral-700/50 rounded-lg p-4 shadow-xl min-w-[250px]">
-                              <div className="space-y-4">
-                                {/* Price Range */}
-                                <div>
-                                  <h4 className="text-white font-semibold mb-3 text-sm">
-                                    Price Range
-                                  </h4>
-                                  <Slider
-                                    value={priceRange}
-                                    onValueChange={setPriceRange}
-                                    max={priceBounds.max}
-                                    min={priceBounds.min}
-                                    step={1}
-                                    className="w-full mb-2"
-                                  />
-                                  <div className="flex justify-between text-sm text-gray-400">
-                                    <span>{priceRange[0]}</span>
-                                    <span>{priceRange[1]}</span>
-                                  </div>
-                                </div>
-                                
-                                {/* Free Toggle */}
-                                <div className="border-t border-neutral-700/50 pt-4">
-                                  <motion.div
-                                    className="flex items-center space-x-2"
-                                    whileHover={{ x: 5 }}
-                                  >
-                                    <Checkbox
-                                      id="free-only"
-                                      checked={freeOnly}
-                                      onCheckedChange={(checked) =>
-                                        setFreeOnly(checked as boolean)
-                                      }
-                                    />
-                                    <label
-                                      htmlFor="free-only"
-                                      className="text-sm text-gray-300 hover:text-white transition-colors cursor-pointer flex items-center gap-2"
-                                    >
-                                      <Zap className="h-4 w-4 text-orange-400" />
-                                      Free Only
-                                    </label>
-                                  </motion.div>
-                                </div>
-                              </div>
-                            </CollapsibleContent>
-                          </div>
-                        </Collapsible>
-
-                        {/* On Sale Only Filter */}
-                        <motion.div
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                        >
-                          <label
-                            className={`flex items-center cursor-pointer bg-gradient-to-r from-gray-800/80 to-gray-900/80 border-2 text-white font-semibold px-4 py-2 rounded-lg shadow-lg transition-all duration-300 ${
-                              onSaleOnly
-                                ? "border-orange-500 bg-gradient-to-r from-orange-500/20 to-orange-600/20 shadow-orange-500/50"
-                                : "border-neutral-600/50 hover:border-orange-500/70 hover:from-gray-700/80 hover:to-gray-800/80"
-                            }`}
-                          >
-                            <Checkbox
-                              id="on-sale"
-                              checked={onSaleOnly}
-                              onCheckedChange={(checked) =>
-                                setOnSaleOnly(checked as boolean)
-                              }
-                              className="mr-2"
-                            />
-                            <span className="text-sm font-medium flex items-center gap-2">
-                              <Zap className="h-4 w-4" />
-                              On Sale Only
+                          <Filter className="h-3.5 w-3.5 text-[#f97316]" />
+                          Categories
+                          {selectedCategories.length > 0 && (
+                            <span className="ml-0.5 bg-[#f97316] text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center font-bold">
+                              {selectedCategories.length}
                             </span>
-                          </label>
-                        </motion.div>
-                      </div>
+                          )}
+                          <ChevronDown
+                            className={`ml-1 h-3.5 w-3.5 transition-transform duration-300 text-white/40 ${
+                              openFilter === "categories" ? "rotate-180" : ""
+                            }`}
+                          />
+                        </button>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="absolute z-[200] mt-2 left-0 bg-[#111113] border border-white/10 rounded-lg p-4 shadow-xl min-w-[200px]">
+                        <div className="space-y-2">
+                          {categories.map((category) => (
+                            <div
+                              key={category.id}
+                              className="flex items-center space-x-2"
+                            >
+                              <Checkbox
+                                id={`category-${category.id}`}
+                                checked={selectedCategories.includes(
+                                  category.id
+                                )}
+                                onCheckedChange={(checked) =>
+                                  handleCategoryChange(
+                                    category.id,
+                                    checked as boolean
+                                  )
+                                }
+                              />
+                              <label
+                                htmlFor={`category-${category.id}`}
+                                className="text-sm text-gray-300 hover:text-white transition-colors cursor-pointer"
+                              >
+                                {category.name}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                      </CollapsibleContent>
                     </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-              {/* Search and Sort Bar */}
-              <motion.div
-                className="flex flex-col sm:flex-row gap-4 mb-6 relative z-10"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-              >
-                <div className="flex-1 relative group">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4  " />
-                  <Input
-                    type="search"
-                    placeholder="Search scripts..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 bg-neutral-900/30 border-neutral-700/50 text-white placeholder-gray-400 focus:border-orange-500 focus:bg-neutral-900/50 transition-all duration-300"
-                  />
+                  </Collapsible>
+
+                  {/* Framework Filter */}
+                  <Collapsible
+                    open={openFilter === "framework"}
+                    onOpenChange={(open) =>
+                      setOpenFilter(open ? "framework" : null)
+                    }
+                  >
+                    <div className="relative z-[60]">
+                      <CollapsibleTrigger asChild>
+                        <button
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[12px] font-medium transition-all duration-200 ${
+                            selectedFrameworks.length > 0
+                              ? "border-[#f97316]/40 bg-[#f97316]/5 text-white"
+                              : "border-white/10 bg-white/[0.03] text-white/50 hover:text-white"
+                          }`}
+                        >
+                          <Code className="h-3.5 w-3.5 text-[#f97316]" />
+                          Framework
+                          {selectedFrameworks.length > 0 && (
+                            <span className="ml-0.5 bg-[#f97316] text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center font-bold">
+                              {selectedFrameworks.length}
+                            </span>
+                          )}
+                          <ChevronDown
+                            className={`ml-1 h-3.5 w-3.5 transition-transform duration-300 text-white/40 ${
+                              openFilter === "framework" ? "rotate-180" : ""
+                            }`}
+                          />
+                        </button>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="absolute z-[200] mt-2 left-0 bg-[#111113] border border-white/10 rounded-lg p-4 shadow-xl min-w-[200px]">
+                        <div className="space-y-2">
+                          {frameworks.map((framework) => (
+                            <div
+                              key={framework.value}
+                              className="flex items-center space-x-2"
+                            >
+                              <Checkbox
+                                id={`framework-${framework.value}`}
+                                checked={selectedFrameworks.includes(
+                                  framework.value
+                                )}
+                                onCheckedChange={(checked) =>
+                                  handleFrameworkChange(
+                                    framework.value,
+                                    checked as boolean
+                                  )
+                                }
+                              />
+                              <label
+                                htmlFor={`framework-${framework.value}`}
+                                className="text-sm text-gray-300 hover:text-white transition-colors cursor-pointer"
+                              >
+                                {framework.label}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                      </CollapsibleContent>
+                    </div>
+                  </Collapsible>
+
+                  {/* Price Filter - Combined */}
+                  <Collapsible
+                    open={openFilter === "price"}
+                    onOpenChange={(open) =>
+                      setOpenFilter(open ? "price" : null)
+                    }
+                  >
+                    <div className="relative z-[60]">
+                      <CollapsibleTrigger asChild>
+                        <button
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[12px] font-medium transition-all duration-200 ${
+                            priceRange[0] !== priceBounds.min ||
+                            priceRange[1] !== priceBounds.max ||
+                            freeOnly
+                              ? "border-[#f97316]/40 bg-[#f97316]/5 text-white"
+                              : "border-white/10 bg-white/[0.03] text-white/50 hover:text-white"
+                          }`}
+                        >
+                          <DollarSign className="h-3.5 w-3.5 text-[#f97316]" />
+                          Price
+                          {(priceRange[0] !== priceBounds.min ||
+                            priceRange[1] !== priceBounds.max) && (
+                              <span className="text-[#f97316] font-semibold text-[10px]">
+                                {` ${priceRange[0]}-${priceRange[1]}`}
+                              </span>
+                            )}
+                          {freeOnly && (
+                            <span className="text-[#f97316] font-semibold text-[10px]">
+                              , Free
+                            </span>
+                          )}
+                          <ChevronDown
+                            className={`ml-1 h-3.5 w-3.5 transition-transform duration-300 text-white/40 ${
+                              openFilter === "price" ? "rotate-180" : ""
+                            }`}
+                          />
+                        </button>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="absolute z-[200] mt-2 left-0 bg-[#111113] border border-white/10 rounded-lg p-4 shadow-xl min-w-[250px]">
+                        <div className="space-y-4">
+                          {/* Price Range */}
+                          <div>
+                            <h4 className="text-white font-semibold mb-3 text-sm">
+                              Price Range
+                            </h4>
+                            <Slider
+                              value={priceRange}
+                              onValueChange={setPriceRange}
+                              max={priceBounds.max}
+                              min={priceBounds.min}
+                              step={1}
+                              className="w-full mb-2"
+                            />
+                            <div className="flex justify-between text-sm text-gray-400">
+                              <span>{priceRange[0]}</span>
+                              <span>{priceRange[1]}</span>
+                            </div>
+                          </div>
+
+                          {/* Free Toggle */}
+                          <div className="border-t border-white/10 pt-4">
+                            <div className="flex items-center space-x-2">
+                              <Checkbox
+                                id="free-only"
+                                checked={freeOnly}
+                                onCheckedChange={(checked) =>
+                                  setFreeOnly(checked as boolean)
+                                }
+                              />
+                              <label
+                                htmlFor="free-only"
+                                className="text-sm text-gray-300 hover:text-white transition-colors cursor-pointer flex items-center gap-2"
+                              >
+                                <Zap className="h-4 w-4 text-[#f97316]" />
+                                Free Only
+                              </label>
+                            </div>
+                          </div>
+                        </div>
+                      </CollapsibleContent>
+                    </div>
+                  </Collapsible>
+
+                  {/* On Sale Checkbox */}
+                  <label
+                    className={`flex items-center cursor-pointer border px-3 py-1.5 rounded-full text-[12px] font-medium transition-all duration-200 ${
+                      onSaleOnly
+                        ? "border-[#f97316]/40 bg-[#f97316]/5 text-white"
+                        : "border-white/10 bg-white/[0.03] text-white/50 hover:text-white"
+                    }`}
+                  >
+                    <Checkbox
+                      id="on-sale"
+                      checked={onSaleOnly}
+                      onCheckedChange={(checked) =>
+                        setOnSaleOnly(checked as boolean)
+                      }
+                      className="mr-2 border-white/20 data-[state=checked]:bg-[#f97316] data-[state=checked]:border-[#f97316]"
+                    />
+                    <span className="flex items-center gap-1">
+                      <Tag className="h-3.5 w-3.5 text-[#f97316]" />
+                      On Sale Only
+                    </span>
+                  </label>
+
+                  {activeFiltersCount > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={clearAllFilters}
+                      className="text-white/40 hover:text-[#f97316] hover:bg-transparent h-auto py-1 px-2 text-xs"
+                    >
+                      Clear All
+                    </Button>
+                  )}
                 </div>
-                <motion.div whileHover={{ scale: 1.02 }}>
+
+                {/* Right: Search and Sort */}
+                <div className="flex items-center gap-3 w-full md:w-auto md:justify-end">
+                  {/* Search Input */}
+                  <div className="relative flex-1 md:w-[200px] lg:w-[240px] max-w-[300px]">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 h-3.5 w-3.5" />
+                    <input
+                      type="text"
+                      placeholder="Search scripts..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full pl-9 pr-4 py-1.5 bg-white/[0.04] border border-white/[0.08] text-white placeholder-white/30 text-[12px] focus:outline-none focus:border-[#f97316]/50 transition-colors"
+                      style={{ borderRadius: "9px" }}
+                    />
+                  </div>
+
+                  {/* Sort Dropdown */}
                   <Select value={sortBy} onValueChange={setSortBy}>
-                    <SelectTrigger className="w-48 bg-neutral-900/30 border-neutral-700/50 text-white backdrop-blur-sm">
+                    <SelectTrigger className="bg-white/[0.03] border-white/10 text-white/50 text-[12px] rounded-full px-3.5 py-1.5 flex items-center gap-1.5 focus:ring-0 focus:ring-offset-0 focus:outline-none h-8 w-fit [&>span]:line-clamp-1 border">
                       <SelectValue placeholder="Sort by" />
                     </SelectTrigger>
-                    <SelectContent className="bg-neutral-900/95 border-neutral-700/50 backdrop-blur-xl">
-                      <SelectItem value="popular" className="text-white">
-                        Most Popular
-                      </SelectItem>
-                      <SelectItem value="newest" className="text-white">
-                        Newest First
-                      </SelectItem>
-                      <SelectItem value="price-low" className="text-white">
-                        Price: Low to High
-                      </SelectItem>
-                      <SelectItem value="price-high" className="text-white">
-                        Price: High to Low
-                      </SelectItem>
+                    <SelectContent className="bg-[#111113] border-white/10 text-white">
+                      <SelectItem value="popular">Most Popular</SelectItem>
+                      <SelectItem value="newest">Newest First</SelectItem>
+                      <SelectItem value="price-low">Price: Low to High</SelectItem>
+                      <SelectItem value="price-high">Price: High to Low</SelectItem>
                     </SelectContent>
                   </Select>
-                </motion.div>
-                {/* <div className="hidden sm:flex border border-neutral-700/50 rounded-md backdrop-blur-sm">
-                  <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <Button
-                      variant={viewMode === "grid" ? "default" : "ghost"}
-                      size="sm"
-                      onClick={() => setViewMode("grid")}
-                      className={
-                        viewMode === "grid"
-                          ? "bg-orange-500 text-white"
-                          : "text-gray-400 hover:text-white"
-                      }
-                    >
-                      <Grid className="h-4 w-4" />
-                    </Button>
-                  </motion.div>
-                  <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <Button
-                      variant={viewMode === "list" ? "default" : "ghost"}
-                      size="sm"
-                      onClick={() => setViewMode("list")}
-                      className={
-                        viewMode === "list"
-                          ? "bg-orange-500 text-white"
-                          : "text-gray-400 hover:text-white"
-                      }
-                    >
-                      <List className="h-4 w-4" />
-                    </Button>
-                  </motion.div>
-                </div> */}
-              </motion.div>
+                </div>
+              </div>
 
-              {/* Active Filters */}
+              {/* Active Filters List */}
               <AnimatePresence>
                 {activeFiltersCount > 0 && (
                   <motion.div
-                    className="mb-6"
+                    className="mb-4"
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: "auto" }}
                     exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.3 }}
+                    transition={{ duration: 0.2 }}
                   >
-                    <motion.div
-                      className="flex flex-wrap gap-2"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ staggerChildren: 0.05 }}
-                    >
-                      {selectedCategories.map((category, index) => (
-                        <motion.div
+                    <div className="flex flex-wrap gap-2">
+                      {selectedCategories.map((category) => (
+                        <Badge
                           key={category}
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.8 }}
-                          transition={{ delay: index * 0.05 }}
-                          whileHover={{ scale: 1.05 }}
+                          variant="secondary"
+                          className="bg-white/[0.04] text-white/60 border-white/10 flex items-center gap-1 rounded-full text-[11px]"
                         >
-                          <Badge
-                            variant="secondary"
-                            className="bg-orange-500/20 text-orange-400 border-orange-500/30 flex items-center gap-1 backdrop-blur-sm"
+                          {categories.find((c) => c.id === category)?.name}
+                          <button
+                            onClick={() => removeFilter("category", category)}
+                            className="hover:text-white transition-colors"
                           >
-                            {categories.find((c) => c.id === category)?.name}
-                            <motion.button
-                              onClick={() => removeFilter("category", category)}
-                              className="hover:text-white transition-colors"
-                              whileHover={{ scale: 1.2 }}
-                              whileTap={{ scale: 0.8 }}
-                            >
-                              <X className="h-3 w-3" />
-                            </motion.button>
-                          </Badge>
-                        </motion.div>
+                            <X className="h-3 w-3" />
+                          </button>
+                        </Badge>
                       ))}
-                      {selectedFrameworks.map((framework, index) => {
+                      {selectedFrameworks.map((framework) => {
                         const frameworkObj = frameworks.find(
                           (f) => f.value === framework
                         );
                         return (
-                          <motion.div
+                          <Badge
                             key={framework}
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.8 }}
-                            transition={{ delay: index * 0.05 }}
-                            whileHover={{ scale: 1.05 }}
+                            variant="secondary"
+                            className="bg-white/[0.04] text-white/60 border-white/10 flex items-center gap-1 rounded-full text-[11px]"
                           >
-                            <Badge
-                              variant="secondary"
-                              className="bg-blue-500/20 text-blue-400 border-blue-500/30 flex items-center gap-1 backdrop-blur-sm"
+                            {frameworkObj?.label || framework}
+                            <button
+                              onClick={() => removeFilter("framework", framework)}
+                              className="hover:text-white transition-colors"
                             >
-                              {frameworkObj?.label || framework}
-                              <motion.button
-                                onClick={() =>
-                                  removeFilter("framework", framework)
-                                }
-                                className="hover:text-white transition-colors"
-                                whileHover={{ scale: 1.2 }}
-                                whileTap={{ scale: 0.8 }}
-                              >
-                                <X className="h-3 w-3" />
-                              </motion.button>
-                            </Badge>
-                          </motion.div>
+                              <X className="h-3 w-3" />
+                            </button>
+                          </Badge>
                         );
                       })}
                       {(priceRange[0] !== priceBounds.min || priceRange[1] !== priceBounds.max) && (
-                        <motion.div
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.8 }}
-                          whileHover={{ scale: 1.05 }}
+                        <Badge
+                          variant="secondary"
+                          className="bg-white/[0.04] text-white/60 border-white/10 flex items-center gap-1 rounded-full text-[11px]"
                         >
-                          <Badge
-                            variant="secondary"
-                            className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 flex items-center gap-1 backdrop-blur-sm"
+                          Price: {priceRange[0]}-{priceRange[1]}
+                          <button
+                            onClick={() => setPriceRange([priceBounds.min, priceBounds.max])}
+                            className="hover:text-white transition-colors"
                           >
-                            Price: {priceRange[0]}-{priceRange[1]}
-                            <motion.button
-                              onClick={() => setPriceRange([priceBounds.min, priceBounds.max])}
-                              className="hover:text-white transition-colors"
-                              whileHover={{ scale: 1.2 }}
-                              whileTap={{ scale: 0.8 }}
-                            >
-                              <X className="h-3 w-3" />
-                            </motion.button>
-                          </Badge>
-                        </motion.div>
+                            <X className="h-3 w-3" />
+                          </button>
+                        </Badge>
                       )}
                       {onSaleOnly && (
-                        <motion.div
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.8 }}
-                          whileHover={{ scale: 1.05 }}
+                        <Badge
+                          variant="secondary"
+                          className="bg-white/[0.04] text-white/60 border-white/10 flex items-center gap-1 rounded-full text-[11px]"
                         >
-                          <Badge
-                            variant="secondary"
-                            className="bg-red-500/20 text-red-400 border-red-500/30 flex items-center gap-1 backdrop-blur-sm"
+                          On Sale
+                          <button
+                            onClick={() => setOnSaleOnly(false)}
+                            className="hover:text-white transition-colors"
                           >
-                            On Sale
-                            <motion.button
-                              onClick={() => setOnSaleOnly(false)}
-                              className="hover:text-white transition-colors"
-                              whileHover={{ scale: 1.2 }}
-                              whileTap={{ scale: 0.8 }}
-                            >
-                              <X className="h-3 w-3" />
-                            </motion.button>
-                          </Badge>
-                        </motion.div>
+                            <X className="h-3 w-3" />
+                          </button>
+                        </Badge>
                       )}
                       {freeOnly && (
-                        <motion.div
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.8 }}
-                          whileHover={{ scale: 1.05 }}
+                        <Badge
+                          variant="secondary"
+                          className="bg-white/[0.04] text-white/60 border-white/10 flex items-center gap-1 rounded-full text-[11px]"
                         >
-                          <Badge
-                            variant="secondary"
-                            className="bg-green-500/20 text-green-400 border-green-500/30 flex items-center gap-1 backdrop-blur-sm"
+                          Free
+                          <button
+                            onClick={() => setFreeOnly(false)}
+                            className="hover:text-white transition-colors"
                           >
-                            Free
-                            <motion.button
-                              onClick={() => setFreeOnly(false)}
-                              className="hover:text-white transition-colors"
-                              whileHover={{ scale: 1.2 }}
-                              whileTap={{ scale: 0.8 }}
-                            >
-                              <X className="h-3 w-3" />
-                            </motion.button>
-                          </Badge>
-                        </motion.div>
+                            <X className="h-3 w-3" />
+                          </button>
+                        </Badge>
                       )}
-                    </motion.div>
+                    </div>
                   </motion.div>
                 )}
               </AnimatePresence>
 
-              {/* Results Count */}
+              {/* Results Count Text */}
               {!loading && (
-                <motion.div
-                  className="mb-6"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                >
-                  <p className="text-gray-400 flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-orange-500" />
+                <div className="mb-6">
+                  <p className="text-[12px] text-white/30 flex items-center gap-1">
+                    <Sparkles className="h-3.5 w-3.5 text-[#f97316]" />
                     Showing {sortedScripts.length} of {allScripts.length} scripts
                     {searchQuery && (
-                      <span className="text-orange-500">
-                        for <span className="font-semibold">{searchQuery}</span>
+                      <span>
+                        {" "}for <span className="text-[#f97316] font-medium">&quot;{searchQuery}&quot;</span>
                       </span>
                     )}
                   </p>
-                </motion.div>
+                </div>
               )}
 
               {/* Scripts Grid/List */}
@@ -1329,7 +1145,7 @@ export default function ScriptsPage() {
                   <motion.div
                     className={
                       viewMode === "grid"
-                        ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
+                        ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-[18px]"
                         : "space-y-4"
                     }
                     initial={{ opacity: 0 }}
@@ -1340,22 +1156,20 @@ export default function ScriptsPage() {
                     {Array.from({ length: 6 }).map((_, index) => (
                       <motion.div
                         key={index}
-                        className={`bg-neutral-900 border-2 border-neutral-700/50 backdrop-blur-sm rounded-lg overflow-hidden ${
-                          viewMode === "list"
-                            ? "flex flex-row"
-                            : "flex flex-col"
-                        }`}
+                        className={`bg-neutral-900 border-2 border-neutral-700/50 backdrop-blur-sm rounded-lg overflow-hidden ${viewMode === "list"
+                          ? "flex flex-row"
+                          : "flex flex-col"
+                          }`}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.1 }}
                       >
                         {/* Image Skeleton */}
                         <div
-                          className={`bg-neutral-800/50 animate-pulse ${
-                            viewMode === "list"
-                              ? "w-56 flex-shrink-0 h-full"
-                              : "w-full h-52"
-                          }`}
+                          className={`bg-neutral-800/50 animate-pulse ${viewMode === "list"
+                            ? "w-56 flex-shrink-0 h-full"
+                            : "w-full h-52"
+                            }`}
                         />
                         {/* Content Skeleton */}
                         <div className="flex flex-col flex-1 p-3 space-y-3">
@@ -1414,7 +1228,7 @@ export default function ScriptsPage() {
                   <motion.div
                     className={
                       viewMode === "grid"
-                        ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
+                        ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-[18px]"
                         : "space-y-4"
                     }
                     initial={{ opacity: 0 }}
@@ -1426,7 +1240,7 @@ export default function ScriptsPage() {
                       // Insert ads at memoized positions (only if they fall within current page)
                       if (randomAds.length > 0 && items.length > 0 && memoizedAdPositions.length > 0) {
                         const adPositions: Array<{ ad: any; position: number }> = [];
-                        
+
                         // Find which ads should appear on this page based on memoized positions
                         for (let i = 0; i < randomAds.length && i < memoizedAdPositions.length; i++) {
                           const globalPosition = memoizedAdPositions[i];
@@ -1434,13 +1248,13 @@ export default function ScriptsPage() {
                           if (globalPosition >= startIndex && globalPosition < endIndex) {
                             // Convert global position to local page position
                             const localPosition = globalPosition - startIndex;
-                            adPositions.push({ 
-                              ad: randomAds[i], 
-                              position: localPosition 
+                            adPositions.push({
+                              ad: randomAds[i],
+                              position: localPosition
                             });
                           }
                         }
-                        
+
                         // Sort by position in descending order to avoid index shifting when inserting
                         adPositions.sort((a, b) => b.position - a.position);
                         adPositions.forEach(({ ad, position }) => {
@@ -1464,124 +1278,39 @@ export default function ScriptsPage() {
 
                         // Otherwise render script
                         const script = item as UIScript;
+                        // Derive badge
+                        const scriptBadge = script.featured
+                          ? "featured" as const
+                          : script.discount > 0
+                            ? "sale" as const
+                            : undefined;
+                        // Build price string
+                        const scriptPrice = script.free
+                          ? "Free"
+                          : `${script.currency_symbol || "$"}${script.price}`;
                         return (
-                          <motion.div key={script.id} className="group" whileHover={{ y: -5, scale: 1.02 }}>
-                            <Link href={`/script/${script.id}`}>
-                              <Card
-                                className={`bg-neutral-900 border-neutral-700/50 hover:border-white cursor-pointer h-full backdrop-blur-sm relative overflow-hidden shadow-2xl rounded-lg transition-all duration-300 ${
-                                  viewMode === "list"
-                                    ? "flex flex-row"
-                                    : "flex flex-col"
-                                }`}
-                              >
-                                {/* Image Section */}
-                                <CardHeader
-                                  className={`p-0 overflow-hidden relative ${
-                                    viewMode === "list"
-                                      ? "w-56 flex-shrink-0 rounded-l-lg"
-                                      : "rounded-t-lg"
-                                  }`}
-                                >
-                                  <Image
-                                    src={script.image || "/placeholder.jpg"}
-                                    alt={script.title}
-                                    width={400}
-                                    height={256}
-                                    className={`object-cover w-full ${
-                                      viewMode === "list" ? "h-full" : "h-52"
-                                    }`}
-                                  />
-                                  {script.featured && (
-                                    <Badge className="absolute top-2 left-2 bg-yellow-500 text-black font-semibold shadow-lg">
-                                      Featured
-                                    </Badge>
-                                  )}
-                                </CardHeader>
-
-                                {/* Content Section */}
-                                <div className="flex flex-col flex-1">
-                                  <CardContent className="p-3 flex-1 space-y-2">
-                                    {/* Title */}
-                                    <CardTitle className="text-base font-bold text-white leading-tight line-clamp-2">
-                                      {script.title}
-                                    </CardTitle>
-
-
-                                    {/* Framework Badges */}
-                                    {script.framework &&
-                                      script.framework.length > 0 && (
-                                        <motion.div
-                                          className="flex flex-wrap gap-1"
-                                          // initial={{ scale: 0, rotate: 180 }}
-                                          // animate={{ scale: 1, rotate: 0 }}
-                                        >
-                                          {script.framework.map((fw, idx) => (
-                                            <motion.div
-                                              key={idx}
-                                              
-                                            >
-                                              <Badge className="bg-neutral-800/95 text-white backdrop-blur-sm text-[10px] font-bold border border-neutral-600/50 rounded px-1.5 py-0.5 uppercase tracking-wide shadow-lg hover:bg-neutral-800/95 hover:text-white">
-                                                <span className="mr-1 text-xs">
-                                                  •
-                                                </span>
-                                                {fw}
-                                              </Badge>
-                                            </motion.div>
-                                          ))}
-                                        </motion.div>
-                                      )}
-                                      
-                                    {/* Description */}
-                                    <CardDescription className="text-neutral-400 text-xs leading-snug flex items-center gap-1.5 flex-row">
-                                      <Avatar className="h-4 w-4 flex-shrink-0">
-                                        <AvatarImage
-                                          src={script.seller_image || "/placeholder-user.jpg"}
-                                          alt={script.seller}
-                                        />
-                                        <AvatarFallback className="bg-orange-500 text-white text-[8px] font-bold">
-                                          {script.seller ? script.seller[0].toUpperCase() : "?"}
-                                        </AvatarFallback>
-                                      </Avatar>
-                                      <span className="whitespace-nowrap">By {script.seller}</span>
-                                      {isVerifiedCreator(script.seller_roles) && (
-                                        <VerifiedIcon size="sm" className="flex-shrink-0" />
-                                      )}
-                                    </CardDescription>
-                                    {/* Price */}
-                                    <div className="flex items-center gap-2 pt-1 flex-wrap">
-                                      {script.free ? (
-                                        <span className="text-orange-500 text-xl font-bold">Free</span>
-                                      ) : (
-                                        <>
-                                          {script.discount > 0 && script.originalPrice ? (
-                                            <>
-                                              <span className="text-gray-500 text-sm line-through">
-                                                {script.currency_symbol || "$"}{script.originalPrice}
-                                              </span>
-                                              <Badge className="bg-red-500/20 text-red-400 border-red-500/30 text-xs font-semibold px-2 py-0.5">
-                                                -{script.discount}%
-                                              </Badge>
-                                            </>
-                                          ) : null}
-                                          <span className="text-orange-500 text-xl font-bold">
-                                            {script.currency_symbol || "$"}{script.price}
-                                          </span>
-                                        </>
-                                      )}
-                                    </div>
-                                  </CardContent>
-
-                                  {/* Button Section */}
-                                  <div className="px-3 pb-3 mt-auto">
-                                    <Button
-                                      variant="outline"
-                                      className="w-full bg-white text-black hover:bg-gray-300 hover:border-gray-300 hover:text-black transition-colors duration-200 font-semibold text-xs py-1.5 h-auto"
-                                    >
-                                      View Details
-                                    </Button>
-                                  </div>
-                                </div>
-                              </Card>
+                          <motion.div
+                            key={script.id}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.05 }}
+                          >
+                            <Link href={`/script/${script.id}`} style={{ display: "block" }}>
+                              <ProductCard
+                                image={script.image || "/placeholder.jpg"}
+                                imageAlt={script.title}
+                                badge={scriptBadge}
+                                tags={script.framework ?? []}
+                                title={script.title}
+                                author={`By ${script.seller}`}
+                                authorImage={script.seller_image}
+                                authorInitials={script.seller ? script.seller[0].toUpperCase() : "?"}
+                                verified={isVerifiedCreator(script.seller_roles)}
+                                rating={script.rating ?? 0}
+                                reviewCount={script.reviews ?? 0}
+                                price={scriptPrice}
+                                onViewDetails={() => { }}
+                              />
                             </Link>
                           </motion.div>
                         );

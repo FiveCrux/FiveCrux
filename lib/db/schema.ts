@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, boolean, integer, numeric, pgEnum } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, boolean, integer, numeric, pgEnum, json } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
 // Users table
@@ -14,6 +14,158 @@ export const users = pgTable('users', {
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 });
+
+export const couponScopeEnum = pgEnum('coupon_scope', [
+  'subscription',
+  'prop',
+  'cart',
+  'Packages',
+  'Categories',
+  'Everything',
+  'Ad Slots',
+  'Featured Script Slots',
+  'Props',
+  'all',
+]);
+
+export const discountTypeEnum = pgEnum('discount_type', [
+  'percentage',
+  'flat',
+  'Percentage',
+  'Amount',
+]);
+
+export const itemTypeEnum = pgEnum('item_type', ['subscription', 'prop']);
+
+export const coupons = pgTable('coupons', {
+  id: integer('id').primaryKey().notNull(),
+  code: text('code').notNull().unique(),
+  discountType: discountTypeEnum('discount_type').notNull(),
+  discountValue: numeric('discount_value', { precision: 10, scale: 2 }).notNull(),
+  scope: couponScopeEnum('scope').notNull(),
+  scopeIds: json('scope_ids'),
+  minCartValue: numeric('min_cart_value', { precision: 10, scale: 2 }).default('0').notNull(),
+  maxUses: integer('max_uses'),
+  usedCount: integer('used_count').default(0).notNull(),
+  perUserLimit: integer('per_user_limit').default(0).notNull(),
+  couponApplicationRule: text('coupon_application_rule').default('individual').notNull(),
+  username: text('username'),
+  note: text('note'),
+  createdBy: text('created_by').references(() => users.id),
+  startDate: timestamp('start_date'),
+  expiryDate: timestamp('expiry_date'),
+  isActive: boolean('is_active').default(true),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export const carts = pgTable('carts', {
+  id: integer('id').primaryKey().notNull(),
+  userId: text('user_id').references(() => users.id),
+  status: text('status').default('active'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export const cartItems = pgTable('cart_items', {
+  id: integer('id').primaryKey().notNull(),
+  cartId: integer('cart_id').notNull().references(() => carts.id, { onDelete: 'cascade' }),
+  itemType: itemTypeEnum('item_type').notNull(),
+  itemId: text('item_id').notNull(),
+  title: text('title').notNull(),
+  price: numeric('price', { precision: 10, scale: 2 }).notNull(),
+  quantity: integer('quantity').default(1).notNull(),
+  metadata: json('metadata'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const orderStatusEnum = pgEnum('order_status', ['pending', 'paid', 'failed']);
+
+export const orders = pgTable('orders', {
+  id: integer('id').primaryKey().notNull(),
+  userId: text('user_id').references(() => users.id),
+  cartId: integer('cart_id').references(() => carts.id),
+  couponId: integer('coupon_id').references(() => coupons.id),
+  status: orderStatusEnum('status').default('pending'),
+  totalAmount: numeric('total_amount').notNull(),
+  discountAmount: numeric('discount_amount').default('0'),
+  payableAmount: numeric('payable_amount').notNull(),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export const couponRedemptions = pgTable('coupon_redemptions', {
+  id: integer('id').primaryKey().notNull(),
+  couponId: integer('coupon_id').references(() => coupons.id),
+  userId: text('user_id').references(() => users.id),
+  orderId: integer('order_id').references(() => orders.id),
+  usedAt: timestamp('used_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export const orderItems = pgTable('order_items', {
+  id: integer('id').primaryKey().notNull(),
+  orderId: integer('order_id').notNull().references(() => orders.id, { onDelete: 'cascade' }),
+  itemType: itemTypeEnum('item_type').notNull(),
+  itemId: text('item_id').notNull(),
+  title: text('title').notNull(),
+  price: numeric('price', { precision: 10, scale: 2 }).notNull(),
+  quantity: integer('quantity').default(1).notNull(),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export const subscriptions = pgTable('subscriptions', {
+  id: text('id').primaryKey().notNull(),
+  title: text('title').notNull(),
+  price: numeric('price', { precision: 10, scale: 2 }).notNull(),
+  metadata: json('metadata'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+// Base prop fields (common to all prop approval states)
+const basePropFields = {
+  id: text('id').primaryKey().notNull(),
+  name: text('name').notNull(),
+  description: text('description').notNull(),
+  price: numeric('price', { precision: 10, scale: 2 }).notNull(),
+  discountPercentage: numeric('discount_percentage', { precision: 5, scale: 2 }).default('0'),
+  discountedPrice: numeric('discounted_price', { precision: 10, scale: 2 }),
+  images: text('images').array().default([]),
+  zipFile: text('zip_file').notNull(),
+  createdBy: text('created_by').notNull().references(() => users.id),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+};
+
+// Pending props table (new submissions)
+export const pendingProps = pgTable('pending_props', {
+  ...basePropFields,
+  submittedAt: timestamp('submitted_at').defaultNow(),
+  adminNotes: text('admin_notes'),
+});
+
+// Approved props table (live props)
+export const approvedProps = pgTable('approved_props', {
+  ...basePropFields,
+  approvedAt: timestamp('approved_at').defaultNow(),
+  approvedBy: text('approved_by'),
+  adminNotes: text('admin_notes'),
+});
+
+// Rejected props table
+export const rejectedProps = pgTable('rejected_props', {
+  ...basePropFields,
+  rejectedAt: timestamp('rejected_at').defaultNow(),
+  rejectedBy: text('rejected_by'),
+  rejectionReason: text('rejection_reason').notNull(),
+  adminNotes: text('admin_notes'),
+});
+
+// Backward-compatible live props export.
+export const props = approvedProps;
 
 // Base script fields (common to all script types)
 const baseScriptFields = {
@@ -79,7 +231,7 @@ const baseGiveawayFields = {
   currency: text('currency'),
   currencySymbol: text('currency_symbol'),
   endDate: text('end_date').notNull(),
-  startDate: text('start_date'),
+  // startDate: text('start_date'),
   maxEntries: integer('max_entries'),
   featured: boolean('featured').default(false),
   autoAnnounce: boolean('auto_announce').default(true),
@@ -270,6 +422,64 @@ export const usersRelations = relations(users, ({ many }) => ({
   giveawayEntries: many(giveawayEntries),
   adSlots: many(userAdSlots),
   featuredScriptSlots: many(userFeaturedScriptSlots),
+  carts: many(carts),
+  orders: many(orders),
+  props: many(approvedProps),
+}));
+
+export const cartsRelations = relations(carts, ({ one, many }) => ({
+  user: one(users, {
+    fields: [carts.userId],
+    references: [users.id],
+  }),
+  items: many(cartItems),
+  orders: many(orders),
+}));
+
+export const cartItemsRelations = relations(cartItems, ({ one }) => ({
+  cart: one(carts, {
+    fields: [cartItems.cartId],
+    references: [carts.id],
+  }),
+}));
+
+export const ordersRelations = relations(orders, ({ one, many }) => ({
+  user: one(users, {
+    fields: [orders.userId],
+    references: [users.id],
+  }),
+  cart: one(carts, {
+    fields: [orders.cartId],
+    references: [carts.id],
+  }),
+  coupon: one(coupons, {
+    fields: [orders.couponId],
+    references: [coupons.id],
+  }),
+  items: many(orderItems),
+  redemptions: many(couponRedemptions),
+}));
+
+export const orderItemsRelations = relations(orderItems, ({ one }) => ({
+  order: one(orders, {
+    fields: [orderItems.orderId],
+    references: [orders.id],
+  }),
+}));
+
+export const couponRedemptionsRelations = relations(couponRedemptions, ({ one }) => ({
+  coupon: one(coupons, {
+    fields: [couponRedemptions.couponId],
+    references: [coupons.id],
+  }),
+  user: one(users, {
+    fields: [couponRedemptions.userId],
+    references: [users.id],
+  }),
+  order: one(orders, {
+    fields: [couponRedemptions.orderId],
+    references: [orders.id],
+  }),
 }));
 
 export const userAdSlotsRelations = relations(userAdSlots, ({ one }) => ({
@@ -334,6 +544,27 @@ export const giveawayPrizeWinnersRelations = relations(giveawayPrizeWinners, ({ 
   // No direct foreign key relation - handled by application logic
 }));
 
+export const approvedPropsRelations = relations(approvedProps, ({ one }) => ({
+  user: one(users, {
+    fields: [approvedProps.createdBy],
+    references: [users.id],
+  }),
+}));
+
+export const pendingPropsRelations = relations(pendingProps, ({ one }) => ({
+  user: one(users, {
+    fields: [pendingProps.createdBy],
+    references: [users.id],
+  }),
+}));
+
+export const rejectedPropsRelations = relations(rejectedProps, ({ one }) => ({
+  user: one(users, {
+    fields: [rejectedProps.createdBy],
+    references: [users.id],
+  }),
+}));
+
 // Type exports
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
@@ -359,3 +590,7 @@ export type FeaturedScript = typeof featuredScripts.$inferSelect;
 export type NewFeaturedScript = typeof featuredScripts.$inferInsert;
 export type UserFeaturedScriptSlot = typeof userFeaturedScriptSlots.$inferSelect;
 export type NewUserFeaturedScriptSlot = typeof userFeaturedScriptSlots.$inferInsert;
+export type Prop = typeof approvedProps.$inferSelect;
+export type NewProp = typeof approvedProps.$inferInsert;
+export type PendingProp = typeof pendingProps.$inferSelect;
+export type NewPendingProp = typeof pendingProps.$inferInsert;

@@ -26,7 +26,6 @@ import {
 import { Badge } from "@/componentss/ui/badge";
 import Link from "next/link";
 import { useSession, signIn } from "next-auth/react";
-import { useTheme } from "next-themes";
 import Navbar from "@/componentss/shared/navbar";
 import {
   Zap,
@@ -35,17 +34,17 @@ import {
   Star,
   ArrowRight,
   Megaphone,
-  Code,
-  ClipboardCheck,
+  Gift,
   MousePointerClick,
-  CodeXmlIcon,
+  ShoppingBag,
 } from "lucide-react";
-import { HexagonBackground } from "@/components/animate-ui/components/backgrounds/hexagon";
-import { StarsBackground } from "@/components/animate-ui/components/backgrounds/stars";
 import { cn } from "@/lib/utils";
 import Footer from "@/componentss/shared/footer";
 import Image from "next/image";
 import { InfiniteMovingCards } from "@/componentss/ui/infinite-moving-cards";
+import { LiquidBackground } from "@/components/ui/liquid-background";
+import { TiltCard } from "@/components/ui/tilt-card";
+import { ScrollCardStack } from "@/components/ui/scroll-stack";
 import FeaturedScriptCard from "@/componentss/featured-scripts/featured-script-card";
 interface Stats {
   totalScripts: number;
@@ -73,13 +72,78 @@ interface Script {
   seller_roles?: string[];
 }
 
+// ─── Framer FAQs-inspired accordion item ────────────────────────────────────
+function FAQItem({
+  question,
+  answer,
+  index,
+}: {
+  question: string
+  answer: string
+  index: number
+}) {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ type: "spring", damping: 60, stiffness: 500, delay: index * 0.05 }}
+    >
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center justify-between text-left px-6 py-5 rounded-[22px] transition-colors duration-200 group"
+        style={{
+          background: open ? "rgba(249,115,22,0.07)" : "transparent",
+        }}
+        aria-expanded={open}
+      >
+        <span className={`text-base font-semibold pr-4 transition-colors duration-200 ${open ? "text-orange-400" : "text-white"}`}>
+          {question}
+        </span>
+        {/* Rotating icon — + when closed, × when open */}
+        <motion.span
+          animate={{ rotate: open ? 45 : 0 }}
+          transition={{ type: "spring", damping: 60, stiffness: 500 }}
+          className={`flex-shrink-0 flex items-center justify-center h-7 w-7 rounded-full text-lg font-light leading-none transition-colors duration-200 ${open ? "text-orange-400" : "text-white/40 group-hover:text-white/70"}`}
+          style={{
+            background: open ? "rgba(249,115,22,0.15)" : "rgba(255,255,255,0.06)",
+            border: open ? "1px solid rgba(249,115,22,0.25)" : "1px solid rgba(255,255,255,0.08)",
+          }}
+        >
+          +
+        </motion.span>
+      </button>
+
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            key="answer"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ type: "spring", damping: 60, stiffness: 500 }}
+            className="overflow-hidden"
+          >
+            <p className="px-6 pb-5 text-sm text-white/50 leading-relaxed">
+              {answer}
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  )
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 export default function HomePage() {
+
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [featuredScripts, setFeaturedScripts] = useState<Script[]>([]);
   const [scriptsLoading, setScriptsLoading] = useState(true);
   const { status } = useSession();
-  const { resolvedTheme } = useTheme();
   const heroRef = useRef(null);
   const featuresRef = useRef(null);
   const statsRef = useRef(null);
@@ -140,7 +204,7 @@ export default function HomePage() {
             seller_image: item.scriptSellerImage || null,
             seller_roles: item.scriptSellerRoles || null,
           }));
-          
+
           // Shuffle the array to randomize starting position
           const shuffledScripts = [...mappedScripts].sort(() => Math.random() - 2);
           setFeaturedScripts(shuffledScripts);
@@ -217,109 +281,140 @@ export default function HomePage() {
       `,
         }}
       />
-      <div className="min-h-screen text-white overflow-hidden">
+      <div className="min-h-screen text-white overflow-x-clip">
         <Navbar />
 
-        {/* Enhanced Hero Section */}
+        {/* ── Hero Section ── */}
         <motion.section
           ref={heroRef}
-          className="relative py-20 px-4 sm:px-6 lg:px-8 min-h-screen flex items-center"
+          className="relative min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 overflow-hidden"
           style={{ y, opacity }}
         >
-          {/* Stars Background */}
-          <StarsBackground
-            starColor={resolvedTheme === "dark" ? "#FFF" : "#000"}
-            className={cn(
-              "absolute inset-0 flex items-center justify-center rounded-xl",
-              "bg-[#131313]"
-            )}
+          {/* Dark base */}
+          <div className="absolute inset-0 bg-[#0e0e0e]" />
+
+          {/* Animated liquid blobs */}
+          <LiquidBackground opacity={0.9} />
+
+          {/* Fine noise texture for depth */}
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E")`,
+              opacity: 0.04,
+              mixBlendMode: "overlay",
+            }}
           />
-          <div className="max-w-7xl mx-auto text-center relative z-10">
+
+          {/* Bottom fade to page bg */}
+          <div className="absolute bottom-0 inset-x-0 h-40 bg-gradient-to-t from-[#131313] to-transparent pointer-events-none" />
+
+          {/* Content */}
+          <div className="relative z-10 max-w-5xl mx-auto text-center">
             <AnimatePresence>
               {heroInView && (
                 <>
+                  {/* Eyebrow badge */}
                   <motion.div
-                    initial={{ opacity: 0, y: 50 }}
+                    initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 1, ease: "easeOut" }}
-                    className="mb-8"
+                    transition={{ type: "spring", bounce: 0, duration: 0.6 }}
+                    className="mb-8 flex justify-center"
                   >
-                    <motion.h1
-                      className="text-5xl md:text-7xl font-bold mb-6 leading-tight"
-                      animate={{
-                        backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
-                      }}
-                      transition={{
-                        duration: 5,
-                        repeat: Number.POSITIVE_INFINITY,
-                      }}
+                    <span
+                      className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold text-white/80"
                       style={{
-                        background:
-                          "linear-gradient(45deg, #f97316, #eab308, #f59e0b, #fb923c, #f97316)",
-                        backgroundSize: "400% 400%",
-                        WebkitBackgroundClip: "text",
-                        WebkitTextFillColor: "transparent",
-                        backgroundClip: "text",
+                        background: "rgba(255,255,255,0.08)",
+                        border: "1px solid rgba(255,255,255,0.12)",
+                        backdropFilter: "blur(8px)",
                       }}
                     >
-                      Premium FiveM
-                      <br />
-                      Marketplace & <br />
-                      Giveaway Platform
-                    </motion.h1>
+                      <span className="h-1.5 w-1.5 rounded-full bg-orange-400 animate-pulse" />
+                      The #1 FiveM Marketplace & Giveaway Platform
+                    </span>
                   </motion.div>
 
+                  {/* Headline — white, no gradient */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 40 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ type: "spring", bounce: 0, duration: 0.7, delay: 0.1 }}
+                    className="mb-6"
+                  >
+                    <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold leading-[1.05] tracking-tight text-white">
+                      Premium FiveM
+                      <br />
+                      <span className="text-orange-400">Scripts</span>
+                      {" & "}
+                      <span className="text-yellow-300">Giveaways</span>
+                    </h1>
+                  </motion.div>
+
+                  {/* Sub-headline */}
                   <motion.p
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 1, delay: 0.4 }}
-                    className="text-xl md:text-2xl text-gray-300 mb-12 max-w-4xl mx-auto leading-relaxed"
+                    transition={{ type: "spring", bounce: 0, duration: 0.7, delay: 0.22 }}
+                    className="text-lg md:text-xl text-white/60 mb-12 max-w-2xl mx-auto leading-relaxed font-normal"
                   >
-                    Discover the most advanced collection of high-quality
-                    scripts for your FiveM server. Built by experts, trusted by
-                    thousands. Plus enter amazing giveaways to win premium
-                    content!
+                    Discover high-quality scripts, enter amazing giveaways, and
+                    grow your FiveM server — all in one place.
                   </motion.p>
 
+                  {/* CTA buttons — pill style matching navbar */}
                   <motion.div
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 1, delay: 0.6 }}
-                    className="flex flex-col sm:flex-row gap-6 justify-center items-center"
+                    transition={{ type: "spring", bounce: 0, duration: 0.7, delay: 0.34 }}
+                    className="flex flex-col sm:flex-row gap-4 justify-center items-center"
                   >
-                    <motion.div
-                      whileHover={{
-                        scale: 1.05,
-                      }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                        <Link href="/scripts">
-                          <Button
-                            size="lg"
-                            className="bg-gradient-to-r from-orange-500 via-yellow-400 to-orange-500 hover:from-orange-600 hover:via-yellow-500 hover:to-orange-600 text-black font-bold px-10 py-4 text-xl rounded-full shadow-2xl transition-all duration-300"
-                          >
-                            Explore Marketplace
-                          </Button>
-                        </Link>
-                    </motion.div>
+                    {/* Primary — solid orange pill */}
+                    <Link href="/scripts">
+                      <motion.button
+                        whileHover={{ scale: 1.04, y: -2 }}
+                        whileTap={{ scale: 0.97 }}
+                        className="inline-flex items-center gap-2.5 px-8 py-3.5 rounded-full text-base font-semibold text-white transition-all duration-200 cursor-pointer"
+                        style={{
+                          background: "rgba(249,115,22,1)",
+                          boxShadow: "0 0 0 1px rgba(249,115,22,0.5), 0 4px 24px rgba(249,115,22,0.45)",
+                        }}
+                      >
+                        <ShoppingBag className="h-4 w-4" />
+                        Explore Marketplace
+                      </motion.button>
+                    </Link>
 
-                    <motion.div
-                      whileHover={{
-                        scale: 1.05,
-                      }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      <Link href="/giveaways">
-                        <Button
-                          size="lg"
-                          variant="outline"
-                          className="bg-transparent border-2 border-orange-500/50 text-orange-500 hover:bg-orange-500/10 hover:border-orange-500 hover:text-orange-500 px-10 py-4 text-xl rounded-full backdrop-blur-sm transition-all duration-300 flex items-center gap-2"
-                        >
-                          <Code className="h-5 w-5" />
-                          Explore Giveaways
-                        </Button>
-                      </Link>
-                    </motion.div>
+                    {/* Secondary — glass pill */}
+                    <Link href="/giveaways">
+                      <motion.button
+                        whileHover={{ scale: 1.04, y: -2 }}
+                        whileTap={{ scale: 0.97 }}
+                        className="inline-flex items-center gap-2.5 px-8 py-3.5 rounded-full text-base font-semibold text-white transition-all duration-200 cursor-pointer"
+                        style={{
+                          background: "rgba(255,255,255,0.08)",
+                          border: "1px solid rgba(255,255,255,0.18)",
+                          backdropFilter: "blur(12px)",
+                          boxShadow: "0 4px 24px rgba(0,0,0,0.3)",
+                        }}
+                      >
+                        <Gift className="h-4 w-4" />
+                        Explore Giveaways
+                      </motion.button>
+                    </Link>
+                  </motion.div>
+
+                  {/* Trust strip */}
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 1, delay: 0.7 }}
+                    className="mt-16 flex flex-wrap items-center justify-center gap-6 text-sm text-white/35"
+                  >
+                    <span className="flex items-center gap-1.5"><Star className="h-3.5 w-3.5 text-yellow-400/70" />Premium Quality</span>
+                    <span className="h-3 w-px bg-white/10" />
+                    <span className="flex items-center gap-1.5"><Shield className="h-3.5 w-3.5 text-orange-400/70" />Security Verified</span>
+                    <span className="h-3 w-px bg-white/10" />
+                    <span className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5 text-white/50" />Community Driven</span>
                   </motion.div>
                 </>
               )}
@@ -355,9 +450,102 @@ export default function HomePage() {
                 ))}
               </div>
             ) : featuredScripts.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-gray-400">No featured scripts available at the moment.</p>
-              </div>
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ type: "spring", bounce: 0, duration: 0.7 }}
+                className="flex flex-col items-center justify-center py-20 px-4"
+              >
+                {/* Glassy card */}
+                <div
+                  className="relative flex flex-col items-center gap-6 rounded-2xl px-10 py-6 w-full overflow-hidden"
+                  style={{
+                    background: "rgba(255,255,255,0.04)",
+                    border: "1px solid rgba(255,255,255,0.08)",
+                    backdropFilter: "blur(16px)",
+                    boxShadow: "0 8px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(249,115,22,0.08)",
+                  }}
+                >
+                  {/* Subtle orange glow behind icon */}
+                  <div
+                    className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-24 pointer-events-none"
+                    style={{
+                      background: "radial-gradient(ellipse at center, rgba(249,115,22,0.18) 0%, transparent 70%)",
+                    }}
+                  />
+
+                  {/* Animated icon */}
+                  <motion.div
+                    animate={{
+                      scale: [1, 1.12, 1],
+                      opacity: [0.7, 1, 0.7],
+                    }}
+                    transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+                    className="relative z-10 flex h-16 w-16 items-center justify-center rounded-2xl"
+                    style={{
+                      background: "rgba(249,115,22,0.12)",
+                      border: "1px solid rgba(249,115,22,0.25)",
+                      boxShadow: "0 0 20px rgba(249,115,22,0.2)",
+                    }}
+                  >
+                    <Zap className="h-8 w-8 text-orange-400" />
+                  </motion.div>
+
+                  {/* Heading with shimmer */}
+                  <motion.h3
+                    className="relative z-10 text-xl font-bold text-white text-center"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2, type: "spring", bounce: 0, duration: 0.6 }}
+                  >
+                    No Featured Scripts Yet
+                  </motion.h3>
+
+                  {/* Sub-text */}
+                  <motion.p
+                    className="relative z-10 text-sm text-white/45 text-center leading-relaxed max-w-xs"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.35, type: "spring", bounce: 0, duration: 0.6 }}
+                  >
+                    Featured scripts will appear here once developers promote their work. Check back soon!
+                  </motion.p>
+
+                  {/* CTA */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5, type: "spring", bounce: 0, duration: 0.6 }}
+                  >
+                    <Link href="/scripts">
+                      <motion.button
+                        whileHover={{ scale: 1.04, y: -1 }}
+                        whileTap={{ scale: 0.97 }}
+                        className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-semibold text-white cursor-pointer transition-all duration-200"
+                        style={{
+                          background: "rgba(249,115,22,0.9)",
+                          boxShadow: "0 0 0 1px rgba(249,115,22,0.4), 0 4px 16px rgba(249,115,22,0.35)",
+                        }}
+                      >
+                        <ShoppingBag className="h-3.5 w-3.5" />
+                        Browse All Scripts
+                      </motion.button>
+                    </Link>
+                  </motion.div>
+
+                  {/* Animated dots row */}
+                  <div className="flex gap-2">
+                    {[0, 0.2, 0.4].map((delay, i) => (
+                      <motion.span
+                        key={i}
+                        className="h-1.5 w-1.5 rounded-full bg-orange-400/40"
+                        animate={{ opacity: [0.3, 1, 0.3], scale: [0.8, 1.2, 0.8] }}
+                        transition={{ duration: 1.5, repeat: Infinity, delay, ease: "easeInOut" }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
             ) : featuredScripts.length > 3 ? (
               <InfiniteMovingCards
                 items={featuredScripts}
@@ -408,20 +596,24 @@ export default function HomePage() {
             <motion.div
               initial={{ opacity: 0, y: 50 }}
               animate={featuresInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 1 }}
-              className="text-center mb-20"
+              transition={{ type: "spring", bounce: 0, duration: 0.7 }}
+              className="text-center mb-16"
             >
-              <Badge className="bg-gradient-to-r from-orange-500/20 to-yellow-400/20 text-orange-400 border-orange-500/30 mb-6 px-4 py-2 text-sm font-semibold">
+              <span
+                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold text-white/70 mb-6"
+                style={{
+                  background: "rgba(255,255,255,0.06)",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                }}
+              >
+                <span className="h-1.5 w-1.5 rounded-full bg-orange-400" />
                 Why Choose Us
-              </Badge>
-              <h2 className="text-5xl md:text-6xl font-bold text-white mb-6 bg-gradient-to-r from-white via-orange-200 to-yellow-200 bg-clip-text text-transparent">
+              </span>
+              <h2 className="text-5xl md:text-6xl font-extrabold text-white mt-4 mb-5 tracking-tight">
                 Why Choose{" "}
-                <span className="bg-gradient-to-r from-orange-500 to-yellow-400 bg-clip-text text-transparent">
-                  FiveCrux
-                </span>
-                ?
+                <span className="text-orange-400">FiveCrux</span>?
               </h2>
-              <p className="text-xl text-gray-300 max-w-2xl mx-auto leading-relaxed">
+              <p className="text-lg text-white/50 max-w-2xl mx-auto leading-relaxed">
                 The most trusted marketplace and giveaway platform for premium FiveM scripts and resources
               </p>
             </motion.div>
@@ -432,27 +624,45 @@ export default function HomePage() {
                 return (
                   <motion.div
                     key={index}
-                    initial={{ opacity: 0, y: 50 }}
+                    initial={{ opacity: 0, y: 40 }}
                     animate={featuresInView ? { opacity: 1, y: 0 } : {}}
-                    transition={{ duration: 0.8, delay: index * 0.1 }}
-                    whileHover={{ scale: 1.05, y: -10 }}
-                    className="group"
+                    transition={{ type: "spring", bounce: 0, duration: 0.6, delay: index * 0.08 }}
                   >
-                    <Card className="bg-neutral-900/40 border-gray-700/50 hover:border-orange-500/50 transition-all duration-500 backdrop-blur-sm h-full relative overflow-hidden">
-                      <CardContent className="p-8 text-center relative z-10">
+                    <TiltCard
+                      className="h-full rounded-2xl cursor-pointer"
+                      style={{
+                        background: "rgba(255,255,255,0.03)",
+                        border: "1px solid rgba(255,255,255,0.07)",
+                        backdropFilter: "blur(12px)",
+                      }}
+                    >
+                      {/* Inner glow on hover via group */}
+                      <div className="group relative h-full p-8 flex flex-col items-center text-center rounded-2xl transition-all duration-300 hover:bg-white/[0.02]">
+                        {/* Spotlight */}
                         <div
-                          className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br ${feature.gradient} mb-6 group-hover:scale-110 transition-transform duration-300`}
+                          className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                          style={{
+                            background: "radial-gradient(ellipse 60% 50% at 50% 0%, rgba(249,115,22,0.12) 0%, transparent 70%)",
+                          }}
+                        />
+                        <div
+                          className="relative z-10 inline-flex items-center justify-center w-14 h-14 rounded-xl mb-6"
+                          style={{
+                            background: "rgba(249,115,22,0.1)",
+                            border: "1px solid rgba(249,115,22,0.2)",
+                            boxShadow: "0 0 16px rgba(249,115,22,0.15)",
+                          }}
                         >
-                          <Icon className="h-8 w-8 text-white" />
+                          <Icon className="h-7 w-7 text-orange-400" />
                         </div>
-                        <h3 className="text-white font-bold text-xl mb-3 group-hover:text-orange-400 transition-colors">
+                        <h3 className="relative z-10 text-white font-bold text-lg mb-2">
                           {feature.title}
                         </h3>
-                        <p className="text-gray-400 text-sm leading-relaxed">
+                        <p className="relative z-10 text-white/45 text-sm leading-relaxed">
                           {feature.description}
                         </p>
-                      </CardContent>
-                    </Card>
+                      </div>
+                    </TiltCard>
                   </motion.div>
                 );
               })}
@@ -462,195 +672,193 @@ export default function HomePage() {
 
 
 
-        {/*Our Services Seciton*/}
-        <motion.div>
-          <div className="max-w-7xl mx-auto relative z-10 py-16 px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center">
-            <motion.div>
-              <h2 className="text-4xl md:text-5xl font-bold text-white mb-4 flex items-center gap-3 justify-center">
-                <Zap className="h-10 w-10 text-orange-500" />
-                Our Services
-              </h2>
-              <p className="text-gray-400 max-w-2xl mx-auto">
-                Our other services that made it possible to serve this website
-                to you
-              </p>
-            </motion.div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 max-w-7xl mx-auto gap-6 px-8">
-            <motion.div
-              whileHover={{ scale: 1.02, y: -5 }}
-              transition={{ duration: 0.3 }}
-            >
-
-              <a
-                href="https://www.gamecrux.io/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Card className="bg-neutral-900/40 border-gray-700/50 hover:border-orange-500/50 transition-all duration-500 backdrop-blur-sm h-full relative overflow-hidden group">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="p-2 rounded-lg bg-gradient-to-br from-orange-500/20 to-yellow-400/20 group-hover:from-orange-500/30 group-hover:to-yellow-400/30 transition-all duration-300">
-                        <Image src="/gamecrux.webp" alt="GameCrux" width={48} height={48} />
-                      </div>
-                      <CardTitle className="text-xl font-bold text-white">GameCrux</CardTitle>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <CardDescription className="text-gray-300 text-sm leading-relaxed">
-                      Discover, Play, and Enjoy a Curated Selection of Exciting Minigames <br />
-                      Dive into the ultimate experience with our comprehensive games. Get started now!
-                    </CardDescription>
-                  </CardContent>
-                  <CardFooter className="pt-4">
-                    <div
-
-                      className="text-orange-400 hover:text-orange-500 font-semibold text-sm flex items-center gap-2 transition-colors"
-                    >
-                      Visit GameCrux
-                      <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                    </div>
-                  </CardFooter>
-                </Card>
-              </a>
-            </motion.div>
-            <motion.div
-              whileHover={{ scale: 1.02, y: -5 }}
-              transition={{ duration: 0.3 }}
-            >
-              <a
-                href="https://crux.tebex.io/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Card className="bg-neutral-900/40 border-gray-700/50 hover:border-orange-500/50 transition-all duration-500 backdrop-blur-sm h-full relative overflow-hidden group">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="p-2 rounded-lg bg-gradient-to-br from-orange-500/20 to-yellow-400/20 group-hover:from-orange-500/30 group-hover:to-yellow-400/30 transition-all duration-300">
-                        {/* <Zap className="h-6 w-6 text-orange-400" /> */}
-                        <Image src="/cs.webp" alt="Crux Studio" width={48} height={48} />
-                      </div>
-                      <CardTitle className="text-xl font-bold text-white">Crux Studio</CardTitle>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <CardDescription className="text-gray-300 text-sm leading-relaxed">
-                      Premium Fivem Assets Marketplace
-                      <br />
-                      Creating high-quality products with passion and attention to detail to make your server even better.
-                    </CardDescription>
-                  </CardContent>
-                  <CardFooter className="pt-4">
-                    <div
-                      className="text-orange-400 hover:text-orange-500 font-semibold text-sm flex items-center gap-2 transition-colors"
-                    >
-                      Visit Crux Studio
-                      <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                    </div>
-                  </CardFooter>
-                </Card>
-              </a>
-
-            </motion.div>
-          </div>
-        </motion.div>
-
-        <motion.div className="max-w-7xl mx-auto mt-10 px-4 sm:px-6">
-          <div className="relative h-64 sm:h-80 md:h-96 rounded-lg overflow-hidden">
-            {/* Background Image */}
-            <img
-              src="/gtav_1.jpg"
-              alt="FiveCrux"
-              className="w-full h-full object-cover object-top opacity-60"
-            />
-
-            {/* Gradient Overlays */}
-            <div className="absolute inset-0 bg-gradient-to-br from-orange-600/50 via-red-600/40 to-purple-900/60"></div>
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
-
-            {/* Content */}
-            <div className="absolute inset-0 flex flex-col md:flex-row items-center md:items-center justify-center md:justify-between px-4 sm:px-6 z-10 gap-4 md:gap-8">
-              {/* Left Content */}
-              <div className="max-w-xl flex flex-col items-start gap-3 md:gap-4">
-                <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white">Publish Your Script</h2>
-                <p className="text-gray-300 text-xs sm:text-sm leading-relaxed text-left">
-                  Every huge store starts with a great idea and yours could be next. Share published mods and get instant exposure. With us your scripts evolve alongside the community that loves it
-                </p>
-                {status === "authenticated" ? (
-                  <Link href="/scripts/submit">
-                    <button className="bg-white text-black font-bold px-6 sm:px-8 py-2 sm:py-3 text-base sm:text-lg shadow-lg rounded-lg hover:bg-gray-300 transition-colors flex items-center gap-2">
-                      Submit Your Script <MousePointerClick className="h-4 w-4 sm:h-5 sm:w-5" />
-                    </button>
-                  </Link>
-                ) : (
-                  <button onClick={() => signIn("discord")} className="bg-white text-black font-bold px-6 sm:px-8 py-2 sm:py-3 text-base sm:text-lg shadow-lg rounded-lg hover:bg-gray-300 transition-colors flex items-center gap-2">
-                    Submit Your Script <MousePointerClick className="h-4 w-4 sm:h-5 sm:w-5" />
-                  </button>
-                )
-                }
-
-              </div>
-
-            </div>
-          </div>
-        </motion.div>
-
-        <motion.div className="max-w-7xl mx-auto mt-10 px-4 sm:px-6">
-          <div className="relative h-64 sm:h-80 md:h-96 rounded-lg overflow-hidden">
-            {/* Background Image */}
-            <img
-              src="/gtav_2.jpg"
-              alt="FiveCrux"
-              className="w-full h-full object-cover object-top opacity-60"
-            />
-
-            {/* Gradient Overlays */}
-            <div className="absolute inset-0 bg-gradient-to-br from-orange-600/50 via-red-600/40 to-purple-900/60"></div>
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
-
-            {/* Content */}
-            <div className="absolute inset-0 flex flex-col md:flex-row items-center md:items-center justify-center md:justify-between px-4 sm:px-6 z-10 gap-4 md:gap-8">
-              {/* Left Content */}
-              <div className="max-w-xl flex flex-col items-start gap-3 md:gap-4">
-                <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white">Create Your Giveaway</h2>
-                <p className="text-gray-300 text-xs sm:text-sm leading-relaxed text-left">
-                  Create and publish giveaways to promote your scripts and get instant exposure. With us your giveaways evolve alongside the community that loves it
-                </p>
-                {status === "authenticated" ? (
-                  <Link href="/giveaways/create">
-                    <button className="bg-white text-black font-bold px-6 sm:px-8 py-2 sm:py-3 text-base sm:text-lg shadow-lg rounded-lg hover:bg-gray-300 transition-colors flex items-center gap-2">
-                      Create Your Giveaway <MousePointerClick className="h-4 w-4 sm:h-5 sm:w-5" />
-                    </button>
-                  </Link>
-                ) : (
-                  <button onClick={() => signIn("discord")} className="bg-white text-black font-bold px-6 sm:px-8 py-2 sm:py-3 text-base sm:text-lg shadow-lg rounded-lg hover:bg-gray-300 transition-colors flex items-center gap-2">
-                    Create Your Giveaway <MousePointerClick className="h-4 w-4 sm:h-5 sm:w-5" />
-                  </button>
-                )}
-
-              </div>
-
-            </div>
-          </div>
-        </motion.div>
-        {/* Call to Action Section */}
-        <motion.section
-          className="py-32 px-4 sm:px-6 lg:px-8 relative overflow-hidden"
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          transition={{ duration: 1 }}
+        {/*Our Services Section*/}
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ type: "spring", bounce: 0, duration: 0.7 }}
         >
-          {/* Background effects */}
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20 align-middle justify-center">
-            <h2 className="text-4xl font-bold mb-8">FAQs</h2>
-            <Accordion type="single" collapsible>
+          <div className="max-w-7xl mx-auto relative z-10 py-16 px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center">
+            <span
+              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold text-white/70 mb-6"
+              style={{
+                background: "rgba(255,255,255,0.06)",
+                border: "1px solid rgba(255,255,255,0.1)",
+              }}
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-orange-400" />
+              Our Services
+            </span>
+            <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-4 text-center tracking-tight">
+              Powered by the <span className="text-orange-400">Crux</span> Ecosystem
+            </h2>
+            <p className="text-white/45 max-w-2xl mx-auto text-center text-base">
+              Our other services that make FiveCrux possible
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 max-w-5xl mx-auto gap-6 px-8">
+            {/* GameCrux */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ type: "spring", bounce: 0, duration: 0.6 }}
+            >
+              <a href="https://www.gamecrux.io/" target="_blank" rel="noopener noreferrer">
+                <TiltCard
+                  className="rounded-2xl overflow-hidden h-full cursor-pointer"
+                  style={{
+                    background: "rgba(255,255,255,0.03)",
+                    border: "1px solid rgba(255,255,255,0.07)",
+                    backdropFilter: "blur(12px)",
+                    boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
+                  }}
+                >
+                  <div className="group relative flex flex-col h-full rounded-2xl overflow-hidden transition-all duration-300 hover:bg-white/[0.02]">
+                    {/* Orange spotlight on hover */}
+                    <div
+                      className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                      style={{
+                        background: "radial-gradient(ellipse 80% 60% at 50% 0%, rgba(249,115,22,0.10) 0%, transparent 70%)",
+                      }}
+                    />
+                    {/* Top border accent */}
+                    <div className="absolute top-0 inset-x-0 h-px opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                      style={{ background: "linear-gradient(90deg, transparent, rgba(249,115,22,0.5), transparent)" }}
+                    />
+                    <div className="relative z-10 p-8 flex flex-col gap-5 h-full">
+                      <div className="flex items-center gap-4">
+                        <div
+                          className="flex-shrink-0 p-2.5 rounded-xl"
+                          style={{
+                            background: "rgba(249,115,22,0.1)",
+                            border: "1px solid rgba(249,115,22,0.2)",
+                          }}
+                        >
+                          <Image src="/gamecrux.webp" alt="GameCrux" width={40} height={40} className="rounded-lg" />
+                        </div>
+                        <div>
+                          <h3 className="text-white font-bold text-xl">GameCrux</h3>
+                          <p className="text-orange-400/70 text-xs font-medium uppercase tracking-wide">Gaming Platform</p>
+                        </div>
+                      </div>
+                      <p className="text-white/45 text-sm leading-relaxed flex-1">
+                        Discover, Play, and Enjoy a Curated Selection of Exciting Minigames. Dive into the ultimate experience with our comprehensive games.
+                      </p>
+                      <div className="flex items-center gap-1.5 text-orange-400 text-sm font-semibold group-hover:gap-2.5 transition-all duration-200">
+                        Visit GameCrux
+                        <ArrowRight className="h-4 w-4" />
+                      </div>
+                    </div>
+                  </div>
+                </TiltCard>
+              </a>
+            </motion.div>
+
+            {/* Crux Studio */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ type: "spring", bounce: 0, duration: 0.6, delay: 0.1 }}
+            >
+              <a href="https://crux.tebex.io/" target="_blank" rel="noopener noreferrer">
+                <TiltCard
+                  className="rounded-2xl overflow-hidden h-full cursor-pointer"
+                  style={{
+                    background: "rgba(255,255,255,0.03)",
+                    border: "1px solid rgba(255,255,255,0.07)",
+                    backdropFilter: "blur(12px)",
+                    boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
+                  }}
+                >
+                  <div className="group relative flex flex-col h-full rounded-2xl overflow-hidden transition-all duration-300 hover:bg-white/[0.02]">
+                    <div
+                      className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                      style={{
+                        background: "radial-gradient(ellipse 80% 60% at 50% 0%, rgba(249,115,22,0.10) 0%, transparent 70%)",
+                      }}
+                    />
+                    <div className="absolute top-0 inset-x-0 h-px opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                      style={{ background: "linear-gradient(90deg, transparent, rgba(249,115,22,0.5), transparent)" }}
+                    />
+                    <div className="relative z-10 p-8 flex flex-col gap-5 h-full">
+                      <div className="flex items-center gap-4">
+                        <div
+                          className="flex-shrink-0 p-2.5 rounded-xl"
+                          style={{
+                            background: "rgba(249,115,22,0.1)",
+                            border: "1px solid rgba(249,115,22,0.2)",
+                          }}
+                        >
+                          <Image src="/cs.webp" alt="Crux Studio" width={40} height={40} className="rounded-lg" />
+                        </div>
+                        <div>
+                          <h3 className="text-white font-bold text-xl">Crux Studio</h3>
+                          <p className="text-orange-400/70 text-xs font-medium uppercase tracking-wide">FiveM Marketplace</p>
+                        </div>
+                      </div>
+                      <p className="text-white/45 text-sm leading-relaxed flex-1">
+                        Premium FiveM Assets Marketplace. Creating high-quality products with passion and attention to detail to make your server even better.
+                      </p>
+                      <div className="flex items-center gap-1.5 text-orange-400 text-sm font-semibold group-hover:gap-2.5 transition-all duration-200">
+                        Visit Crux Studio
+                        <ArrowRight className="h-4 w-4" />
+                      </div>
+                    </div>
+                  </div>
+                </TiltCard>
+              </a>
+            </motion.div>
+          </div>
+        </motion.div>
+
+        <ScrollCardStack />
+        {/* FAQ Section */}
+        <motion.section
+          className="py-24 px-4 sm:px-6 lg:px-8"
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ type: "spring", bounce: 0, duration: 0.7 }}
+        >
+          <div className="max-w-3xl mx-auto">
+            {/* Section header */}
+            <div className="text-center mb-12">
+              <span
+                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold text-white/70 mb-6"
+                style={{
+                  background: "rgba(255,255,255,0.06)",
+                  border: "1px solid rgba(255,255,255,0.10)",
+                }}
+              >
+                <span className="h-1.5 w-1.5 rounded-full bg-orange-400" />
+                FAQ
+              </span>
+              <h2 className="text-4xl md:text-5xl font-extrabold text-white tracking-tight mt-4 mb-4">
+                Frequently Asked <span className="text-orange-400">Questions</span>
+              </h2>
+              <p className="text-white/45 text-base max-w-xl mx-auto">
+                Everything you need to know about FiveCrux.
+              </p>
+            </div>
+
+            {/* Framer-style FAQ accordion — glassy outer card, gap: 2px, padding: 4px, radius: 26px */}
+            <motion.div
+              className="flex flex-col w-full p-1"
+              style={{
+                background: "rgba(255,255,255,0.05)",
+                border: "1px solid rgba(255,255,255,0.08)",
+                borderRadius: "26px",
+                gap: "2px",
+              }}
+            >
               {faqs.map((faq, index) => (
-                <AccordionItem key={index} value={`item-${index + 1}`}>
-                  <AccordionTrigger className="text-2xl">{faq.question}</AccordionTrigger>
-                  <AccordionContent>{faq.answer}</AccordionContent>
-                </AccordionItem>
+                <FAQItem key={index} index={index} question={faq.question} answer={faq.answer} />
               ))}
-            </Accordion>
+            </motion.div>
           </div>
         </motion.section>
         <Footer />

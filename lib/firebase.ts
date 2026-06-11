@@ -11,11 +11,15 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 }
 
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp()
+const app = firebaseConfig.projectId
+  ? !getApps().length
+    ? initializeApp(firebaseConfig)
+    : getApp()
+  : null
 
 let analytics: any = null
 
-if (typeof window !== "undefined") {
+if (typeof window !== "undefined" && app) {
   isSupported().then((supported) => {
     if (supported) {
       analytics = getAnalytics(app)

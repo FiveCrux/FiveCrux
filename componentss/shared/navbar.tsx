@@ -1,10 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import Link from "next/link"
 import Image from "next/image"
 import { useSession, signIn, signOut } from "next-auth/react"
+import { ShoppingCart } from "lucide-react"
 import { Avatar, AvatarImage, AvatarFallback } from "@/componentss/ui/avatar"
 import { getSessionUserProfilePicture } from "@/lib/user-utils"
 import {
@@ -22,11 +23,56 @@ import {
 export default function NavbarComponent() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const { data: session, status } = useSession()
+  const [cartCount, setCartCount] = useState<number>(0)
+
   const userRoles = (session?.user as any)?.roles || []
-  const hasAdminAccess = userRoles.includes("admin")
+  const hasAdminAccess =
+    userRoles.includes("admin") ||
+    userRoles.includes("founder") ||
+    userRoles.includes("moderator")
+
+  const fetchCartCount = async () => {
+    try {
+      const response = await fetch("/api/cart")
+      if (!response.ok) {
+        setCartCount(0)
+        return
+      }
+
+      const data = await response.json()
+      const count = Array.isArray(data.items)
+        ? data.items.reduce((sum: number, item: any) => sum + Number(item.quantity || 0), 0)
+        : 0
+
+      setCartCount(count)
+    } catch (error) {
+      setCartCount(0)
+    }
+  }
+
+  useEffect(() => {
+    if (status === "authenticated") {
+      fetchCartCount()
+    } else {
+      setCartCount(0)
+    }
+  }, [status])
+
+  useEffect(() => {
+    const handleCartUpdated = () => {
+      if (status === "authenticated") {
+        fetchCartCount()
+      }
+    }
+
+    window.addEventListener("cartUpdated", handleCartUpdated)
+    return () => window.removeEventListener("cartUpdated", handleCartUpdated)
+  }, [status])
+
   const navItems = [
     { name: "Home", link: "/" },
-    { name: "Marketplace", link: "/scripts" },
+    { name: "Scripts", link: "/scripts" },
+    { name: "Props", link: "/props" },
     { name: "Giveaways", link: "/giveaways" },
     { name: "Advertise", link: "/advertise" },
   ]
@@ -67,23 +113,39 @@ export default function NavbarComponent() {
   }
 
   return (
-    <div className="relative w-full">
-      <Navbar className="top-0 z-[60]">
+    <Navbar className="top-0 z-[60]">
         {/* Desktop Navigation */}
         <NavBody>
           <CustomLogo />
           <NavItems items={navItems} />
-          <div className="flex items-center gap-2 ml-auto pl-6 flex-shrink-0">
+          <div className="flex items-center gap-2 ml-auto pl-4 flex-shrink-0">
+            <Link
+              href="/cart"
+              aria-label="Cart"
+              className="relative inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.07] text-neutral-300 transition-all duration-200 hover:bg-white/[0.12] hover:text-orange-400"
+            >
+              <ShoppingCart className="h-4 w-4" />
+              {cartCount > 0 && (
+                <span className="absolute -top-1 -right-1 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-orange-500 px-1 text-[9px] font-bold text-black">
+                  {cartCount}
+                </span>
+              )}
+            </Link>
             {status === "authenticated" ? (
               <>
-                <Link href="/profile" className="block">
-                  <Avatar className="h-9 w-9 ring-1 ring-gray-700/60">
+                <Link href="/profile" className="block transition-transform duration-200 hover:-translate-y-0.5">
+                  <Avatar className="h-8 w-8 ring-1 ring-orange-500/30 hover:ring-orange-500/60 transition-all duration-200">
                     <AvatarImage src={String(getSessionUserProfilePicture(session) || "")} alt={String(session?.user?.name || "User")} />
-                    <AvatarFallback className="bg-gray-800 text-white text-sm">
+                    <AvatarFallback className="bg-neutral-800 text-white text-xs">
                       {String(session?.user?.name || "U").charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                 </Link>
+                {hasAdminAccess && (
+                  <NavbarButton variant="secondary" className="text-white" href="/admin">
+                    Admin
+                  </NavbarButton>
+                )}
                 {hasAdminAccess && (
                   <NavbarButton variant="secondary" className="text-white" href="/admin">
                     Admin
@@ -114,10 +176,24 @@ export default function NavbarComponent() {
         <MobileNav>
           <MobileNavHeader>
             <CustomLogo />
-            <MobileNavToggle
-              isOpen={isMobileMenuOpen}
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            />
+            <div className="flex items-center gap-2">
+              <Link
+                href="/cart"
+                aria-label="Cart"
+                className="relative inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.07] text-neutral-300 transition-all duration-200 hover:bg-white/[0.12] hover:text-orange-400"
+              >
+                <ShoppingCart className="h-4 w-4" />
+                {cartCount > 0 && (
+                  <span className="absolute -top-1 -right-1 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-orange-500 px-1 text-[9px] font-bold text-black">
+                    {cartCount}
+                  </span>
+                )}
+              </Link>
+              <MobileNavToggle
+                isOpen={isMobileMenuOpen}
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              />
+            </div>
           </MobileNavHeader>
 
           <MobileNavMenu
@@ -134,19 +210,19 @@ export default function NavbarComponent() {
                 <span className="block">{item.name}</span>
               </Link>
             ))}
-            
+
             {status === "authenticated" ? (
               <div className="flex w-full flex-col gap-4">
-                <div className="flex items-center space-x-3 pb-4 border-b border-gray-700">
-                  <Avatar className="h-10 w-10 ring-1 ring-gray-700/60">
+                <div className="flex items-center space-x-3 pb-4 border-b border-white/[0.08]">
+                  <Avatar className="h-10 w-10 ring-1 ring-orange-500/30">
                     <AvatarImage src={String(getSessionUserProfilePicture(session) || "")} alt={String(session?.user?.name || "User")} />
-                    <AvatarFallback className="bg-gray-800 text-white text-sm">
+                    <AvatarFallback className="bg-neutral-800 text-white text-sm">
                       {String(session?.user?.name || "U").charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="text-neutral-600 dark:text-neutral-300 font-medium">{session?.user?.name}</p>
-                    <p className="text-neutral-500 dark:text-neutral-400 text-sm">{session?.user?.email}</p>
+                    <p className="text-neutral-200 font-medium">{session?.user?.name}</p>
+                    <p className="text-neutral-400 text-sm">{session?.user?.email}</p>
                   </div>
                 </div>
                 <Link
@@ -189,6 +265,5 @@ export default function NavbarComponent() {
           </MobileNavMenu>
         </MobileNav>
       </Navbar>
-    </div>
   )
 }
