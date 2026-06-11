@@ -209,8 +209,6 @@ export default function GiveawaysPage() {
               endDate: g.end_date,
               start_date: g.start_date || null,
               is_upcoming: g.is_upcoming || false,
-              start_date: g.start_date || null,
-              is_upcoming: g.is_upcoming || false,
               image:
                 g.cover_image ||
                 (g.images && g.images[0]) ||

@@ -1545,10 +1545,7 @@ export async function getGiveaways(filters?: {
 
   const now = new Date().toISOString();
 
-  const now = new Date().toISOString();
-  
   // Fetch creator images and roles for each giveaway with priority: profile_picture first, then Discord image
-  // Include all giveaways (both active and upcoming)
   // Include all giveaways (both active and upcoming)
   const giveawaysWithImages = await Promise.all(
     giveaways.map(async (giveaway: any) => {
@@ -1561,7 +1558,7 @@ export async function getGiveaways(filters?: {
           creatorRoles = creatorResult[0].roles;
         }
       }
-      
+
       // Determine if giveaway is upcoming (scheduled for future)
       let isUpcoming = false;
       if (giveaway.startDate) {
@@ -1569,22 +1566,12 @@ export async function getGiveaways(filters?: {
         const nowTime = new Date(now).getTime();
         isUpcoming = startDate > nowTime;
       }
-      
-      
-      // Determine if giveaway is upcoming (scheduled for future)
-      let isUpcoming = false;
-      if (giveaway.startDate) {
-        const startDate = new Date(giveaway.startDate).getTime();
-        const nowTime = new Date(now).getTime();
-        isUpcoming = startDate > nowTime;
-      }
-      
+
       return {
         ...giveaway,
         creatorImage,
         creatorRoles,
-        isUpcoming, // Mark scheduled giveaways as upcoming
-        isUpcoming, // Mark scheduled giveaways as upcoming
+        isUpcoming,
       };
     })
   );
@@ -1868,7 +1855,6 @@ export async function updateGiveaway(id: number, updateData: Partial<NewGiveaway
       description: giveaway.description,
       totalValue: giveaway.totalValue,
       endDate: giveaway.endDate,
-      startDate: giveaway.startDate,
       startDate: giveaway.startDate,
       maxEntries: giveaway.maxEntries,
       currency: giveaway.currency || 'USD',
