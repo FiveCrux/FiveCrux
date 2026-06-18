@@ -26,7 +26,8 @@ import {
   Users,
   Shield,
   Megaphone,
-  Plus,
+  ChevronDown,
+  MessagesSquare,
 } from "lucide-react"
 import Navbar from "@/componentss/shared/navbar"
 import Footer from "@/componentss/shared/footer"
@@ -199,19 +200,19 @@ function HeroSpotlight({ items, query, setQuery, onSearch }: {
   )
 }
 
-// ── FAQ accordion item ──
+// ── FAQ accordion item (chevron rotate, glass row) ──
 function FaqItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false)
   return (
-    <div className="rounded-[22px] transition-colors" style={{ background: open ? "rgba(249,115,22,0.07)" : "transparent" }}>
-      <button onClick={() => setOpen((v) => !v)} className="flex w-full items-center justify-between px-6 py-5 text-left">
-        <span className={`pr-4 text-base font-semibold ${open ? "text-orange-400" : "text-white"}`}>{q}</span>
-        <span className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full transition-transform ${open ? "rotate-45 text-orange-400" : "text-white/40"}`}
-          style={{ background: open ? "rgba(249,115,22,0.15)" : "rgba(255,255,255,0.06)" }}>
-          <Plus className="h-4 w-4" />
-        </span>
+    <div
+      className="rounded-2xl border border-white/[0.08] bg-white/[0.04] px-5 backdrop-blur-md transition-all duration-300 sm:px-6"
+      style={open ? { borderColor: "rgba(249,115,22,0.3)", background: "rgba(249,115,22,0.05)" } : undefined}
+    >
+      <button onClick={() => setOpen((v) => !v)} className="flex w-full items-center justify-between gap-4 py-5 text-left">
+        <span className={`text-base font-semibold ${open ? "text-orange-400" : "text-white"}`}>{q}</span>
+        <ChevronDown className={`h-5 w-5 flex-shrink-0 text-orange-400 transition-transform duration-300 ${open ? "rotate-180" : ""}`} />
       </button>
-      {open && <p className="px-6 pb-5 text-sm leading-relaxed text-white/55">{a}</p>}
+      {open && <p className="pb-5 pr-4 leading-relaxed text-white/60">{a}</p>}
     </div>
   )
 }
@@ -309,84 +310,105 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Why Choose FiveCrux */}
+      {/* Why Choose FiveCrux — bento (Variant 2) */}
       <section className="mt-20 px-3 sm:px-6">
         <div className="mx-auto max-w-7xl">
-          <div className="mb-12 text-center">
-            <span className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-4 py-1.5 text-sm font-semibold text-white/70">
-              <span className="h-1.5 w-1.5 rounded-full bg-orange-400" /> Why Choose Us
-            </span>
+          <div className="mb-12 max-w-2xl">
+            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-orange-400">Why Choose Us</p>
             <h2 className="text-4xl font-extrabold tracking-tight sm:text-5xl">Why Choose <span className="text-orange-400">FiveCrux</span>?</h2>
           </div>
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {PLATFORM_FEATURES.map((f) => {
-              const Icon = f.icon
-              return (
-                <div key={f.title} className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-7 text-center backdrop-blur-md transition hover:-translate-y-1 hover:border-orange-500/30">
-                  <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-xl border border-orange-500/20 bg-orange-500/10">
-                    <Icon className="h-7 w-7 text-orange-400" />
-                  </div>
-                  <h3 className="mb-2 text-lg font-bold">{f.title}</h3>
-                  <p className="text-sm leading-relaxed text-white/45">{f.description}</p>
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+            {/* Large hero tile */}
+            <div className="relative flex flex-col justify-between overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.04] p-8 backdrop-blur-md transition hover:border-orange-500/30 lg:row-span-2">
+              <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-orange-500/15 blur-3xl" />
+              <div className="relative">
+                <div className="mb-8 flex h-16 w-16 items-center justify-center rounded-2xl border border-orange-500/20 bg-orange-500/10">
+                  <Users className="h-8 w-8 text-orange-400" />
                 </div>
-              )
-            })}
+                <h3 className="mb-4 text-3xl font-extrabold">Community Driven</h3>
+                <p className="text-lg leading-relaxed text-white/60">Built by experienced FiveM developers, trusted and improved by the community.</p>
+              </div>
+              <div className="relative mt-10 flex items-center gap-2 text-sm font-semibold text-yellow-400">
+                <Sparkles className="h-4 w-4" /><span>Powered by real developers</span>
+              </div>
+            </div>
+            {/* Premium Quality */}
+            <div className="flex items-start gap-4 rounded-2xl border border-white/[0.08] bg-white/[0.04] p-7 backdrop-blur-md transition hover:border-orange-500/30">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-orange-500/20 bg-orange-500/10"><Star className="h-6 w-6 text-orange-400" /></div>
+              <div><h3 className="mb-1.5 text-lg font-bold">Premium Quality</h3><p className="text-sm leading-relaxed text-white/55">Only top-tier scripts that meet our quality standards make it onto FiveCrux.</p></div>
+            </div>
+            {/* Security Verified */}
+            <div className="flex items-start gap-4 rounded-2xl border border-white/[0.08] bg-white/[0.04] p-7 backdrop-blur-md transition hover:border-orange-500/30">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-orange-500/20 bg-orange-500/10"><Shield className="h-6 w-6 text-orange-400" /></div>
+              <div><h3 className="mb-1.5 text-lg font-bold">Security Verified</h3><p className="text-sm leading-relaxed text-white/55">Every resource is manually reviewed before it goes live.</p></div>
+            </div>
+            {/* Maximum Reach — wide */}
+            <div className="flex items-start gap-4 rounded-2xl border border-white/[0.08] bg-white/[0.04] p-7 backdrop-blur-md transition hover:border-orange-500/30 lg:col-span-2">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-orange-500/20 bg-orange-500/10"><Megaphone className="h-6 w-6 text-orange-400" /></div>
+              <div><h3 className="mb-1.5 text-lg font-bold">Maximum Reach</h3><p className="text-sm leading-relaxed text-white/55">Get discovered by thousands of FiveM server owners worldwide.</p></div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Our Services / Crux Ecosystem */}
+      {/* Our Services / Crux Ecosystem — editorial banners (Variant 2) */}
       <section className="mt-20 px-3 sm:px-6">
-        <div className="mx-auto max-w-5xl">
-          <div className="mb-10 text-center">
-            <span className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-4 py-1.5 text-sm font-semibold text-white/70">
-              <span className="h-1.5 w-1.5 rounded-full bg-orange-400" /> Our Services
-            </span>
-            <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl">Powered by the <span className="text-orange-400">Crux</span> Ecosystem</h2>
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-12">
+            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-orange-400">Our Services</p>
+            <h2 className="max-w-2xl text-3xl font-extrabold tracking-tight sm:text-5xl">Powered by the <span className="text-orange-400">Crux</span> Ecosystem</h2>
           </div>
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="space-y-6">
+            {/* GameCrux — visual left */}
             <a href="https://www.gamecrux.io/" target="_blank" rel="noopener noreferrer"
-              className="group block rounded-2xl border border-white/[0.07] bg-white/[0.03] p-7 backdrop-blur-md transition hover:-translate-y-1 hover:border-orange-500/30">
-              <div className="mb-4 flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-orange-500/20 bg-orange-500/10">
-                  <Image src="/gamecrux.webp" alt="GameCrux" width={40} height={40} className="rounded-lg" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold">GameCrux</h3>
-                  <p className="text-xs font-medium uppercase tracking-wide text-orange-400/70">Gaming Platform</p>
-                </div>
+              className="group flex flex-col overflow-hidden rounded-3xl border border-white/[0.08] bg-white/[0.04] backdrop-blur-md transition-all hover:border-orange-500/40 md:flex-row">
+              <div className="relative flex items-center justify-center overflow-hidden p-12 md:w-2/5" style={{ background: "linear-gradient(135deg, rgba(249,115,22,0.25), rgba(20,20,20,0.4))" }}>
+                <div className="absolute inset-0 opacity-30" style={{ background: "radial-gradient(circle at center, rgba(249,115,22,0.5), transparent 70%)" }} />
+                <Image src="/gamecrux.webp" alt="GameCrux" width={96} height={96} className="relative rounded-2xl drop-shadow-2xl" />
               </div>
-              <p className="text-sm leading-relaxed text-white/45">Discover, play, and enjoy a curated selection of exciting minigames.</p>
-              <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-orange-400 group-hover:gap-2.5">Visit GameCrux <ArrowRight className="h-4 w-4" /></span>
+              <div className="flex flex-col justify-center p-8 sm:p-12 md:w-3/5">
+                <span className="mb-3 text-xs font-semibold uppercase tracking-widest text-yellow-400/80">Gaming Platform</span>
+                <h3 className="mb-4 text-3xl font-extrabold sm:text-4xl">GameCrux</h3>
+                <p className="mb-7 max-w-lg text-lg leading-relaxed text-white/60">Discover, play, and enjoy a curated selection of exciting minigames.</p>
+                <span className="inline-flex items-center gap-2 text-base font-semibold text-orange-400 transition-all group-hover:gap-3">Visit GameCrux <ArrowRight className="h-5 w-5" /></span>
+              </div>
             </a>
+            {/* Crux Studio — visual right */}
             <a href="https://crux.tebex.io/" target="_blank" rel="noopener noreferrer"
-              className="group block rounded-2xl border border-white/[0.07] bg-white/[0.03] p-7 backdrop-blur-md transition hover:-translate-y-1 hover:border-orange-500/30">
-              <div className="mb-4 flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-orange-500/20 bg-orange-500/10">
-                  <Image src="/cs.webp" alt="Crux Studio" width={40} height={40} className="rounded-lg" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold">Crux Studio</h3>
-                  <p className="text-xs font-medium uppercase tracking-wide text-orange-400/70">FiveM Marketplace</p>
-                </div>
+              className="group flex flex-col overflow-hidden rounded-3xl border border-white/[0.08] bg-white/[0.04] backdrop-blur-md transition-all hover:border-orange-500/40 md:flex-row-reverse">
+              <div className="relative flex items-center justify-center overflow-hidden p-12 md:w-2/5" style={{ background: "linear-gradient(135deg, rgba(250,204,21,0.22), rgba(20,20,20,0.4))" }}>
+                <div className="absolute inset-0 opacity-30" style={{ background: "radial-gradient(circle at center, rgba(250,204,21,0.5), transparent 70%)" }} />
+                <Image src="/cs.webp" alt="Crux Studio" width={96} height={96} className="relative rounded-2xl drop-shadow-2xl" />
               </div>
-              <p className="text-sm leading-relaxed text-white/45">Premium FiveM assets crafted with passion and attention to detail.</p>
-              <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-orange-400 group-hover:gap-2.5">Visit Crux Studio <ArrowRight className="h-4 w-4" /></span>
+              <div className="flex flex-col justify-center p-8 sm:p-12 md:w-3/5 md:items-end md:text-right">
+                <span className="mb-3 text-xs font-semibold uppercase tracking-widest text-yellow-400/80">FiveM Marketplace</span>
+                <h3 className="mb-4 text-3xl font-extrabold sm:text-4xl">Crux Studio</h3>
+                <p className="mb-7 max-w-lg text-lg leading-relaxed text-white/60">Premium FiveM assets crafted with passion and attention to detail.</p>
+                <span className="inline-flex items-center gap-2 text-base font-semibold text-orange-400 transition-all group-hover:gap-3">Visit Crux Studio <ArrowRight className="h-5 w-5" /></span>
+              </div>
             </a>
           </div>
         </div>
       </section>
 
-      {/* FAQ */}
+      {/* FAQ — two column (Variant 2) */}
       <section className="mt-20 px-3 sm:px-6">
-        <div className="mx-auto max-w-3xl">
-          <div className="mb-10 text-center">
-            <span className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-4 py-1.5 text-sm font-semibold text-white/70">
-              <span className="h-1.5 w-1.5 rounded-full bg-orange-400" /> FAQ
-            </span>
-            <h2 className="text-3xl font-extrabold tracking-tight sm:text-5xl">Frequently Asked <span className="text-orange-400">Questions</span></h2>
+        <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-2 lg:gap-16">
+          {/* Left sticky intro */}
+          <div className="lg:sticky lg:top-28 lg:self-start">
+            <span className="text-xs font-bold uppercase tracking-[0.25em] text-orange-400">FAQ</span>
+            <h2 className="mt-3 text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">Frequently Asked <span className="text-orange-400">Questions</span></h2>
+            <p className="mt-5 max-w-md leading-relaxed text-white/60">Still have questions? Everything you need to know about publishing, payouts, and growing on FiveCrux is right here.</p>
+            <div className="mt-8 flex max-w-md items-center gap-4 rounded-2xl border border-white/[0.08] bg-white/[0.04] p-5 backdrop-blur-md">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-orange-500/30 bg-orange-500/15"><MessagesSquare className="h-5 w-5 text-orange-400" /></span>
+              <div>
+                <p className="text-sm font-semibold">Can&apos;t find an answer?</p>
+                <p className="text-sm text-white/50">Reach out to our support team anytime.</p>
+              </div>
+            </div>
           </div>
-          <div className="flex flex-col gap-0.5 rounded-[26px] border border-white/[0.08] bg-white/[0.05] p-1.5">
+          {/* Right accordion */}
+          <div className="flex flex-col gap-3">
             {FAQS.map((f) => (
               <FaqItem key={f.q} q={f.q} a={f.a} />
             ))}

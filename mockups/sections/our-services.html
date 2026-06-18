@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Our Services — 3 Variants</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              orange: '#f97316',
+              yellow: '#facc15',
+            },
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    body { font-family: Inter, sans-serif; background: #0a0a0a; color: #fff; }
+    .glass {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .eyebrow {
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: #f97316;
+    }
+    .orange-glow:hover {
+      border-color: rgba(249, 115, 22, 0.5);
+      box-shadow: 0 0 0 1px rgba(249, 115, 22, 0.25), 0 20px 60px -20px rgba(249, 115, 22, 0.45);
+      transform: translateY(-4px);
+    }
+    .accent-line {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #f97316, #facc15, transparent);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .group:hover .accent-line { opacity: 1; }
+    .transition-all { transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1); }
+    .grid-bg {
+      background-image:
+        radial-gradient(circle at 50% 0%, rgba(249, 115, 22, 0.08), transparent 60%),
+        linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+      background-size: 100% 100%, 44px 44px, 44px 44px;
+    }
+    .cta-arrow { transition: transform 0.3s ease; }
+    .group:hover .cta-arrow,
+    .cta-link:hover .cta-arrow { transform: translateX(5px); }
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent);
+    }
+    .variant-chip {
+      background: linear-gradient(135deg, #f97316, #facc15);
+      color: #0a0a0a;
+      font-weight: 800;
+    }
+    ::-webkit-scrollbar { width: 10px; }
+    ::-webkit-scrollbar-track { background: #0a0a0a; }
+    ::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 6px; }
+    .preview-game {
+      background: radial-gradient(circle at 30% 20%, rgba(249,115,22,0.35), transparent 55%),
+                  radial-gradient(circle at 80% 70%, rgba(250,204,21,0.25), transparent 55%),
+                  linear-gradient(135deg, #1a1207, #0d0d0d);
+    }
+    .preview-studio {
+      background: radial-gradient(circle at 70% 25%, rgba(250,204,21,0.3), transparent 55%),
+                  radial-gradient(circle at 20% 80%, rgba(249,115,22,0.3), transparent 55%),
+                  linear-gradient(135deg, #0d0d0d, #1a1207);
+    }
+  </style>
+</head>
+<body class="antialiased">
+
+  <!-- Sticky top title -->
+  <header class="sticky top-0 z-50 glass border-b border-white/10">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+      <h1 class="text-base sm:text-lg font-bold tracking-tight flex items-center gap-2">
+        <i data-lucide="layout-grid" class="w-5 h-5 text-brand-orange"></i>
+        Our Services <span class="text-white/40 font-medium">— 3 Variants</span>
+      </h1>
+      <span class="text-xs text-white/40 hidden sm:inline">Crux Ecosystem · Mockup</span>
+    </div>
+  </header>
+
+  <!-- ============================== VARIANT 1 ============================== -->
+  <section class="grid-bg">
+    <div class="max-w-7xl mx-auto px-6 pt-16 pb-6">
+      <div class="flex flex-col sm:flex-row sm:items-center gap-4 mb-2">
+        <span class="variant-chip text-sm px-4 py-1.5 rounded-full w-max">VARIANT 1</span>
+        <p class="text-sm text-white/50">Two large side-by-side glass cards · logo chip, CTA arrow, orange hover glow + top accent line.</p>
+      </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-6 pb-20">
+      <div class="text-center mb-12">
+        <p class="eyebrow mb-3">Our Services</p>
+        <h2 class="text-3xl sm:text-5xl font-extrabold tracking-tight">
+          Powered by the <span class="text-brand-orange">Crux</span> Ecosystem
+        </h2>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- GameCrux -->
+        <a href="#" target="_blank" rel="noopener" class="group relative glass rounded-2xl p-8 sm:p-10 overflow-hidden transition-all orange-glow block">
+          <div class="accent-line"></div>
+          <div class="flex items-center justify-center w-16 h-16 rounded-2xl bg-brand-orange/15 border border-brand-orange/30 mb-7">
+            <i data-lucide="gamepad-2" class="w-8 h-8 text-brand-orange"></i>
+          </div>
+          <span class="text-xs font-semibold tracking-wide uppercase text-brand-yellow/80">Gaming Platform</span>
+          <h3 class="text-2xl sm:text-3xl font-bold mt-2 mb-3">GameCrux</h3>
+          <p class="text-white/60 leading-relaxed mb-8">Discover, play, and enjoy a curated selection of exciting minigames.</p>
+          <span class="inline-flex items-center gap-2 text-sm font-semibold text-brand-orange">
+            Visit GameCrux
+            <i data-lucide="arrow-up-right" class="w-4 h-4 cta-arrow"></i>
+          </span>
+        </a>
+
+        <!-- Crux Studio -->
+        <a href="#" class="group relative glass rounded-2xl p-8 sm:p-10 overflow-hidden transition-all orange-glow block">
+          <div class="accent-line"></div>
+          <div class="flex items-center justify-center w-16 h-16 rounded-2xl bg-brand-orange/15 border border-brand-orange/30 mb-7">
+            <i data-lucide="store" class="w-8 h-8 text-brand-orange"></i>
+          </div>
+          <span class="text-xs font-semibold tracking-wide uppercase text-brand-yellow/80">FiveM Marketplace</span>
+          <h3 class="text-2xl sm:text-3xl font-bold mt-2 mb-3">Crux Studio</h3>
+          <p class="text-white/60 leading-relaxed mb-8">Premium FiveM assets crafted with passion and attention to detail.</p>
+          <span class="inline-flex items-center gap-2 text-sm font-semibold text-brand-orange">
+            Visit Crux Studio
+            <i data-lucide="arrow-up-right" class="w-4 h-4 cta-arrow"></i>
+          </span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <div class="max-w-7xl mx-auto px-6"><div class="divider"></div></div>
+
+  <!-- ============================== VARIANT 2 ============================== -->
+  <section>
+    <div class="max-w-7xl mx-auto px-6 pt-16 pb-6">
+      <div class="flex flex-col sm:flex-row sm:items-center gap-4 mb-2">
+        <span class="variant-chip text-sm px-4 py-1.5 rounded-full w-max">VARIANT 2</span>
+        <p class="text-sm text-white/50">Two wide horizontal banner rows · big visual block alternating sides · more editorial.</p>
+      </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-6 pb-20">
+      <div class="mb-12">
+        <p class="eyebrow mb-3">Our Services</p>
+        <h2 class="text-3xl sm:text-5xl font-extrabold tracking-tight max-w-2xl">
+          Powered by the <span class="text-brand-orange">Crux</span> Ecosystem
+        </h2>
+      </div>
+
+      <div class="space-y-6">
+        <!-- GameCrux banner (visual left) -->
+        <a href="#" target="_blank" rel="noopener" class="group glass rounded-3xl overflow-hidden flex flex-col md:flex-row transition-all hover:border-brand-orange/40 block">
+          <div class="preview-game md:w-2/5 flex items-center justify-center p-12 relative overflow-hidden">
+            <div class="absolute inset-0 opacity-30 bg-[radial-gradient(circle_at_center,rgba(249,115,22,0.5),transparent_70%)]"></div>
+            <i data-lucide="gamepad-2" class="w-24 h-24 text-white/90 relative drop-shadow-2xl"></i>
+          </div>
+          <div class="md:w-3/5 p-8 sm:p-12 flex flex-col justify-center">
+            <span class="text-xs font-semibold tracking-widest uppercase text-brand-yellow/80 mb-3">Gaming Platform</span>
+            <h3 class="text-3xl sm:text-4xl font-extrabold mb-4">GameCrux</h3>
+            <p class="text-white/60 text-lg leading-relaxed mb-7 max-w-lg">Discover, play, and enjoy a curated selection of exciting minigames.</p>
+            <span class="inline-flex items-center gap-2 text-base font-semibold text-brand-orange">
+              Visit GameCrux <i data-lucide="arrow-right" class="w-5 h-5 cta-arrow"></i>
+            </span>
+          </div>
+        </a>
+
+        <!-- Crux Studio banner (visual right) -->
+        <a href="#" class="group glass rounded-3xl overflow-hidden flex flex-col md:flex-row-reverse transition-all hover:border-brand-orange/40 block">
+          <div class="preview-studio md:w-2/5 flex items-center justify-center p-12 relative overflow-hidden">
+            <div class="absolute inset-0 opacity-30 bg-[radial-gradient(circle_at_center,rgba(250,204,21,0.5),transparent_70%)]"></div>
+            <i data-lucide="store" class="w-24 h-24 text-white/90 relative drop-shadow-2xl"></i>
+          </div>
+          <div class="md:w-3/5 p-8 sm:p-12 flex flex-col justify-center md:items-end md:text-right">
+            <span class="text-xs font-semibold tracking-widest uppercase text-brand-yellow/80 mb-3">FiveM Marketplace</span>
+            <h3 class="text-3xl sm:text-4xl font-extrabold mb-4">Crux Studio</h3>
+            <p class="text-white/60 text-lg leading-relaxed mb-7 max-w-lg">Premium FiveM assets crafted with passion and attention to detail.</p>
+            <span class="inline-flex items-center gap-2 text-base font-semibold text-brand-orange">
+              Visit Crux Studio <i data-lucide="arrow-right" class="w-5 h-5 cta-arrow"></i>
+            </span>
+          </div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <div class="max-w-7xl mx-auto px-6"><div class="divider"></div></div>
+
+  <!-- ============================== VARIANT 3 ============================== -->
+  <section class="grid-bg">
+    <div class="max-w-7xl mx-auto px-6 pt-16 pb-6">
+      <div class="flex flex-col sm:flex-row sm:items-center gap-4 mb-2">
+        <span class="variant-chip text-sm px-4 py-1.5 rounded-full w-max">VARIANT 3</span>
+        <p class="text-sm text-white/50">App-store-style feature cards · gradient preview media on top, details below, platform badges.</p>
+      </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-6 pb-24">
+      <div class="text-center mb-12">
+        <p class="eyebrow mb-3">Our Services</p>
+        <h2 class="text-3xl sm:text-5xl font-extrabold tracking-tight">
+          Powered by the <span class="text-brand-orange">Crux</span> Ecosystem
+        </h2>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-7">
+        <!-- GameCrux listing -->
+        <article class="group glass rounded-2xl overflow-hidden transition-all hover:border-brand-orange/40 hover:-translate-y-1">
+          <div class="preview-game h-44 sm:h-52 relative flex items-center justify-center overflow-hidden">
+            <div class="absolute top-4 left-4 flex items-center gap-2 glass rounded-full px-3 py-1 text-xs font-semibold">
+              <span class="w-2 h-2 rounded-full bg-brand-orange"></span> Gaming Platform
+            </div>
+            <i data-lucide="gamepad-2" class="w-20 h-20 text-white/85 drop-shadow-xl group-hover:scale-110 transition-all"></i>
+          </div>
+          <div class="p-7">
+            <div class="flex items-start gap-4 mb-4">
+              <div class="flex items-center justify-center w-12 h-12 rounded-xl bg-brand-orange/15 border border-brand-orange/30 shrink-0">
+                <i data-lucide="gamepad-2" class="w-6 h-6 text-brand-orange"></i>
+              </div>
+              <div>
+                <h3 class="text-xl font-bold leading-tight">GameCrux</h3>
+                <div class="flex flex-wrap gap-2 mt-1.5">
+                  <span class="text-[11px] font-medium px-2 py-0.5 rounded bg-white/5 border border-white/10 text-white/70">Minigames</span>
+                  <span class="text-[11px] font-medium px-2 py-0.5 rounded bg-white/5 border border-white/10 text-white/70">Web</span>
+                </div>
+              </div>
+            </div>
+            <p class="text-white/60 leading-relaxed mb-6">Discover, play, and enjoy a curated selection of exciting minigames.</p>
+            <a href="#" target="_blank" rel="noopener" class="cta-link inline-flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-brand-orange text-black font-semibold hover:bg-brand-orange/90 transition-all">
+              Visit GameCrux <i data-lucide="arrow-up-right" class="w-4 h-4 cta-arrow"></i>
+            </a>
+          </div>
+        </article>
+
+        <!-- Crux Studio listing -->
+        <article class="group glass rounded-2xl overflow-hidden transition-all hover:border-brand-orange/40 hover:-translate-y-1">
+          <div class="preview-studio h-44 sm:h-52 relative flex items-center justify-center overflow-hidden">
+            <div class="absolute top-4 left-4 flex items-center gap-2 glass rounded-full px-3 py-1 text-xs font-semibold">
+              <span class="w-2 h-2 rounded-full bg-brand-yellow"></span> FiveM Marketplace
+            </div>
+            <i data-lucide="store" class="w-20 h-20 text-white/85 drop-shadow-xl group-hover:scale-110 transition-all"></i>
+          </div>
+          <div class="p-7">
+            <div class="flex items-start gap-4 mb-4">
+              <div class="flex items-center justify-center w-12 h-12 rounded-xl bg-brand-orange/15 border border-brand-orange/30 shrink-0">
+                <i data-lucide="store" class="w-6 h-6 text-brand-orange"></i>
+              </div>
+              <div>
+                <h3 class="text-xl font-bold leading-tight">Crux Studio</h3>
+                <div class="flex flex-wrap gap-2 mt-1.5">
+                  <span class="text-[11px] font-medium px-2 py-0.5 rounded bg-white/5 border border-white/10 text-white/70">FiveM</span>
+                  <span class="text-[11px] font-medium px-2 py-0.5 rounded bg-white/5 border border-white/10 text-white/70">Assets</span>
+                </div>
+              </div>
+            </div>
+            <p class="text-white/60 leading-relaxed mb-6">Premium FiveM assets crafted with passion and attention to detail.</p>
+            <a href="#" class="cta-link inline-flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-brand-orange text-black font-semibold hover:bg-brand-orange/90 transition-all">
+              Visit Crux Studio <i data-lucide="arrow-up-right" class="w-4 h-4 cta-arrow"></i>
+            </a>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <footer class="border-t border-white/10 py-8 text-center text-xs text-white/30">
+    Crux Ecosystem · Our Services section mockups
+  </footer>
+
+  <script>lucide.createIcons()</script>
+</body>
+</html>
