@@ -5,7 +5,7 @@ import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { motion } from "framer-motion"
-import { Package, DollarSign, Image as ImageIcon, Sparkles, FileArchive, ShieldCheck, X, Upload } from "lucide-react"
+import { Package, DollarSign, Image as ImageIcon, Sparkles, FileArchive, ShieldCheck, X, Upload, Store } from "lucide-react"
 import { Button } from "@/componentss/ui/button"
 import { Input } from "@/componentss/ui/input"
 import { Textarea } from "@/componentss/ui/textarea"
@@ -33,6 +33,8 @@ export default function SubmitPropPage() {
     price: "",
     discountPercentage: "0",
     zipFile: "",
+    tebexStoreToken: "",
+    tebexPackageId: "",
   })
 
   const [media, setMedia] = useState<{ images: string[] }>({ images: [] })
@@ -55,6 +57,8 @@ export default function SubmitPropPage() {
               price: prop.price?.toString() || "",
               discountPercentage: prop.discountPercentage?.toString() || "0",
               zipFile: prop.zipFile || "",
+              tebexStoreToken: prop.tebexStoreToken || "",
+              tebexPackageId: prop.tebexPackageId || "",
             })
             setMedia({ images: prop.images || [] })
           } else {
@@ -175,6 +179,8 @@ export default function SubmitPropPage() {
         discountPercentage: parseFloat(formData.discountPercentage || "0"),
         images: media.images,
         zipFile: formData.zipFile || "https://example.com/placeholder.zip", // Fallback for testing
+        tebexStoreToken: formData.tebexStoreToken.trim() || null,
+        tebexPackageId: formData.tebexPackageId.trim() || null,
       }
 
       const url = isEditMode && propId ? `/api/props/${propId}` : "/api/props"
@@ -400,6 +406,41 @@ export default function SubmitPropPage() {
                         max="100"
                         value={formData.discountPercentage}
                         onChange={(e) => setFormData({ ...formData, discountPercentage: e.target.value })}
+                        className={inputClass}
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Tebex (optional) */}
+              <Card className={cardClass}>
+                <CardHeader>
+                  <CardTitle className="text-white flex items-center gap-3 text-lg">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-500/15 text-orange-400">
+                      <Store className="h-5 w-5" />
+                    </span>
+                    Tebex (optional)
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-5">
+                  <p className="text-sm text-gray-400">Add these to sell this prop directly via your Tebex store</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+                    <div>
+                      <Label className="text-gray-200">Tebex Store Token</Label>
+                      <Input
+                        value={formData.tebexStoreToken}
+                        onChange={(e) => setFormData({ ...formData, tebexStoreToken: e.target.value })}
+                        placeholder="Your Tebex webstore token"
+                        className={inputClass}
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-gray-200">Tebex Package ID</Label>
+                      <Input
+                        value={formData.tebexPackageId}
+                        onChange={(e) => setFormData({ ...formData, tebexPackageId: e.target.value })}
+                        placeholder="Tebex package ID"
                         className={inputClass}
                       />
                     </div>

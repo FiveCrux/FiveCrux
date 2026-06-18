@@ -1,31 +1,53 @@
-"use client"
-
-import { motion } from "framer-motion"
-import { Loader2 } from "lucide-react"
-
 export default function Loading() {
   return (
-    <div className="min-h-screen text-white flex items-center justify-center">
-      <motion.div
-        className="flex flex-col items-center gap-4"
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5 }}
-      >
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
-        >
-          <Loader2 className="h-12 w-12 text-orange-500" />
-        </motion.div>
-        <motion.p
-          className="text-gray-400"
-          animate={{ opacity: [0.5, 1, 0.5] }}
-          transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
-        >
-          Loading script details...
-        </motion.p>
-      </motion.div>
+    <div className="min-h-screen bg-[#0a0a0a] text-white">
+      <div className="mx-auto max-w-7xl px-4 pt-24 pb-16 sm:px-6 lg:px-8">
+        {/* Breadcrumb */}
+        <div className="mb-6 h-4 w-48 animate-pulse rounded-lg border border-white/[0.06] bg-white/[0.04]" />
+
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+          {/* Gallery column */}
+          <div className="lg:col-span-2 space-y-4">
+            <div className="aspect-video w-full animate-pulse rounded-2xl border border-white/[0.06] bg-white/[0.04]" />
+            <div className="grid grid-cols-4 gap-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="aspect-video animate-pulse rounded-xl border border-white/[0.06] bg-white/[0.04]"
+                />
+              ))}
+            </div>
+            <div className="mt-6 space-y-3">
+              <div className="h-6 w-40 animate-pulse rounded-lg border border-white/[0.06] bg-white/[0.04]" />
+              <div className="h-4 w-full animate-pulse rounded-lg border border-white/[0.06] bg-white/[0.04]" />
+              <div className="h-4 w-11/12 animate-pulse rounded-lg border border-white/[0.06] bg-white/[0.04]" />
+              <div className="h-4 w-4/5 animate-pulse rounded-lg border border-white/[0.06] bg-white/[0.04]" />
+            </div>
+          </div>
+
+          {/* Info column */}
+          <div className="space-y-4">
+            <div className="rounded-2xl border border-white/[0.06] bg-white/[0.04] p-6">
+              <div className="h-7 w-3/4 animate-pulse rounded-lg border border-white/[0.06] bg-white/[0.06]" />
+              <div className="mt-4 h-5 w-1/2 animate-pulse rounded-lg border border-white/[0.06] bg-white/[0.06]" />
+              <div className="mt-6 h-10 w-32 animate-pulse rounded-lg border border-white/[0.06] bg-white/[0.06]" />
+              <div className="mt-6 space-y-3">
+                <div className="h-11 w-full animate-pulse rounded-xl border border-white/[0.06] bg-white/[0.06]" />
+                <div className="h-11 w-full animate-pulse rounded-xl border border-white/[0.06] bg-white/[0.06]" />
+              </div>
+            </div>
+            <div className="rounded-2xl border border-white/[0.06] bg-white/[0.04] p-6">
+              <div className="flex items-center gap-3">
+                <div className="h-12 w-12 animate-pulse rounded-full border border-white/[0.06] bg-white/[0.06]" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 w-2/3 animate-pulse rounded-lg border border-white/[0.06] bg-white/[0.06]" />
+                  <div className="h-3 w-1/2 animate-pulse rounded-lg border border-white/[0.06] bg-white/[0.06]" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

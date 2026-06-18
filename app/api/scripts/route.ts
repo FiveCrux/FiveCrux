@@ -53,6 +53,9 @@ export async function POST(request: NextRequest) {
       youtubeVideoLink: body.youtube_video_link || null,
       featured: body.featured || false,
       free: body.free || false,
+      // Tebex Headless integration: seller's own store token + package id (nullable)
+      tebexStoreToken: body.tebexStoreToken || null,
+      tebexPackageId: body.tebexPackageId || null,
       id: 0
     })
 
