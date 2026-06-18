@@ -113,6 +113,9 @@ export default function NavbarComponent() {
   }
 
   return (
+    <>
+    {/* Spacer to offset the fixed navbar (~82px) so page content never hides behind it */}
+    <div aria-hidden className="h-[88px]" />
     <Navbar className="top-0 z-[60]">
         {/* Desktop Navigation */}
         <NavBody>
@@ -260,5 +263,6 @@ export default function NavbarComponent() {
           </MobileNavMenu>
         </MobileNav>
       </Navbar>
+    </>
   )
 }
