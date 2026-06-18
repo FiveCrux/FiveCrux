@@ -293,10 +293,15 @@ export default function ProfilePage() {
     const fetchActiveSlots = async () => {
       if (!session?.user?.id || status !== "authenticated") return;
 
+      // Abort the request after 8s so a slow/down API never blocks the slot UI
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
       try {
         const response = await fetch("/api/user/ad-slots", {
           credentials: "include", // Important for session cookies
+          signal: controller.signal,
         });
+        clearTimeout(timeoutId);
 
         if (response.ok) {
           const data = await response.json();
@@ -318,6 +323,7 @@ export default function ProfilePage() {
           setAvailableSlotUniqueIds([]);
         }
       } catch (error) {
+        clearTimeout(timeoutId);
         console.error("Error fetching active slots:", error);
         setPurchasedSlots(0);
         setAvailableSlotUniqueIds([]);
@@ -356,6 +362,8 @@ export default function ProfilePage() {
   const handleDeleteAd = async (adId: number) => {
     if (!confirm("Are you sure you want to delete this ad?")) return;
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
     try {
       const response = await fetch(`/api/users/advertisements?id=${adId}`, {
         method: "DELETE",
@@ -363,7 +371,9 @@ export default function ProfilePage() {
         headers: {
           "Content-Type": "application/json",
         },
+        signal: controller.signal,
       });
+      clearTimeout(timeoutId);
 
       if (response.ok) {
         // Refetch ads to update the list
@@ -373,6 +383,7 @@ export default function ProfilePage() {
         toast.error("Failed to delete ad");
       }
     } catch (error) {
+      clearTimeout(timeoutId);
       console.error("Error deleting ad:", error);
       toast.error("Error deleting ad");
     }
@@ -432,6 +443,8 @@ export default function ProfilePage() {
     if (!file) return;
 
     setUploadingProfilePicture(true);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
     try {
       const formData = new FormData();
       formData.append("file", file);
@@ -439,7 +452,9 @@ export default function ProfilePage() {
       const response = await fetch("/api/user/profile-picture", {
         method: "POST",
         body: formData,
+        signal: controller.signal,
       });
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         const error = await response.json();
@@ -452,6 +467,7 @@ export default function ProfilePage() {
       // Refresh session to get updated profile picture
       await updateSession();
     } catch (error) {
+      clearTimeout(timeoutId);
       console.error("Upload error:", error);
       toast.error(
         `Failed to upload profile picture: ${
@@ -471,10 +487,14 @@ export default function ProfilePage() {
     if (!confirm("Are you sure you want to remove your profile picture?"))
       return;
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
     try {
       const response = await fetch("/api/user/profile-picture", {
         method: "DELETE",
+        signal: controller.signal,
       });
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         throw new Error("Failed to remove profile picture");
@@ -485,6 +505,7 @@ export default function ProfilePage() {
       // Refresh session to get updated profile picture
       await updateSession();
     } catch (error) {
+      clearTimeout(timeoutId);
       console.error("Remove error:", error);
       toast.error("Failed to remove profile picture");
     }
@@ -502,6 +523,8 @@ export default function ProfilePage() {
     }
 
     setSavingName(true);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
     try {
       const response = await fetch("/api/user/name", {
         method: "PATCH",
@@ -509,7 +532,9 @@ export default function ProfilePage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ name: nameValue.trim() }),
+        signal: controller.signal,
       });
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         const error = await response.json();
@@ -522,6 +547,7 @@ export default function ProfilePage() {
       // Refresh session to get updated name
       await updateSession();
     } catch (error) {
+      clearTimeout(timeoutId);
       console.error("Save name error:", error);
       toast.error(
         `Failed to update name: ${
@@ -549,7 +575,7 @@ export default function ProfilePage() {
     return (
       <>
         <Navbar />
-        <div className="min-h-screen text-white flex items-center justify-center">
+        <div className="min-h-screen bg-[#0a0a0a] text-white flex items-center justify-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-orange-500"></div>
         </div>
       </>
@@ -563,24 +589,31 @@ export default function ProfilePage() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen text-white">
+      <div className="min-h-screen bg-[#0a0a0a] text-white">
         {/* Header */}
-        <div className="bg-gradient-to-r from-orange-500/10 to-yellow-400/10 py-16 px-4 sm:px-6 lg:px-8 border-b border-gray-800/50">
-          <div className="max-w-7xl mx-auto">
+        <div className="relative overflow-hidden border-b border-white/[0.08] px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+          {/* Ambient gradient glow */}
+          <div className="pointer-events-none absolute inset-0">
+            <div className="absolute -top-24 left-1/4 h-72 w-72 rounded-full bg-orange-500/10 blur-3xl" />
+            <div className="absolute -bottom-24 right-1/4 h-72 w-72 rounded-full bg-yellow-400/10 blur-3xl" />
+          </div>
+          <div className="relative max-w-7xl mx-auto">
             <motion.div
-              className="flex items-center gap-3 sm:gap-6 flex-wrap sm:flex-nowrap"
+              className="flex flex-col sm:flex-row sm:items-center gap-5 sm:gap-7"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
             >
-              <div className="relative group">
-                <Avatar className="h-20 w-20">
-                  <AvatarImage src={profilePictureUrl || ""} />
-                  <AvatarFallback className="bg-orange-500 text-white text-2xl">
-                    {session.user?.name?.charAt(0) || "U"}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-full flex items-center justify-center">
+              <div className="relative group shrink-0 mx-auto sm:mx-0">
+                <div className="rounded-full p-[2px] bg-gradient-to-br from-orange-500 to-yellow-400">
+                  <Avatar className="h-24 w-24 sm:h-28 sm:w-28 ring-2 ring-[#0a0a0a]">
+                    <AvatarImage src={profilePictureUrl || ""} />
+                    <AvatarFallback className="bg-gradient-to-br from-orange-500 to-yellow-400 text-black text-3xl font-bold">
+                      {session.user?.name?.charAt(0) || "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                </div>
+                <div className="absolute inset-0 bg-black/55 opacity-0 group-hover:opacity-100 transition-opacity rounded-full flex items-center justify-center">
                   <label className="cursor-pointer">
                     <input
                       type="file"
@@ -600,18 +633,22 @@ export default function ProfilePage() {
                 {profilePictureUrl && (
                   <button
                     onClick={handleRemoveProfilePicture}
-                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                    className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors shadow-lg"
                     title="Remove profile picture"
                   >
                     <X className="h-4 w-4" />
                   </button>
                 )}
               </div>
-              <div className="min-w-0 flex-1">
-                <h1 className="text-2xl sm:text-3xl font-bold truncate">{session.user?.name}</h1>
-                <p className="text-gray-400 text-sm sm:text-base truncate">{session.user?.email}</p>
-                <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-2">
-                  <div className="flex flex-wrap gap-2">
+              <div className="min-w-0 flex-1 text-center sm:text-left">
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight truncate">
+                  {session.user?.name}
+                </h1>
+                <p className="text-white/50 text-sm sm:text-base truncate mt-1">
+                  {session.user?.email}
+                </p>
+                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 sm:gap-3 mt-3">
+                  <div className="flex flex-wrap justify-center sm:justify-start gap-2">
                     {(session.user as any)?.roles?.length > 0 ? (
                       (session.user as any).roles.map((role: string) => (
                         <Badge
@@ -627,7 +664,7 @@ export default function ProfilePage() {
                               ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
                               : role === "crew"
                               ? "bg-blue-500/20 text-blue-400 border-blue-500/30"
-                              : "bg-gray-500/20 text-gray-400 border-gray-500/30"
+                              : "bg-white/[0.06] text-white/60 border-white/[0.1]"
                           }`}
                         >
                           {role === "verified_creator"
@@ -638,17 +675,45 @@ export default function ProfilePage() {
                         </Badge>
                       ))
                     ) : (
-                      <Badge className="bg-gray-500/20 text-gray-400 border-gray-500/30">
+                      <Badge className="bg-white/[0.06] text-white/60 border-white/[0.1]">
                         Loading roles...
                       </Badge>
                     )}
                   </div>
-                  <span className="text-gray-500 text-xs sm:text-sm whitespace-nowrap">
+                  <span className="inline-flex items-center gap-1.5 text-white/40 text-xs sm:text-sm whitespace-nowrap">
+                    <Calendar className="h-3.5 w-3.5" />
                     Member since {new Date().toLocaleDateString()}
                   </span>
-                  {/* Debug session button removed */}
                 </div>
               </div>
+            </motion.div>
+
+            {/* Stat tiles */}
+            <motion.div
+              className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mt-8"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.1 }}
+            >
+              {[
+                { label: "Scripts", value: stats.totalScripts, icon: Package, color: "text-orange-400", bg: "bg-orange-500/15" },
+                { label: "Giveaways", value: stats.totalGiveaways, icon: Gift, color: "text-green-400", bg: "bg-green-500/15" },
+                { label: "Ads", value: stats.totalAds, icon: Tag, color: "text-blue-400", bg: "bg-blue-500/15" },
+                { label: "Entries", value: stats.totalEntries, icon: Sparkles, color: "text-purple-400", bg: "bg-purple-500/15" },
+              ].map((tile) => (
+                <div
+                  key={tile.label}
+                  className="flex items-center gap-3 rounded-2xl bg-white/[0.04] border border-white/[0.08] backdrop-blur-sm p-3 sm:p-4"
+                >
+                  <div className={`shrink-0 p-2.5 rounded-xl ${tile.bg}`}>
+                    <tile.icon className={`h-5 w-5 ${tile.color}`} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xl sm:text-2xl font-bold leading-none">{tile.value}</p>
+                    <p className="text-white/45 text-xs sm:text-sm mt-1 truncate">{tile.label}</p>
+                  </div>
+                </div>
+              ))}
             </motion.div>
           </div>
         </div>
@@ -662,59 +727,59 @@ export default function ProfilePage() {
           >
             {/* Mobile Tabs */}
             <div className="lg:hidden -mx-4 sm:-mx-6 px-4 sm:px-6 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-              <TabsList className="flex w-max min-w-full bg-gray-800/50 gap-2 p-1">
+              <TabsList className="flex w-max min-w-full bg-white/[0.04] border border-white/[0.08] backdrop-blur-sm rounded-xl gap-1.5 p-1.5">
               <TabsTrigger
                 value="overview"
-                className="data-[state=active]:bg-orange-500 whitespace-nowrap px-3 py-2 text-xs flex-shrink-0"
+                className="rounded-lg text-white/60 data-[state=active]:bg-orange-500 data-[state=active]:text-black whitespace-nowrap px-3 py-2 text-xs flex-shrink-0"
               >
                 Overview
               </TabsTrigger>
               <TabsTrigger
                 value="scripts"
-                className="data-[state=active]:bg-orange-500 whitespace-nowrap px-3 py-2 text-xs flex-shrink-0"
+                className="rounded-lg text-white/60 data-[state=active]:bg-orange-500 data-[state=active]:text-black whitespace-nowrap px-3 py-2 text-xs flex-shrink-0"
               >
                 Scripts
               </TabsTrigger>
               <TabsTrigger
                 value="props"
-                className="data-[state=active]:bg-orange-500 whitespace-nowrap px-3 py-2 text-xs flex-shrink-0"
+                className="rounded-lg text-white/60 data-[state=active]:bg-orange-500 data-[state=active]:text-black whitespace-nowrap px-3 py-2 text-xs flex-shrink-0"
               >
                 Props
               </TabsTrigger>
               <TabsTrigger
                 value="giveaways"
-                className="data-[state=active]:bg-orange-500 whitespace-nowrap px-3 py-2 text-xs flex-shrink-0"
+                className="rounded-lg text-white/60 data-[state=active]:bg-orange-500 data-[state=active]:text-black whitespace-nowrap px-3 py-2 text-xs flex-shrink-0"
               >
                 Giveaways
               </TabsTrigger>
               <TabsTrigger
                 value="ads"
-                className="data-[state=active]:bg-orange-500 whitespace-nowrap px-3 py-2 text-xs flex-shrink-0"
+                className="rounded-lg text-white/60 data-[state=active]:bg-orange-500 data-[state=active]:text-black whitespace-nowrap px-3 py-2 text-xs flex-shrink-0"
               >
                 Ads
               </TabsTrigger>
               <TabsTrigger
                 value="featured-scripts"
-                className="data-[state=active]:bg-purple-500 whitespace-nowrap px-3 py-2 text-xs flex-shrink-0"
+                className="rounded-lg text-white/60 data-[state=active]:bg-purple-500 data-[state=active]:text-white whitespace-nowrap px-3 py-2 text-xs flex-shrink-0"
               >
                 Featured
               </TabsTrigger>
               <TabsTrigger
                 value="entries"
-                className="data-[state=active]:bg-orange-500 whitespace-nowrap px-3 py-2 text-xs flex-shrink-0"
+                className="rounded-lg text-white/60 data-[state=active]:bg-orange-500 data-[state=active]:text-black whitespace-nowrap px-3 py-2 text-xs flex-shrink-0"
               >
                 Entries
               </TabsTrigger>
               <TabsTrigger
                 value="settings"
-                className="data-[state=active]:bg-orange-500 whitespace-nowrap px-3 py-2 text-xs flex-shrink-0"
+                className="rounded-lg text-white/60 data-[state=active]:bg-orange-500 data-[state=active]:text-black whitespace-nowrap px-3 py-2 text-xs flex-shrink-0"
               >
                 Settings
               </TabsTrigger>
               {canManageCoupons && (
                 <TabsTrigger
                   value="coupons"
-                  className="data-[state=active]:bg-orange-500 whitespace-nowrap px-3 py-2 text-xs flex-shrink-0"
+                  className="rounded-lg text-white/60 data-[state=active]:bg-orange-500 data-[state=active]:text-black whitespace-nowrap px-3 py-2 text-xs flex-shrink-0"
                 >
                   Coupons
                 </TabsTrigger>
@@ -723,59 +788,59 @@ export default function ProfilePage() {
             </div>
 
             {/* Desktop Tabs */}
-            <TabsList className={`hidden lg:grid w-full ${canManageCoupons ? "grid-cols-9" : "grid-cols-8"} bg-gray-800/50 gap-2 p-1`}>
+            <TabsList className={`hidden lg:grid w-full ${canManageCoupons ? "grid-cols-9" : "grid-cols-8"} bg-white/[0.04] border border-white/[0.08] backdrop-blur-sm rounded-xl gap-1.5 p-1.5`}>
               <TabsTrigger
                 value="overview"
-                className="data-[state=active]:bg-orange-500"
+                className="rounded-lg text-white/60 data-[state=active]:bg-orange-500 data-[state=active]:text-black"
               >
                 <User className="h-4 w-4 mr-2" />
                 Overview
               </TabsTrigger>
               <TabsTrigger
                 value="scripts"
-                className="data-[state=active]:bg-orange-500"
+                className="rounded-lg text-white/60 data-[state=active]:bg-orange-500 data-[state=active]:text-black"
               >
                 <Package className="h-4 w-4 mr-2" />
                 Scripts
               </TabsTrigger>
               <TabsTrigger
                 value="props"
-                className="data-[state=active]:bg-orange-500"
+                className="rounded-lg text-white/60 data-[state=active]:bg-orange-500 data-[state=active]:text-black"
               >
                 <Package className="h-4 w-4 mr-2" />
                 Props
               </TabsTrigger>
               <TabsTrigger
                 value="giveaways"
-                className="data-[state=active]:bg-orange-500"
+                className="rounded-lg text-white/60 data-[state=active]:bg-orange-500 data-[state=active]:text-black"
               >
                 <Gift className="h-4 w-4 mr-2" />
                 Giveaways
               </TabsTrigger>
               <TabsTrigger
                 value="ads"
-                className="data-[state=active]:bg-orange-500"
+                className="rounded-lg text-white/60 data-[state=active]:bg-orange-500 data-[state=active]:text-black"
               >
                 <Tag className="h-4 w-4 mr-2" />
                 Ads
               </TabsTrigger>
               <TabsTrigger
                 value="featured-scripts"
-                className="data-[state=active]:bg-purple-500"
+                className="rounded-lg text-white/60 data-[state=active]:bg-purple-500 data-[state=active]:text-white"
               >
                 <Star className="h-4 w-4 mr-2" />
                 Featured Scripts
               </TabsTrigger>
               <TabsTrigger
                 value="entries"
-                className="data-[state=active]:bg-orange-500"
+                className="rounded-lg text-white/60 data-[state=active]:bg-orange-500 data-[state=active]:text-black"
               >
                 <Sparkles className="h-4 w-4 mr-2" />
                 Entries
               </TabsTrigger>
               <TabsTrigger
                 value="settings"
-                className="data-[state=active]:bg-orange-500"
+                className="rounded-lg text-white/60 data-[state=active]:bg-orange-500 data-[state=active]:text-black"
               >
                 <Settings className="h-4 w-4 mr-2" />
                 Settings
@@ -783,7 +848,7 @@ export default function ProfilePage() {
               {canManageCoupons && (
                 <TabsTrigger
                   value="coupons"
-                  className="data-[state=active]:bg-orange-500"
+                  className="rounded-lg text-white/60 data-[state=active]:bg-orange-500 data-[state=active]:text-black"
                 >
                   <Tag className="h-4 w-4 mr-2" />
                   Coupons
@@ -798,44 +863,8 @@ export default function ProfilePage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8 }}
               >
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-5">
-                  <Card className="bg-gray-800/30 border-gray-700/50">
-                    <CardContent className="p-6">
-                      <div className="flex items-center gap-4">
-                        <div className="p-3 bg-orange-500/20 rounded-lg">
-                          <Package className="h-6 w-6 text-orange-500" />
-                        </div>
-                        <div>
-                          <p className="text-gray-400 text-sm">Total Scripts</p>
-                          <p className="text-2xl font-bold">
-                            {stats.totalScripts}
-                          </p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="bg-gray-800/30 border-gray-700/50">
-                    <CardContent className="p-6">
-                      <div className="flex items-center gap-4">
-                        <div className="p-3 bg-green-500/20 rounded-lg">
-                          <Gift className="h-6 w-6 text-green-500" />
-                        </div>
-                        <div>
-                          <p className="text-gray-400 text-sm">
-                            Total Giveaways
-                          </p>
-                          <p className="text-2xl font-bold">
-                            {stats.totalGiveaways}
-                          </p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-
                 {/* Recent Activity */}
-                <Card className="bg-gray-800/30 border-gray-700/50">
+                <Card className="bg-white/[0.04] border-white/[0.08] backdrop-blur-sm rounded-2xl">
                   <CardHeader>
                     <CardTitle className="text-white flex items-center gap-2">
                       <Sparkles className="h-5 w-5 text-orange-500" />
@@ -843,17 +872,19 @@ export default function ProfilePage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                       {scripts.slice(0, 3).map((script: any) => (
                         <div
                           key={script.id}
-                          className="flex items-center justify-between p-4 bg-gray-700/30 rounded-lg"
+                          className="flex items-center justify-between gap-3 p-4 bg-white/[0.03] border border-white/[0.06] rounded-xl"
                         >
-                          <div className="flex items-center gap-4">
-                            <Package className="h-5 w-5 text-orange-500" />
-                            <div>
-                              <p className="font-medium">{script.title}</p>
-                              <p className="text-sm text-gray-400">
+                          <div className="flex items-center gap-4 min-w-0">
+                            <div className="p-2 rounded-lg bg-orange-500/15 shrink-0">
+                              <Package className="h-5 w-5 text-orange-500" />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="font-medium truncate">{script.title}</p>
+                              <p className="text-sm text-white/45">
                                 Script •{" "}
                                 {new Date(
                                   script.created_at
@@ -861,7 +892,7 @@ export default function ProfilePage() {
                               </p>
                             </div>
                           </div>
-                          <Badge className={getStatusColor(script.status)}>
+                          <Badge className={`shrink-0 ${getStatusColor(script.status)}`}>
                             {script.status}
                           </Badge>
                         </div>
@@ -869,13 +900,15 @@ export default function ProfilePage() {
                       {giveaways.slice(0, 3).map((giveaway: any) => (
                         <div
                           key={giveaway.id}
-                          className="flex items-center justify-between p-4 bg-gray-700/30 rounded-lg"
+                          className="flex items-center justify-between gap-3 p-4 bg-white/[0.03] border border-white/[0.06] rounded-xl"
                         >
-                          <div className="flex items-center gap-4">
-                            <Gift className="h-5 w-5 text-green-500" />
-                            <div>
-                              <p className="font-medium">{giveaway.title}</p>
-                              <p className="text-sm text-gray-400">
+                          <div className="flex items-center gap-4 min-w-0">
+                            <div className="p-2 rounded-lg bg-green-500/15 shrink-0">
+                              <Gift className="h-5 w-5 text-green-500" />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="font-medium truncate">{giveaway.title}</p>
+                              <p className="text-sm text-white/45">
                                 Giveaway •{" "}
                                 {new Date(
                                   giveaway.created_at
@@ -883,11 +916,19 @@ export default function ProfilePage() {
                               </p>
                             </div>
                           </div>
-                          <Badge className={getStatusColor(giveaway.status)}>
+                          <Badge className={`shrink-0 ${getStatusColor(giveaway.status)}`}>
                             {giveaway.status}
                           </Badge>
                         </div>
                       ))}
+                      {scripts.length === 0 && giveaways.length === 0 && (
+                        <div className="py-10 text-center">
+                          <Sparkles className="h-10 w-10 text-white/20 mx-auto mb-3" />
+                          <p className="text-white/45 text-sm">
+                            No recent activity yet. Create a script or giveaway to get started.
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -901,11 +942,11 @@ export default function ProfilePage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8 }}
               >
-                <div className="flex flex-col mb-4 items-start justify-between sm:flex-row md:flex-row">
-                  <h2 className="text-2xl font-bold mb-4 md:mb-0 sm:mb-0">My Scripts</h2>
+                <div className="flex flex-col gap-3 mb-6 items-start justify-between sm:flex-row sm:items-center">
+                  <h2 className="text-xl sm:text-2xl font-bold">My Scripts</h2>
                   <Button
                     onClick={() => router.push("/scripts/submit")}
-                    className="bg-orange-500 hover:bg-orange-600"
+                    className="w-full sm:w-auto bg-orange-500 hover:bg-orange-600 text-black font-semibold"
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     Create New Script
@@ -921,10 +962,10 @@ export default function ProfilePage() {
                     {scripts.map((script: any) => (
                       <Card
                         key={script.id}
-                        className="bg-gray-800/30 border-gray-700/50 hover:border-orange-500/50 transition-colors"
+                        className="bg-white/[0.04] border-white/[0.08] backdrop-blur-sm rounded-2xl hover:border-orange-500/40 transition-colors"
                       >
-                        <CardContent className="p-6">
-                          <div className="aspect-video bg-gray-700 rounded-lg mb-4 overflow-hidden">
+                        <CardContent className="p-5">
+                          <div className="aspect-video bg-white/[0.04] border border-white/[0.06] rounded-xl mb-4 overflow-hidden">
                             {script.cover_image ||
                             (script.screenshots &&
                               script.screenshots.length > 0) ? (
@@ -938,7 +979,7 @@ export default function ProfilePage() {
                               />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center">
-                                <Package className="h-12 w-12 text-gray-500" />
+                                <Package className="h-12 w-12 text-white/20" />
                               </div>
                             )}
                           </div>
@@ -948,7 +989,7 @@ export default function ProfilePage() {
                               <h3 className="font-bold text-base sm:text-lg break-words">
                                 {script.title}
                               </h3>
-                              <p className="text-gray-400 text-sm line-clamp-2 break-words">
+                              <p className="text-white/45 text-sm line-clamp-2 break-words">
                                 {script.description}
                               </p>
                             </div>
@@ -1025,19 +1066,19 @@ export default function ProfilePage() {
                     ))}
 
                     {scripts.length === 0 && !loading && (
-                      <Card className="bg-gray-800/30 border-gray-700/50">
+                      <Card className="bg-white/[0.04] border-white/[0.08] backdrop-blur-sm rounded-2xl md:col-span-2 lg:col-span-3">
                         <CardContent className="p-12 text-center">
-                          <Package className="h-12 w-12 text-gray-500 mx-auto mb-4" />
+                          <Package className="h-12 w-12 text-white/20 mx-auto mb-4" />
                           <h3 className="text-xl font-bold mb-2">
                             No scripts yet
                           </h3>
-                          <p className="text-gray-400 mb-4">
+                          <p className="text-white/45 mb-4">
                             Start creating your first script to showcase your
                             work
                           </p>
                           <Button
                             onClick={() => router.push("/scripts/submit")}
-                            className="bg-orange-500 hover:bg-orange-600"
+                            className="bg-orange-500 hover:bg-orange-600 text-black font-semibold"
                           >
                             <Plus className="h-4 w-4 mr-2" />
                             Create Your First Script
@@ -1057,11 +1098,11 @@ export default function ProfilePage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8 }}
               >
-                <div className="flex flex-col mb-4 items-start justify-between sm:flex-row md:flex-row">
-                  <h2 className="text-2xl font-bold mb-4 md:mb-0 sm:mb-0">My Giveaways</h2>
+                <div className="flex flex-col gap-3 mb-6 items-start justify-between sm:flex-row sm:items-center">
+                  <h2 className="text-xl sm:text-2xl font-bold">My Giveaways</h2>
                   <Button
                     onClick={() => router.push("/giveaways/create")}
-                    className="bg-green-500 hover:bg-green-600"
+                    className="w-full sm:w-auto bg-green-500 hover:bg-green-600 text-black font-semibold"
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     Create New Giveaway
@@ -1077,10 +1118,10 @@ export default function ProfilePage() {
                     {giveaways.map((giveaway: any) => (
                       <Card
                         key={giveaway.id}
-                        className="bg-gray-800/30 border-gray-700/50 hover:border-green-500/50 transition-colors"
+                        className="bg-white/[0.04] border-white/[0.08] backdrop-blur-sm rounded-2xl hover:border-green-500/40 transition-colors"
                       >
-                        <CardContent className="p-6">
-                          <div className="aspect-video bg-gray-700 rounded-lg mb-4 overflow-hidden">
+                        <CardContent className="p-5">
+                          <div className="aspect-video bg-white/[0.04] border border-white/[0.06] rounded-xl mb-4 overflow-hidden">
                             {giveaway.cover_image ||
                             (giveaway.images && giveaway.images.length > 0) ? (
                               <img
@@ -1091,7 +1132,7 @@ export default function ProfilePage() {
                               />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center">
-                                <Gift className="h-12 w-12 text-gray-500" />
+                                <Gift className="h-12 w-12 text-white/20" />
                               </div>
                             )}
                           </div>
@@ -1101,7 +1142,7 @@ export default function ProfilePage() {
                               <h3 className="font-bold text-base sm:text-lg break-words">
                                 {giveaway.title}
                               </h3>
-                              <p className="text-gray-400 text-sm line-clamp-2 break-words">
+                              <p className="text-white/45 text-sm line-clamp-2 break-words">
                                 {giveaway.description}
                               </p>
                             </div>
@@ -1156,7 +1197,7 @@ export default function ProfilePage() {
                                 </div>
                               )}
 
-                            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-xs sm:text-sm text-gray-400">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-xs sm:text-sm text-white/45">
                               <div className="flex items-center gap-1">
                                 <Calendar className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
                                 <span>
@@ -1222,19 +1263,19 @@ export default function ProfilePage() {
                     ))}
 
                     {giveaways.length === 0 && !loading && (
-                      <Card className="bg-gray-800/30 border-gray-700/50">
+                      <Card className="bg-white/[0.04] border-white/[0.08] backdrop-blur-sm rounded-2xl md:col-span-2 lg:col-span-3">
                         <CardContent className="p-12 text-center">
-                          <Gift className="h-12 w-12 text-gray-500 mx-auto mb-4" />
+                          <Gift className="h-12 w-12 text-white/20 mx-auto mb-4" />
                           <h3 className="text-xl font-bold mb-2">
                             No giveaways yet
                           </h3>
-                          <p className="text-gray-400 mb-4">
+                          <p className="text-white/45 mb-4">
                             Start creating your first giveaway to engage with
                             the community
                           </p>
                           <Button
                             onClick={() => router.push("/giveaways/create")}
-                            className="bg-green-500 hover:bg-green-600"
+                            className="bg-green-500 hover:bg-green-600 text-black font-semibold"
                           >
                             <Plus className="h-4 w-4 mr-2" />
                             Create Your First Giveaway
@@ -1264,7 +1305,7 @@ export default function ProfilePage() {
                       {ads.map((ad: any) => (
                         <Card
                           key={ad.id}
-                          className="bg-gray-800/30 border-gray-700/50 hover:border-orange-500/50 transition-all duration-300"
+                          className="bg-white/[0.04] border-white/[0.08] backdrop-blur-sm rounded-2xl hover:border-orange-500/40 transition-all duration-300"
                         >
                           <CardHeader className="pb-3">
                             <div className="flex items-center justify-between">
@@ -1297,7 +1338,7 @@ export default function ProfilePage() {
                             </CardTitle>
                           </CardHeader>
                           <CardContent>
-                            <p className="text-gray-400 text-sm mb-4 line-clamp-3">
+                            <p className="text-white/45 text-sm mb-4 line-clamp-3">
                               {ad.description}
                             </p>
                             
@@ -1319,7 +1360,7 @@ export default function ProfilePage() {
                               )}
 
                             <div className="space-y-2">
-                              <div className="flex items-center gap-4 text-xs text-gray-500">
+                              <div className="flex items-center gap-4 text-xs text-white/35">
                                 <div>
                                   Created:{" "}
                                   {new Date(ad.created_at).toLocaleDateString()}
@@ -1381,7 +1422,7 @@ export default function ProfilePage() {
                                 setShowAdsForm(true);
                               }}
                             >
-                              <Card className="bg-gray-800/30 border-2 border-dashed border-orange-500/50 hover:border-orange-500 transition-all duration-300 h-full flex flex-col items-center justify-center min-h-[300px]">
+                              <Card className="bg-white/[0.04] backdrop-blur-sm rounded-2xl border-2 border-dashed border-orange-500/40 hover:border-orange-500 transition-all duration-300 h-full flex flex-col items-center justify-center min-h-[300px]">
                                 <CardContent className="flex flex-col items-center justify-center py-12">
                                   <div className="w-20 h-20 rounded-full bg-orange-500/10 border-2 border-dashed border-orange-500/50 flex items-center justify-center mb-4 group-hover:bg-orange-500/20 group-hover:border-orange-500 transition-all duration-300">
                                     <Plus className="h-10 w-10 text-orange-500 group-hover:scale-110 transition-transform duration-300" />
@@ -1389,7 +1430,7 @@ export default function ProfilePage() {
                                   <h3 className="text-lg font-semibold text-white mb-2">
                                     Create New Ad
                                   </h3>
-                                  <p className="text-gray-400 text-sm text-center mb-4">
+                                  <p className="text-white/45 text-sm text-center mb-4">
                                     Click to create an advertisement in this
                                     slot
                                   </p>
@@ -1410,7 +1451,7 @@ export default function ProfilePage() {
                           whileHover={{ scale: 1.02 }}
                           transition={{ duration: 0.2 }}
                         >
-                          <Card className="bg-gray-800/30 border-gray-700/50 relative overflow-hidden h-full">
+                          <Card className="bg-white/[0.04] border-white/[0.08] backdrop-blur-sm rounded-2xl relative overflow-hidden h-full">
                             <div className="absolute inset-0 bg-gradient-to-br from-gray-900/80 to-gray-800/80 group-hover:opacity-0 transition-opacity duration-300" />
                             <CardHeader className="pb-3 relative z-0">
                               <div className="flex items-center justify-between">
@@ -1430,7 +1471,7 @@ export default function ProfilePage() {
                               </CardTitle>
                             </CardHeader>
                             <CardContent className="relative z-0">
-                              <p className="text-gray-400 text-sm mb-4 line-clamp-3">
+                              <p className="text-white/45 text-sm mb-4 line-clamp-3">
                                 Purchase this slot to unlock and create your
                                 advertisement.
                               </p>
@@ -1439,7 +1480,7 @@ export default function ProfilePage() {
                               </div>
 
                               <div className="flex items-center justify-between">
-                                <div className="text-xs text-gray-500">
+                                <div className="text-xs text-white/35">
                                   Status: Locked
                                 </div>
                                 <div className="flex gap-2">
@@ -1500,7 +1541,7 @@ export default function ProfilePage() {
                                 setShowAdsForm(true);
                               }}
                             >
-                              <Card className="bg-gray-800/30 border-2 border-dashed border-orange-500/50 hover:border-orange-500 transition-all duration-300 h-full flex flex-col items-center justify-center min-h-[300px]">
+                              <Card className="bg-white/[0.04] backdrop-blur-sm rounded-2xl border-2 border-dashed border-orange-500/40 hover:border-orange-500 transition-all duration-300 h-full flex flex-col items-center justify-center min-h-[300px]">
                                 <CardContent className="flex flex-col items-center justify-center py-12">
                                   <div className="w-20 h-20 rounded-full bg-orange-500/10 border-2 border-dashed border-orange-500/50 flex items-center justify-center mb-4 group-hover:bg-orange-500/20 group-hover:border-orange-500 transition-all duration-300">
                                     <Plus className="h-10 w-10 text-orange-500 group-hover:scale-110 transition-transform duration-300" />
@@ -1508,7 +1549,7 @@ export default function ProfilePage() {
                                   <h3 className="text-lg font-semibold text-white mb-2">
                                     Create New Ad
                                   </h3>
-                                  <p className="text-gray-400 text-sm text-center mb-4">
+                                  <p className="text-white/45 text-sm text-center mb-4">
                                     Click to create an advertisement in this
                                     slot
                                   </p>
@@ -1529,7 +1570,7 @@ export default function ProfilePage() {
                           whileHover={{ scale: 1.02 }}
                           transition={{ duration: 0.2 }}
                         >
-                          <Card className="bg-gray-800/30 border-gray-700/50 relative overflow-hidden h-full">
+                          <Card className="bg-white/[0.04] border-white/[0.08] backdrop-blur-sm rounded-2xl relative overflow-hidden h-full">
                             <div className="absolute inset-0 bg-gradient-to-br from-gray-900/80 to-gray-800/80 z-10 group-hover:opacity-0 transition-opacity duration-300" />
                             <CardHeader className="pb-3 relative z-0">
                               <div className="flex items-center justify-between">
@@ -1549,7 +1590,7 @@ export default function ProfilePage() {
                               </CardTitle>
                             </CardHeader>
                             <CardContent className="relative z-0">
-                              <p className="text-gray-400 text-sm mb-4 line-clamp-3">
+                              <p className="text-white/45 text-sm mb-4 line-clamp-3">
                                 Purchase this slot to unlock and create your
                                 advertisement.
                               </p>
@@ -1558,7 +1599,7 @@ export default function ProfilePage() {
                               </div>
 
                               <div className="flex items-center justify-between">
-                                <div className="text-xs text-gray-500">
+                                <div className="text-xs text-white/35">
                                   Status: Locked
                                 </div>
                                 <div className="flex gap-2">
@@ -1619,7 +1660,7 @@ export default function ProfilePage() {
                       {featuredScripts.map((featuredScript: any) => (
                         <Card
                           key={featuredScript.id}
-                          className="bg-gray-800/30 border-gray-700/50 hover:border-purple-500/50 transition-all duration-300"
+                          className="bg-white/[0.04] border-white/[0.08] backdrop-blur-sm rounded-2xl hover:border-purple-500/40 transition-all duration-300"
                         >
                           {featuredScript.scriptCoverImage && (
                             <div className="relative w-full h-48 overflow-hidden rounded-t-lg">
@@ -1663,11 +1704,11 @@ export default function ProfilePage() {
                           <CardContent>
                             <div className="space-y-2">
                               {featuredScript.scriptDescription && (
-                                <p className="text-sm text-gray-400 line-clamp-3 mb-2">
+                                <p className="text-sm text-white/45 line-clamp-3 mb-2">
                                   {featuredScript.scriptDescription}
                                 </p>
                               )}
-                              <div className="flex items-center gap-4 text-xs text-gray-500">
+                              <div className="flex items-center gap-4 text-xs text-white/35">
                                 <div>
                                   Created:{" "}
                                   {new Date(
@@ -1752,7 +1793,7 @@ export default function ProfilePage() {
                                 setShowScriptSelectionPopup(true);
                               }}
                             >
-                              <Card className="bg-gray-800/30 border-2 border-dashed border-purple-500/50 hover:border-purple-500 transition-all duration-300 h-full flex flex-col items-center justify-center min-h-[300px]">
+                              <Card className="bg-white/[0.04] backdrop-blur-sm rounded-2xl border-2 border-dashed border-purple-500/40 hover:border-purple-500 transition-all duration-300 h-full flex flex-col items-center justify-center min-h-[300px]">
                                 <CardContent className="flex flex-col items-center justify-center py-12">
                                   <div className="w-20 h-20 rounded-full bg-purple-500/10 border-2 border-dashed border-purple-500/50 flex items-center justify-center mb-4 group-hover:bg-purple-500/20 group-hover:border-purple-500 transition-all duration-300">
                                     <Plus className="h-10 w-10 text-purple-500 group-hover:scale-110 transition-transform duration-300" />
@@ -1760,7 +1801,7 @@ export default function ProfilePage() {
                                   <h3 className="text-lg font-semibold text-white mb-2">
                                     Feature a Script
                                   </h3>
-                                  <p className="text-gray-400 text-sm text-center mb-4">
+                                  <p className="text-white/45 text-sm text-center mb-4">
                                     Click to select a script to feature in this
                                     slot
                                   </p>
@@ -1782,7 +1823,7 @@ export default function ProfilePage() {
                             whileHover={{ scale: 1.02 }}
                             transition={{ duration: 0.2 }}
                           >
-                            <Card className="bg-gray-800/30 border-gray-700/50 relative overflow-hidden h-full">
+                            <Card className="bg-white/[0.04] border-white/[0.08] backdrop-blur-sm rounded-2xl relative overflow-hidden h-full">
                               <div className="absolute inset-0 bg-gradient-to-br from-gray-900/80 to-gray-800/80 z-10 group-hover:opacity-0 transition-opacity duration-300" />
                               <CardHeader className="pb-3 relative z-0">
                                 <div className="flex items-center justify-between">
@@ -1802,7 +1843,7 @@ export default function ProfilePage() {
                                 </CardTitle>
                               </CardHeader>
                               <CardContent className="relative z-0">
-                                <p className="text-gray-400 text-sm mb-4 line-clamp-3">
+                                <p className="text-white/45 text-sm mb-4 line-clamp-3">
                                   Purchase this slot to unlock and feature your
                                   script.
                                 </p>
@@ -1810,7 +1851,7 @@ export default function ProfilePage() {
                                   <Star className="h-12 w-12 text-gray-600" />
                                 </div>
                                 <div className="flex items-center justify-between">
-                                  <div className="text-xs text-gray-500">
+                                  <div className="text-xs text-white/35">
                                     Status: Locked
                                   </div>
                                   <div className="flex gap-2">
@@ -1872,7 +1913,7 @@ export default function ProfilePage() {
                                 setShowScriptSelectionPopup(true);
                               }}
                             >
-                              <Card className="bg-gray-800/30 border-2 border-dashed border-purple-500/50 hover:border-purple-500 transition-all duration-300 h-full flex flex-col items-center justify-center min-h-[300px]">
+                              <Card className="bg-white/[0.04] backdrop-blur-sm rounded-2xl border-2 border-dashed border-purple-500/40 hover:border-purple-500 transition-all duration-300 h-full flex flex-col items-center justify-center min-h-[300px]">
                                 <CardContent className="flex flex-col items-center justify-center py-12">
                                   <div className="w-20 h-20 rounded-full bg-purple-500/10 border-2 border-dashed border-purple-500/50 flex items-center justify-center mb-4 group-hover:bg-purple-500/20 group-hover:border-purple-500 transition-all duration-300">
                                     <Plus className="h-10 w-10 text-purple-500 group-hover:scale-110 transition-transform duration-300" />
@@ -1880,7 +1921,7 @@ export default function ProfilePage() {
                                   <h3 className="text-lg font-semibold text-white mb-2">
                                     Feature a Script
                                   </h3>
-                                  <p className="text-gray-400 text-sm text-center mb-4">
+                                  <p className="text-white/45 text-sm text-center mb-4">
                                     Click to select a script to feature in this
                                     slot
                                   </p>
@@ -1902,7 +1943,7 @@ export default function ProfilePage() {
                             whileHover={{ scale: 1.02 }}
                             transition={{ duration: 0.2 }}
                           >
-                            <Card className="bg-gray-800/30 border-gray-700/50 relative overflow-hidden h-full">
+                            <Card className="bg-white/[0.04] border-white/[0.08] backdrop-blur-sm rounded-2xl relative overflow-hidden h-full">
                               <div className="absolute inset-0 bg-gradient-to-br from-gray-900/80 to-gray-800/80 z-10 group-hover:opacity-0 transition-opacity duration-300" />
                               <CardHeader className="pb-3 relative z-0">
                                 <div className="flex items-center justify-between">
@@ -1922,7 +1963,7 @@ export default function ProfilePage() {
                                 </CardTitle>
                               </CardHeader>
                               <CardContent className="relative z-0">
-                                <p className="text-gray-400 text-sm mb-4 line-clamp-3">
+                                <p className="text-white/45 text-sm mb-4 line-clamp-3">
                                   Purchase this slot to unlock and feature your
                                   script.
                                 </p>
@@ -1930,7 +1971,7 @@ export default function ProfilePage() {
                                   <Star className="h-12 w-12 text-gray-600" />
                                 </div>
                                 <div className="flex items-center justify-between">
-                                  <div className="text-xs text-gray-500">
+                                  <div className="text-xs text-white/35">
                                     Status: Locked
                                   </div>
                                   <div className="flex gap-2">
@@ -1980,9 +2021,9 @@ export default function ProfilePage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8 }}
               >
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-2xl font-bold">Giveaway Entries</h2>
-                  <p className="text-gray-400 text-sm">
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between mb-6">
+                  <h2 className="text-xl sm:text-2xl font-bold">Giveaway Entries</h2>
+                  <p className="text-white/45 text-sm">
                     Entries from users who participated in your giveaways
                   </p>
                 </div>
@@ -1995,9 +2036,9 @@ export default function ProfilePage() {
                     {giveawayEntries.map((entry: any, index: number) => (
                       <Card
                         key={entry.id}
-                        className="bg-gray-800/30 border-gray-700/50 hover:border-orange-500/50 transition-colors"
+                        className="bg-white/[0.04] border-white/[0.08] backdrop-blur-sm rounded-2xl hover:border-orange-500/40 transition-colors"
                       >
-                        <CardContent className="p-6">
+                        <CardContent className="p-5 sm:p-6">
                           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                             <div className="flex-1 min-w-0">
                               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 mb-4">
@@ -2012,7 +2053,7 @@ export default function ProfilePage() {
                                   <h3 className="text-base sm:text-lg font-semibold text-white mb-1 break-words">
                                     {entry.giveaway_title}
                                   </h3>
-                                  <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 text-xs sm:text-sm text-gray-400">
+                                  <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 text-xs sm:text-sm text-white/45">
                                     <div className="flex items-center gap-1">
                                       <User className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
                                       <span className="truncate">
@@ -2045,7 +2086,7 @@ export default function ProfilePage() {
                                   {entry.status.charAt(0).toUpperCase() +
                                     entry.status.slice(1)}
                                 </Badge>
-                                <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-400">
+                                <div className="flex items-center gap-2 text-xs sm:text-sm text-white/45">
                                   <Star className="h-3 w-3 sm:h-4 sm:w-4 text-orange-500 flex-shrink-0" />
                                   <span className="font-medium">
                                     {entry.points_earned} points
@@ -2053,7 +2094,7 @@ export default function ProfilePage() {
                                 </div>
                                 {entry.requirements_completed &&
                                   entry.requirements_completed.length > 0 && (
-                                    <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-400">
+                                    <div className="flex items-center gap-2 text-xs sm:text-sm text-white/45">
                                       <Sparkles className="h-3 w-3 sm:h-4 sm:w-4 text-purple-500 flex-shrink-0" />
                                       <span className="break-words">
                                         {entry.requirements_completed.length}{" "}
@@ -2071,7 +2112,7 @@ export default function ProfilePage() {
                                 onClick={() =>
                                   router.push(`/giveaway/${entry.giveaway_id}`)
                                 }
-                                className="border-gray-600 text-gray-300 hover:text-white hover:border-orange-500 whitespace-nowrap"
+                                className="border-white/[0.12] bg-transparent text-white/70 hover:text-white hover:border-orange-500 whitespace-nowrap"
                               >
                                 <Eye className="h-4 w-4 mr-1" />
                                 <span className="hidden sm:inline">View Giveaway</span>
@@ -2084,19 +2125,19 @@ export default function ProfilePage() {
                     ))}
 
                     {giveawayEntries.length === 0 && !loading && (
-                      <Card className="bg-gray-800/30 border-gray-700/50">
+                      <Card className="bg-white/[0.04] border-white/[0.08] backdrop-blur-sm rounded-2xl">
                         <CardContent className="p-12 text-center">
-                          <Sparkles className="h-12 w-12 text-gray-500 mx-auto mb-4" />
+                          <Sparkles className="h-12 w-12 text-white/20 mx-auto mb-4" />
                           <h3 className="text-xl font-bold mb-2">
                             No entries yet
                           </h3>
-                          <p className="text-gray-400 mb-4">
+                          <p className="text-white/45 mb-4">
                             No users have entered your giveaways yet. Create
                             more giveaways to attract participants!
                           </p>
                           <Button
                             onClick={() => router.push("/giveaways/create")}
-                            className="bg-green-500 hover:bg-green-600"
+                            className="bg-green-500 hover:bg-green-600 text-black font-semibold"
                           >
                             <Gift className="h-4 w-4 mr-2" />
                             Create Giveaway
@@ -2139,7 +2180,7 @@ export default function ProfilePage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8 }}
               >
-                <Card className="bg-gray-800/30 border-gray-700/50">
+                <Card className="bg-white/[0.04] border-white/[0.08] backdrop-blur-sm rounded-2xl">
                   <CardHeader>
                     <CardTitle className="text-white flex items-center gap-2">
                       <Settings className="h-5 w-5 text-orange-500" />
@@ -2153,7 +2194,7 @@ export default function ProfilePage() {
                       </h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-sm font-medium text-gray-400 mb-2">
+                          <label className="block text-sm font-medium text-white/50 mb-2">
                             Name
                           </label>
                           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
@@ -2163,7 +2204,7 @@ export default function ProfilePage() {
                               onChange={(e) => setNameValue(e.target.value)}
                               onFocus={() => setEditingName(true)}
                               disabled={savingName}
-                              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:border-orange-500 focus:outline-none disabled:opacity-50 min-w-0"
+                              className="w-full px-3 py-2 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white focus:border-orange-500 focus:outline-none disabled:opacity-50 min-w-0"
                               placeholder="Enter your name"
                             />
                             {editingName && (
@@ -2176,7 +2217,7 @@ export default function ProfilePage() {
                                     !nameValue.trim() ||
                                     nameValue.trim() === session?.user?.name
                                   }
-                                  className="bg-orange-500 hover:bg-orange-600 text-white whitespace-nowrap"
+                                  className="bg-orange-500 hover:bg-orange-600 text-black font-semibold whitespace-nowrap"
                                 >
                                   {savingName ? (
                                     <>
@@ -2192,7 +2233,7 @@ export default function ProfilePage() {
                                   variant="outline"
                                   onClick={handleCancelEditName}
                                   disabled={savingName}
-                                  className="border-gray-600 text-gray-300 hover:text-white whitespace-nowrap"
+                                  className="border-white/[0.12] bg-transparent text-white/70 hover:text-white hover:bg-white/[0.06] whitespace-nowrap"
                                 >
                                   Cancel
                                 </Button>
@@ -2201,16 +2242,16 @@ export default function ProfilePage() {
                           </div>
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-400 mb-2">
+                          <label className="block text-sm font-medium text-white/50 mb-2">
                             Email
                           </label>
                           <input
                             type="email"
                             value={session.user?.email || ""}
                             disabled
-                            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white disabled:opacity-50 min-w-0 overflow-x-auto"
+                            className="w-full px-3 py-2 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white disabled:opacity-50 min-w-0 overflow-x-auto"
                           />
-                          <p className="text-xs text-gray-500 mt-1">
+                          <p className="text-xs text-white/35 mt-1">
                             Email cannot be changed
                           </p>
                         </div>
@@ -2222,25 +2263,26 @@ export default function ProfilePage() {
                         Account Statistics
                       </h3>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="text-center p-4 bg-gray-700/30 rounded-lg">
+                        <div className="text-center p-4 bg-white/[0.03] border border-white/[0.06] rounded-xl">
                           <p className="text-2xl font-bold text-orange-500">
                             {stats.totalScripts}
                           </p>
-                          <p className="text-sm text-gray-400">Scripts</p>
+                          <p className="text-sm text-white/45">Scripts</p>
                         </div>
-                        <div className="text-center p-4 bg-gray-700/30 rounded-lg">
+                        <div className="text-center p-4 bg-white/[0.03] border border-white/[0.06] rounded-xl">
                           <p className="text-2xl font-bold text-green-500">
                             {stats.totalGiveaways}
                           </p>
-                          <p className="text-sm text-gray-400">Giveaways</p>
+                          <p className="text-sm text-white/45">Giveaways</p>
                         </div>
-                        <div className="text-center p-4 bg-gray-700/30 rounded-lg">
+                        <div className="text-center p-4 bg-white/[0.03] border border-white/[0.06] rounded-xl">
                           <p className="text-2xl font-bold text-purple-500">
                             {stats.totalEntries}
                           </p>
-                          <p className="text-sm text-gray-400">Entries</p>
+                          <p className="text-sm text-white/45">Entries</p>
                         </div>
                       </div>
+
                     </div>
                   </CardContent>
                 </Card>

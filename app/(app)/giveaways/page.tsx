@@ -68,6 +68,42 @@ import {
   useUserGiveawayEntries,
 } from "@/hooks/use-giveaways-queries";
 import { toast } from "sonner";
+import { MARKETPLACE_SEED } from "@/lib/marketplace-seed";
+
+// TODO: remove before production
+// Synthesize ~6 demo giveaways from MARKETPLACE_SEED so the page looks
+// populated when the giveaways API returns empty or errors (e.g. no DB in dev).
+const buildSeedGiveaways = (): any[] => {
+  const prizeValues = [29.99, 49.99, 19.99, 75, 120, 39.99];
+  const daysOut = [2, 4, 6, 3, 8, 5];
+  return MARKETPLACE_SEED.slice(0, 6).map((item, i) => {
+    const end = new Date();
+    end.setDate(end.getDate() + daysOut[i]);
+    return {
+      id: 900000 + Number(item.id),
+      title: item.title,
+      description: `Win "${item.title}" from ${item.seller} — a premium FiveM prize.`,
+      totalValue: prizeValues[i].toString(),
+      currency_symbol: "$",
+      entries: 120 + i * 87,
+      maxEntries: 1000,
+      timeLeft: "",
+      endDate: end.toISOString(),
+      start_date: null,
+      is_upcoming: false,
+      image: item.coverImage,
+      requirements: [],
+      difficulty: "Easy",
+      category: item.category,
+      featured: i < 2,
+      trending: i === 2,
+      creator: item.seller,
+      creatorImage: item.sellerImage,
+      creator_roles: null,
+      tags: item.framework || [],
+    };
+  });
+};
 
 // Animated background particles
 const AnimatedParticles = () => {
@@ -184,49 +220,64 @@ export default function GiveawaysPage() {
 
   useEffect(() => {
     const load = async () => {
+      // 8s timeout so the page never infinite-spins if the API is slow/down
+      // (the DB may be absent in dev).
+      const c = new AbortController();
+      const t = setTimeout(() => c.abort(), 8000);
+      let gotGiveaways = false;
       try {
         setLoading(true);
         const [giveawaysRes, adsRes, entriesRes] = await Promise.all([
-          fetch(`/api/giveaways`, { cache: "no-store" }),
-          fetch(`/api/promotions/giveaways`, { cache: "no-store" }),
-          fetch(`/api/users/giveaway-entries`, { cache: "no-store" }),
+          fetch(`/api/giveaways`, { cache: "no-store", signal: c.signal }),
+          fetch(`/api/promotions/giveaways`, {
+            cache: "no-store",
+            signal: c.signal,
+          }),
+          fetch(`/api/users/giveaway-entries`, {
+            cache: "no-store",
+            signal: c.signal,
+          }),
         ]);
+        clearTimeout(t);
 
         if (giveawaysRes.ok) {
           const data = await giveawaysRes.json();
           console.log("Giveaways API response:", data);
           const list = Array.isArray(data) ? data : data.giveaways || [];
-          setActiveGiveaways(
-            list.map((g: any) => ({
-              id: g.id,
-              title: g.title,
-              description: g.description,
-              totalValue: g.total_value,
-              currency_symbol: g.currency_symbol,
-              entries: g.entries_count || 0,
-              maxEntries: g.max_entries || 0,
-              timeLeft: "", // can be computed from end_date if needed
-              endDate: g.end_date,
-              start_date: g.start_date || null,
-              is_upcoming: g.is_upcoming || false,
-              image:
-                g.cover_image ||
-                (g.images && g.images[0]) ||
-                "/placeholder.jpg",
-              requirements:
-                (g.requirements &&
-                  g.requirements.map((r: any) => r.description)) ||
-                [],
-              difficulty: g.difficulty,
-              category: g.category,
-              featured: g.featured,
-              trending: false,
-              creator: g.creator_name,
-              creatorImage: g.creator_image,
-              creator_roles: g.creator_roles || null,
-              tags: g.tags || [],
-            }))
-          );
+          if (list.length > 0) {
+            gotGiveaways = true;
+            setActiveGiveaways(
+              list.map((g: any) => ({
+                id: g.id,
+                title: g.title,
+                description: g.description,
+                totalValue: g.total_value,
+                currency_symbol: g.currency_symbol,
+                entries: g.entries_count || 0,
+                maxEntries: g.max_entries || 0,
+                timeLeft: "", // can be computed from end_date if needed
+                endDate: g.end_date,
+                start_date: g.start_date || null,
+                is_upcoming: g.is_upcoming || false,
+                image:
+                  g.cover_image ||
+                  (g.images && g.images[0]) ||
+                  "/placeholder.jpg",
+                requirements:
+                  (g.requirements &&
+                    g.requirements.map((r: any) => r.description)) ||
+                  [],
+                difficulty: g.difficulty,
+                category: g.category,
+                featured: g.featured,
+                trending: false,
+                creator: g.creator_name,
+                creatorImage: g.creator_image,
+                creator_roles: g.creator_roles || null,
+                tags: g.tags || [],
+              }))
+            );
+          }
         } else {
           console.error("Failed to fetch giveaways:", giveawaysRes.status);
         }
@@ -252,6 +303,12 @@ export default function GiveawaysPage() {
       } catch (error) {
         console.error("Error loading giveaways:", error);
       } finally {
+        clearTimeout(t);
+        // SEED FALLBACK: on empty/error/timeout, show demo giveaways.
+        // TODO: remove before production
+        if (!gotGiveaways) {
+          setActiveGiveaways(buildSeedGiveaways());
+        }
         setLoading(false);
       }
     };
@@ -373,6 +430,18 @@ export default function GiveawaysPage() {
       console.error("Error entering giveaway:", error);
       toast.error("Failed to enter giveaway. Please try again.");
     }
+  };
+
+  // Returns a friendly "ends in X" string from an end date.
+  const getTimeLeft = (endDate: string) => {
+    const diff = new Date(endDate).getTime() - new Date().getTime();
+    if (diff <= 0) return "Ended";
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    if (days >= 1) return `Ends in ${days} day${days === 1 ? "" : "s"}`;
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    if (hours >= 1) return `Ends in ${hours} hour${hours === 1 ? "" : "s"}`;
+    const mins = Math.max(1, Math.floor(diff / (1000 * 60)));
+    return `Ends in ${mins} min${mins === 1 ? "" : "s"}`;
   };
 
   const getDifficultyColor = (difficulty: string) => {
@@ -663,18 +732,37 @@ export default function GiveawaysPage() {
                       new Date().getTime();
                     const isUpcoming = giveaway.is_upcoming || (giveaway.start_date && new Date(giveaway.start_date).getTime() > new Date().getTime());
 
-                    // Build image overlay for ended/upcoming states
-                    const giveawayImageOverlay = isEnded ? (
-                      <div className="absolute inset-0 z-50 pointer-events-none flex items-center justify-center bg-[#0a0a0c]/65">
-                        <span className="px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-white/30 border border-white/15 rounded-[6px]">
-                          Ended
-                        </span>
-                      </div>
-                    ) : isUpcoming ? (
-                      <div className="absolute top-2.5 left-2.5 z-50 flex items-center gap-1 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-bold text-[10px] px-2 py-1 rounded-full uppercase tracking-wider shadow-lg">
-                        ⏰ Upcoming
-                      </div>
-                    ) : null;
+                    // Build image overlay: prize-value badge + countdown,
+                    // plus ended/upcoming states.
+                    const giveawayImageOverlay = (
+                      <>
+                        {/* Prize value badge (top-left) */}
+                        <div className="absolute top-2.5 left-2.5 z-40 flex items-center gap-1 rounded-full bg-gradient-to-r from-[#f97316] to-[#facc15] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[#0a0a0a] shadow-lg shadow-[#f97316]/30">
+                          <Trophy className="h-3 w-3" />
+                          {`${giveaway.currency_symbol || "$"}${giveaway.totalValue}`} Prize
+                        </div>
+
+                        {/* Countdown / status (bottom-left) */}
+                        {!isEnded && !isUpcoming && (
+                          <div className="absolute bottom-2.5 left-2.5 z-40 flex items-center gap-1 rounded-full bg-[#0a0a0c]/80 px-2.5 py-1 text-[10px] font-semibold text-[#facc15] border border-white/10 backdrop-blur-sm">
+                            <Clock className="h-3 w-3" />
+                            {getTimeLeft(giveaway.endDate)}
+                          </div>
+                        )}
+
+                        {isEnded ? (
+                          <div className="absolute inset-0 z-50 pointer-events-none flex items-center justify-center bg-[#0a0a0c]/65">
+                            <span className="px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-white/30 border border-white/15 rounded-[6px]">
+                              Ended
+                            </span>
+                          </div>
+                        ) : isUpcoming ? (
+                          <div className="absolute bottom-2.5 left-2.5 z-50 flex items-center gap-1 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-bold text-[10px] px-2 py-1 rounded-full uppercase tracking-wider shadow-lg">
+                            ⏰ Upcoming
+                          </div>
+                        ) : null}
+                      </>
+                    );
 
                     // Build custom action button
                     const giveawayAction = isUpcoming ? (
@@ -707,21 +795,24 @@ export default function GiveawaysPage() {
                         style={{
                           fontSize: "11px",
                           fontWeight: 600,
-                          color: enteredGiveaways.includes(giveaway.id) ? "#34d399" : "#f97316",
+                          color: enteredGiveaways.includes(giveaway.id) ? "#34d399" : "#fff",
                           background: enteredGiveaways.includes(giveaway.id)
                             ? "rgba(52,211,153,0.12)"
-                            : "rgba(249,115,22,0.1)",
+                            : "linear-gradient(to right, #f97316, #ea580c)",
                           border: enteredGiveaways.includes(giveaway.id)
                             ? "1px solid rgba(52,211,153,0.3)"
-                            : "1px solid rgba(249,115,22,0.25)",
+                            : "1px solid rgba(249,115,22,0.5)",
                           borderRadius: "7px",
                           padding: "6px 12px",
                           cursor: enteredGiveaways.includes(giveaway.id) ? "default" : "pointer",
                           whiteSpace: "nowrap",
                           lineHeight: 1.2,
+                          boxShadow: enteredGiveaways.includes(giveaway.id)
+                            ? "none"
+                            : "0 4px 12px rgba(249,115,22,0.25)",
                         }}
                       >
-                        {enteredGiveaways.includes(giveaway.id) ? "🏆 Registered!" : "Enter"}
+                        {enteredGiveaways.includes(giveaway.id) ? "🏆 Registered!" : "Enter Giveaway"}
                       </button>
                     ) : (
                       <button
@@ -910,18 +1001,26 @@ export default function GiveawaysPage() {
                       new Date().getTime();
                     const isUpcoming = giveaway.is_upcoming || (giveaway.start_date && new Date(giveaway.start_date).getTime() > new Date().getTime());
 
-                    // Build image overlay for ended/upcoming states
-                    const giveawayImageOverlay = isEnded ? (
-                      <div className="absolute inset-0 z-50 pointer-events-none flex items-center justify-center bg-[#0a0a0c]/65">
-                        <span className="px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-white/30 border border-white/15 rounded-[6px]">
-                          Ended
-                        </span>
-                      </div>
-                    ) : isUpcoming ? (
-                      <div className="absolute top-2.5 left-2.5 z-50 flex items-center gap-1 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-bold text-[10px] px-2 py-1 rounded-full uppercase tracking-wider shadow-lg">
-                        ⏰ Upcoming
-                      </div>
-                    ) : null;
+                    // Build image overlay: prize-value badge + ended/upcoming states
+                    const giveawayImageOverlay = (
+                      <>
+                        <div className="absolute top-2.5 left-2.5 z-40 flex items-center gap-1 rounded-full bg-gradient-to-r from-[#f97316] to-[#facc15] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[#0a0a0a] shadow-lg shadow-[#f97316]/30">
+                          <Trophy className="h-3 w-3" />
+                          {`${giveaway.currency_symbol || "$"}${giveaway.totalValue}`} Prize
+                        </div>
+                        {isEnded ? (
+                          <div className="absolute inset-0 z-50 pointer-events-none flex items-center justify-center bg-[#0a0a0c]/65">
+                            <span className="px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-white/30 border border-white/15 rounded-[6px]">
+                              Ended
+                            </span>
+                          </div>
+                        ) : isUpcoming ? (
+                          <div className="absolute bottom-2.5 left-2.5 z-50 flex items-center gap-1 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-bold text-[10px] px-2 py-1 rounded-full uppercase tracking-wider shadow-lg">
+                            ⏰ Upcoming
+                          </div>
+                        ) : null}
+                      </>
+                    );
 
                     // Build custom action button
                     const giveawayAction = isUpcoming ? (
@@ -954,21 +1053,24 @@ export default function GiveawaysPage() {
                         style={{
                           fontSize: "11px",
                           fontWeight: 600,
-                          color: enteredGiveaways.includes(giveaway.id) ? "#34d399" : "#f97316",
+                          color: enteredGiveaways.includes(giveaway.id) ? "#34d399" : "#fff",
                           background: enteredGiveaways.includes(giveaway.id)
                             ? "rgba(52,211,153,0.12)"
-                            : "rgba(249,115,22,0.1)",
+                            : "linear-gradient(to right, #f97316, #ea580c)",
                           border: enteredGiveaways.includes(giveaway.id)
                             ? "1px solid rgba(52,211,153,0.3)"
-                            : "1px solid rgba(249,115,22,0.25)",
+                            : "1px solid rgba(249,115,22,0.5)",
                           borderRadius: "7px",
                           padding: "6px 12px",
                           cursor: enteredGiveaways.includes(giveaway.id) ? "default" : "pointer",
                           whiteSpace: "nowrap",
                           lineHeight: 1.2,
+                          boxShadow: enteredGiveaways.includes(giveaway.id)
+                            ? "none"
+                            : "0 4px 12px rgba(249,115,22,0.25)",
                         }}
                       >
-                        {enteredGiveaways.includes(giveaway.id) ? "🏆 Registered!" : "Enter"}
+                        {enteredGiveaways.includes(giveaway.id) ? "🏆 Registered!" : "Enter Giveaway"}
                       </button>
                     ) : (
                       <button
@@ -1028,11 +1130,14 @@ export default function GiveawaysPage() {
 
             <TabsContent value="rules" className="mt-8">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card className="bg-gray-800/30 border-gray-700/50 backdrop-blur-sm">
+                <Card className="bg-white/[0.04] border-white/[0.08] backdrop-blur-md rounded-2xl">
                   <CardHeader>
-                    <CardTitle className="text-white">Giveaway Rules</CardTitle>
+                    <CardTitle className="text-white flex items-center gap-2">
+                      <Star className="h-4 w-4 text-[#f97316]" />
+                      Giveaway Rules
+                    </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-4 text-gray-300">
+                  <CardContent className="space-y-4 text-white/60">
                     <div>
                       <h4 className="text-white font-semibold mb-2">
                         Eligibility
@@ -1064,11 +1169,14 @@ export default function GiveawaysPage() {
                   </CardContent>
                 </Card>
 
-                <Card className="bg-gray-800/30 border-gray-700/50 backdrop-blur-sm">
+                <Card className="bg-white/[0.04] border-white/[0.08] backdrop-blur-md rounded-2xl">
                   <CardHeader>
-                    <CardTitle className="text-white">How to Enter</CardTitle>
+                    <CardTitle className="text-white flex items-center gap-2">
+                      <Gift className="h-4 w-4 text-[#f97316]" />
+                      How to Enter
+                    </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-4 text-gray-300">
+                  <CardContent className="space-y-4 text-white/60">
                     <div>
                       <h4 className="text-white font-semibold mb-2">
                         Step 1: Meet Requirements
@@ -1095,8 +1203,8 @@ export default function GiveawaysPage() {
                         Winners are announced on our Discord server and website.
                       </p>
                     </div>
-                    <div className="bg-yellow-400/10 border border-yellow-400/30 rounded-lg p-4">
-                      <h4 className="text-yellow-400 font-semibold mb-2">
+                    <div className="bg-[#f97316]/10 border border-[#f97316]/30 rounded-xl p-4">
+                      <h4 className="text-[#f97316] font-semibold mb-2">
                         Pro Tip
                       </h4>
                       <p className="text-sm">

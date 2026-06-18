@@ -55,3 +55,5 @@ Thumbs.db
 AWS_S3_SETUP.md
 S3_SETUP_CHECKLIST.md
 GIVEAWAY_WINNER_SETUP.md
+# QA audit artifacts (screenshots + scratch scripts)
+mockups/_audit/

@@ -146,11 +146,6 @@ export default function NavbarComponent() {
                     Admin
                   </NavbarButton>
                 )}
-                {hasAdminAccess && (
-                  <NavbarButton variant="secondary" className="text-white" href="/admin">
-                    Admin
-                  </NavbarButton>
-                )}
                 <NavbarButton
                   variant="secondary"
                   className="text-white"

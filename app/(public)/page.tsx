@@ -1,868 +1,402 @@
-"use client";
+"use client"
 
-import { useState, useRef, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react"
+import Link from "next/link"
+import Image from "next/image"
+import { useRouter } from "next/navigation"
 import {
-  motion,
-  useScroll,
-  useTransform,
-  useInView,
-  AnimatePresence,
-} from "framer-motion";
-import { Button } from "@/componentss/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/componentss/ui/card";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/componentss/ui/accordion";
-import { Badge } from "@/componentss/ui/badge";
-import Link from "next/link";
-import { useSession, signIn } from "next-auth/react";
-import Navbar from "@/componentss/shared/navbar";
-import {
-  Zap,
-  Shield,
-  Users,
+  Search,
   Star,
+  Play,
+  ShoppingCart,
+  ChevronLeft,
+  ChevronRight,
   ArrowRight,
-  Megaphone,
+  Sparkles,
+  Zap,
   Gift,
-  MousePointerClick,
-  ShoppingBag,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
-import Footer from "@/componentss/shared/footer";
-import Image from "next/image";
-import { InfiniteMovingCards } from "@/componentss/ui/infinite-moving-cards";
-import { LiquidBackground } from "@/components/ui/liquid-background";
-import { TiltCard } from "@/components/ui/tilt-card";
-import { ScrollCardStack } from "@/components/ui/scroll-stack";
-import FeaturedScriptCard from "@/componentss/featured-scripts/featured-script-card";
-interface Stats {
-  totalScripts: number;
-  totalUsers: number;
-  totalGiveaways: number;
-  totalGiveawayValue: number;
-  totalDevelopers: number;
-  categoryCounts: Record<string, number>;
+  Building2,
+  Code2,
+  Package,
+  Car,
+  Crosshair,
+  Shirt,
+  Upload,
+  BadgeDollarSign,
+  Users,
+  Shield,
+  Megaphone,
+  Plus,
+} from "lucide-react"
+import Navbar from "@/componentss/shared/navbar"
+import Footer from "@/componentss/shared/footer"
+import { ProductCard, type MarketProduct } from "@/componentss/marketplace/product-card"
+import { MARKETPLACE_SEED, type SeedProduct } from "@/lib/marketplace-seed"
+
+const CATEGORIES = [
+  { name: "Scripts", icon: Code2, href: "/scripts" },
+  { name: "Props", icon: Package, href: "/props" },
+  { name: "MLOs", icon: Building2, href: "/scripts?category=mlo" },
+  { name: "Vehicles", icon: Car, href: "/scripts?category=vehicles" },
+  { name: "Weapons", icon: Crosshair, href: "/scripts?category=weapons" },
+  { name: "Clothing", icon: Shirt, href: "/scripts?category=clothing" },
+  { name: "Giveaways", icon: Gift, href: "/giveaways" },
+]
+
+const PLATFORM_FEATURES = [
+  { title: "Community Driven", description: "Built by experienced FiveM developers, trusted and improved by the community.", icon: Users },
+  { title: "Premium Quality", description: "Only top-tier scripts that meet our quality standards make it onto FiveCrux.", icon: Star },
+  { title: "Security Verified", description: "Every resource is manually reviewed before it goes live.", icon: Shield },
+  { title: "Maximum Reach", description: "Get discovered by thousands of FiveM server owners worldwide.", icon: Megaphone },
+]
+
+const FAQS = [
+  { q: "How does publishing a script work?", a: "Submit your script through the developer panel. Each submission goes through a quality, security, and compatibility review before being published." },
+  { q: "How do I get paid?", a: "Payments are handled through Tebex — money from your sales goes directly to your connected Tebex account." },
+  { q: "Is there any publishing fee?", a: "There is no upfront fee to publish. You can optionally pay for featured slots and ads for extra reach." },
+  { q: "Can I host giveaways on FiveCrux?", a: "Yes. Developers can create and publish giveaways to promote their scripts and reach a wider FiveM audience." },
+]
+
+function mapFeatured(item: any): MarketProduct {
+  return {
+    id: item.scriptId ?? item.id,
+    title: item.scriptTitle || item.title || "Untitled",
+    framework: Array.isArray(item.scriptFramework) ? item.scriptFramework : item.scriptFramework ? [item.scriptFramework] : item.framework || [],
+    price: Number(item.scriptPrice ?? item.price ?? 0),
+    free: item.scriptFree ?? item.free ?? false,
+    seller: item.scriptSellerName || item.seller_name || item.seller,
+    sellerImage: item.scriptSellerImage || item.seller_image,
+    coverImage: item.scriptCoverImage || item.cover_image,
+    tag: "FEATURED",
+    href: `/script/${item.scriptId ?? item.id}`,
+  }
 }
 
-interface Script {
-  id: number;
-  featuredScriptId?: number; // ID of the featured script entry for tracking
-  title: string;
-  description: string;
-  cover_image?: string;
-  framework?: string[];
-  price: number;
-  original_price?: number;
-  currency_symbol?: string;
-  free?: boolean;
-  seller?: string;
-  seller_name?: string;
-  seller_image?: string;
-  seller_roles?: string[];
-}
-
-// ─── Framer FAQs-inspired accordion item ────────────────────────────────────
-function FAQItem({
-  question,
-  answer,
-  index,
-}: {
-  question: string
-  answer: string
-  index: number
+// ── Horizontal scroll row ──
+function Row({ title, icon, emoji, items, seeAllHref }: {
+  title: string
+  icon?: React.ReactNode
+  emoji?: string
+  items: MarketProduct[]
+  seeAllHref: string
 }) {
-  const [open, setOpen] = useState(false)
-
+  if (!items.length) return null
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ type: "spring", damping: 60, stiffness: 500, delay: index * 0.05 }}
-    >
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between text-left px-6 py-5 rounded-[22px] transition-colors duration-200 group"
-        style={{
-          background: open ? "rgba(249,115,22,0.07)" : "transparent",
-        }}
-        aria-expanded={open}
-      >
-        <span className={`text-base font-semibold pr-4 transition-colors duration-200 ${open ? "text-orange-400" : "text-white"}`}>
-          {question}
-        </span>
-        {/* Rotating icon — + when closed, × when open */}
-        <motion.span
-          animate={{ rotate: open ? 45 : 0 }}
-          transition={{ type: "spring", damping: 60, stiffness: 500 }}
-          className={`flex-shrink-0 flex items-center justify-center h-7 w-7 rounded-full text-lg font-light leading-none transition-colors duration-200 ${open ? "text-orange-400" : "text-white/40 group-hover:text-white/70"}`}
-          style={{
-            background: open ? "rgba(249,115,22,0.15)" : "rgba(255,255,255,0.06)",
-            border: open ? "1px solid rgba(249,115,22,0.25)" : "1px solid rgba(255,255,255,0.08)",
-          }}
-        >
-          +
-        </motion.span>
-      </button>
-
-      <AnimatePresence initial={false}>
-        {open && (
-          <motion.div
-            key="answer"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ type: "spring", damping: 60, stiffness: 500 }}
-            className="overflow-hidden"
-          >
-            <p className="px-6 pb-5 text-sm text-white/50 leading-relaxed">
-              {answer}
-            </p>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.div>
+    <section>
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="flex items-center gap-2 text-lg font-extrabold sm:text-xl">
+          {emoji ? <span>{emoji}</span> : icon}
+          {title}
+        </h2>
+        <Link href={seeAllHref} className="flex items-center gap-1 text-sm font-semibold text-orange-400 transition-all hover:gap-2">
+          See all <ArrowRight className="h-4 w-4" />
+        </Link>
+      </div>
+      <div className="-mx-3 overflow-x-auto px-3 [scrollbar-width:none] sm:-mx-6 sm:px-6 [&::-webkit-scrollbar]:hidden">
+        <div className="flex w-max gap-4 pb-2">
+          {items.map((p) => (
+            <ProductCard key={`${title}-${p.id}`} product={p} />
+          ))}
+        </div>
+      </div>
+    </section>
   )
 }
-// ─────────────────────────────────────────────────────────────────────────────
 
-export default function HomePage() {
+// ── Rotating featured spotlight hero ──
+function HeroSpotlight({ items, query, setQuery, onSearch }: {
+  items: MarketProduct[]
+  query: string
+  setQuery: (v: string) => void
+  onSearch: () => void
+}) {
+  const [idx, setIdx] = useState(0)
+  const slides = items.length ? items : []
+  const active = slides[idx % slides.length] || items[0]
 
-  const [stats, setStats] = useState<Stats | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [featuredScripts, setFeaturedScripts] = useState<Script[]>([]);
-  const [scriptsLoading, setScriptsLoading] = useState(true);
-  const { status } = useSession();
-  const heroRef = useRef(null);
-  const featuresRef = useRef(null);
-  const statsRef = useRef(null);
-
-  const { scrollYProgress } = useScroll();
-  const heroInView = useInView(heroRef, { once: true });
-  const featuresInView = useInView(featuresRef, { once: true });
-  const statsInView = useInView(statsRef, { once: true });
-
-  const y = useTransform(scrollYProgress, [0, 1], ["0%", "50%"]);
-  const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
-
-  // Fetch dynamic stats
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const statsRes = await fetch("/api/stats", { cache: "no-store" });
+    if (slides.length <= 1) return
+    const t = setInterval(() => setIdx((i) => (i + 1) % slides.length), 6000)
+    return () => clearInterval(t)
+  }, [slides.length])
 
-        if (statsRes.ok) {
-          const statsData = await statsRes.json();
-          setStats(statsData);
-        }
-      } catch (error) {
-        console.error("Error fetching stats:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
-
-  // Fetch featured scripts
-  useEffect(() => {
-    const fetchFeaturedScripts = async () => {
-      try {
-        setScriptsLoading(true);
-        const response = await fetch("/api/featured-scripts?status=active", { cache: "no-store" });
-
-        if (response.ok) {
-          const data = await response.json();
-          const featuredScriptsData = data.featuredScripts || [];
-          // Map API response to match the expected format
-          const mappedScripts: Script[] = featuredScriptsData.map((item: any) => ({
-            id: item.scriptId,
-            featuredScriptId: item.id, // Store the featured script ID for tracking
-            title: item.scriptTitle || "",
-            description: item.scriptDescription || "",
-            cover_image: item.scriptCoverImage || "/placeholder.jpg",
-            framework: Array.isArray(item.scriptFramework) ? item.scriptFramework : item.scriptFramework ? [item.scriptFramework] : [],
-            price: item.scriptPrice || 0,
-            original_price: item.scriptPrice || 0,
-            currency_symbol: item.scriptCurrencySymbol || "$",
-            free: item.scriptFree || false,
-            seller: item.scriptSellerName || "",
-            seller_name: item.scriptSellerName || "",
-            seller_image: item.scriptSellerImage || null,
-            seller_roles: item.scriptSellerRoles || null,
-          }));
-
-          // Shuffle the array to randomize starting position
-          const shuffledScripts = [...mappedScripts].sort(() => Math.random() - 2);
-          setFeaturedScripts(shuffledScripts);
-        }
-      } catch (error) {
-        console.error("Error fetching featured scripts:", error);
-      } finally {
-        setScriptsLoading(false);
-      }
-    };
-
-    fetchFeaturedScripts();
-  }, []);
-
-  const faqs = [
-    {
-      question: "How does publishing a script work?",
-      answer: "Developers can submit their scripts through the developer panel. Each submission goes through a review process to ensure quality, security, and compatibility before being published.",
-    },
-    {
-      question: "Who owns the script rights?",
-      answer: "Developers retain full ownership of their scripts. FiveCrux only provides the platform for promotion."
-    },
-    {
-      question: "Is there any publishing fee?",
-      answer: "There is no upfront fee to publish scripts."
-    },
-    {
-      question: "Can I host giveaways on FiveCrux?",
-      answer: "Yes. Developers can create and publish giveaways to promote their scripts, gain visibility, and reach a wider FiveM audience."
-    }
-  ]
-  const platformFeatures = [
-    {
-      title: "Community Driven",
-      description: "Built by experienced FiveM developers, trusted and improved by the community.",
-      icon: Users,
-      gradient: "from-orange-500 to-orange-600",
-    },
-    {
-      title: "Premium Quality",
-      description: "Only top-tier scripts that meet our quality standards are listed on FiveCrux. ",
-      icon: Star,
-      gradient: "from-yellow-400 to-yellow-500",
-    },
-    {
-      title: "Security Verified",
-      description: "Every resource is manually reviewed",
-      icon: Shield,
-      gradient: "from-orange-500 to-red-500",
-    },
-    {
-      title: "Maximum Reach",
-      description:
-        "Get your scripts discovered by thousands of FiveM server owners and communities worldwide.",
-      icon: Megaphone,
-      gradient: "from-yellow-400 to-orange-500",
-    },
-  ];
-
+  const go = (d: number) => setIdx((i) => (i + d + slides.length) % slides.length)
+  if (!active) return null
 
   return (
-    <>
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `
-        .scrollbar-hide::-webkit-scrollbar {
-          display: none;
-        }
-        .scrollbar-hide {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-      `,
-        }}
-      />
-      <div className="min-h-screen text-white overflow-x-clip">
-        <Navbar />
+    <section className="mt-4 px-3 sm:px-6">
+      <div className="relative mx-auto max-w-7xl overflow-hidden rounded-2xl border border-white/[0.08]" style={{ minHeight: "70vh" }}>
+        {/* Cover image of active product */}
+        {active.coverImage ? (
+          <Image src={active.coverImage} alt={active.title} fill priority className="object-cover" sizes="100vw" />
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-fuchsia-700 via-purple-700 to-orange-600" />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/55 to-[#0a0a0a]/20" />
 
-        {/* ── Hero Section ── */}
-        <motion.section
-          ref={heroRef}
-          className="relative min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 overflow-hidden"
-          style={{ y, opacity }}
-        >
-          {/* Dark base */}
-          <div className="absolute inset-0 bg-[#0e0e0e]" />
-
-          {/* Animated liquid blobs */}
-          <LiquidBackground opacity={0.9} />
-
-          {/* Fine noise texture for depth */}
-          <div
-            className="absolute inset-0 pointer-events-none"
-            style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E")`,
-              opacity: 0.04,
-              mixBlendMode: "overlay",
-            }}
-          />
-
-          {/* Bottom fade to page bg */}
-          <div className="absolute bottom-0 inset-x-0 h-40 bg-gradient-to-t from-[#131313] to-transparent pointer-events-none" />
-
-          {/* Content */}
-          <div className="relative z-10 max-w-5xl mx-auto text-center">
-            <AnimatePresence>
-              {heroInView && (
-                <>
-                  {/* Eyebrow badge */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ type: "spring", bounce: 0, duration: 0.6 }}
-                    className="mb-8 flex justify-center"
-                  >
-                    <span
-                      className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold text-white/80"
-                      style={{
-                        background: "rgba(255,255,255,0.08)",
-                        border: "1px solid rgba(255,255,255,0.12)",
-                        backdropFilter: "blur(8px)",
-                      }}
-                    >
-                      <span className="h-1.5 w-1.5 rounded-full bg-orange-400 animate-pulse" />
-                      The #1 FiveM Marketplace & Giveaway Platform
-                    </span>
-                  </motion.div>
-
-                  {/* Headline — white, no gradient */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 40 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ type: "spring", bounce: 0, duration: 0.7, delay: 0.1 }}
-                    className="mb-6"
-                  >
-                    <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold leading-[1.05] tracking-tight text-white">
-                      Premium FiveM
-                      <br />
-                      <span className="text-orange-400">Scripts</span>
-                      {" & "}
-                      <span className="text-yellow-300">Giveaways</span>
-                    </h1>
-                  </motion.div>
-
-                  {/* Sub-headline */}
-                  <motion.p
-                    initial={{ opacity: 0, y: 30 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ type: "spring", bounce: 0, duration: 0.7, delay: 0.22 }}
-                    className="text-lg md:text-xl text-white/60 mb-12 max-w-2xl mx-auto leading-relaxed font-normal"
-                  >
-                    Discover high-quality scripts, enter amazing giveaways, and
-                    grow your FiveM server — all in one place.
-                  </motion.p>
-
-                  {/* CTA buttons — pill style matching navbar */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 30 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ type: "spring", bounce: 0, duration: 0.7, delay: 0.34 }}
-                    className="flex flex-col sm:flex-row gap-4 justify-center items-center"
-                  >
-                    {/* Primary — solid orange pill */}
-                    <Link href="/scripts">
-                      <motion.button
-                        whileHover={{ scale: 1.04, y: -2 }}
-                        whileTap={{ scale: 0.97 }}
-                        className="inline-flex items-center gap-2.5 px-8 py-3.5 rounded-full text-base font-semibold text-white transition-all duration-200 cursor-pointer"
-                        style={{
-                          background: "rgba(249,115,22,1)",
-                          boxShadow: "0 0 0 1px rgba(249,115,22,0.5), 0 4px 24px rgba(249,115,22,0.45)",
-                        }}
-                      >
-                        <ShoppingBag className="h-4 w-4" />
-                        Explore Marketplace
-                      </motion.button>
-                    </Link>
-
-                    {/* Secondary — glass pill */}
-                    <Link href="/giveaways">
-                      <motion.button
-                        whileHover={{ scale: 1.04, y: -2 }}
-                        whileTap={{ scale: 0.97 }}
-                        className="inline-flex items-center gap-2.5 px-8 py-3.5 rounded-full text-base font-semibold text-white transition-all duration-200 cursor-pointer"
-                        style={{
-                          background: "rgba(255,255,255,0.08)",
-                          border: "1px solid rgba(255,255,255,0.18)",
-                          backdropFilter: "blur(12px)",
-                          boxShadow: "0 4px 24px rgba(0,0,0,0.3)",
-                        }}
-                      >
-                        <Gift className="h-4 w-4" />
-                        Explore Giveaways
-                      </motion.button>
-                    </Link>
-                  </motion.div>
-
-                  {/* Trust strip */}
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 1, delay: 0.7 }}
-                    className="mt-16 flex flex-wrap items-center justify-center gap-6 text-sm text-white/35"
-                  >
-                    <span className="flex items-center gap-1.5"><Star className="h-3.5 w-3.5 text-yellow-400/70" />Premium Quality</span>
-                    <span className="h-3 w-px bg-white/10" />
-                    <span className="flex items-center gap-1.5"><Shield className="h-3.5 w-3.5 text-orange-400/70" />Security Verified</span>
-                    <span className="h-3 w-px bg-white/10" />
-                    <span className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5 text-white/50" />Community Driven</span>
-                  </motion.div>
-                </>
-              )}
-            </AnimatePresence>
+        {/* Search overlay */}
+        <div className="relative z-10 flex justify-center p-4 sm:p-8">
+          <div className="flex w-full max-w-2xl items-center gap-3 rounded-xl border border-white/10 bg-black/40 px-4 py-3 backdrop-blur-md focus-within:border-orange-500/50">
+            <Search className="h-5 w-5 text-white/60" />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && onSearch()}
+              type="text"
+              placeholder="Search scripts, MLOs, vehicles, props…"
+              className="w-full bg-transparent text-sm outline-none placeholder:text-white/50"
+            />
+            <button onClick={onSearch} className="rounded-lg bg-orange-500 px-3 py-1.5 text-xs font-bold text-black">Search</button>
           </div>
-        </motion.section>
+        </div>
 
-        {/* Featured scripts Section */}
-        <motion.section className="py-20 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-7xl mx-auto relative z-10">
-            <motion.div
-              initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1 }}
-              className="text-center mb-12"
-            >
-              <Badge className="bg-gradient-to-r from-orange-500/20 to-yellow-400/20 text-orange-400 border-orange-500/30 mb-6 px-4 py-2 text-sm font-semibold">
-                Featured Scripts
-              </Badge>
-              <h2 className="text-4xl md:text-5xl font-bold text-white mb-4 flex items-center gap-0 justify-center sm:gap-3">
-                <Zap className="h-10 w-10 text-orange-500" />
-                Featured Scripts
-              </h2>
-              <p className="text-gray-400 max-w-2xl mx-auto">
-                Check out our most popular and featured scripts
-              </p>
-            </motion.div>
-
-            {scriptsLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="bg-neutral-900 border-2 border-neutral-700/50 rounded-xl h-96 animate-pulse" />
-                ))}
-              </div>
-            ) : featuredScripts.length === 0 ? (
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ type: "spring", bounce: 0, duration: 0.7 }}
-                className="flex flex-col items-center justify-center py-20 px-4"
-              >
-                {/* Glassy card */}
-                <div
-                  className="relative flex flex-col items-center gap-6 rounded-2xl px-10 py-6 w-full overflow-hidden"
-                  style={{
-                    background: "rgba(255,255,255,0.04)",
-                    border: "1px solid rgba(255,255,255,0.08)",
-                    backdropFilter: "blur(16px)",
-                    boxShadow: "0 8px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(249,115,22,0.08)",
-                  }}
-                >
-                  {/* Subtle orange glow behind icon */}
-                  <div
-                    className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-24 pointer-events-none"
-                    style={{
-                      background: "radial-gradient(ellipse at center, rgba(249,115,22,0.18) 0%, transparent 70%)",
-                    }}
-                  />
-
-                  {/* Animated icon */}
-                  <motion.div
-                    animate={{
-                      scale: [1, 1.12, 1],
-                      opacity: [0.7, 1, 0.7],
-                    }}
-                    transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-                    className="relative z-10 flex h-16 w-16 items-center justify-center rounded-2xl"
-                    style={{
-                      background: "rgba(249,115,22,0.12)",
-                      border: "1px solid rgba(249,115,22,0.25)",
-                      boxShadow: "0 0 20px rgba(249,115,22,0.2)",
-                    }}
-                  >
-                    <Zap className="h-8 w-8 text-orange-400" />
-                  </motion.div>
-
-                  {/* Heading with shimmer */}
-                  <motion.h3
-                    className="relative z-10 text-xl font-bold text-white text-center"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2, type: "spring", bounce: 0, duration: 0.6 }}
-                  >
-                    No Featured Scripts Yet
-                  </motion.h3>
-
-                  {/* Sub-text */}
-                  <motion.p
-                    className="relative z-10 text-sm text-white/45 text-center leading-relaxed max-w-xs"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.35, type: "spring", bounce: 0, duration: 0.6 }}
-                  >
-                    Featured scripts will appear here once developers promote their work. Check back soon!
-                  </motion.p>
-
-                  {/* CTA */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5, type: "spring", bounce: 0, duration: 0.6 }}
-                  >
-                    <Link href="/scripts">
-                      <motion.button
-                        whileHover={{ scale: 1.04, y: -1 }}
-                        whileTap={{ scale: 0.97 }}
-                        className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-semibold text-white cursor-pointer transition-all duration-200"
-                        style={{
-                          background: "rgba(249,115,22,0.9)",
-                          boxShadow: "0 0 0 1px rgba(249,115,22,0.4), 0 4px 16px rgba(249,115,22,0.35)",
-                        }}
-                      >
-                        <ShoppingBag className="h-3.5 w-3.5" />
-                        Browse All Scripts
-                      </motion.button>
-                    </Link>
-                  </motion.div>
-
-                  {/* Animated dots row */}
-                  <div className="flex gap-2">
-                    {[0, 0.2, 0.4].map((delay, i) => (
-                      <motion.span
-                        key={i}
-                        className="h-1.5 w-1.5 rounded-full bg-orange-400/40"
-                        animate={{ opacity: [0.3, 1, 0.3], scale: [0.8, 1.2, 0.8] }}
-                        transition={{ duration: 1.5, repeat: Infinity, delay, ease: "easeInOut" }}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </motion.div>
-            ) : featuredScripts.length > 3 ? (
-              <InfiniteMovingCards
-                items={featuredScripts}
-                direction="left"
-                speed="fast"
-                pauseOnHover={true}
-                className="max-w-7xl"
-                renderItem={(item, index) => (
-                  <FeaturedScriptCard
-                    item={item}
-                    index={index}
-                    style={{
-                      width: "calc((100vw - 8rem) / 3)",
-                      minWidth: "320px",
-                      maxWidth: "400px",
-                    }}
-                  />
-                )}
-              />
-            ) : (
-              <div className="overflow-x-auto -mx-4 sm:-mx-6 px-4 sm:px-6 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                <div className="flex md:grid md:grid-cols-2 xl:grid-cols-3 gap-6 md:gap-6 min-w-max md:min-w-0">
-                  {featuredScripts.map((item, index) => (
-                    <FeaturedScriptCard
-                      key={item.id}
-                      item={item}
-                      index={index}
-                      className="flex-shrink-0 w-[320px] md:w-auto"
-                    />
-                  ))}
-                </div>
-              </div>
+        {/* Content */}
+        <div className="relative z-10 flex flex-col justify-end px-5 pb-12 sm:px-10" style={{ minHeight: "calc(70vh - 90px)" }}>
+          <span className="mb-3 inline-flex items-center gap-1.5 self-start rounded-full bg-orange-500 px-2.5 py-1 text-[11px] font-bold text-black">
+            <Star className="h-3 w-3" /> FEATURED SPOTLIGHT
+          </span>
+          <h1 className="mb-3 max-w-3xl text-3xl font-black tracking-tight drop-shadow-lg sm:text-5xl">{active.title}</h1>
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            {active.framework?.slice(0, 2).map((fw) => (
+              <span key={fw} className="rounded-md border border-white/15 bg-white/10 px-2 py-1 text-xs font-bold backdrop-blur-sm">{fw}</span>
+            ))}
+            {typeof active.rating === "number" && (
+              <span className="flex items-center gap-1 text-sm font-semibold text-yellow-400">
+                <Star className="h-4 w-4 fill-yellow-400" /> {active.rating.toFixed(1)}
+              </span>
             )}
+            {active.seller && <span className="text-sm text-white/70">by {active.seller}</span>}
+            <span className="ml-2 text-2xl font-black">{active.free || active.price === 0 ? "Free" : `$${active.price.toFixed(2)}`}</span>
           </div>
-        </motion.section>
-
-        {/* Platform Features Section */}
-        <motion.section
-          ref={featuresRef}
-          className="py-32 px-4 sm:px-6 lg:px-8 relative overflow-hidden"
-          initial={{ opacity: 0 }}
-          animate={featuresInView ? { opacity: 1 } : {}}
-          transition={{ duration: 1 }}
-        >
-          {/* Background decoration */}
-
-          <div className="max-w-7xl mx-auto relative z-10">
-            <motion.div
-              initial={{ opacity: 0, y: 50 }}
-              animate={featuresInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ type: "spring", bounce: 0, duration: 0.7 }}
-              className="text-center mb-16"
-            >
-              <span
-                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold text-white/70 mb-6"
-                style={{
-                  background: "rgba(255,255,255,0.06)",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                }}
-              >
-                <span className="h-1.5 w-1.5 rounded-full bg-orange-400" />
-                Why Choose Us
-              </span>
-              <h2 className="text-5xl md:text-6xl font-extrabold text-white mt-4 mb-5 tracking-tight">
-                Why Choose{" "}
-                <span className="text-orange-400">FiveCrux</span>?
-              </h2>
-              <p className="text-lg text-white/50 max-w-2xl mx-auto leading-relaxed">
-                The most trusted marketplace and giveaway platform for premium FiveM scripts and resources
-              </p>
-            </motion.div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {platformFeatures.map((feature, index) => {
-                const Icon = feature.icon;
-                return (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, y: 40 }}
-                    animate={featuresInView ? { opacity: 1, y: 0 } : {}}
-                    transition={{ type: "spring", bounce: 0, duration: 0.6, delay: index * 0.08 }}
-                  >
-                    <TiltCard
-                      className="h-full rounded-2xl cursor-pointer"
-                      style={{
-                        background: "rgba(255,255,255,0.03)",
-                        border: "1px solid rgba(255,255,255,0.07)",
-                        backdropFilter: "blur(12px)",
-                      }}
-                    >
-                      {/* Inner glow on hover via group */}
-                      <div className="group relative h-full p-8 flex flex-col items-center text-center rounded-2xl transition-all duration-300 hover:bg-white/[0.02]">
-                        {/* Spotlight */}
-                        <div
-                          className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
-                          style={{
-                            background: "radial-gradient(ellipse 60% 50% at 50% 0%, rgba(249,115,22,0.12) 0%, transparent 70%)",
-                          }}
-                        />
-                        <div
-                          className="relative z-10 inline-flex items-center justify-center w-14 h-14 rounded-xl mb-6"
-                          style={{
-                            background: "rgba(249,115,22,0.1)",
-                            border: "1px solid rgba(249,115,22,0.2)",
-                            boxShadow: "0 0 16px rgba(249,115,22,0.15)",
-                          }}
-                        >
-                          <Icon className="h-7 w-7 text-orange-400" />
-                        </div>
-                        <h3 className="relative z-10 text-white font-bold text-lg mb-2">
-                          {feature.title}
-                        </h3>
-                        <p className="relative z-10 text-white/45 text-sm leading-relaxed">
-                          {feature.description}
-                        </p>
-                      </div>
-                    </TiltCard>
-                  </motion.div>
-                );
-              })}
-            </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <Link href={active.href} className="flex items-center gap-2 rounded-xl bg-orange-500 px-6 py-3 font-bold text-black transition hover:bg-orange-400 shadow-[0_0_0_1px_rgba(249,115,22,0.5),0_8px_32px_rgba(249,115,22,0.35)]">
+              <Play className="h-4 w-4" /> View Script
+            </Link>
+            <Link href={active.href} className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.06] px-6 py-3 font-semibold backdrop-blur-md transition hover:bg-white/10">
+              <ShoppingCart className="h-4 w-4" /> Add to Cart
+            </Link>
           </div>
-        </motion.section>
+        </div>
 
-
-
-        {/*Our Services Section*/}
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-80px" }}
-          transition={{ type: "spring", bounce: 0, duration: 0.7 }}
-        >
-          <div className="max-w-7xl mx-auto relative z-10 py-16 px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center">
-            <span
-              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold text-white/70 mb-6"
-              style={{
-                background: "rgba(255,255,255,0.06)",
-                border: "1px solid rgba(255,255,255,0.1)",
-              }}
-            >
-              <span className="h-1.5 w-1.5 rounded-full bg-orange-400" />
-              Our Services
-            </span>
-            <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-4 text-center tracking-tight">
-              Powered by the <span className="text-orange-400">Crux</span> Ecosystem
-            </h2>
-            <p className="text-white/45 max-w-2xl mx-auto text-center text-base">
-              Our other services that make FiveCrux possible
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 max-w-5xl mx-auto gap-6 px-8">
-            {/* GameCrux */}
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ type: "spring", bounce: 0, duration: 0.6 }}
-            >
-              <a href="https://www.gamecrux.io/" target="_blank" rel="noopener noreferrer">
-                <TiltCard
-                  className="rounded-2xl overflow-hidden h-full cursor-pointer"
-                  style={{
-                    background: "rgba(255,255,255,0.03)",
-                    border: "1px solid rgba(255,255,255,0.07)",
-                    backdropFilter: "blur(12px)",
-                    boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
-                  }}
-                >
-                  <div className="group relative flex flex-col h-full rounded-2xl overflow-hidden transition-all duration-300 hover:bg-white/[0.02]">
-                    {/* Orange spotlight on hover */}
-                    <div
-                      className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
-                      style={{
-                        background: "radial-gradient(ellipse 80% 60% at 50% 0%, rgba(249,115,22,0.10) 0%, transparent 70%)",
-                      }}
-                    />
-                    {/* Top border accent */}
-                    <div className="absolute top-0 inset-x-0 h-px opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                      style={{ background: "linear-gradient(90deg, transparent, rgba(249,115,22,0.5), transparent)" }}
-                    />
-                    <div className="relative z-10 p-8 flex flex-col gap-5 h-full">
-                      <div className="flex items-center gap-4">
-                        <div
-                          className="flex-shrink-0 p-2.5 rounded-xl"
-                          style={{
-                            background: "rgba(249,115,22,0.1)",
-                            border: "1px solid rgba(249,115,22,0.2)",
-                          }}
-                        >
-                          <Image src="/gamecrux.webp" alt="GameCrux" width={40} height={40} className="rounded-lg" />
-                        </div>
-                        <div>
-                          <h3 className="text-white font-bold text-xl">GameCrux</h3>
-                          <p className="text-orange-400/70 text-xs font-medium uppercase tracking-wide">Gaming Platform</p>
-                        </div>
-                      </div>
-                      <p className="text-white/45 text-sm leading-relaxed flex-1">
-                        Discover, Play, and Enjoy a Curated Selection of Exciting Minigames. Dive into the ultimate experience with our comprehensive games.
-                      </p>
-                      <div className="flex items-center gap-1.5 text-orange-400 text-sm font-semibold group-hover:gap-2.5 transition-all duration-200">
-                        Visit GameCrux
-                        <ArrowRight className="h-4 w-4" />
-                      </div>
-                    </div>
-                  </div>
-                </TiltCard>
-              </a>
-            </motion.div>
-
-            {/* Crux Studio */}
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ type: "spring", bounce: 0, duration: 0.6, delay: 0.1 }}
-            >
-              <a href="https://crux.tebex.io/" target="_blank" rel="noopener noreferrer">
-                <TiltCard
-                  className="rounded-2xl overflow-hidden h-full cursor-pointer"
-                  style={{
-                    background: "rgba(255,255,255,0.03)",
-                    border: "1px solid rgba(255,255,255,0.07)",
-                    backdropFilter: "blur(12px)",
-                    boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
-                  }}
-                >
-                  <div className="group relative flex flex-col h-full rounded-2xl overflow-hidden transition-all duration-300 hover:bg-white/[0.02]">
-                    <div
-                      className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
-                      style={{
-                        background: "radial-gradient(ellipse 80% 60% at 50% 0%, rgba(249,115,22,0.10) 0%, transparent 70%)",
-                      }}
-                    />
-                    <div className="absolute top-0 inset-x-0 h-px opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                      style={{ background: "linear-gradient(90deg, transparent, rgba(249,115,22,0.5), transparent)" }}
-                    />
-                    <div className="relative z-10 p-8 flex flex-col gap-5 h-full">
-                      <div className="flex items-center gap-4">
-                        <div
-                          className="flex-shrink-0 p-2.5 rounded-xl"
-                          style={{
-                            background: "rgba(249,115,22,0.1)",
-                            border: "1px solid rgba(249,115,22,0.2)",
-                          }}
-                        >
-                          <Image src="/cs.webp" alt="Crux Studio" width={40} height={40} className="rounded-lg" />
-                        </div>
-                        <div>
-                          <h3 className="text-white font-bold text-xl">Crux Studio</h3>
-                          <p className="text-orange-400/70 text-xs font-medium uppercase tracking-wide">FiveM Marketplace</p>
-                        </div>
-                      </div>
-                      <p className="text-white/45 text-sm leading-relaxed flex-1">
-                        Premium FiveM Assets Marketplace. Creating high-quality products with passion and attention to detail to make your server even better.
-                      </p>
-                      <div className="flex items-center gap-1.5 text-orange-400 text-sm font-semibold group-hover:gap-2.5 transition-all duration-200">
-                        Visit Crux Studio
-                        <ArrowRight className="h-4 w-4" />
-                      </div>
-                    </div>
-                  </div>
-                </TiltCard>
-              </a>
-            </motion.div>
-          </div>
-        </motion.div>
-
-        <ScrollCardStack />
-        {/* FAQ Section */}
-        <motion.section
-          className="py-24 px-4 sm:px-6 lg:px-8"
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-80px" }}
-          transition={{ type: "spring", bounce: 0, duration: 0.7 }}
-        >
-          <div className="max-w-3xl mx-auto">
-            {/* Section header */}
-            <div className="text-center mb-12">
-              <span
-                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold text-white/70 mb-6"
-                style={{
-                  background: "rgba(255,255,255,0.06)",
-                  border: "1px solid rgba(255,255,255,0.10)",
-                }}
-              >
-                <span className="h-1.5 w-1.5 rounded-full bg-orange-400" />
-                FAQ
-              </span>
-              <h2 className="text-4xl md:text-5xl font-extrabold text-white tracking-tight mt-4 mb-4">
-                Frequently Asked <span className="text-orange-400">Questions</span>
-              </h2>
-              <p className="text-white/45 text-base max-w-xl mx-auto">
-                Everything you need to know about FiveCrux.
-              </p>
-            </div>
-
-            {/* Framer-style FAQ accordion — glassy outer card, gap: 2px, padding: 4px, radius: 26px */}
-            <motion.div
-              className="flex flex-col w-full p-1"
-              style={{
-                background: "rgba(255,255,255,0.05)",
-                border: "1px solid rgba(255,255,255,0.08)",
-                borderRadius: "26px",
-                gap: "2px",
-              }}
-            >
-              {faqs.map((faq, index) => (
-                <FAQItem key={index} index={index} question={faq.question} answer={faq.answer} />
+        {slides.length > 1 && (
+          <>
+            <button onClick={() => go(-1)} aria-label="Previous" className="absolute left-3 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/10 bg-black/40 backdrop-blur-md transition hover:bg-white/10">
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+            <button onClick={() => go(1)} aria-label="Next" className="absolute right-3 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/10 bg-black/40 backdrop-blur-md transition hover:bg-white/10">
+              <ChevronRight className="h-5 w-5" />
+            </button>
+            <div className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 items-center gap-2">
+              {slides.map((_, i) => (
+                <button key={i} onClick={() => setIdx(i)} aria-label={`Slide ${i + 1}`}
+                  className={`h-1.5 rounded-full transition-all ${i === idx % slides.length ? "w-8 bg-orange-500" : "w-2 bg-white/30"}`} />
               ))}
-            </motion.div>
+            </div>
+          </>
+        )}
+      </div>
+    </section>
+  )
+}
+
+// ── FAQ accordion item ──
+function FaqItem({ q, a }: { q: string; a: string }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="rounded-[22px] transition-colors" style={{ background: open ? "rgba(249,115,22,0.07)" : "transparent" }}>
+      <button onClick={() => setOpen((v) => !v)} className="flex w-full items-center justify-between px-6 py-5 text-left">
+        <span className={`pr-4 text-base font-semibold ${open ? "text-orange-400" : "text-white"}`}>{q}</span>
+        <span className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full transition-transform ${open ? "rotate-45 text-orange-400" : "text-white/40"}`}
+          style={{ background: open ? "rgba(249,115,22,0.15)" : "rgba(255,255,255,0.06)" }}>
+          <Plus className="h-4 w-4" />
+        </span>
+      </button>
+      {open && <p className="px-6 pb-5 text-sm leading-relaxed text-white/55">{a}</p>}
+    </div>
+  )
+}
+
+export default function HomePage() {
+  const router = useRouter()
+  const [query, setQuery] = useState("")
+  const [liveFeatured, setLiveFeatured] = useState<MarketProduct[]>([])
+
+  // Optional live featured overlay (DB may be empty in dev → seed is the source of truth).
+  useEffect(() => {
+    let cancelled = false
+    fetch("/api/featured-scripts?status=active", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!cancelled && d?.featuredScripts?.length) setLiveFeatured(d.featuredScripts.map(mapFeatured))
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const rows = useMemo(() => {
+    const SEED: SeedProduct[] = MARKETPLACE_SEED
+    const byCat = (c: SeedProduct["category"]) => SEED.filter((p) => p.category === c)
+    const featuredSeed = SEED.filter((p) => p.tag === "FEATURED")
+    const heroItems = (liveFeatured.length ? liveFeatured : featuredSeed).slice(0, 5)
+    return {
+      heroItems,
+      featured: (liveFeatured.length ? liveFeatured : featuredSeed).slice(0, 10),
+      trending: [...SEED].sort((a, b) => (b.rating || 0) - (a.rating || 0)).slice(0, 10),
+      newReleases: [...SEED].reverse().slice(0, 10),
+      free: SEED.filter((p) => p.free || p.price === 0).slice(0, 10),
+      mlo: byCat("mlo"),
+      vehicles: byCat("vehicle"),
+      weapons: byCat("weapon"),
+      clothing: byCat("clothing"),
+    }
+  }, [liveFeatured])
+
+  const onSearch = () => {
+    const q = query.trim()
+    router.push(q ? `/scripts?search=${encodeURIComponent(q)}` : "/scripts")
+  }
+
+  return (
+    <div className="min-h-screen overflow-x-clip bg-[#0a0a0a] text-white">
+      <Navbar />
+
+      <HeroSpotlight items={rows.heroItems} query={query} setQuery={setQuery} onSearch={onSearch} />
+
+      {/* Category chips */}
+      <section className="mt-5 px-3 sm:px-6">
+        <div className="mx-auto max-w-7xl overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="flex w-max items-center gap-2.5 pb-1">
+            {CATEGORIES.map((c, i) => {
+              const Icon = c.icon
+              return (
+                <Link key={c.name} href={c.href}
+                  className={`flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition ${
+                    i === 0 ? "bg-orange-500 font-semibold text-black" : "border border-white/[0.08] bg-white/[0.04] backdrop-blur-md hover:bg-white/10"
+                  }`}>
+                  <Icon className="h-4 w-4" /> {c.name}
+                </Link>
+              )
+            })}
           </div>
-        </motion.section>
+        </div>
+      </section>
+
+      {/* Discovery rows */}
+      <main className="mx-auto mt-8 max-w-7xl space-y-10 px-3 sm:px-6">
+        <Row title="Featured" icon={<Sparkles className="h-5 w-5 text-yellow-400" />} items={rows.featured} seeAllHref="/scripts?featured=true" />
+        <Row title="Trending This Week" emoji="🔥" items={rows.trending} seeAllHref="/scripts" />
+        <Row title="New Releases" icon={<Zap className="h-5 w-5 text-orange-400" />} items={rows.newReleases} seeAllHref="/scripts" />
+        <Row title="Free Scripts" icon={<Gift className="h-5 w-5 text-green-400" />} items={rows.free} seeAllHref="/scripts?free=true" />
+        <Row title="Top MLOs & Maps" icon={<Building2 className="h-5 w-5 text-yellow-400" />} items={rows.mlo} seeAllHref="/scripts?category=mlo" />
+        <Row title="Vehicles" icon={<Car className="h-5 w-5 text-sky-400" />} items={rows.vehicles} seeAllHref="/scripts?category=vehicles" />
+        <Row title="Weapons" icon={<Crosshair className="h-5 w-5 text-red-400" />} items={rows.weapons} seeAllHref="/scripts?category=weapons" />
+        <Row title="Clothing & EUP" icon={<Shirt className="h-5 w-5 text-pink-400" />} items={rows.clothing} seeAllHref="/scripts?category=clothing" />
+      </main>
+
+      {/* Start selling strip */}
+      <section className="mt-12 px-3 sm:px-6">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 rounded-2xl border border-white/[0.10] bg-white/[0.06] px-5 py-5 backdrop-blur-md sm:flex-row sm:px-8">
+          <p className="flex items-center gap-2.5 text-center text-sm font-semibold sm:text-left sm:text-base">
+            <BadgeDollarSign className="h-5 w-5 shrink-0 text-yellow-400" />
+            Got scripts to sell? List your product and get paid directly via Tebex.
+          </p>
+          <Link href="/scripts/submit"
+            className="flex shrink-0 items-center gap-2 whitespace-nowrap rounded-xl bg-orange-500 px-5 py-3 text-sm font-bold text-black transition hover:bg-orange-400 shadow-[0_0_0_1px_rgba(249,115,22,0.5),0_8px_32px_rgba(249,115,22,0.35)]">
+            <Upload className="h-4 w-4" /> Start Selling
+          </Link>
+        </div>
+      </section>
+
+      {/* Why Choose FiveCrux */}
+      <section className="mt-20 px-3 sm:px-6">
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-12 text-center">
+            <span className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-4 py-1.5 text-sm font-semibold text-white/70">
+              <span className="h-1.5 w-1.5 rounded-full bg-orange-400" /> Why Choose Us
+            </span>
+            <h2 className="text-4xl font-extrabold tracking-tight sm:text-5xl">Why Choose <span className="text-orange-400">FiveCrux</span>?</h2>
+          </div>
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {PLATFORM_FEATURES.map((f) => {
+              const Icon = f.icon
+              return (
+                <div key={f.title} className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-7 text-center backdrop-blur-md transition hover:-translate-y-1 hover:border-orange-500/30">
+                  <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-xl border border-orange-500/20 bg-orange-500/10">
+                    <Icon className="h-7 w-7 text-orange-400" />
+                  </div>
+                  <h3 className="mb-2 text-lg font-bold">{f.title}</h3>
+                  <p className="text-sm leading-relaxed text-white/45">{f.description}</p>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* Our Services / Crux Ecosystem */}
+      <section className="mt-20 px-3 sm:px-6">
+        <div className="mx-auto max-w-5xl">
+          <div className="mb-10 text-center">
+            <span className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-4 py-1.5 text-sm font-semibold text-white/70">
+              <span className="h-1.5 w-1.5 rounded-full bg-orange-400" /> Our Services
+            </span>
+            <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl">Powered by the <span className="text-orange-400">Crux</span> Ecosystem</h2>
+          </div>
+          <div className="grid gap-6 md:grid-cols-2">
+            <a href="https://www.gamecrux.io/" target="_blank" rel="noopener noreferrer"
+              className="group block rounded-2xl border border-white/[0.07] bg-white/[0.03] p-7 backdrop-blur-md transition hover:-translate-y-1 hover:border-orange-500/30">
+              <div className="mb-4 flex items-center gap-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-orange-500/20 bg-orange-500/10">
+                  <Image src="/gamecrux.webp" alt="GameCrux" width={40} height={40} className="rounded-lg" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold">GameCrux</h3>
+                  <p className="text-xs font-medium uppercase tracking-wide text-orange-400/70">Gaming Platform</p>
+                </div>
+              </div>
+              <p className="text-sm leading-relaxed text-white/45">Discover, play, and enjoy a curated selection of exciting minigames.</p>
+              <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-orange-400 group-hover:gap-2.5">Visit GameCrux <ArrowRight className="h-4 w-4" /></span>
+            </a>
+            <a href="https://crux.tebex.io/" target="_blank" rel="noopener noreferrer"
+              className="group block rounded-2xl border border-white/[0.07] bg-white/[0.03] p-7 backdrop-blur-md transition hover:-translate-y-1 hover:border-orange-500/30">
+              <div className="mb-4 flex items-center gap-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-orange-500/20 bg-orange-500/10">
+                  <Image src="/cs.webp" alt="Crux Studio" width={40} height={40} className="rounded-lg" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold">Crux Studio</h3>
+                  <p className="text-xs font-medium uppercase tracking-wide text-orange-400/70">FiveM Marketplace</p>
+                </div>
+              </div>
+              <p className="text-sm leading-relaxed text-white/45">Premium FiveM assets crafted with passion and attention to detail.</p>
+              <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-orange-400 group-hover:gap-2.5">Visit Crux Studio <ArrowRight className="h-4 w-4" /></span>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section className="mt-20 px-3 sm:px-6">
+        <div className="mx-auto max-w-3xl">
+          <div className="mb-10 text-center">
+            <span className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-4 py-1.5 text-sm font-semibold text-white/70">
+              <span className="h-1.5 w-1.5 rounded-full bg-orange-400" /> FAQ
+            </span>
+            <h2 className="text-3xl font-extrabold tracking-tight sm:text-5xl">Frequently Asked <span className="text-orange-400">Questions</span></h2>
+          </div>
+          <div className="flex flex-col gap-0.5 rounded-[26px] border border-white/[0.08] bg-white/[0.05] p-1.5">
+            {FAQS.map((f) => (
+              <FaqItem key={f.q} q={f.q} a={f.a} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <div className="mt-20">
         <Footer />
       </div>
-    </>
-  );
+    </div>
+  )
 }

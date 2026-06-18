@@ -39,6 +39,78 @@ import Footer from "@/componentss/shared/footer"
 import { VerifiedIcon } from "@/componentss/shared/verified-icon"
 import { isVerifiedCreator } from "@/lib/utils"
 import { toast } from "sonner"
+import { MARKETPLACE_SEED } from "@/lib/marketplace-seed"
+
+// TODO: remove before production
+// Builds a demo giveaway from a MARKETPLACE_SEED item so the page renders
+// with realistic data when the giveaway API returns nothing/errors (DB may be absent in dev).
+function buildSeedGiveaway(giveawayId: string) {
+  const seedList = MARKETPLACE_SEED
+  // Pick a seed item deterministically from the route id, falling back to the first item.
+  const numericId = parseInt(String(giveawayId).replace(/\D/g, ""), 10)
+  const index = Number.isFinite(numericId) && numericId > 0 ? (numericId - 1) % seedList.length : 0
+  const item = seedList[index] || seedList[0]
+
+  const prizeValue = item.price && item.price > 0 ? item.price : 49.99
+  // Countdown end date a few days out so the timer is live.
+  const endDate = new Date(Date.now() + 1000 * 60 * 60 * 24 * 5).toISOString()
+  const startDate = new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString()
+
+  return {
+    id: item.id,
+    title: `${item.title} Giveaway`,
+    description: `Win the "${item.title}" mod for your FiveM server! Complete the simple requirements below for a chance to claim this premium prize from ${item.seller}. Winners are drawn automatically when the countdown ends.`,
+    totalValue: prizeValue.toFixed(2),
+    currencySymbol: "$",
+    entriesCount: 1240 + (Number(item.id) * 37),
+    endDate,
+    startDate,
+    start_date: startDate,
+    category: "Giveaways",
+    createdAt: startDate,
+    updatedAt: startDate,
+    featured: item.tag === "FEATURED",
+    creatorName: item.seller,
+    creator_name: item.seller,
+    creatorEmail: "",
+    creatorId: `seed-${item.id}`,
+    creator_id: `seed-${item.id}`,
+    creator_image: item.sellerImage,
+    creator_roles: null,
+    coverImage: item.coverImage,
+    images: [item.coverImage],
+    videos: [],
+    prizes: [
+      { position: 1, name: "Grand Prize", description: item.title, value: `$${prizeValue.toFixed(2)}`, winner: null },
+      { position: 2, name: "Runner Up", description: "Store credit", value: "$15.00", winner: null },
+      { position: 3, name: "Third Place", description: "Store credit", value: "$5.00", winner: null },
+    ],
+    requirements: [
+      { id: 1, description: "https://discord.gg/fivecrux", type: "discord", points: 10, required: true, link: "https://discord.gg/fivecrux" },
+      { id: 2, description: "Follow on X / Twitter", type: "follow", points: 5, required: false, link: "https://twitter.com/fivecrux" },
+      { id: 3, description: "Share this giveaway", type: "share", points: 15, required: true, link: null },
+    ],
+    __isSeed: true,
+  }
+}
+
+// TODO: remove before production
+// Demo "more giveaways" cards built from MARKETPLACE_SEED (excludes the current one).
+function buildSeedRelated(giveawayId: string) {
+  const numericId = parseInt(String(giveawayId).replace(/\D/g, ""), 10)
+  return MARKETPLACE_SEED
+    .filter((item) => item.id !== numericId)
+    .slice(0, 6)
+    .map((item, i) => ({
+      id: item.id,
+      title: `${item.title} Giveaway`,
+      coverImage: item.coverImage,
+      image: item.coverImage,
+      totalValue: (item.price && item.price > 0 ? item.price : 49.99).toFixed(2),
+      endDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * (3 + i)).toISOString(),
+      entriesCount: 480 + Number(item.id) * 23,
+    }))
+}
 
 // Add CSS for spin animation
 const spinStyle = `
@@ -435,26 +507,37 @@ export default function GiveawayDetailPage() {
         return
       }
 
+      // 8s timeout so we never infinite-spin if the DB/API is absent in dev.
+      const c = new AbortController()
+      const t = setTimeout(() => c.abort(), 8000)
       try {
         fetchRefs.current.giveaway = true
         setFetchingStates(prev => ({ ...prev, giveaway: true }))
         setLoading(true)
-        const response = await fetch(`/api/giveaways/${giveawayId}`, { cache: "no-store" })
-        
+        const response = await fetch(`/api/giveaways/${giveawayId}`, { cache: "no-store", signal: c.signal })
+
         if (response.ok) {
           const data = await response.json()
-          console.log('Giveaway data:', { 
-            creator_roles: data.creator_roles, 
+          console.log('Giveaway data:', {
+            creator_roles: data.creator_roles,
             creatorRoles: data.creatorRoles,
-            creator_id: data.creator_id || data.creatorId 
+            creator_id: data.creator_id || data.creatorId
           })
-          setGiveaway(data)
+          // Empty/invalid payload -> fall back to seed demo data.
+          if (!data || (typeof data === 'object' && !data.id && !data.title)) {
+            setGiveaway(buildSeedGiveaway(giveawayId)) // TODO: remove before production
+          } else {
+            setGiveaway(data)
+          }
         } else {
-          setError('Failed to load giveaway')
+          // API error -> render a demo giveaway from the marketplace seed.
+          setGiveaway(buildSeedGiveaway(giveawayId)) // TODO: remove before production
         }
       } catch (error) {
-        setError('Error loading giveaway')
+        // Network error / abort / timeout -> render a demo giveaway from the marketplace seed.
+        setGiveaway(buildSeedGiveaway(giveawayId)) // TODO: remove before production
       } finally {
+        clearTimeout(t)
         setLoading(false)
         setFetchingStates(prev => ({ ...prev, giveaway: false }))
         fetchRefs.current.giveaway = false
@@ -470,19 +553,32 @@ export default function GiveawayDetailPage() {
     const fetchRelatedGiveaways = async () => {
       if (fetchRefs.current.related) return
 
+      // 8s timeout so the "More Giveaways" skeletons never spin forever.
+      const c = new AbortController()
+      const t = setTimeout(() => c.abort(), 8000)
       try {
         fetchRefs.current.related = true
         setFetchingStates(prev => ({ ...prev, related: true }))
         setRelatedLoading(true)
-        const response = await fetch(`/api/giveaways/${giveawayId}/related`)
-        
+        const response = await fetch(`/api/giveaways/${giveawayId}/related`, { signal: c.signal })
+
         if (response.ok) {
           const data = await response.json()
-          setRelatedGiveaways(data.relatedGiveaways || [])
+          const list = data.relatedGiveaways || []
+          if (list.length > 0) {
+            setRelatedGiveaways(list)
+          } else {
+            setRelatedGiveaways(buildSeedRelated(giveawayId)) // TODO: remove before production
+          }
+        } else {
+          setRelatedGiveaways(buildSeedRelated(giveawayId)) // TODO: remove before production
         }
       } catch (error) {
         console.error('Error fetching related giveaways:', error)
+        // Seed fallback so the section is never empty in dev.
+        setRelatedGiveaways(buildSeedRelated(giveawayId)) // TODO: remove before production
       } finally {
+        clearTimeout(t)
         setRelatedLoading(false)
         setFetchingStates(prev => ({ ...prev, related: false }))
         fetchRefs.current.related = false

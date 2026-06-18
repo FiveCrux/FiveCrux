@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FiveCrux — Marketplace</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: { sans: ['Inter', 'sans-serif'] },
+      colors: { brand: { orange: '#f97316', yellow: '#facc15' } }
+    }
+  }
+}
+</script>
+<style>
+  body{font-family:'Inter',sans-serif;background:#0a0a0a}
+  .glass{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);backdrop-filter:blur(12px)}
+  .glass-strong{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.10);backdrop-filter:blur(16px)}
+  .orange-glow{box-shadow:0 0 0 1px rgba(249,115,22,0.5),0 8px 32px rgba(249,115,22,0.35)}
+  .card-hover{transition:all .25s ease}.card-hover:hover{transform:translateY(-5px);border-color:rgba(249,115,22,0.35);box-shadow:0 16px 48px rgba(0,0,0,0.5)}
+  .row-scroll{overflow-x:auto;scrollbar-width:none}.row-scroll::-webkit-scrollbar{display:none}
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-track{background:#0a0a0a}
+  ::-webkit-scrollbar-thumb{background:#27272a;border-radius:8px;border:2px solid #0a0a0a}
+  ::-webkit-scrollbar-thumb:hover{background:#3f3f46}
+  .slug-text{font-weight:900;letter-spacing:-0.03em;color:rgba(255,255,255,0.07);text-transform:uppercase}
+</style>
+</head>
+<body class="text-white antialiased">
+
+<!-- ===== NAVBAR ===== -->
+<div class="sticky top-0 z-50 px-4 pt-4">
+  <nav class="glass-strong max-w-7xl mx-auto rounded-2xl px-5 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-8">
+      <a href="#" class="text-2xl font-black tracking-tight"><span class="text-brand-orange">Five</span><span class="text-brand-yellow">Crux</span></a>
+      <div class="hidden lg:flex items-center gap-6 text-sm font-medium text-zinc-300">
+        <a href="#" class="text-white">Home</a>
+        <a href="#" class="hover:text-white transition">Scripts</a>
+        <a href="#" class="hover:text-white transition">Props</a>
+        <a href="#" class="hover:text-white transition">Giveaways</a>
+        <a href="#" class="hover:text-white transition">Advertise</a>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <button class="relative p-2 rounded-xl glass hover:bg-white/10 transition">
+        <i data-lucide="shopping-cart" class="w-5 h-5"></i>
+        <span class="absolute -top-1 -right-1 bg-brand-orange text-black text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full">2</span>
+      </button>
+      <button class="hidden sm:flex items-center gap-2 bg-brand-orange hover:bg-orange-500 text-black font-semibold text-sm px-4 py-2 rounded-xl transition">
+        <i data-lucide="upload" class="w-4 h-4"></i> Start Selling
+      </button>
+      <button class="glass hover:bg-white/10 text-sm font-medium px-4 py-2 rounded-xl transition">Login</button>
+    </div>
+  </nav>
+</div>
+
+<!-- ===== SEARCH STRIP ===== -->
+<div class="max-w-7xl mx-auto px-4 mt-4">
+  <div class="glass rounded-2xl p-2 flex items-center gap-2">
+    <div class="flex items-center gap-2 flex-1 px-3">
+      <i data-lucide="search" class="w-5 h-5 text-zinc-400"></i>
+      <input type="text" placeholder="Search scripts, MLOs, vehicles, creators…" class="bg-transparent w-full py-2 text-sm placeholder-zinc-500 focus:outline-none">
+    </div>
+    <button class="flex items-center gap-2 glass-strong text-sm font-medium px-4 py-2.5 rounded-xl text-zinc-200 hover:bg-white/10 transition">
+      All Categories <i data-lucide="chevron-down" class="w-4 h-4"></i>
+    </button>
+    <button class="bg-brand-orange hover:bg-orange-500 text-black font-semibold text-sm px-5 py-2.5 rounded-xl transition">Search</button>
+  </div>
+</div>
+
+<!-- ===== SPLIT HERO ===== -->
+<section class="max-w-7xl mx-auto px-4 mt-5">
+  <div class="flex flex-col lg:flex-row gap-4 lg:h-[70vh]">
+
+    <!-- LEFT: featured showcase -->
+    <div class="lg:w-[65%] relative rounded-2xl overflow-hidden glass card-hover">
+      <div class="absolute inset-0 bg-gradient-to-br from-orange-600/40 via-zinc-900 to-yellow-600/20"></div>
+      <div class="absolute inset-0 flex items-center justify-center select-none">
+        <span class="slug-text text-6xl md:text-8xl rotate-[-4deg]">CASINO HEIST</span>
+      </div>
+      <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
+      <span class="absolute top-4 left-4 bg-brand-orange text-black text-xs font-bold px-3 py-1 rounded-lg flex items-center gap-1"><i data-lucide="star" class="w-3 h-3"></i> FEATURED</span>
+      <div class="absolute bottom-0 left-0 right-0 p-6 md:p-8">
+        <div class="flex gap-2 mb-3">
+          <span class="glass text-xs font-medium px-2.5 py-1 rounded-md text-zinc-200">ESX</span>
+        </div>
+        <h2 class="text-3xl md:text-5xl font-black tracking-tight mb-2">Casino Heist Script</h2>
+        <div class="flex items-center gap-4 text-sm text-zinc-300 mb-3">
+          <span class="flex items-center gap-1.5"><span class="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-pink-500"></span> HighRoller</span>
+          <span class="flex items-center gap-1 text-brand-yellow"><i data-lucide="star" class="w-4 h-4 fill-current"></i> 5.0</span>
+        </div>
+        <p class="text-zinc-400 text-sm mb-5 max-w-lg">A complete multi-stage casino heist experience with hacking minigames, vaults and synced rewards.</p>
+        <div class="flex items-center gap-4 flex-wrap">
+          <span class="text-2xl font-black">$39.99</span>
+          <button class="flex items-center gap-2 bg-brand-orange hover:bg-orange-500 text-black font-semibold px-6 py-3 rounded-xl transition orange-glow">
+            <i data-lucide="eye" class="w-5 h-5"></i> View
+          </button>
+          <button class="flex items-center gap-2 glass-strong hover:bg-white/10 font-semibold px-6 py-3 rounded-xl transition">
+            <i data-lucide="shopping-cart" class="w-5 h-5"></i> Add to Cart
+          </button>
+        </div>
+        <div class="flex items-center gap-2 mt-6">
+          <span class="w-8 h-1.5 rounded-full bg-brand-orange"></span>
+          <span class="w-2 h-1.5 rounded-full bg-white/30"></span>
+          <span class="w-2 h-1.5 rounded-full bg-white/30"></span>
+          <span class="w-2 h-1.5 rounded-full bg-white/30"></span>
+          <span class="w-2 h-1.5 rounded-full bg-white/30"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: featured mini list -->
+    <div class="lg:w-[35%] flex flex-col gap-3">
+      <h3 class="text-xs font-bold tracking-widest text-zinc-500 uppercase px-1">Featured</h3>
+      <!-- active -->
+      <a href="#" class="glass-strong rounded-2xl p-3 flex items-center gap-3 border border-brand-orange/70 orange-glow">
+        <div class="relative w-20 h-14 rounded-lg overflow-hidden bg-gradient-to-br from-orange-600/50 to-yellow-600/30 flex items-center justify-center shrink-0"><span class="slug-text text-[8px]">CASINO</span></div>
+        <div class="flex-1 min-w-0">
+          <p class="font-semibold text-sm truncate">Casino Heist Script</p>
+          <p class="text-xs text-zinc-400">HighRoller</p>
+        </div>
+        <span class="font-bold text-sm">$39.99</span>
+      </a>
+      <a href="#" class="glass rounded-2xl p-3 flex items-center gap-3 hover:bg-white/10 transition">
+        <div class="relative w-20 h-14 rounded-lg overflow-hidden bg-gradient-to-br from-blue-600/40 to-cyan-600/20 flex items-center justify-center shrink-0"><span class="slug-text text-[8px]">BANK</span></div>
+        <div class="flex-1 min-w-0">
+          <p class="font-semibold text-sm truncate">Advanced Banking System</p>
+          <p class="text-xs text-zinc-400">CruxDev</p>
+        </div>
+        <span class="font-bold text-sm">$19.99</span>
+      </a>
+      <a href="#" class="glass rounded-2xl p-3 flex items-center gap-3 hover:bg-white/10 transition">
+        <div class="relative w-20 h-14 rounded-lg overflow-hidden bg-gradient-to-br from-emerald-600/40 to-teal-600/20 flex items-center justify-center shrink-0"><span class="slug-text text-[8px]">HOSPITAL</span></div>
+        <div class="flex-1 min-w-0">
+          <p class="font-semibold text-sm truncate">Hospital Interior MLO</p>
+          <p class="text-xs text-zinc-400">MapMasters</p>
+        </div>
+        <span class="font-bold text-sm">$29.99</span>
+      </a>
+      <a href="#" class="glass rounded-2xl p-3 flex items-center gap-3 hover:bg-white/10 transition">
+        <div class="relative w-20 h-14 rounded-lg overflow-hidden bg-gradient-to-br from-violet-600/40 to-fuchsia-600/20 flex items-center justify-center shrink-0"><span class="slug-text text-[8px]">PHONE</span></div>
+        <div class="flex-1 min-w-0">
+          <p class="font-semibold text-sm truncate">Phone System v2</p>
+          <p class="text-xs text-zinc-400">ConnectDev</p>
+        </div>
+        <span class="font-bold text-sm">$22.50</span>
+      </a>
+      <a href="#" class="glass rounded-2xl p-3 flex items-center gap-3 hover:bg-white/10 transition">
+        <div class="relative w-20 h-14 rounded-lg overflow-hidden bg-gradient-to-br from-rose-600/40 to-orange-600/20 flex items-center justify-center shrink-0"><span class="slug-text text-[8px]">APTS</span></div>
+        <div class="flex-1 min-w-0">
+          <p class="font-semibold text-sm truncate">Luxury Apartments MLO</p>
+          <p class="text-xs text-zinc-400">MapMasters</p>
+        </div>
+        <span class="font-bold text-sm">$34.99</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ===== TOP SELLERS THIS WEEK ===== -->
+<section class="max-w-7xl mx-auto px-4 mt-12">
+  <div class="flex items-center justify-between mb-4">
+    <h2 class="text-xl font-bold flex items-center gap-2"><i data-lucide="flame" class="w-5 h-5 text-brand-orange"></i> Top Sellers This Week</h2>
+    <a href="#" class="text-sm text-brand-orange font-medium hover:underline flex items-center gap-1">See all <i data-lucide="arrow-right" class="w-4 h-4"></i></a>
+  </div>
+  <div class="row-scroll flex gap-4 pb-2 -mx-4 px-4">
+    <!-- cards injected by JS -->
+    <div id="topSellersRow" class="flex gap-4"></div>
+  </div>
+</section>
+
+<!-- ===== BROWSE THE MARKETPLACE ===== -->
+<section class="max-w-7xl mx-auto px-4 mt-12">
+  <h2 class="text-xl font-bold mb-4">Browse the Marketplace</h2>
+  <div class="flex flex-wrap gap-2 mb-6">
+    <button class="bg-brand-orange text-black text-sm font-semibold px-4 py-2 rounded-full">All</button>
+    <button class="glass text-sm font-medium px-4 py-2 rounded-full text-zinc-300 hover:bg-white/10 transition">Scripts</button>
+    <button class="glass text-sm font-medium px-4 py-2 rounded-full text-zinc-300 hover:bg-white/10 transition">Props</button>
+    <button class="glass text-sm font-medium px-4 py-2 rounded-full text-zinc-300 hover:bg-white/10 transition">MLOs</button>
+    <button class="glass text-sm font-medium px-4 py-2 rounded-full text-zinc-300 hover:bg-white/10 transition">Vehicles</button>
+    <button class="glass text-sm font-medium px-4 py-2 rounded-full text-zinc-300 hover:bg-white/10 transition">Weapons</button>
+  </div>
+  <div id="gridProducts" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4"></div>
+</section>
+
+<!-- ===== NEW RELEASES ===== -->
+<section class="max-w-7xl mx-auto px-4 mt-12">
+  <div class="flex items-center justify-between mb-4">
+    <h2 class="text-xl font-bold flex items-center gap-2"><i data-lucide="sparkles" class="w-5 h-5 text-brand-yellow"></i> New Releases</h2>
+    <a href="#" class="text-sm text-brand-orange font-medium hover:underline flex items-center gap-1">See all <i data-lucide="arrow-right" class="w-4 h-4"></i></a>
+  </div>
+  <div class="row-scroll flex gap-4 pb-2 -mx-4 px-4">
+    <div id="newReleasesRow" class="flex gap-4"></div>
+  </div>
+</section>
+
+<!-- ===== TOP CREATORS ===== -->
+<section class="max-w-7xl mx-auto px-4 mt-12">
+  <h2 class="text-xl font-bold mb-4 flex items-center gap-2"><i data-lucide="users" class="w-5 h-5 text-brand-orange"></i> Top Creators</h2>
+  <div class="row-scroll flex gap-4 pb-2 -mx-4 px-4">
+    <div id="creatorsRow" class="flex gap-4"></div>
+  </div>
+</section>
+
+<!-- ===== BECOME A SELLER BAND ===== -->
+<section class="max-w-7xl mx-auto px-4 mt-12">
+  <div class="glass-strong rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gradient-to-r from-orange-600/10 to-transparent">
+    <div class="flex items-center gap-3">
+      <i data-lucide="badge-dollar-sign" class="w-7 h-7 text-brand-orange"></i>
+      <p class="text-lg font-semibold">Sell your scripts. <span class="text-zinc-400 font-normal">Get paid via PayPal.</span></p>
+    </div>
+    <button class="flex items-center gap-2 bg-brand-orange hover:bg-orange-500 text-black font-semibold px-6 py-3 rounded-xl transition orange-glow">
+      <i data-lucide="upload" class="w-5 h-5"></i> Start Selling
+    </button>
+  </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer class="max-w-7xl mx-auto px-4 mt-12 mb-8">
+  <div class="glass rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+    <a href="#" class="text-xl font-black tracking-tight"><span class="text-brand-orange">Five</span><span class="text-brand-yellow">Crux</span></a>
+    <div class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-zinc-400">
+      <a href="#" class="hover:text-white transition">Scripts</a>
+      <a href="#" class="hover:text-white transition">Props</a>
+      <a href="#" class="hover:text-white transition">Giveaways</a>
+      <a href="#" class="hover:text-white transition">Advertise</a>
+      <a href="#" class="hover:text-white transition">Support</a>
+      <a href="#" class="hover:text-white transition">Terms</a>
+    </div>
+    <p class="text-xs text-zinc-500">© 2026 FiveCrux</p>
+  </div>
+</footer>
+
+<script>
+// ===== PRODUCT DATA =====
+const products = [
+  {title:"Advanced Banking System", slug:"BANK", fw:["ESX","QBCore"], price:19.99, old:30, rating:4.9, seller:"CruxDev", tag:"FEATURED", grad:"from-blue-600/40 to-cyan-600/20", av:"from-blue-500 to-cyan-500"},
+  {title:"Police MDT & Dispatch", slug:"MDT", fw:["QBCore"], price:24.99, rating:5.0, seller:"NightShift", grad:"from-indigo-600/40 to-blue-600/20", av:"from-indigo-500 to-blue-500"},
+  {title:"Inventory HUD Reloaded", slug:"INV HUD", fw:["ESX","Standalone"], price:0, rating:4.7, seller:"PixelForge", tag:"FREE", grad:"from-emerald-600/40 to-green-600/20", av:"from-emerald-500 to-green-500"},
+  {title:"Luxury Apartments MLO", slug:"APTS", fw:["Standalone"], price:34.99, rating:4.8, seller:"MapMasters", grad:"from-rose-600/40 to-orange-600/20", av:"from-rose-500 to-orange-500"},
+  {title:"Drift Car Pack (15)", slug:"DRIFT", fw:["Standalone"], price:14.99, rating:4.6, seller:"RevHead", grad:"from-sky-600/40 to-cyan-600/20", av:"from-sky-500 to-cyan-500"},
+  {title:"Advanced Garage", slug:"GARAGE", fw:["QBCore"], price:12.99, rating:4.5, seller:"GarageGuru", grad:"from-amber-600/40 to-yellow-600/20", av:"from-amber-500 to-yellow-500"},
+  {title:"Hospital Interior MLO", slug:"HOSPITAL", fw:["Standalone"], price:29.99, rating:4.9, seller:"MapMasters", tag:"FEATURED", grad:"from-teal-600/40 to-emerald-600/20", av:"from-teal-500 to-emerald-500"},
+  {title:"Phone System v2", slug:"PHONE", fw:["ESX","QBCore"], price:22.50, rating:4.8, seller:"ConnectDev", grad:"from-violet-600/40 to-fuchsia-600/20", av:"from-violet-500 to-fuchsia-500"},
+  {title:"Weapon Pack Tactical", slug:"TACTICAL", fw:["Standalone"], price:9.99, rating:4.4, seller:"Armory", grad:"from-zinc-600/40 to-stone-600/20", av:"from-zinc-500 to-stone-500"},
+  {title:"Job Center Reworked", slug:"JOBS", fw:["QBCore"], price:0, rating:4.6, seller:"WorkForce", tag:"FREE", grad:"from-lime-600/40 to-green-600/20", av:"from-lime-500 to-green-500"},
+  {title:"Casino Heist Script", slug:"CASINO", fw:["ESX"], price:39.99, rating:5.0, seller:"HighRoller", tag:"FEATURED", grad:"from-orange-600/40 to-yellow-600/20", av:"from-purple-500 to-pink-500"},
+  {title:"Custom Clothing Pack", slug:"CLOTHING", fw:["Standalone"], price:7.99, rating:4.3, seller:"ThreadCo", grad:"from-pink-600/40 to-rose-600/20", av:"from-pink-500 to-rose-500"},
+];
+
+function fwBadges(fw){
+  return fw.map(f=>`<span class="glass text-[10px] font-medium px-2 py-0.5 rounded text-zinc-300">${f}</span>`).join('');
+}
+
+function priceHtml(p){
+  if(p.price===0) return `<span class="text-green-400 font-bold text-sm">Free</span>`;
+  let html = `<span class="font-bold text-sm">$${p.price.toFixed(2)}</span>`;
+  if(p.old) html += `<span class="text-zinc-500 line-through text-xs ml-1.5">$${p.old.toFixed(2)}</span>`;
+  return html;
+}
+
+function cornerTag(p){
+  if(p.tag==="FEATURED") return `<span class="absolute top-2 left-2 bg-brand-orange text-black text-[10px] font-bold px-2 py-0.5 rounded">FEATURED</span>`;
+  if(p.tag==="FREE") return `<span class="absolute top-2 left-2 bg-green-500 text-black text-[10px] font-bold px-2 py-0.5 rounded">FREE</span>`;
+  return '';
+}
+
+function card(p){
+  return `
+  <div class="glass rounded-2xl overflow-hidden card-hover">
+    <div class="relative h-32 bg-gradient-to-br ${p.grad} flex items-center justify-center">
+      <span class="slug-text text-2xl">${p.slug}</span>
+      ${cornerTag(p)}
+    </div>
+    <div class="p-3">
+      <div class="flex gap-1 mb-2">${fwBadges(p.fw)}</div>
+      <h3 class="font-semibold text-sm truncate mb-2">${p.title}</h3>
+      <div class="flex items-center justify-between text-xs text-zinc-400 mb-2">
+        <span class="flex items-center gap-1.5"><span class="w-5 h-5 rounded-full bg-gradient-to-br ${p.av}"></span> ${p.seller}</span>
+        <span class="flex items-center gap-0.5 text-brand-yellow"><i data-lucide="star" class="w-3 h-3 fill-current"></i> ${p.rating.toFixed(1)}</span>
+      </div>
+      <div class="flex items-center justify-between">
+        <div>${priceHtml(p)}</div>
+        <button class="p-1.5 rounded-lg glass hover:bg-brand-orange hover:text-black transition"><i data-lucide="shopping-cart" class="w-4 h-4"></i></button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function scrollCard(p){
+  return `<div class="w-56 shrink-0">${card(p)}</div>`;
+}
+
+// Top Sellers row (6 cards)
+document.getElementById('topSellersRow').innerHTML =
+  [products[10],products[0],products[1],products[6],products[3],products[7]].map(scrollCard).join('');
+
+// New Releases row (6 cards)
+document.getElementById('newReleasesRow').innerHTML =
+  [products[11],products[8],products[5],products[4],products[9],products[2]].map(scrollCard).join('');
+
+// Grid (~15 cards = 12 + 3 repeats)
+const gridList = products.concat([products[0],products[6],products[3]]);
+document.getElementById('gridProducts').innerHTML = gridList.map(card).join('');
+
+// ===== CREATORS =====
+const creators = [
+  {name:"CruxDev", rating:4.9, count:24, av:"from-blue-500 to-cyan-500"},
+  {name:"MapMasters", rating:4.8, count:31, av:"from-rose-500 to-orange-500"},
+  {name:"NightShift", rating:5.0, count:12, av:"from-indigo-500 to-blue-500"},
+  {name:"HighRoller", rating:5.0, count:9, av:"from-purple-500 to-pink-500"},
+  {name:"PixelForge", rating:4.7, count:18, av:"from-emerald-500 to-green-500"},
+  {name:"ConnectDev", rating:4.8, count:15, av:"from-violet-500 to-fuchsia-500"},
+];
+
+document.getElementById('creatorsRow').innerHTML = creators.map(c=>`
+  <div class="glass rounded-2xl p-4 w-48 shrink-0 flex flex-col items-center text-center card-hover">
+    <div class="w-16 h-16 rounded-full bg-gradient-to-br ${c.av} mb-3"></div>
+    <p class="font-semibold text-sm flex items-center gap-1">${c.name} <i data-lucide="badge-check" class="w-4 h-4 text-brand-orange"></i></p>
+    <p class="text-xs text-brand-yellow flex items-center gap-0.5 mt-1"><i data-lucide="star" class="w-3 h-3 fill-current"></i> ${c.rating.toFixed(1)}</p>
+    <p class="text-xs text-zinc-500 mt-0.5">${c.count} products</p>
+    <button class="mt-3 w-full glass-strong hover:bg-brand-orange hover:text-black text-xs font-semibold py-2 rounded-lg transition">Follow</button>
+  </div>`).join('');
+
+lucide.createIcons();
+</script>
+</body>
+</html>

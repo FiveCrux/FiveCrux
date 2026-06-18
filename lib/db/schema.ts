@@ -192,6 +192,11 @@ const baseScriptFields = {
   coverImage: text('cover_image'),
   featured: boolean('featured').default(false),
   free: boolean('free').default(false),
+  // Tebex Headless integration: seller's OWN webstore public token and the
+  // Tebex package id that backs this product. Nullable until the seller has
+  // linked their Tebex store / package.
+  tebexStoreToken: text('tebex_store_token'),
+  tebexPackageId: text('tebex_package_id'),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 }
@@ -417,6 +422,36 @@ export const userFeaturedScriptSlots = pgTable('user_featured_script_slots', {
   featuredSlotStatus: text('featured_slot_status').default('active').notNull(), // 'active' | 'inactive'
 });
 
+// Tebex orders table.
+// Records every basket we create against a Tebex webstore (a seller's store for
+// product purchases, or FiveCrux's own store for platform fees) so we can
+// reconcile the order when the matching Tebex webhook arrives.
+export const tebexOrders = pgTable('tebex_orders', {
+  id: text('id').primaryKey().notNull(),
+  basketIdent: text('basket_ident').notNull(),
+  userId: text('user_id').references(() => users.id, { onDelete: 'set null' }),
+  // 'seller_product' for a seller's webstore purchase, 'platform_fee' for
+  // FiveCrux's own store (ad slots, featured-script slots).
+  kind: text('kind').notNull(),
+  storeToken: text('store_token').notNull(),
+  // Tebex package ids included in this basket.
+  packageIds: json('package_ids'),
+  // 'pending' | 'completed' | 'declined' | 'refunded'
+  status: text('status').default('pending').notNull(),
+  tebexTransactionId: text('tebex_transaction_id'),
+  amount: numeric('amount', { precision: 10, scale: 2 }),
+  custom: json('custom'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export const tebexOrdersRelations = relations(tebexOrders, ({ one }) => ({
+  user: one(users, {
+    fields: [tebexOrders.userId],
+    references: [users.id],
+  }),
+}));
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   giveawayEntries: many(giveawayEntries),
@@ -594,3 +629,5 @@ export type Prop = typeof approvedProps.$inferSelect;
 export type NewProp = typeof approvedProps.$inferInsert;
 export type PendingProp = typeof pendingProps.$inferSelect;
 export type NewPendingProp = typeof pendingProps.$inferInsert;
+export type TebexOrder = typeof tebexOrders.$inferSelect;
+export type NewTebexOrder = typeof tebexOrders.$inferInsert;
