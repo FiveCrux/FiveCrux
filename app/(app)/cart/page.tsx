@@ -48,8 +48,13 @@ export default function CartPage() {
     try {
       const response = await fetch("/api/cart", { signal: c.signal })
 
-      // Mirror the original server-side auth redirect.
+      // Mirror the original server-side auth redirect (skipped under local mock auth
+      // so the cart UI can be reviewed without a real server session).
       if (response.status === 401) {
+        if (process.env.NEXT_PUBLIC_MOCK_AUTH === "true") {
+          setItems([])
+          return
+        }
         router.push("/api/auth/signin?callbackUrl=/cart")
         return
       }
