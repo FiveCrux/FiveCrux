@@ -4,32 +4,11 @@ import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { motion, useInView, AnimatePresence } from "framer-motion";
 import {
   Search,
-  Filter,
-  Star,
-  Eye,
-  Grid,
-  List,
-  ChevronDown,
   X,
-  Sparkles,
   Zap,
-  Code,
-  DollarSign,
-  Sliders,
-  LayoutGrid,
-  Tag,
+  SlidersHorizontal,
 } from "lucide-react";
 import { Button } from "@/componentss/ui/button";
-import { Input } from "@/componentss/ui/input";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/componentss/ui/card";
-import { Badge } from "@/componentss/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/componentss/ui/avatar";
 import {
   Select,
   SelectContent,
@@ -37,61 +16,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/componentss/ui/select";
-import { Checkbox } from "@/componentss/ui/checkbox";
 import { Slider } from "@/componentss/ui/slider";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/componentss/ui/collapsible";
-import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import Navbar from "@/componentss/shared/navbar";
 import Footer from "@/componentss/shared/footer";
 import AdCard, { useRandomAds } from "@/componentss/ads/ad-card";
-import { VerifiedIcon } from "@/componentss/shared/verified-icon";
-import { ProductCard } from "@/componentss/ui/product-card";
-import { isVerifiedCreator } from "@/lib/utils";
-import Image from "next/image";
-import { InfiniteMovingCards } from "@/componentss/ui/infinite-moving-cards";
-import FeaturedScriptCard from "@/componentss/featured-scripts/featured-script-card";
+import { ProductCard, type MarketProduct } from "@/componentss/marketplace/product-card";
 import { MARKETPLACE_SEED } from "@/lib/marketplace-seed";
-// Animated background particles - Client only to avoid hydration issues
-const AnimatedParticles = () => {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) return null;
-
-  return (
-    <div className="fixed inset-0 pointer-events-none overflow-hidden">
-      {[...Array(5)].map((_, i) => (
-        <motion.div
-          key={i}
-          className="absolute w-1 h-1 bg-orange-500/30 rounded-full"
-          animate={{
-            x: [0, i * 40 - 100],
-            y: [0, i * 30 - 75],
-            opacity: [0, 1, 0],
-            scale: [0, 1, 0],
-          }}
-          transition={{
-            duration: 15 + i * 2,
-            repeat: Number.POSITIVE_INFINITY,
-            delay: i * 0.5,
-          }}
-          style={{
-            left: `${20 + i * 15}%`,
-            top: `${25 + i * 12}%`,
-          }}
-        />
-      ))}
-    </div>
-  );
-};
 
 export default function ScriptsPage() {
   const searchParams = useSearchParams();
@@ -652,805 +583,511 @@ export default function ScriptsPage() {
     return positions.sort((a, b) => a - b);
   }, [randomAds.map(ad => ad.id).join(','), sortedScripts.length]); // Only recalculate when ads or total count changes, not when filters change
 
+  // Map a UIScript onto the shared MarketProduct shape consumed by ProductCard.
+  const toMarketProduct = useCallback((s: UIScript): MarketProduct => {
+    const isFree = !!s.free || s.price === 0;
+    return {
+      id: s.id,
+      title: s.title,
+      framework: s.framework,
+      price: s.price,
+      originalPrice: s.originalPrice,
+      free: isFree,
+      rating: typeof s.rating === "number" && s.rating > 0 ? s.rating : undefined,
+      seller: s.seller,
+      sellerImage: s.seller_image ?? undefined,
+      coverImage: s.image && s.image !== "/placeholder.jpg" ? s.image : undefined,
+      tag: s.featured ? "FEATURED" : isFree ? "FREE" : null,
+      href: `/script/${s.id}`,
+    };
+  }, []);
+
+  // Featured items come from /api/featured-scripts with a slightly different shape.
+  const featuredProducts: MarketProduct[] = useMemo(
+    () =>
+      featuredScripts.map((item: any) => {
+        const isFree = !!item.free || Number(item.price) === 0;
+        return {
+          id: item.id,
+          title: item.title,
+          framework: Array.isArray(item.framework) ? item.framework : [],
+          price: Number(item.price) || 0,
+          originalPrice:
+            item.original_price && Number(item.original_price) > Number(item.price)
+              ? Number(item.original_price)
+              : undefined,
+          free: isFree,
+          rating: undefined,
+          seller: item.seller_name || item.seller,
+          sellerImage: item.seller_image ?? undefined,
+          coverImage:
+            item.cover_image && item.cover_image !== "/placeholder.jpg"
+              ? item.cover_image
+              : undefined,
+          tag: "FEATURED",
+          href: `/script/${item.id}`,
+        } as MarketProduct;
+      }),
+    [featuredScripts]
+  );
+
+  const hasActiveFilters = activeFiltersCount > 0 || searchQuery.length > 0 || activeTab !== "all";
+
   return (
     <>
       <Navbar />
-      <div
-        className="min-h-screen text-white relative overflow-hidden pb-16"
-        style={{
-          backgroundColor: "#0d0d0f",
-          backgroundImage: `
-            linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
-            radial-gradient(circle at 50% 0%, rgba(249, 115, 22, 0.07) 0%, transparent 60%)
-          `,
-          backgroundSize: "60px 100%, 100% 100%",
-        }}
-      >
-        {/* Hero Section */}
-        <motion.div
-          className="max-w-7xl mx-auto pt-24 pb-8 px-10 flex flex-col md:flex-row md:items-end md:justify-between gap-6 border-b border-white/5"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-        >
-          <div className="space-y-1">
-            <nav className="flex items-center space-x-2 text-[12px] font-medium tracking-wide mb-3">
-              <Link href="/" className="text-white/25 hover:text-white transition-colors">
-                Home
-              </Link>
-              <span className="text-white/25">/</span>
-              <span className="text-white/45">Scripts</span>
-            </nav>
-            <h1 className="text-[36px] font-bold tracking-tight text-white" style={{ letterSpacing: "-0.5px" }}>
-              <span className="text-[#f97316]">All</span> Scripts
-            </h1>
-            <p className="text-[14px] text-white/35 font-medium">
-              Browse our complete collection of premium FiveM scripts
-            </p>
+      <main className="min-h-screen bg-[#0a0a0a] text-white">
+        {/* ── Page header ───────────────────────────────────────────────── */}
+        <section className="relative overflow-hidden border-b border-white/[0.06]">
+          <div className="pointer-events-none absolute inset-0">
+            <div className="absolute -top-24 left-1/4 h-72 w-72 rounded-full bg-orange-500/20 blur-[120px]" />
+            <div className="absolute -top-12 right-1/4 h-72 w-72 rounded-full bg-yellow-400/10 blur-[120px]" />
           </div>
-          <div className="flex items-center gap-4">
+          <motion.div
+            className="relative mx-auto flex max-w-7xl flex-col gap-4 px-4 pb-8 pt-24 sm:px-6 sm:flex-row sm:items-end sm:justify-between lg:px-8"
+            initial={{ opacity: 0, y: -16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <div>
+              <span className="mb-3 inline-block rounded-full border border-orange-500/30 bg-orange-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-orange-400">
+                Marketplace
+              </span>
+              <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
+                <span className="text-[#f97316]">Scripts</span>
+              </h1>
+              <p className="mt-2 max-w-2xl text-sm text-white/50 sm:text-base">
+                Browse our complete collection of premium FiveM scripts.
+              </p>
+            </div>
             {!loading && (
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold text-[#f97316] bg-[#f97316]/10 border border-[#f97316]/15">
+              <div className="flex w-fit items-center gap-1.5 rounded-full border border-[#f97316]/15 bg-[#f97316]/10 px-3 py-1.5 text-xs font-semibold text-[#f97316]">
                 <Zap className="h-3.5 w-3.5 fill-[#f97316]" />
                 <span>{sortedScripts.length} scripts found</span>
               </div>
             )}
-          </div>
-        </motion.div>
+          </motion.div>
+        </section>
 
-        {/* Featured scripts Section */}
-        <motion.section className="py-20 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-7xl mx-auto relative z-10">
-            <motion.div
-              initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1 }}
-              className="text-center mb-12"
-            >
-              <Badge className="bg-gradient-to-r from-orange-500/20 to-yellow-400/20 text-orange-400 border-orange-500/30 mb-6 px-4 py-2 text-sm font-semibold">
-                Featured Scripts
-              </Badge>
-              <h2 className="text-4xl md:text-5xl font-bold text-white mb-4 flex items-center gap-0 justify-center sm:gap-3">
-                <Zap className="h-10 w-10 text-orange-500" />
-                Featured Scripts
-              </h2>
-              <p className="text-gray-400 max-w-2xl mx-auto">
-                Check out our most popular and featured scripts
-              </p>
-            </motion.div>
-
-            {scriptsLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="bg-neutral-900 border-2 border-neutral-700/50 rounded-xl h-96 animate-pulse" />
+        {/* ── Catalog ──────────────────────────────────────────────────── */}
+        <section ref={scriptsRef} className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+          {/* Featured scripts — compact horizontal-scroll row */}
+          {!scriptsLoading && featuredProducts.length > 0 && (
+            <div className="mb-10">
+              <div className="mb-4 flex items-center gap-2">
+                <Zap className="h-5 w-5 text-orange-500" />
+                <h2 className="text-lg font-bold text-white">Featured Scripts</h2>
+              </div>
+              <div className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-2 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                {featuredProducts.map((product) => (
+                  <ProductCard key={`featured-${product.id}`} product={product} />
                 ))}
               </div>
-            ) : featuredScripts.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-gray-400">No featured scripts available at the moment.</p>
-              </div>
-            ) : featuredScripts.length > 3 ? (
-              <InfiniteMovingCards
-                items={featuredScripts}
-                direction="left"
-                speed="fast"
-                pauseOnHover={true}
-                className="max-w-7xl"
-                renderItem={(item, index) => (
-                  <FeaturedScriptCard
-                    item={item}
-                    index={index}
-                    style={{
-                      width: "calc((100vw - 8rem) / 3)",
-                      minWidth: "320px",
-                      maxWidth: "400px",
-                    }}
-                  />
-                )}
+            </div>
+          )}
+
+          {/* Search + sort + filter toggle */}
+          <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="relative flex-1">
+              <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
+              <input
+                type="text"
+                placeholder="Search scripts…"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] py-3 pl-11 pr-4 text-sm text-white placeholder-white/40 outline-none transition focus:border-orange-500/50 focus:bg-white/[0.06]"
               />
-            ) : (
-              <div className="overflow-x-auto -mx-4 sm:-mx-6 px-4 sm:px-6 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                <div className="flex md:grid md:grid-cols-2 xl:grid-cols-3 gap-6 md:gap-6 min-w-max md:min-w-0">
-                  {featuredScripts.map((item, index) => (
-                    <FeaturedScriptCard
-                      key={item.id}
-                      item={item}
-                      index={index}
-                      className="flex-shrink-0 w-[320px] md:w-auto"
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </motion.section>
+            </div>
 
-        {/* Tabs Row */}
-        <div className="max-w-7xl mx-auto px-10 pt-8 flex gap-2.5">
-          <button
-            onClick={() => setActiveTab("all")}
-            className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-full border transition-all duration-200 ${
-              activeTab === "all"
-                ? "bg-[#f97316] border-[#f97316] text-white shadow-lg shadow-[#f97316]/20"
-                : "bg-white/[0.03] border-white/[0.08] text-white/40 hover:text-white"
-            }`}
-          >
-            <LayoutGrid className="h-3.5 w-3.5" />
-            All Scripts
-          </button>
-          <button
-            onClick={() => setActiveTab("featured")}
-            className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-full border transition-all duration-200 ${
-              activeTab === "featured"
-                ? "bg-[#f97316] border-[#f97316] text-white shadow-lg shadow-[#f97316]/20"
-                : "bg-white/[0.03] border-white/[0.08] text-white/40 hover:text-white"
-            }`}
-          >
-            <Zap className="h-3.5 w-3.5" />
-            Featured
-          </button>
-          <button
-            onClick={() => setActiveTab("onsale")}
-            className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-full border transition-all duration-200 ${
-              activeTab === "onsale"
-                ? "bg-[#f97316] border-[#f97316] text-white shadow-lg shadow-[#f97316]/20"
-                : "bg-white/[0.03] border-white/[0.08] text-white/40 hover:text-white"
-            }`}
-          >
-            <Tag className="h-3.5 w-3.5" />
-            On Sale
-          </button>
-        </div>
+            {/* Sort */}
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="h-auto w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-3 text-sm font-semibold text-white/70 focus:ring-0 focus:ring-offset-0 focus:outline-none sm:w-[190px]">
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent className="border-white/10 bg-[#111113] text-white">
+                <SelectItem value="popular">Most Popular</SelectItem>
+                <SelectItem value="newest">Newest First</SelectItem>
+                <SelectItem value="rating">Top Rated</SelectItem>
+                <SelectItem value="price-low">Price: Low to High</SelectItem>
+                <SelectItem value="price-high">Price: High to Low</SelectItem>
+              </SelectContent>
+            </Select>
 
-        <div className="max-w-7xl mx-auto px-10 py-8">
-          <div className="flex flex-col gap-6">
-            {/* Main Content */}
-            <motion.div
-              ref={scriptsRef}
-              className="flex-1"
-              initial={{ opacity: 0, y: 20 }}
-              animate={scriptsInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.8 }}
+            {/* Filters toggle */}
+            <button
+              onClick={() => setOpenFilter((s) => (s === "panel" ? null : "panel"))}
+              className={`flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition ${
+                openFilter === "panel" || activeFiltersCount > 0
+                  ? "border-orange-500/50 bg-orange-500/10 text-orange-400"
+                  : "border-white/[0.08] bg-white/[0.04] text-white/70 hover:border-white/20"
+              }`}
             >
-              {/* Filters Bar & Search/Sort */}
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 py-4 border-y border-white/5 mb-6 relative z-50">
-                {/* Left: Filter dropdown pills */}
-                <div ref={filterContainerRef} className="flex flex-wrap gap-2.5 items-center relative z-50">
-                  {/* Categories Filter */}
-                  <Collapsible
-                    open={openFilter === "categories"}
-                    onOpenChange={(open) =>
-                      setOpenFilter(open ? "categories" : null)
-                    }
-                  >
-                    <div className="relative z-[60]">
-                      <CollapsibleTrigger asChild>
-                        <button
-                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[12px] font-medium transition-all duration-200 ${
-                            selectedCategories.length > 0
-                              ? "border-[#f97316]/40 bg-[#f97316]/5 text-white"
-                              : "border-white/10 bg-white/[0.03] text-white/50 hover:text-white"
-                          }`}
-                        >
-                          <Filter className="h-3.5 w-3.5 text-[#f97316]" />
-                          Categories
-                          {selectedCategories.length > 0 && (
-                            <span className="ml-0.5 bg-[#f97316] text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center font-bold">
-                              {selectedCategories.length}
-                            </span>
-                          )}
-                          <ChevronDown
-                            className={`ml-1 h-3.5 w-3.5 transition-transform duration-300 text-white/40 ${
-                              openFilter === "categories" ? "rotate-180" : ""
-                            }`}
-                          />
-                        </button>
-                      </CollapsibleTrigger>
-                      <CollapsibleContent className="absolute z-[200] mt-2 left-0 bg-[#111113] border border-white/10 rounded-lg p-4 shadow-xl min-w-[200px]">
-                        <div className="space-y-2">
-                          {categories.map((category) => (
-                            <div
-                              key={category.id}
-                              className="flex items-center space-x-2"
-                            >
-                              <Checkbox
-                                id={`category-${category.id}`}
-                                checked={selectedCategories.includes(
-                                  category.id
-                                )}
-                                onCheckedChange={(checked) =>
-                                  handleCategoryChange(
-                                    category.id,
-                                    checked as boolean
-                                  )
-                                }
-                              />
-                              <label
-                                htmlFor={`category-${category.id}`}
-                                className="text-sm text-gray-300 hover:text-white transition-colors cursor-pointer"
-                              >
-                                {category.name}
-                              </label>
-                            </div>
-                          ))}
-                        </div>
-                      </CollapsibleContent>
-                    </div>
-                  </Collapsible>
+              <SlidersHorizontal className="h-4 w-4" />
+              Filters
+              {activeFiltersCount > 0 && (
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-orange-500 text-[10px] font-bold text-black">
+                  {activeFiltersCount}
+                </span>
+              )}
+            </button>
+          </div>
 
-                  {/* Framework Filter */}
-                  <Collapsible
-                    open={openFilter === "framework"}
-                    onOpenChange={(open) =>
-                      setOpenFilter(open ? "framework" : null)
-                    }
-                  >
-                    <div className="relative z-[60]">
-                      <CollapsibleTrigger asChild>
-                        <button
-                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[12px] font-medium transition-all duration-200 ${
-                            selectedFrameworks.length > 0
-                              ? "border-[#f97316]/40 bg-[#f97316]/5 text-white"
-                              : "border-white/10 bg-white/[0.03] text-white/50 hover:text-white"
-                          }`}
-                        >
-                          <Code className="h-3.5 w-3.5 text-[#f97316]" />
-                          Framework
-                          {selectedFrameworks.length > 0 && (
-                            <span className="ml-0.5 bg-[#f97316] text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center font-bold">
-                              {selectedFrameworks.length}
-                            </span>
-                          )}
-                          <ChevronDown
-                            className={`ml-1 h-3.5 w-3.5 transition-transform duration-300 text-white/40 ${
-                              openFilter === "framework" ? "rotate-180" : ""
-                            }`}
-                          />
-                        </button>
-                      </CollapsibleTrigger>
-                      <CollapsibleContent className="absolute z-[200] mt-2 left-0 bg-[#111113] border border-white/10 rounded-lg p-4 shadow-xl min-w-[200px]">
-                        <div className="space-y-2">
-                          {frameworks.map((framework) => (
-                            <div
-                              key={framework.value}
-                              className="flex items-center space-x-2"
-                            >
-                              <Checkbox
-                                id={`framework-${framework.value}`}
-                                checked={selectedFrameworks.includes(
-                                  framework.value
-                                )}
-                                onCheckedChange={(checked) =>
-                                  handleFrameworkChange(
-                                    framework.value,
-                                    checked as boolean
-                                  )
-                                }
-                              />
-                              <label
-                                htmlFor={`framework-${framework.value}`}
-                                className="text-sm text-gray-300 hover:text-white transition-colors cursor-pointer"
-                              >
-                                {framework.label}
-                              </label>
-                            </div>
-                          ))}
-                        </div>
-                      </CollapsibleContent>
-                    </div>
-                  </Collapsible>
+          {/* Tab chips */}
+          <div className="mb-4 flex flex-wrap gap-2">
+            {([
+              { id: "all", label: "All Scripts" },
+              { id: "featured", label: "Featured" },
+              { id: "onsale", label: "On Sale" },
+            ] as const).map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`rounded-full px-4 py-1.5 text-sm font-semibold transition ${
+                  activeTab === tab.id
+                    ? "bg-gradient-to-r from-orange-500 to-yellow-400 text-black"
+                    : "border border-white/[0.08] bg-white/[0.04] text-white/70 hover:border-orange-500/40 hover:text-white"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
 
-                  {/* Price Filter - Combined */}
-                  <Collapsible
-                    open={openFilter === "price"}
-                    onOpenChange={(open) =>
-                      setOpenFilter(open ? "price" : null)
-                    }
-                  >
-                    <div className="relative z-[60]">
-                      <CollapsibleTrigger asChild>
-                        <button
-                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[12px] font-medium transition-all duration-200 ${
-                            priceRange[0] !== priceBounds.min ||
-                            priceRange[1] !== priceBounds.max ||
-                            freeOnly
-                              ? "border-[#f97316]/40 bg-[#f97316]/5 text-white"
-                              : "border-white/10 bg-white/[0.03] text-white/50 hover:text-white"
-                          }`}
-                        >
-                          <DollarSign className="h-3.5 w-3.5 text-[#f97316]" />
-                          Price
-                          {(priceRange[0] !== priceBounds.min ||
-                            priceRange[1] !== priceBounds.max) && (
-                              <span className="text-[#f97316] font-semibold text-[10px]">
-                                {` ${priceRange[0]}-${priceRange[1]}`}
-                              </span>
-                            )}
-                          {freeOnly && (
-                            <span className="text-[#f97316] font-semibold text-[10px]">
-                              , Free
-                            </span>
-                          )}
-                          <ChevronDown
-                            className={`ml-1 h-3.5 w-3.5 transition-transform duration-300 text-white/40 ${
-                              openFilter === "price" ? "rotate-180" : ""
-                            }`}
-                          />
-                        </button>
-                      </CollapsibleTrigger>
-                      <CollapsibleContent className="absolute z-[200] mt-2 left-0 bg-[#111113] border border-white/10 rounded-lg p-4 shadow-xl min-w-[250px]">
-                        <div className="space-y-4">
-                          {/* Price Range */}
-                          <div>
-                            <h4 className="text-white font-semibold mb-3 text-sm">
-                              Price Range
-                            </h4>
-                            <Slider
-                              value={priceRange}
-                              onValueChange={setPriceRange}
-                              max={priceBounds.max}
-                              min={priceBounds.min}
-                              step={1}
-                              className="w-full mb-2"
-                            />
-                            <div className="flex justify-between text-sm text-gray-400">
-                              <span>{priceRange[0]}</span>
-                              <span>{priceRange[1]}</span>
-                            </div>
-                          </div>
+          {/* Category chips */}
+          <div className="mb-5 flex flex-wrap gap-2">
+            <button
+              onClick={() => setSelectedCategories([])}
+              className={`rounded-full px-4 py-1.5 text-sm font-semibold transition ${
+                selectedCategories.length === 0
+                  ? "bg-gradient-to-r from-orange-500 to-yellow-400 text-black"
+                  : "border border-white/[0.08] bg-white/[0.04] text-white/70 hover:border-orange-500/40 hover:text-white"
+              }`}
+            >
+              All
+            </button>
+            {categories.map((cat) => {
+              const active = selectedCategories.includes(cat.id);
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => handleCategoryChange(cat.id, !active)}
+                  className={`rounded-full px-4 py-1.5 text-sm font-semibold transition ${
+                    active
+                      ? "bg-gradient-to-r from-orange-500 to-yellow-400 text-black"
+                      : "border border-white/[0.08] bg-white/[0.04] text-white/70 hover:border-orange-500/40 hover:text-white"
+                  }`}
+                >
+                  {cat.name}
+                </button>
+              );
+            })}
+          </div>
 
-                          {/* Free Toggle */}
-                          <div className="border-t border-white/10 pt-4">
-                            <div className="flex items-center space-x-2">
-                              <Checkbox
-                                id="free-only"
-                                checked={freeOnly}
-                                onCheckedChange={(checked) =>
-                                  setFreeOnly(checked as boolean)
-                                }
-                              />
-                              <label
-                                htmlFor="free-only"
-                                className="text-sm text-gray-300 hover:text-white transition-colors cursor-pointer flex items-center gap-2"
-                              >
-                                <Zap className="h-4 w-4 text-[#f97316]" />
-                                Free Only
-                              </label>
-                            </div>
-                          </div>
-                        </div>
-                      </CollapsibleContent>
-                    </div>
-                  </Collapsible>
-
-                  {/* On Sale Checkbox */}
-                  <label
-                    className={`flex items-center cursor-pointer border px-3 py-1.5 rounded-full text-[12px] font-medium transition-all duration-200 ${
-                      onSaleOnly
-                        ? "border-[#f97316]/40 bg-[#f97316]/5 text-white"
-                        : "border-white/10 bg-white/[0.03] text-white/50 hover:text-white"
-                    }`}
-                  >
-                    <Checkbox
-                      id="on-sale"
-                      checked={onSaleOnly}
-                      onCheckedChange={(checked) =>
-                        setOnSaleOnly(checked as boolean)
-                      }
-                      className="mr-2 border-white/20 data-[state=checked]:bg-[#f97316] data-[state=checked]:border-[#f97316]"
-                    />
-                    <span className="flex items-center gap-1">
-                      <Tag className="h-3.5 w-3.5 text-[#f97316]" />
-                      On Sale Only
-                    </span>
-                  </label>
-
-                  {activeFiltersCount > 0 && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={clearAllFilters}
-                      className="text-white/40 hover:text-[#f97316] hover:bg-transparent h-auto py-1 px-2 text-xs"
-                    >
-                      Clear All
-                    </Button>
-                  )}
-                </div>
-
-                {/* Right: Search and Sort */}
-                <div className="flex items-center gap-3 w-full md:w-auto md:justify-end">
-                  {/* Search Input */}
-                  <div className="relative flex-1 md:w-[200px] lg:w-[240px] max-w-[300px]">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 h-3.5 w-3.5" />
-                    <input
-                      type="text"
-                      placeholder="Search scripts..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-9 pr-4 py-1.5 bg-white/[0.04] border border-white/[0.08] text-white placeholder-white/30 text-[12px] focus:outline-none focus:border-[#f97316]/50 transition-colors"
-                      style={{ borderRadius: "9px" }}
-                    />
-                  </div>
-
-                  {/* Sort Dropdown */}
-                  <Select value={sortBy} onValueChange={setSortBy}>
-                    <SelectTrigger className="bg-white/[0.03] border-white/10 text-white/50 text-[12px] rounded-full px-3.5 py-1.5 flex items-center gap-1.5 focus:ring-0 focus:ring-offset-0 focus:outline-none h-8 w-fit [&>span]:line-clamp-1 border">
-                      <SelectValue placeholder="Sort by" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-[#111113] border-white/10 text-white">
-                      <SelectItem value="popular">Most Popular</SelectItem>
-                      <SelectItem value="newest">Newest First</SelectItem>
-                      <SelectItem value="price-low">Price: Low to High</SelectItem>
-                      <SelectItem value="price-high">Price: High to Low</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              {/* Active Filters List */}
-              <AnimatePresence>
-                {activeFiltersCount > 0 && (
-                  <motion.div
-                    className="mb-4"
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
+          {/* Collapsible filter panel: frameworks + price + free/on-sale */}
+          <AnimatePresence initial={false}>
+            {openFilter === "panel" && (
+              <motion.div
+                ref={filterContainerRef}
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="mb-6 overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.03]"
+              >
+                <div className="grid gap-6 p-5 md:grid-cols-3">
+                  {/* Frameworks */}
+                  <div>
+                    <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-white/50">Framework</h3>
                     <div className="flex flex-wrap gap-2">
-                      {selectedCategories.map((category) => (
-                        <Badge
-                          key={category}
-                          variant="secondary"
-                          className="bg-white/[0.04] text-white/60 border-white/10 flex items-center gap-1 rounded-full text-[11px]"
-                        >
-                          {categories.find((c) => c.id === category)?.name}
-                          <button
-                            onClick={() => removeFilter("category", category)}
-                            className="hover:text-white transition-colors"
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </Badge>
-                      ))}
-                      {selectedFrameworks.map((framework) => {
-                        const frameworkObj = frameworks.find(
-                          (f) => f.value === framework
-                        );
+                      {frameworks.map((fw) => {
+                        const active = selectedFrameworks.includes(fw.value);
                         return (
-                          <Badge
-                            key={framework}
-                            variant="secondary"
-                            className="bg-white/[0.04] text-white/60 border-white/10 flex items-center gap-1 rounded-full text-[11px]"
+                          <button
+                            key={fw.value}
+                            onClick={() => handleFrameworkChange(fw.value, !active)}
+                            className={`rounded-lg border px-3 py-1.5 text-xs font-bold uppercase transition ${
+                              active
+                                ? "border-orange-500/60 bg-orange-500/15 text-orange-300"
+                                : "border-white/15 bg-white/[0.04] text-white/60 hover:border-white/30"
+                            }`}
                           >
-                            {frameworkObj?.label || framework}
-                            <button
-                              onClick={() => removeFilter("framework", framework)}
-                              className="hover:text-white transition-colors"
-                            >
-                              <X className="h-3 w-3" />
-                            </button>
-                          </Badge>
+                            {fw.label}
+                          </button>
                         );
                       })}
-                      {(priceRange[0] !== priceBounds.min || priceRange[1] !== priceBounds.max) && (
-                        <Badge
-                          variant="secondary"
-                          className="bg-white/[0.04] text-white/60 border-white/10 flex items-center gap-1 rounded-full text-[11px]"
-                        >
-                          Price: {priceRange[0]}-{priceRange[1]}
-                          <button
-                            onClick={() => setPriceRange([priceBounds.min, priceBounds.max])}
-                            className="hover:text-white transition-colors"
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </Badge>
-                      )}
-                      {onSaleOnly && (
-                        <Badge
-                          variant="secondary"
-                          className="bg-white/[0.04] text-white/60 border-white/10 flex items-center gap-1 rounded-full text-[11px]"
-                        >
-                          On Sale
-                          <button
-                            onClick={() => setOnSaleOnly(false)}
-                            className="hover:text-white transition-colors"
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </Badge>
-                      )}
-                      {freeOnly && (
-                        <Badge
-                          variant="secondary"
-                          className="bg-white/[0.04] text-white/60 border-white/10 flex items-center gap-1 rounded-full text-[11px]"
-                        >
-                          Free
-                          <button
-                            onClick={() => setFreeOnly(false)}
-                            className="hover:text-white transition-colors"
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </Badge>
-                      )}
                     </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {/* Results Count Text */}
-              {!loading && (
-                <div className="mb-6">
-                  <p className="text-[12px] text-white/30 flex items-center gap-1">
-                    <Sparkles className="h-3.5 w-3.5 text-[#f97316]" />
-                    Showing {sortedScripts.length} of {allScripts.length} scripts
-                    {searchQuery && (
-                      <span>
-                        {" "}for <span className="text-[#f97316] font-medium">&quot;{searchQuery}&quot;</span>
-                      </span>
-                    )}
-                  </p>
-                </div>
-              )}
-
-              {/* Scripts Grid/List */}
-              <AnimatePresence mode="wait">
-                {loading ? (
-                  <motion.div
-                    className={
-                      viewMode === "grid"
-                        ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-[18px]"
-                        : "space-y-4"
-                    }
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.5, staggerChildren: 0.1 }}
-                  >
-                    {Array.from({ length: 6 }).map((_, index) => (
-                      <motion.div
-                        key={index}
-                        className={`bg-neutral-900 border-2 border-neutral-700/50 backdrop-blur-sm rounded-lg overflow-hidden ${viewMode === "list"
-                          ? "flex flex-row"
-                          : "flex flex-col"
-                          }`}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                      >
-                        {/* Image Skeleton */}
-                        <div
-                          className={`bg-neutral-800/50 animate-pulse ${viewMode === "list"
-                            ? "w-56 flex-shrink-0 h-full"
-                            : "w-full h-52"
-                            }`}
-                        />
-                        {/* Content Skeleton */}
-                        <div className="flex flex-col flex-1 p-3 space-y-3">
-                          <div className="space-y-2">
-                            <div className="h-5 bg-neutral-800/50 rounded animate-pulse w-3/4" />
-                            <div className="h-4 bg-neutral-800/50 rounded animate-pulse w-1/2" />
-                          </div>
-                          <div className="flex gap-2">
-                            <div className="h-5 w-16 bg-neutral-800/50 rounded animate-pulse" />
-                            <div className="h-5 w-16 bg-neutral-800/50 rounded animate-pulse" />
-                          </div>
-                          <div className="h-4 bg-neutral-800/50 rounded animate-pulse w-2/3" />
-                          <div className="h-6 bg-neutral-800/50 rounded animate-pulse w-20" />
-                          <div className="mt-auto pt-2">
-                            <div className="h-8 bg-neutral-800/50 rounded animate-pulse w-full" />
-                          </div>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </motion.div>
-                ) : sortedScripts.length === 0 ? (
-                  <motion.div
-                    className="text-center py-20"
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.9 }}
-                    transition={{ duration: 0.5 }}
-                  >
-                    <motion.div
-                      className="mb-6"
-                      animate={{ rotate: [0, 10, -10, 0] }}
-                      transition={{
-                        duration: 2,
-                        repeat: Number.POSITIVE_INFINITY,
-                      }}
-                    >
-                      <Search className="h-16 w-16 text-gray-600 mx-auto" />
-                    </motion.div>
-                    <p className="text-gray-400 text-xl mb-6">
-                      No scripts found matching your criteria
-                    </p>
-                    <motion.div
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      <Button
-                        onClick={clearAllFilters}
-                        className="bg-gradient-to-r from-orange-500 to-yellow-400 hover:from-orange-600 hover:to-yellow-500 text-black font-semibold"
-                      >
-                        <Sparkles className="mr-2 h-4 w-4" />
-                        Clear All Filters
-                      </Button>
-                    </motion.div>
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    className={
-                      viewMode === "grid"
-                        ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-[18px]"
-                        : "space-y-4"
-                    }
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.5, staggerChildren: 0.1 }}
-                  >
-                    {(() => {
-                      const items: GridItem[] = [...paginatedScripts];
-                      // Insert ads at memoized positions (only if they fall within current page)
-                      if (randomAds.length > 0 && items.length > 0 && memoizedAdPositions.length > 0) {
-                        const adPositions: Array<{ ad: any; position: number }> = [];
-
-                        // Find which ads should appear on this page based on memoized positions
-                        for (let i = 0; i < randomAds.length && i < memoizedAdPositions.length; i++) {
-                          const globalPosition = memoizedAdPositions[i];
-                          // Check if this ad position falls within the current page
-                          if (globalPosition >= startIndex && globalPosition < endIndex) {
-                            // Convert global position to local page position
-                            const localPosition = globalPosition - startIndex;
-                            adPositions.push({
-                              ad: randomAds[i],
-                              position: localPosition
-                            });
-                          }
-                        }
-
-                        // Sort by position in descending order to avoid index shifting when inserting
-                        adPositions.sort((a, b) => b.position - a.position);
-                        adPositions.forEach(({ ad, position }) => {
-                          items.splice(position, 0, {
-                            ...ad,
-                            isAd: true,
-                          } as GridItem);
-                        });
-                      }
-                      return items.map((item: GridItem, index) => {
-                        // If it's an ad, render AdCard
-                        if ("isAd" in item && item.isAd) {
-                          return (
-                            <AdCard
-                              key={`ad-${item.id}`}
-                              ad={item as any}
-                              variant="script"
-                            />
-                          );
-                        }
-
-                        // Otherwise render script
-                        const script = item as UIScript;
-                        // Derive badge
-                        const scriptBadge = script.featured
-                          ? "featured" as const
-                          : script.discount > 0
-                            ? "sale" as const
-                            : undefined;
-                        // Build price string
-                        const scriptPrice = script.free
-                          ? "Free"
-                          : `${script.currency_symbol || "$"}${script.price}`;
-                        return (
-                          <motion.div
-                            key={script.id}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: index * 0.05 }}
-                          >
-                            <Link href={`/script/${script.id}`} style={{ display: "block" }}>
-                              <ProductCard
-                                image={script.image || "/placeholder.jpg"}
-                                imageAlt={script.title}
-                                badge={scriptBadge}
-                                tags={script.framework ?? []}
-                                title={script.title}
-                                author={`By ${script.seller}`}
-                                authorImage={script.seller_image}
-                                authorInitials={script.seller ? script.seller[0].toUpperCase() : "?"}
-                                verified={isVerifiedCreator(script.seller_roles)}
-                                rating={script.rating ?? 0}
-                                reviewCount={script.reviews ?? 0}
-                                price={scriptPrice}
-                                onViewDetails={() => { }}
-                              />
-                            </Link>
-                          </motion.div>
-                        );
-                      });
-                    })()}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {/* Pagination */}
-              {sortedScripts.length > 0 && totalPages > 1 && (
-                <motion.div
-                  className="flex justify-center mt-12"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5 }}
-                >
-                  <div className="flex space-x-2">
-                    {/* Previous Button */}
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.05 }}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      <Button
-                        variant="outline"
-                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                        disabled={currentPage === 1}
-                        className="bg-neutral-900/30 border-neutral-700/50 text-white hover:bg-orange-500 hover:border-orange-500 backdrop-blur-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        Previous
-                      </Button>
-                    </motion.div>
-
-                    {/* Page Numbers */}
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
-                      <motion.div
-                        key={pageNum}
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: pageNum * 0.05 }}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        <Button
-                          variant={currentPage === pageNum ? "default" : "outline"}
-                          onClick={() => setCurrentPage(pageNum)}
-                          className={
-                            currentPage === pageNum
-                              ? "bg-orange-500 text-white"
-                              : "bg-neutral-900/30 border-neutral-700/50 text-white hover:bg-orange-500 hover:border-orange-500 backdrop-blur-sm"
-                          }
-                        >
-                          {pageNum}
-                        </Button>
-                      </motion.div>
-                    ))}
-
-                    {/* Next Button */}
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: (totalPages + 1) * 0.05 }}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      <Button
-                        variant="outline"
-                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                        disabled={currentPage === totalPages}
-                        className="bg-neutral-900/30 border-neutral-700/50 text-white hover:bg-orange-500 hover:border-orange-500 backdrop-blur-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        Next
-                      </Button>
-                    </motion.div>
                   </div>
-                </motion.div>
+
+                  {/* Price range */}
+                  <div>
+                    <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-white/50">Price Range</h3>
+                    <Slider
+                      value={priceRange}
+                      onValueChange={setPriceRange}
+                      max={priceBounds.max}
+                      min={priceBounds.min}
+                      step={1}
+                      className="w-full"
+                    />
+                    <div className="mt-2 flex justify-between text-xs text-white/50">
+                      <span>${priceRange[0]}</span>
+                      <span>${priceRange[1]}</span>
+                    </div>
+                  </div>
+
+                  {/* Free / On sale toggles */}
+                  <div>
+                    <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-white/50">Pricing</h3>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        onClick={() => setFreeOnly((v) => !v)}
+                        className={`rounded-lg border px-3 py-1.5 text-xs font-bold uppercase transition ${
+                          freeOnly
+                            ? "border-orange-500/60 bg-orange-500/15 text-orange-300"
+                            : "border-white/15 bg-white/[0.04] text-white/60 hover:border-white/30"
+                        }`}
+                      >
+                        Free Only
+                      </button>
+                      <button
+                        onClick={() => setOnSaleOnly((v) => !v)}
+                        className={`rounded-lg border px-3 py-1.5 text-xs font-bold uppercase transition ${
+                          onSaleOnly
+                            ? "border-orange-500/60 bg-orange-500/15 text-orange-300"
+                            : "border-white/15 bg-white/[0.04] text-white/60 hover:border-white/30"
+                        }`}
+                      >
+                        On Sale
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Active filter chips + result meta */}
+          <div className="mb-5 flex flex-wrap items-center gap-3 text-sm text-white/50">
+            <span className="flex items-center gap-1.5">
+              <Zap className="h-3.5 w-3.5 text-[#f97316]" />
+              {sortedScripts.length} of {allScripts.length} scripts
+              {searchQuery && (
+                <span>
+                  {" "}for <span className="font-medium text-[#f97316]">&quot;{searchQuery}&quot;</span>
+                </span>
               )}
-            </motion.div>
+            </span>
+
+            <AnimatePresence>
+              {selectedCategories.map((category) => (
+                <motion.button
+                  key={`chip-cat-${category}`}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  onClick={() => removeFilter("category", category)}
+                  className="flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-0.5 text-[11px] text-white/60 hover:text-white"
+                >
+                  {categories.find((c) => c.id === category)?.name}
+                  <X className="h-3 w-3" />
+                </motion.button>
+              ))}
+              {selectedFrameworks.map((framework) => (
+                <motion.button
+                  key={`chip-fw-${framework}`}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  onClick={() => removeFilter("framework", framework)}
+                  className="flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-0.5 text-[11px] text-white/60 hover:text-white"
+                >
+                  {frameworks.find((f) => f.value === framework)?.label || framework}
+                  <X className="h-3 w-3" />
+                </motion.button>
+              ))}
+              {(priceRange[0] !== priceBounds.min || priceRange[1] !== priceBounds.max) && (
+                <motion.button
+                  key="chip-price"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  onClick={() => setPriceRange([priceBounds.min, priceBounds.max])}
+                  className="flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-0.5 text-[11px] text-white/60 hover:text-white"
+                >
+                  ${priceRange[0]}-${priceRange[1]}
+                  <X className="h-3 w-3" />
+                </motion.button>
+              )}
+              {freeOnly && (
+                <motion.button
+                  key="chip-free"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  onClick={() => setFreeOnly(false)}
+                  className="flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-0.5 text-[11px] text-white/60 hover:text-white"
+                >
+                  Free
+                  <X className="h-3 w-3" />
+                </motion.button>
+              )}
+              {onSaleOnly && (
+                <motion.button
+                  key="chip-sale"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  onClick={() => setOnSaleOnly(false)}
+                  className="flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-0.5 text-[11px] text-white/60 hover:text-white"
+                >
+                  On Sale
+                  <X className="h-3 w-3" />
+                </motion.button>
+              )}
+            </AnimatePresence>
+
+            {hasActiveFilters && (
+              <button
+                onClick={clearAllFilters}
+                className="flex items-center gap-1 text-orange-400 hover:text-orange-300"
+              >
+                <X className="h-3.5 w-3.5" /> Clear filters
+              </button>
+            )}
           </div>
-        </div>
-      </div>
+
+          {/* Grid / states */}
+          {loading ? (
+            <div className="grid justify-center gap-4 [grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),1fr))] justify-items-center">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="h-64 w-full max-w-[280px] animate-pulse rounded-2xl border border-white/[0.06] bg-white/[0.03]"
+                />
+              ))}
+            </div>
+          ) : sortedScripts.length === 0 ? (
+            <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] py-16 text-center">
+              <Search className="mx-auto mb-4 h-12 w-12 text-white/20" />
+              <h3 className="text-lg font-semibold text-white">No scripts found</h3>
+              <p className="mt-1 text-sm text-white/50">Try adjusting your search or filters.</p>
+              <Button
+                onClick={clearAllFilters}
+                className="mt-6 bg-gradient-to-r from-orange-500 to-yellow-400 font-semibold text-black hover:from-orange-600 hover:to-yellow-500"
+              >
+                Clear All Filters
+              </Button>
+            </div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={scriptsInView ? { opacity: 1 } : { opacity: 1 }}
+              transition={{ duration: 0.4 }}
+              // auto-fill at the card's native 280px width so columns only form when
+              // there is room — keeps the fixed-width ProductCard responsive without overflow.
+              className="grid justify-center gap-4 [grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),1fr))] justify-items-center"
+            >
+              {(() => {
+                const items: GridItem[] = [...paginatedScripts];
+                // Insert ads at memoized positions (only if they fall within current page)
+                if (randomAds.length > 0 && items.length > 0 && memoizedAdPositions.length > 0) {
+                  const adPositions: Array<{ ad: any; position: number }> = [];
+
+                  // Find which ads should appear on this page based on memoized positions
+                  for (let i = 0; i < randomAds.length && i < memoizedAdPositions.length; i++) {
+                    const globalPosition = memoizedAdPositions[i];
+                    // Check if this ad position falls within the current page
+                    if (globalPosition >= startIndex && globalPosition < endIndex) {
+                      // Convert global position to local page position
+                      const localPosition = globalPosition - startIndex;
+                      adPositions.push({
+                        ad: randomAds[i],
+                        position: localPosition
+                      });
+                    }
+                  }
+
+                  // Sort by position in descending order to avoid index shifting when inserting
+                  adPositions.sort((a, b) => b.position - a.position);
+                  adPositions.forEach(({ ad, position }) => {
+                    items.splice(position, 0, {
+                      ...ad,
+                      isAd: true,
+                    } as GridItem);
+                  });
+                }
+                return items.map((item: GridItem, index) => {
+                  // If it's an ad, render AdCard
+                  if ("isAd" in item && item.isAd) {
+                    return (
+                      <AdCard
+                        key={`ad-${item.id}`}
+                        ad={item as any}
+                        variant="script"
+                      />
+                    );
+                  }
+
+                  // Otherwise render script via the shared marketplace ProductCard
+                  const script = item as UIScript;
+                  return (
+                    <motion.div
+                      key={script.id}
+                      initial={{ opacity: 0, y: 16 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: Math.min(index * 0.04, 0.4) }}
+                      className="w-full max-w-[280px]"
+                    >
+                      <ProductCard product={toMarketProduct(script)} className="w-full" />
+                    </motion.div>
+                  );
+                });
+              })()}
+            </motion.div>
+          )}
+
+          {/* Pagination */}
+          {sortedScripts.length > 0 && totalPages > 1 && (
+            <motion.div
+              className="mt-12 flex justify-center"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                <button
+                  onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                  className="rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white/70 transition hover:border-orange-500/50 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Previous
+                </button>
+
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                  <button
+                    key={pageNum}
+                    onClick={() => setCurrentPage(pageNum)}
+                    className={`min-w-[40px] rounded-xl px-3 py-2 text-sm font-semibold transition ${
+                      currentPage === pageNum
+                        ? "bg-gradient-to-r from-orange-500 to-yellow-400 text-black"
+                        : "border border-white/[0.08] bg-white/[0.04] text-white/70 hover:border-orange-500/50 hover:text-white"
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                ))}
+
+                <button
+                  onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                  className="rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white/70 transition hover:border-orange-500/50 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Next
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </section>
+      </main>
       <Footer />
     </>
   );
