@@ -324,7 +324,7 @@ export default function ProfilePage() {
         }
       } catch (error) {
         clearTimeout(timeoutId);
-        console.error("Error fetching active slots:", error);
+        if ((error as any)?.name !== "AbortError") console.error("Error fetching active slots:", error);
         setPurchasedSlots(0);
         setAvailableSlotUniqueIds([]);
       }

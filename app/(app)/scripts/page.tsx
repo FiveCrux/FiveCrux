@@ -246,7 +246,7 @@ export default function ScriptsPage() {
           setFeaturedScripts(shuffledScripts);
         }
       } catch (error) {
-        console.error("Error fetching featured scripts:", error);
+        if ((error as any)?.name !== "AbortError") console.error("Error fetching featured scripts:", error);
       } finally {
         setScriptsLoading(false);
       }

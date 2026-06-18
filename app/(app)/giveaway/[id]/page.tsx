@@ -574,7 +574,7 @@ export default function GiveawayDetailPage() {
           setRelatedGiveaways(buildSeedRelated(giveawayId)) // TODO: remove before production
         }
       } catch (error) {
-        console.error('Error fetching related giveaways:', error)
+        if ((error as any)?.name !== "AbortError") console.error('Error fetching related giveaways:', error)
         // Seed fallback so the section is never empty in dev.
         setRelatedGiveaways(buildSeedRelated(giveawayId)) // TODO: remove before production
       } finally {

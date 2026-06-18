@@ -552,7 +552,10 @@ export default function ScriptDetailPage() {
         }
         setScript(data);
       } catch (err) {
-        console.error("Error fetching script:", err);
+        // An aborted request (our own timeout) is expected — fall back quietly.
+        if ((err as any)?.name !== "AbortError") {
+          console.error("Error fetching script:", err);
+        }
         // TODO: remove before production — seed fallback on network/parse error.
         const seeded = scriptFromSeed(Number(scriptId));
         if (seeded) {
@@ -616,7 +619,7 @@ export default function ScriptDetailPage() {
 
         setOtherScripts(filteredScripts);
       } catch (err) {
-        console.error("Error fetching other scripts:", err);
+        if ((err as any)?.name !== "AbortError") console.error("Error fetching other scripts:", err);
         // TODO: remove before production — seed fallback for related section.
         const seeded = MARKETPLACE_SEED.filter(
           (s) => Number(s.id) !== Number(scriptId)
