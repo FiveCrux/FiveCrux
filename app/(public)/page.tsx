@@ -334,18 +334,18 @@ export default function HomePage() {
             </div>
             {/* Premium Quality */}
             <div className="flex items-start gap-4 rounded-2xl border border-white/[0.08] bg-white/[0.04] p-7 backdrop-blur-md transition hover:border-orange-500/30">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-orange-500/20 bg-orange-500/10"><Star className="h-6 w-6 text-orange-400" /></div>
-              <div><h3 className="mb-1.5 text-lg font-bold">Premium Quality</h3><p className="text-sm leading-relaxed text-white/55">Only top-tier scripts that meet our quality standards make it onto FiveCrux.</p></div>
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.06]"><Star className="h-6 w-6 text-white/70" /></div>
+              <div><h3 className="mb-1.5 text-lg font-bold">Premium Quality</h3><p className="text-sm leading-relaxed text-white/65">Only top-tier scripts that meet our quality standards make it onto FiveCrux.</p></div>
             </div>
             {/* Security Verified */}
             <div className="flex items-start gap-4 rounded-2xl border border-white/[0.08] bg-white/[0.04] p-7 backdrop-blur-md transition hover:border-orange-500/30">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-orange-500/20 bg-orange-500/10"><Shield className="h-6 w-6 text-orange-400" /></div>
-              <div><h3 className="mb-1.5 text-lg font-bold">Security Verified</h3><p className="text-sm leading-relaxed text-white/55">Every resource is manually reviewed before it goes live.</p></div>
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.06]"><Shield className="h-6 w-6 text-white/70" /></div>
+              <div><h3 className="mb-1.5 text-lg font-bold">Security Verified</h3><p className="text-sm leading-relaxed text-white/65">Every resource is manually reviewed before it goes live.</p></div>
             </div>
             {/* Maximum Reach — wide */}
             <div className="flex items-start gap-4 rounded-2xl border border-white/[0.08] bg-white/[0.04] p-7 backdrop-blur-md transition hover:border-orange-500/30 lg:col-span-2">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-orange-500/20 bg-orange-500/10"><Megaphone className="h-6 w-6 text-orange-400" /></div>
-              <div><h3 className="mb-1.5 text-lg font-bold">Maximum Reach</h3><p className="text-sm leading-relaxed text-white/55">Get discovered by thousands of FiveM server owners worldwide.</p></div>
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.06]"><Megaphone className="h-6 w-6 text-white/70" /></div>
+              <div><h3 className="mb-1.5 text-lg font-bold">Maximum Reach</h3><p className="text-sm leading-relaxed text-white/65">Get discovered by thousands of FiveM server owners worldwide.</p></div>
             </div>
           </div>
         </div>
