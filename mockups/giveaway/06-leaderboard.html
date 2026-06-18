@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FiveCrux — Giveaways</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: { sans: ['Inter', 'sans-serif'] },
+        colors: { brand: { orange: '#f97316', yellow: '#facc15' } }
+      }
+    }
+  }
+</script>
+<style>
+  body{font-family:'Inter',sans-serif;background:#0a0a0a;color:#fff}
+  .glass{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);backdrop-filter:blur(12px)}
+  .glass-strong{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.10);backdrop-filter:blur(16px)}
+  .orange-glow{box-shadow:0 0 0 1px rgba(249,115,22,0.5),0 8px 32px rgba(249,115,22,0.30)}
+  .card-hover{transition:all .25s ease}
+  .card-hover:hover{transform:translateY(-4px);border-color:rgba(249,115,22,0.35);box-shadow:0 16px 48px rgba(0,0,0,0.5)}
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-track{background:#0a0a0a}
+  ::-webkit-scrollbar-thumb{background:#262626;border-radius:6px}
+  .ph-label{font-weight:800;letter-spacing:.10em;text-transform:uppercase;color:rgba(255,255,255,0.13)}
+  .ph-1{background:linear-gradient(135deg,#1c1410,#2a1c0e)}
+  .ph-2{background:linear-gradient(135deg,#101418,#0e1c2a)}
+  .ph-3{background:linear-gradient(135deg,#1a1408,#2a230e)}
+  .ph-4{background:linear-gradient(135deg,#161616,#222)}
+  .ph-5{background:linear-gradient(135deg,#14100f,#241410)}
+  .ph-6{background:linear-gradient(135deg,#1a1208,#2a1c0e)}
+  .live-dot{width:8px;height:8px;border-radius:9999px;background:#22c55e;box-shadow:0 0 0 0 rgba(34,197,94,0.6);animation:pulse 1.8s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(34,197,94,0.55)}70%{box-shadow:0 0 0 9px rgba(34,197,94,0)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}
+  .ticker{display:flex;gap:2.5rem;white-space:nowrap;animation:scroll 28s linear infinite}
+  @keyframes scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+  .avatar{display:inline-flex;align-items:center;justify-content:center;font-weight:700;color:#0a0a0a;border:2px solid #0a0a0a}
+  .feed-item{animation:fadein .5s ease}
+  @keyframes fadein{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+</style>
+</head>
+<body class="text-white antialiased selection:bg-brand-orange/30">
+
+<!-- ===== NAVBAR ===== -->
+<header class="sticky top-0 z-50 px-4 pt-4">
+  <nav class="glass-strong max-w-7xl mx-auto rounded-2xl px-5 py-3 flex items-center gap-6">
+    <a href="#" class="text-2xl font-extrabold tracking-tight shrink-0">
+      <span class="text-brand-orange">Five</span><span class="text-brand-yellow">Crux</span>
+    </a>
+    <ul class="hidden lg:flex items-center gap-7 text-sm font-medium text-white/60 ml-2">
+      <li><a href="#" class="hover:text-white transition">Home</a></li>
+      <li><a href="#" class="hover:text-white transition">Scripts</a></li>
+      <li><a href="#" class="hover:text-white transition">Props</a></li>
+      <li><a href="#" class="text-white">Giveaways</a></li>
+      <li><a href="#" class="hover:text-white transition">Advertise</a></li>
+    </ul>
+    <div class="flex items-center gap-3 ml-auto">
+      <span class="hidden sm:inline-flex items-center gap-2 glass rounded-full px-3 py-1.5 text-xs font-medium">
+        <span class="live-dot"></span> 312 online
+      </span>
+      <button class="glass hover:bg-white/10 text-sm font-medium px-5 py-2.5 rounded-xl transition">Login</button>
+    </div>
+  </nav>
+</header>
+
+<!-- ===== LIVE WINNERS TICKER ===== -->
+<div class="border-y border-white/8 bg-white/[0.02] overflow-hidden mt-4 py-2.5">
+  <div class="ticker text-sm">
+    <span class="inline-flex items-center gap-2 text-white/60"><i data-lucide="trophy" class="w-4 h-4 text-brand-yellow"></i> <b class="text-white">@vortex</b> won Drift Car Pack</span>
+    <span class="inline-flex items-center gap-2 text-white/60"><i data-lucide="trophy" class="w-4 h-4 text-brand-yellow"></i> <b class="text-white">@mara_rp</b> won Police MDT</span>
+    <span class="inline-flex items-center gap-2 text-white/60"><i data-lucide="trophy" class="w-4 h-4 text-brand-yellow"></i> <b class="text-white">@neonjake</b> won Casino Heist</span>
+    <span class="inline-flex items-center gap-2 text-white/60"><i data-lucide="trophy" class="w-4 h-4 text-brand-yellow"></i> <b class="text-white">@dripcity</b> won Luxury MLO</span>
+    <span class="inline-flex items-center gap-2 text-white/60"><i data-lucide="trophy" class="w-4 h-4 text-brand-yellow"></i> <b class="text-white">@kos_dev</b> won Starter Pack</span>
+    <!-- duplicate for seamless loop -->
+    <span class="inline-flex items-center gap-2 text-white/60"><i data-lucide="trophy" class="w-4 h-4 text-brand-yellow"></i> <b class="text-white">@vortex</b> won Drift Car Pack</span>
+    <span class="inline-flex items-center gap-2 text-white/60"><i data-lucide="trophy" class="w-4 h-4 text-brand-yellow"></i> <b class="text-white">@mara_rp</b> won Police MDT</span>
+    <span class="inline-flex items-center gap-2 text-white/60"><i data-lucide="trophy" class="w-4 h-4 text-brand-yellow"></i> <b class="text-white">@neonjake</b> won Casino Heist</span>
+    <span class="inline-flex items-center gap-2 text-white/60"><i data-lucide="trophy" class="w-4 h-4 text-brand-yellow"></i> <b class="text-white">@dripcity</b> won Luxury MLO</span>
+    <span class="inline-flex items-center gap-2 text-white/60"><i data-lucide="trophy" class="w-4 h-4 text-brand-yellow"></i> <b class="text-white">@kos_dev</b> won Starter Pack</span>
+  </div>
+</div>
+
+<main class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+
+  <!-- ===== HEADER ===== -->
+  <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8">
+    <div>
+      <span class="inline-flex items-center gap-2 glass rounded-full px-4 py-1.5 text-xs font-medium text-white/70">
+        <i data-lucide="activity" class="w-3.5 h-3.5 text-brand-orange"></i>
+        Social / Leaderboard
+      </span>
+      <h1 class="mt-4 text-4xl sm:text-5xl font-extrabold tracking-tight">Community Giveaways</h1>
+      <p class="mt-2 text-white/55">Live entries, real winners, and the community grinding for the top spot.</p>
+    </div>
+    <div class="flex gap-4">
+      <div class="glass rounded-2xl px-5 py-3 text-center">
+        <div class="text-2xl font-extrabold text-brand-orange">11,920</div>
+        <div class="text-xs text-white/45 mt-0.5">total entries</div>
+      </div>
+      <div class="glass rounded-2xl px-5 py-3 text-center">
+        <div class="text-2xl font-extrabold text-brand-yellow">6</div>
+        <div class="text-xs text-white/45 mt-0.5">live now</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MAIN GRID: giveaways + sidebar ===== -->
+  <div class="grid lg:grid-cols-3 gap-6">
+
+    <!-- ---- LEFT: GIVEAWAY CARDS ---- -->
+    <div class="lg:col-span-2 grid sm:grid-cols-2 gap-6">
+
+      <!-- card 1 -->
+      <article class="glass rounded-2xl overflow-hidden card-hover flex flex-col">
+        <div class="ph-1 relative h-36 flex items-center justify-center">
+          <span class="ph-label text-base">Casino Heist</span>
+          <span class="absolute top-3 left-3 inline-flex items-center gap-1.5 bg-brand-yellow text-black text-[11px] font-bold px-2.5 py-1 rounded-full"><i data-lucide="trophy" class="w-3 h-3"></i>$450</span>
+          <span class="absolute top-3 right-3 inline-flex items-center gap-1.5 glass-strong text-[11px] font-semibold px-2.5 py-1 rounded-full"><span class="live-dot"></span>live</span>
+        </div>
+        <div class="p-5 flex flex-col flex-1">
+          <h4 class="font-bold leading-snug">Casino Heist Script Bundle</h4>
+          <div class="mt-3 flex items-center gap-3">
+            <div class="flex -space-x-2">
+              <span class="avatar w-7 h-7 rounded-full bg-brand-orange text-[11px]">H</span>
+              <span class="avatar w-7 h-7 rounded-full bg-brand-yellow text-[11px]">K</span>
+              <span class="avatar w-7 h-7 rounded-full bg-emerald-400 text-[11px]">M</span>
+              <span class="avatar w-7 h-7 rounded-full bg-white/15 text-[10px] text-white">+1.2k</span>
+            </div>
+            <span class="text-xs text-white/45 inline-flex items-center gap-1"><i data-lucide="users" class="w-3.5 h-3.5"></i>1,240 entered</span>
+          </div>
+          <div class="mt-3 flex items-center justify-between text-sm">
+            <span class="inline-flex items-center gap-1.5 text-brand-yellow"><i data-lucide="clock" class="w-4 h-4"></i>2d 14h</span>
+            <span class="inline-flex items-center gap-1.5 text-white/45 text-xs"><i data-lucide="crown" class="w-3.5 h-3.5"></i>HighRoller</span>
+          </div>
+          <button class="mt-4 inline-flex items-center justify-center gap-2 bg-brand-orange hover:bg-orange-500 text-black font-semibold text-sm px-4 py-2.5 rounded-xl orange-glow transition"><i data-lucide="gift" class="w-4 h-4"></i>Enter</button>
+        </div>
+      </article>
+
+      <!-- card 2 -->
+      <article class="glass rounded-2xl overflow-hidden card-hover flex flex-col">
+        <div class="ph-2 relative h-36 flex items-center justify-center">
+          <span class="ph-label text-base text-center leading-snug">Luxury<br>Apartments</span>
+          <span class="absolute top-3 left-3 inline-flex items-center gap-1.5 bg-brand-yellow text-black text-[11px] font-bold px-2.5 py-1 rounded-full"><i data-lucide="trophy" class="w-3 h-3"></i>$35</span>
+          <span class="absolute top-3 right-3 inline-flex items-center gap-1.5 glass-strong text-[11px] font-semibold px-2.5 py-1 rounded-full"><span class="live-dot"></span>live</span>
+        </div>
+        <div class="p-5 flex flex-col flex-1">
+          <h4 class="font-bold leading-snug">Luxury Apartments MLO</h4>
+          <div class="mt-3 flex items-center gap-3">
+            <div class="flex -space-x-2">
+              <span class="avatar w-7 h-7 rounded-full bg-sky-400 text-[11px]">D</span>
+              <span class="avatar w-7 h-7 rounded-full bg-brand-orange text-[11px]">R</span>
+              <span class="avatar w-7 h-7 rounded-full bg-white/15 text-[10px] text-white">+878</span>
+            </div>
+            <span class="text-xs text-white/45 inline-flex items-center gap-1"><i data-lucide="users" class="w-3.5 h-3.5"></i>880 entered</span>
+          </div>
+          <div class="mt-3 flex items-center justify-between text-sm">
+            <span class="inline-flex items-center gap-1.5 text-brand-yellow"><i data-lucide="clock" class="w-4 h-4"></i>4d 6h</span>
+            <span class="inline-flex items-center gap-1.5 text-white/45 text-xs"><i data-lucide="crown" class="w-3.5 h-3.5"></i>MapMasters</span>
+          </div>
+          <button class="mt-4 inline-flex items-center justify-center gap-2 bg-brand-orange hover:bg-orange-500 text-black font-semibold text-sm px-4 py-2.5 rounded-xl orange-glow transition"><i data-lucide="gift" class="w-4 h-4"></i>Enter</button>
+        </div>
+      </article>
+
+      <!-- card 3 -->
+      <article class="glass rounded-2xl overflow-hidden card-hover flex flex-col">
+        <div class="ph-3 relative h-36 flex items-center justify-center">
+          <span class="ph-label text-base text-center leading-snug">Server<br>Starter Pack</span>
+          <span class="absolute top-3 left-3 inline-flex items-center gap-1.5 bg-brand-yellow text-black text-[11px] font-bold px-2.5 py-1 rounded-full"><i data-lucide="trophy" class="w-3 h-3"></i>$600</span>
+          <span class="absolute top-3 right-3 inline-flex items-center gap-1.5 glass-strong text-[11px] font-semibold px-2.5 py-1 rounded-full text-brand-orange"><i data-lucide="activity" class="w-3 h-3"></i>hot</span>
+        </div>
+        <div class="p-5 flex flex-col flex-1">
+          <h4 class="font-bold leading-snug">Full Server Starter Pack</h4>
+          <div class="mt-3 flex items-center gap-3">
+            <div class="flex -space-x-2">
+              <span class="avatar w-7 h-7 rounded-full bg-brand-yellow text-[11px]">F</span>
+              <span class="avatar w-7 h-7 rounded-full bg-emerald-400 text-[11px]">N</span>
+              <span class="avatar w-7 h-7 rounded-full bg-violet-400 text-[11px]">V</span>
+              <span class="avatar w-7 h-7 rounded-full bg-white/15 text-[10px] text-white">+3.3k</span>
+            </div>
+            <span class="text-xs text-white/45 inline-flex items-center gap-1"><i data-lucide="users" class="w-3.5 h-3.5"></i>3,400 entered</span>
+          </div>
+          <div class="mt-3 flex items-center justify-between text-sm">
+            <span class="inline-flex items-center gap-1.5 text-brand-yellow"><i data-lucide="clock" class="w-4 h-4"></i>18h</span>
+            <span class="inline-flex items-center gap-1.5 text-white/45 text-xs"><i data-lucide="crown" class="w-3.5 h-3.5"></i>FiveCrux</span>
+          </div>
+          <button class="mt-4 inline-flex items-center justify-center gap-2 bg-brand-orange hover:bg-orange-500 text-black font-semibold text-sm px-4 py-2.5 rounded-xl orange-glow transition"><i data-lucide="gift" class="w-4 h-4"></i>Enter</button>
+        </div>
+      </article>
+
+      <!-- card 4 -->
+      <article class="glass rounded-2xl overflow-hidden card-hover flex flex-col">
+        <div class="ph-4 relative h-36 flex items-center justify-center">
+          <span class="ph-label text-base text-center leading-snug">Drift Car<br>Pack</span>
+          <span class="absolute top-3 left-3 inline-flex items-center gap-1.5 bg-brand-yellow text-black text-[11px] font-bold px-2.5 py-1 rounded-full"><i data-lucide="trophy" class="w-3 h-3"></i>$15</span>
+          <span class="absolute top-3 right-3 inline-flex items-center gap-1.5 glass-strong text-[11px] font-semibold px-2.5 py-1 rounded-full"><span class="live-dot"></span>live</span>
+        </div>
+        <div class="p-5 flex flex-col flex-1">
+          <h4 class="font-bold leading-snug">Drift Car Pack <span class="text-white/40 font-medium">(15)</span></h4>
+          <div class="mt-3 flex items-center gap-3">
+            <div class="flex -space-x-2">
+              <span class="avatar w-7 h-7 rounded-full bg-rose-400 text-[11px]">R</span>
+              <span class="avatar w-7 h-7 rounded-full bg-brand-orange text-[11px]">V</span>
+              <span class="avatar w-7 h-7 rounded-full bg-white/15 text-[10px] text-white">+538</span>
+            </div>
+            <span class="text-xs text-white/45 inline-flex items-center gap-1"><i data-lucide="users" class="w-3.5 h-3.5"></i>540 entered</span>
+          </div>
+          <div class="mt-3 flex items-center justify-between text-sm">
+            <span class="inline-flex items-center gap-1.5 text-brand-yellow"><i data-lucide="clock" class="w-4 h-4"></i>6d</span>
+            <span class="inline-flex items-center gap-1.5 text-white/45 text-xs"><i data-lucide="crown" class="w-3.5 h-3.5"></i>RevHead</span>
+          </div>
+          <button class="mt-4 inline-flex items-center justify-center gap-2 bg-brand-orange hover:bg-orange-500 text-black font-semibold text-sm px-4 py-2.5 rounded-xl orange-glow transition"><i data-lucide="gift" class="w-4 h-4"></i>Enter</button>
+        </div>
+      </article>
+
+      <!-- card 5 -->
+      <article class="glass rounded-2xl overflow-hidden card-hover flex flex-col">
+        <div class="ph-5 relative h-36 flex items-center justify-center">
+          <span class="ph-label text-base text-center leading-snug">Police MDT<br>+ Dispatch</span>
+          <span class="absolute top-3 left-3 inline-flex items-center gap-1.5 bg-brand-yellow text-black text-[11px] font-bold px-2.5 py-1 rounded-full"><i data-lucide="trophy" class="w-3 h-3"></i>$25</span>
+          <span class="absolute top-3 right-3 inline-flex items-center gap-1.5 glass-strong text-[11px] font-semibold px-2.5 py-1 rounded-full"><span class="live-dot"></span>live</span>
+        </div>
+        <div class="p-5 flex flex-col flex-1">
+          <h4 class="font-bold leading-snug">Police MDT + Dispatch</h4>
+          <div class="mt-3 flex items-center gap-3">
+            <div class="flex -space-x-2">
+              <span class="avatar w-7 h-7 rounded-full bg-blue-400 text-[11px]">N</span>
+              <span class="avatar w-7 h-7 rounded-full bg-brand-yellow text-[11px]">M</span>
+              <span class="avatar w-7 h-7 rounded-full bg-white/15 text-[10px] text-white">+758</span>
+            </div>
+            <span class="text-xs text-white/45 inline-flex items-center gap-1"><i data-lucide="users" class="w-3.5 h-3.5"></i>760 entered</span>
+          </div>
+          <div class="mt-3 flex items-center justify-between text-sm">
+            <span class="inline-flex items-center gap-1.5 text-brand-yellow"><i data-lucide="clock" class="w-4 h-4"></i>3d 9h</span>
+            <span class="inline-flex items-center gap-1.5 text-white/45 text-xs"><i data-lucide="crown" class="w-3.5 h-3.5"></i>NightShift</span>
+          </div>
+          <button class="mt-4 inline-flex items-center justify-center gap-2 bg-brand-orange hover:bg-orange-500 text-black font-semibold text-sm px-4 py-2.5 rounded-xl orange-glow transition"><i data-lucide="gift" class="w-4 h-4"></i>Enter</button>
+        </div>
+      </article>
+
+      <!-- card 6 -->
+      <article class="glass rounded-2xl overflow-hidden card-hover flex flex-col">
+        <div class="ph-6 relative h-36 flex items-center justify-center">
+          <span class="ph-label text-base text-center leading-snug">Scripts<br>Mega Bundle</span>
+          <span class="absolute top-3 left-3 inline-flex items-center gap-1.5 bg-brand-yellow text-black text-[11px] font-bold px-2.5 py-1 rounded-full"><i data-lucide="trophy" class="w-3 h-3"></i>$1,200</span>
+          <span class="absolute top-3 right-3 inline-flex items-center gap-1.5 glass-strong text-[11px] font-semibold px-2.5 py-1 rounded-full text-brand-orange"><i data-lucide="activity" class="w-3 h-3"></i>hot</span>
+        </div>
+        <div class="p-5 flex flex-col flex-1">
+          <h4 class="font-bold leading-snug">Premium Scripts Mega Bundle</h4>
+          <div class="mt-3 flex items-center gap-3">
+            <div class="flex -space-x-2">
+              <span class="avatar w-7 h-7 rounded-full bg-brand-orange text-[11px]">C</span>
+              <span class="avatar w-7 h-7 rounded-full bg-emerald-400 text-[11px]">J</span>
+              <span class="avatar w-7 h-7 rounded-full bg-pink-400 text-[11px]">A</span>
+              <span class="avatar w-7 h-7 rounded-full bg-white/15 text-[10px] text-white">+5k</span>
+            </div>
+            <span class="text-xs text-white/45 inline-flex items-center gap-1"><i data-lucide="users" class="w-3.5 h-3.5"></i>5,100 entered</span>
+          </div>
+          <div class="mt-3 flex items-center justify-between text-sm">
+            <span class="inline-flex items-center gap-1.5 text-brand-yellow"><i data-lucide="clock" class="w-4 h-4"></i>1d 3h</span>
+            <span class="inline-flex items-center gap-1.5 text-white/45 text-xs"><i data-lucide="crown" class="w-3.5 h-3.5"></i>CruxDev</span>
+          </div>
+          <button class="mt-4 inline-flex items-center justify-center gap-2 bg-brand-orange hover:bg-orange-500 text-black font-semibold text-sm px-4 py-2.5 rounded-xl orange-glow transition"><i data-lucide="gift" class="w-4 h-4"></i>Enter</button>
+        </div>
+      </article>
+
+    </div>
+
+    <!-- ---- RIGHT SIDEBAR ---- -->
+    <aside class="space-y-6">
+
+      <!-- TOP PARTICIPANTS LEADERBOARD -->
+      <div class="glass rounded-2xl p-6">
+        <div class="flex items-center gap-2 mb-5">
+          <i data-lucide="crown" class="w-5 h-5 text-brand-yellow"></i>
+          <h3 class="font-bold">Top Participants</h3>
+          <span class="ml-auto text-xs text-white/40">this month</span>
+        </div>
+        <ol class="space-y-3">
+          <li class="flex items-center gap-3">
+            <span class="w-6 text-center font-extrabold text-brand-yellow">1</span>
+            <span class="avatar w-9 h-9 rounded-full bg-brand-yellow">V</span>
+            <div class="flex-1 min-w-0">
+              <div class="font-semibold text-sm truncate">@vortex</div>
+              <div class="text-xs text-white/40">48 entries · 3 wins</div>
+            </div>
+            <i data-lucide="trophy" class="w-4 h-4 text-brand-yellow"></i>
+          </li>
+          <li class="flex items-center gap-3">
+            <span class="w-6 text-center font-extrabold text-white/70">2</span>
+            <span class="avatar w-9 h-9 rounded-full bg-brand-orange">M</span>
+            <div class="flex-1 min-w-0">
+              <div class="font-semibold text-sm truncate">@mara_rp</div>
+              <div class="text-xs text-white/40">41 entries · 2 wins</div>
+            </div>
+          </li>
+          <li class="flex items-center gap-3">
+            <span class="w-6 text-center font-extrabold text-white/70">3</span>
+            <span class="avatar w-9 h-9 rounded-full bg-emerald-400">N</span>
+            <div class="flex-1 min-w-0">
+              <div class="font-semibold text-sm truncate">@neonjake</div>
+              <div class="text-xs text-white/40">37 entries · 2 wins</div>
+            </div>
+          </li>
+          <li class="flex items-center gap-3">
+            <span class="w-6 text-center font-bold text-white/50">4</span>
+            <span class="avatar w-9 h-9 rounded-full bg-sky-400">D</span>
+            <div class="flex-1 min-w-0">
+              <div class="font-semibold text-sm truncate">@dripcity</div>
+              <div class="text-xs text-white/40">33 entries · 1 win</div>
+            </div>
+          </li>
+          <li class="flex items-center gap-3">
+            <span class="w-6 text-center font-bold text-white/50">5</span>
+            <span class="avatar w-9 h-9 rounded-full bg-violet-400">K</span>
+            <div class="flex-1 min-w-0">
+              <div class="font-semibold text-sm truncate">@kos_dev</div>
+              <div class="text-xs text-white/40">29 entries · 1 win</div>
+            </div>
+          </li>
+        </ol>
+        <button class="mt-5 w-full glass-strong hover:bg-white/10 text-sm font-medium py-2.5 rounded-xl transition">View full leaderboard</button>
+      </div>
+
+      <!-- RECENT WINNERS FEED -->
+      <div class="glass rounded-2xl p-6">
+        <div class="flex items-center gap-2 mb-5">
+          <span class="live-dot"></span>
+          <h3 class="font-bold">Recent Winners</h3>
+        </div>
+        <ul class="space-y-4">
+          <li class="feed-item flex items-start gap-3">
+            <span class="avatar w-8 h-8 rounded-full bg-brand-orange shrink-0">V</span>
+            <div class="text-sm">
+              <span class="font-semibold">@vortex</span> <span class="text-white/50">won</span> <span class="font-semibold text-brand-yellow">Drift Car Pack</span>
+              <div class="text-xs text-white/35 mt-0.5 inline-flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3"></i>2 min ago</div>
+            </div>
+          </li>
+          <li class="feed-item flex items-start gap-3">
+            <span class="avatar w-8 h-8 rounded-full bg-brand-yellow shrink-0">M</span>
+            <div class="text-sm">
+              <span class="font-semibold">@mara_rp</span> <span class="text-white/50">won</span> <span class="font-semibold text-brand-yellow">Police MDT + Dispatch</span>
+              <div class="text-xs text-white/35 mt-0.5 inline-flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3"></i>22 min ago</div>
+            </div>
+          </li>
+          <li class="feed-item flex items-start gap-3">
+            <span class="avatar w-8 h-8 rounded-full bg-emerald-400 shrink-0">N</span>
+            <div class="text-sm">
+              <span class="font-semibold">@neonjake</span> <span class="text-white/50">won</span> <span class="font-semibold text-brand-yellow">Casino Heist Bundle</span>
+              <div class="text-xs text-white/35 mt-0.5 inline-flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3"></i>1 hr ago</div>
+            </div>
+          </li>
+          <li class="feed-item flex items-start gap-3">
+            <span class="avatar w-8 h-8 rounded-full bg-sky-400 shrink-0">D</span>
+            <div class="text-sm">
+              <span class="font-semibold">@dripcity</span> <span class="text-white/50">won</span> <span class="font-semibold text-brand-yellow">Luxury Apartments MLO</span>
+              <div class="text-xs text-white/35 mt-0.5 inline-flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3"></i>3 hr ago</div>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <!-- LIVE ACTIVITY COUNTER -->
+      <div class="glass rounded-2xl p-6 text-center">
+        <i data-lucide="activity" class="w-6 h-6 text-brand-orange mx-auto"></i>
+        <div class="mt-3 text-3xl font-extrabold">+147</div>
+        <p class="text-sm text-white/50 mt-1">entries in the last hour</p>
+        <div class="mt-4 inline-flex items-center gap-2 text-xs glass-strong rounded-full px-3 py-1.5">
+          <span class="live-dot"></span> updating live
+        </div>
+      </div>
+
+    </aside>
+  </div>
+</main>
+
+<!-- ===== FOOTER ===== -->
+<footer class="border-t border-white/8 mt-12">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 py-10 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-white/40">
+    <span class="text-lg font-extrabold tracking-tight"><span class="text-brand-orange">Five</span><span class="text-brand-yellow">Crux</span></span>
+    <span>© 2026 FiveCrux. Join the community. Win big.</span>
+  </div>
+</footer>
+
+<script>lucide.createIcons();</script>
+</body>
+</html>

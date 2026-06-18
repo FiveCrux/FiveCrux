@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FiveCrux — Giveaways</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: { sans: ['Inter', 'sans-serif'] },
+        colors: { brand: { orange: '#f97316', yellow: '#facc15' } }
+      }
+    }
+  }
+</script>
+<style>
+  body{font-family:'Inter',sans-serif;background:#0a0a0a;color:#fff}
+  .glass{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);backdrop-filter:blur(12px)}
+  .glass-strong{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.10);backdrop-filter:blur(16px)}
+  .orange-glow{box-shadow:0 0 0 1px rgba(249,115,22,0.5),0 8px 32px rgba(249,115,22,0.35)}
+  .tile{transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease}
+  .tile:hover{transform:translateY(-4px);border-color:rgba(249,115,22,0.35);box-shadow:0 18px 50px rgba(0,0,0,0.55)}
+  .ph{position:relative;overflow:hidden}
+  .ph .slug{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:1rem;font-weight:900;letter-spacing:-.04em;color:rgba(255,255,255,0.10);line-height:1.05;user-select:none}
+  .grain:after{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,0.05) 1px,transparent 1px);background-size:14px 14px;opacity:.4}
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-track{background:#0a0a0a}
+  ::-webkit-scrollbar-thumb{background:#262626;border-radius:5px;border:2px solid #0a0a0a}
+  ::-webkit-scrollbar-thumb:hover{background:#3f3f46}
+</style>
+</head>
+<body class="text-white antialiased selection:bg-brand-orange/30">
+
+<!-- ===== NAVBAR ===== -->
+<header class="sticky top-0 z-50 px-4 pt-4">
+  <nav class="glass-strong max-w-7xl mx-auto rounded-2xl px-5 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-8">
+      <a href="#" class="text-2xl font-black tracking-tight"><span class="text-brand-orange">Five</span><span class="text-brand-yellow">Crux</span></a>
+      <div class="hidden lg:flex items-center gap-1 text-sm font-medium text-neutral-300">
+        <a href="#" class="px-3 py-2 rounded-lg hover:text-white hover:bg-white/5 transition">Home</a>
+        <a href="#" class="px-3 py-2 rounded-lg hover:text-white hover:bg-white/5 transition">Scripts</a>
+        <a href="#" class="px-3 py-2 rounded-lg hover:text-white hover:bg-white/5 transition">Props</a>
+        <a href="#" class="px-3 py-2 rounded-lg text-white bg-white/5">Giveaways</a>
+        <a href="#" class="px-3 py-2 rounded-lg hover:text-white hover:bg-white/5 transition">Advertise</a>
+      </div>
+    </div>
+    <div class="flex items-center gap-2 sm:gap-3">
+      <button class="relative p-2.5 rounded-xl glass hover:bg-white/10 transition" aria-label="Notifications">
+        <i data-lucide="bell" class="w-5 h-5"></i>
+        <span class="absolute -top-1 -right-1 bg-brand-orange text-black text-[10px] font-bold min-w-[18px] h-[18px] flex items-center justify-center rounded-full px-1">3</span>
+      </button>
+      <button class="hidden sm:inline-flex items-center gap-2 bg-brand-orange text-black font-semibold text-sm px-4 py-2.5 rounded-xl hover:bg-orange-400 transition orange-glow">
+        <i data-lucide="gift" class="w-4 h-4"></i> Host Giveaway
+      </button>
+      <button class="glass hover:bg-white/10 text-sm font-medium px-4 py-2.5 rounded-xl transition">Login</button>
+    </div>
+  </nav>
+</header>
+
+<main class="max-w-7xl mx-auto px-4 pt-8 pb-16">
+
+  <!-- ===== CONCEPT CHIP + HEADING ===== -->
+  <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-7">
+    <div>
+      <span class="inline-flex items-center gap-2 glass rounded-full px-3 py-1.5 text-xs font-semibold text-brand-yellow mb-3">
+        <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i> Bento Dashboard
+      </span>
+      <h1 class="text-3xl sm:text-4xl font-black tracking-tight">Giveaways <span class="text-brand-orange">.</span></h1>
+      <p class="text-neutral-400 text-sm mt-2 max-w-md">Win premium FiveM scripts, MLOs &amp; bundles. Enter free, track live odds, claim your loot.</p>
+    </div>
+    <div class="flex items-center gap-2">
+      <button class="glass hover:bg-white/10 text-sm font-medium px-4 py-2.5 rounded-xl transition flex items-center gap-2"><i data-lucide="filter" class="w-4 h-4"></i> Filter</button>
+      <button class="glass hover:bg-white/10 text-sm font-medium px-4 py-2.5 rounded-xl transition flex items-center gap-2"><i data-lucide="arrow-up-down" class="w-4 h-4"></i> Ending Soon</button>
+    </div>
+  </div>
+
+  <!-- ===== BENTO GRID ===== -->
+  <div class="grid grid-cols-1 md:grid-cols-4 auto-rows-[minmax(0,auto)] gap-4">
+
+    <!-- FEATURED (large) -->
+    <article class="tile glass-strong rounded-2xl overflow-hidden md:col-span-2 md:row-span-2 flex flex-col">
+      <div class="ph grain h-56 sm:h-64 md:h-full md:min-h-[260px] flex-1" style="background:linear-gradient(135deg,#f97316 0%,#7c2d12 55%,#1c1410 100%)">
+        <span class="slug text-5xl sm:text-6xl">PREMIUM<br>SCRIPTS<br>MEGA BUNDLE</span>
+        <span class="absolute top-4 left-4 inline-flex items-center gap-1.5 bg-black/40 backdrop-blur text-xs font-bold px-3 py-1.5 rounded-full text-brand-yellow"><i data-lucide="flame" class="w-3.5 h-3.5"></i> FEATURED</span>
+        <span class="absolute top-4 right-4 inline-flex items-center gap-1.5 bg-brand-yellow text-black text-xs font-extrabold px-3 py-1.5 rounded-full"><i data-lucide="badge-dollar-sign" class="w-3.5 h-3.5"></i> $1,200 value</span>
+      </div>
+      <div class="p-5 sm:p-6">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <h2 class="text-2xl font-extrabold tracking-tight">Premium Scripts Mega Bundle</h2>
+            <p class="text-sm text-neutral-400 mt-1 flex items-center gap-1.5"><i data-lucide="user-round" class="w-4 h-4 text-brand-orange"></i> Hosted by <span class="text-neutral-200 font-medium">CruxDev</span></p>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3 mt-5">
+          <div class="glass rounded-xl px-4 py-3">
+            <p class="text-[11px] uppercase tracking-wide text-neutral-500 flex items-center gap-1.5"><i data-lucide="users" class="w-3.5 h-3.5"></i> Entries</p>
+            <p class="text-xl font-bold mt-0.5">5,100</p>
+          </div>
+          <div class="glass rounded-xl px-4 py-3">
+            <p class="text-[11px] uppercase tracking-wide text-neutral-500 flex items-center gap-1.5"><i data-lucide="clock" class="w-3.5 h-3.5 text-brand-orange"></i> Ends in</p>
+            <p class="text-xl font-bold mt-0.5 text-brand-orange">1d 3h</p>
+          </div>
+        </div>
+        <button class="mt-5 w-full inline-flex items-center justify-center gap-2 bg-brand-orange text-black font-bold px-5 py-3.5 rounded-xl hover:bg-orange-400 transition orange-glow">
+          <i data-lucide="ticket" class="w-5 h-5"></i> Enter Giveaway
+        </button>
+      </div>
+    </article>
+
+    <!-- LIVE STATS -->
+    <section class="tile glass rounded-2xl p-5 md:col-span-2 flex flex-col justify-between">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-bold flex items-center gap-2"><span class="relative flex h-2.5 w-2.5"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-400"></span></span> Live Stats</h3>
+        <span class="text-xs text-neutral-500">updated just now</span>
+      </div>
+      <div class="grid grid-cols-3 gap-3 mt-4">
+        <div class="rounded-xl bg-gradient-to-br from-brand-orange/15 to-transparent border border-brand-orange/20 px-3 py-4 text-center">
+          <p class="text-2xl sm:text-3xl font-black text-brand-orange">$2,325</p>
+          <p class="text-[11px] uppercase tracking-wide text-neutral-400 mt-1">Total prizes</p>
+        </div>
+        <div class="rounded-xl bg-white/[0.03] border border-white/10 px-3 py-4 text-center">
+          <p class="text-2xl sm:text-3xl font-black">6</p>
+          <p class="text-[11px] uppercase tracking-wide text-neutral-400 mt-1">Active draws</p>
+        </div>
+        <div class="rounded-xl bg-gradient-to-br from-brand-yellow/15 to-transparent border border-brand-yellow/20 px-3 py-4 text-center">
+          <p class="text-2xl sm:text-3xl font-black text-brand-yellow">11,920</p>
+          <p class="text-[11px] uppercase tracking-wide text-neutral-400 mt-1">Participants</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- MEDIUM TILE: Luxury Apartments MLO -->
+    <article class="tile glass rounded-2xl overflow-hidden flex flex-col">
+      <div class="ph h-32 flex items-center justify-center" style="background:linear-gradient(135deg,#1e3a8a 0%,#0f172a 70%)">
+        <span class="slug text-2xl">LUXURY<br>APARTMENTS MLO</span>
+        <span class="absolute top-3 right-3 bg-brand-yellow text-black text-[11px] font-extrabold px-2.5 py-1 rounded-full">$35</span>
+      </div>
+      <div class="p-4 flex-1 flex flex-col">
+        <h3 class="font-bold text-sm leading-snug">Luxury Apartments MLO</h3>
+        <p class="text-xs text-neutral-500 mt-1 flex items-center gap-1.5"><i data-lucide="user-round" class="w-3.5 h-3.5"></i> MapMasters</p>
+        <div class="flex items-center justify-between text-xs text-neutral-400 mt-3">
+          <span class="flex items-center gap-1"><i data-lucide="users" class="w-3.5 h-3.5"></i> 880</span>
+          <span class="flex items-center gap-1 text-brand-orange"><i data-lucide="clock" class="w-3.5 h-3.5"></i> 4d 6h</span>
+        </div>
+        <button class="mt-3 w-full inline-flex items-center justify-center gap-2 bg-brand-orange/90 text-black font-semibold text-sm px-4 py-2.5 rounded-xl hover:bg-orange-400 transition">Enter Giveaway</button>
+      </div>
+    </article>
+
+    <!-- MEDIUM TILE: Police MDT -->
+    <article class="tile glass rounded-2xl overflow-hidden flex flex-col">
+      <div class="ph h-32 flex items-center justify-center" style="background:linear-gradient(135deg,#334155 0%,#0b1120 70%)">
+        <span class="slug text-2xl">POLICE MDT<br>+ DISPATCH</span>
+        <span class="absolute top-3 right-3 bg-brand-yellow text-black text-[11px] font-extrabold px-2.5 py-1 rounded-full">$25</span>
+      </div>
+      <div class="p-4 flex-1 flex flex-col">
+        <h3 class="font-bold text-sm leading-snug">Police MDT + Dispatch</h3>
+        <p class="text-xs text-neutral-500 mt-1 flex items-center gap-1.5"><i data-lucide="user-round" class="w-3.5 h-3.5"></i> NightShift</p>
+        <div class="flex items-center justify-between text-xs text-neutral-400 mt-3">
+          <span class="flex items-center gap-1"><i data-lucide="users" class="w-3.5 h-3.5"></i> 760</span>
+          <span class="flex items-center gap-1 text-brand-orange"><i data-lucide="clock" class="w-3.5 h-3.5"></i> 3d 9h</span>
+        </div>
+        <button class="mt-3 w-full inline-flex items-center justify-center gap-2 bg-brand-orange/90 text-black font-semibold text-sm px-4 py-2.5 rounded-xl hover:bg-orange-400 transition">Enter Giveaway</button>
+      </div>
+    </article>
+
+    <!-- RECENT WINNERS (tall-ish) -->
+    <section class="tile glass rounded-2xl p-5 md:col-span-2 md:row-span-2 flex flex-col">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-sm font-bold flex items-center gap-2"><i data-lucide="trophy" class="w-4 h-4 text-brand-yellow"></i> Recent Winners</h3>
+        <a href="#" class="text-xs text-brand-orange hover:underline">View all</a>
+      </div>
+      <ul class="space-y-3 flex-1">
+        <li class="flex items-center gap-3 glass rounded-xl px-3 py-2.5">
+          <div class="w-9 h-9 rounded-full bg-gradient-to-br from-brand-orange to-brand-yellow flex items-center justify-center text-black font-bold text-sm">DZ</div>
+          <div class="min-w-0 flex-1">
+            <p class="text-sm font-semibold truncate">DriftZilla won <span class="text-brand-yellow">Drift Car Pack</span></p>
+            <p class="text-[11px] text-neutral-500">2 hours ago · $15 value</p>
+          </div>
+          <i data-lucide="party-popper" class="w-4 h-4 text-brand-orange shrink-0"></i>
+        </li>
+        <li class="flex items-center gap-3 glass rounded-xl px-3 py-2.5">
+          <div class="w-9 h-9 rounded-full bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm">KP</div>
+          <div class="min-w-0 flex-1">
+            <p class="text-sm font-semibold truncate">Kappa_PD won <span class="text-brand-yellow">Police MDT Suite</span></p>
+            <p class="text-[11px] text-neutral-500">Yesterday · $25 value</p>
+          </div>
+          <i data-lucide="party-popper" class="w-4 h-4 text-brand-orange shrink-0"></i>
+        </li>
+        <li class="flex items-center gap-3 glass rounded-xl px-3 py-2.5">
+          <div class="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold text-sm">VX</div>
+          <div class="min-w-0 flex-1">
+            <p class="text-sm font-semibold truncate">VortexRP won <span class="text-brand-yellow">Casino Heist Bundle</span></p>
+            <p class="text-[11px] text-neutral-500">2 days ago · $450 value</p>
+          </div>
+          <i data-lucide="party-popper" class="w-4 h-4 text-brand-orange shrink-0"></i>
+        </li>
+        <li class="flex items-center gap-3 glass rounded-xl px-3 py-2.5">
+          <div class="w-9 h-9 rounded-full bg-gradient-to-br from-fuchsia-500 to-purple-700 flex items-center justify-center text-white font-bold text-sm">NS</div>
+          <div class="min-w-0 flex-1">
+            <p class="text-sm font-semibold truncate">NeoSan won <span class="text-brand-yellow">Server Starter Pack</span></p>
+            <p class="text-[11px] text-neutral-500">3 days ago · $600 value</p>
+          </div>
+          <i data-lucide="party-popper" class="w-4 h-4 text-brand-orange shrink-0"></i>
+        </li>
+      </ul>
+      <div class="mt-4 glass rounded-xl px-4 py-3 flex items-center gap-3">
+        <i data-lucide="shield-check" class="w-5 h-5 text-brand-orange shrink-0"></i>
+        <p class="text-xs text-neutral-400">All draws are provably fair &amp; randomly verified on-chain.</p>
+      </div>
+    </section>
+
+    <!-- WIDE TILE: Casino Heist Script Bundle -->
+    <article class="tile glass rounded-2xl overflow-hidden md:col-span-2 flex flex-row">
+      <div class="ph w-32 sm:w-44 shrink-0 flex items-center justify-center" style="background:linear-gradient(135deg,#facc15 0%,#854d0e 60%,#1c1407 100%)">
+        <span class="slug text-xl sm:text-2xl text-black/15">CASINO<br>HEIST<br>BUNDLE</span>
+      </div>
+      <div class="p-4 sm:p-5 flex-1 flex flex-col justify-between min-w-0">
+        <div>
+          <div class="flex items-start justify-between gap-2">
+            <h3 class="font-extrabold text-base sm:text-lg leading-snug">Casino Heist Script Bundle</h3>
+            <span class="bg-brand-yellow text-black text-[11px] font-extrabold px-2.5 py-1 rounded-full whitespace-nowrap">$450</span>
+          </div>
+          <p class="text-xs text-neutral-500 mt-1 flex items-center gap-1.5"><i data-lucide="user-round" class="w-3.5 h-3.5"></i> HighRoller</p>
+        </div>
+        <div class="flex items-center justify-between mt-3">
+          <div class="flex items-center gap-4 text-xs text-neutral-400">
+            <span class="flex items-center gap-1"><i data-lucide="users" class="w-3.5 h-3.5"></i> 1,240</span>
+            <span class="flex items-center gap-1 text-brand-orange"><i data-lucide="clock" class="w-3.5 h-3.5"></i> 2d 14h</span>
+          </div>
+          <button class="inline-flex items-center justify-center gap-2 bg-brand-orange text-black font-semibold text-sm px-4 py-2.5 rounded-xl hover:bg-orange-400 transition">Enter</button>
+        </div>
+      </div>
+    </article>
+
+    <!-- WIDE TILE: Full Server Starter Pack -->
+    <article class="tile glass rounded-2xl overflow-hidden md:col-span-2 flex flex-row">
+      <div class="ph w-32 sm:w-44 shrink-0 flex items-center justify-center" style="background:linear-gradient(135deg,#f97316 0%,#1e293b 70%)">
+        <span class="slug text-xl sm:text-2xl">SERVER<br>STARTER<br>PACK</span>
+      </div>
+      <div class="p-4 sm:p-5 flex-1 flex flex-col justify-between min-w-0">
+        <div>
+          <div class="flex items-start justify-between gap-2">
+            <h3 class="font-extrabold text-base sm:text-lg leading-snug">Full Server Starter Pack</h3>
+            <span class="bg-brand-yellow text-black text-[11px] font-extrabold px-2.5 py-1 rounded-full whitespace-nowrap">$600</span>
+          </div>
+          <p class="text-xs text-neutral-500 mt-1 flex items-center gap-1.5"><i data-lucide="user-round" class="w-3.5 h-3.5"></i> FiveCrux</p>
+        </div>
+        <div class="flex items-center justify-between mt-3">
+          <div class="flex items-center gap-4 text-xs text-neutral-400">
+            <span class="flex items-center gap-1"><i data-lucide="users" class="w-3.5 h-3.5"></i> 3,400</span>
+            <span class="flex items-center gap-1 text-red-400"><i data-lucide="clock" class="w-3.5 h-3.5"></i> 18h</span>
+          </div>
+          <button class="inline-flex items-center justify-center gap-2 bg-brand-orange text-black font-semibold text-sm px-4 py-2.5 rounded-xl hover:bg-orange-400 transition">Enter</button>
+        </div>
+      </div>
+    </article>
+
+    <!-- SMALL TILE: Drift Car Pack -->
+    <article class="tile glass rounded-2xl overflow-hidden flex flex-col">
+      <div class="ph h-32 flex items-center justify-center" style="background:linear-gradient(135deg,#be123c 0%,#1c0a10 70%)">
+        <span class="slug text-2xl">DRIFT<br>CAR PACK</span>
+        <span class="absolute top-3 right-3 bg-brand-yellow text-black text-[11px] font-extrabold px-2.5 py-1 rounded-full">$15</span>
+      </div>
+      <div class="p-4 flex-1 flex flex-col">
+        <h3 class="font-bold text-sm leading-snug">Drift Car Pack (15)</h3>
+        <p class="text-xs text-neutral-500 mt-1 flex items-center gap-1.5"><i data-lucide="user-round" class="w-3.5 h-3.5"></i> RevHead</p>
+        <div class="flex items-center justify-between text-xs text-neutral-400 mt-3">
+          <span class="flex items-center gap-1"><i data-lucide="users" class="w-3.5 h-3.5"></i> 540</span>
+          <span class="flex items-center gap-1 text-brand-orange"><i data-lucide="clock" class="w-3.5 h-3.5"></i> 6d</span>
+        </div>
+        <button class="mt-3 w-full inline-flex items-center justify-center gap-2 bg-brand-orange/90 text-black font-semibold text-sm px-4 py-2.5 rounded-xl hover:bg-orange-400 transition">Enter Giveaway</button>
+      </div>
+    </article>
+
+    <!-- HOST YOUR OWN CTA TILE -->
+    <section class="tile glass-strong rounded-2xl p-6 relative overflow-hidden flex flex-col justify-center" style="background:radial-gradient(120% 120% at 100% 0%,rgba(249,115,22,0.22),transparent 60%)">
+      <div class="w-11 h-11 rounded-xl bg-brand-orange/20 border border-brand-orange/30 flex items-center justify-center mb-3">
+        <i data-lucide="gift" class="w-5 h-5 text-brand-orange"></i>
+      </div>
+      <h3 class="text-lg font-extrabold leading-snug">Host your own giveaway</h3>
+      <p class="text-sm text-neutral-400 mt-1.5">Grow your audience by giving away your scripts. Free to set up.</p>
+      <button class="mt-4 inline-flex items-center justify-center gap-2 bg-brand-orange text-black font-bold text-sm px-5 py-3 rounded-xl hover:bg-orange-400 transition orange-glow w-full sm:w-auto">
+        Get Started <i data-lucide="arrow-right" class="w-4 h-4"></i>
+      </button>
+    </section>
+
+  </div>
+</main>
+
+<footer class="border-t border-white/10 mt-4">
+  <div class="max-w-7xl mx-auto px-4 py-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-neutral-500">
+    <p><span class="text-brand-orange font-bold">Five</span><span class="text-brand-yellow font-bold">Crux</span> — the FiveM marketplace.</p>
+    <p>© 2026 FiveCrux. All giveaways provably fair.</p>
+  </div>
+</footer>
+
+<script>lucide.createIcons()</script>
+</body>
+</html>
