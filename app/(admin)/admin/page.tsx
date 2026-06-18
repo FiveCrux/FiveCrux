@@ -326,9 +326,26 @@ export default function AdminPage() {
   const createAdMutation = useCreateAd();
   const deleteAdMutation = useDeleteAd();
 
+  // Safety timeout so the gating loader never spins forever when the DB/API is
+  // unavailable in dev. After 8s we stop blocking and fall through to empty states.
+  const [loadingTimedOut, setLoadingTimedOut] = useState(false);
+
   // Combined loading state
-  const loading =
+  const isFetching =
     usersLoading || scriptsLoading || giveawaysLoading || adsLoading || propsLoading;
+  // Never block the UI for more than 8s — if the data layer hangs (e.g. DB absent
+  // in dev) we render the dashboard with empty states instead of an infinite spinner.
+  const loading = isFetching && !loadingTimedOut;
+
+  useEffect(() => {
+    if (!isFetching) return;
+    const c = new AbortController();
+    const t = setTimeout(() => {
+      c.abort();
+      setLoadingTimedOut(true);
+    }, 8000);
+    return () => clearTimeout(t);
+  }, [isFetching]);
 
   const [activeTab, setActiveTab] = useState("dashboard");
 
@@ -422,10 +439,19 @@ export default function AdminPage() {
         const formData = new FormData();
         formData.append("file", selectedImage);
 
-        const uploadResponse = await fetch("/api/upload", {
-          method: "POST",
-          body: formData,
-        });
+        // Abort the upload after 8s so the dialog never hangs indefinitely.
+        const c = new AbortController();
+        const t = setTimeout(() => c.abort(), 8000);
+        let uploadResponse: Response;
+        try {
+          uploadResponse = await fetch("/api/upload", {
+            method: "POST",
+            body: formData,
+            signal: c.signal,
+          });
+        } finally {
+          clearTimeout(t);
+        }
 
         if (uploadResponse.ok) {
           const uploadResult = await uploadResponse.json();
@@ -629,8 +655,9 @@ export default function AdminPage() {
     return (
       <>
         <Navbar />
-        <div className="min-h-screen text-white flex items-center justify-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-orange-500"></div>
+        <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col items-center justify-center gap-4">
+          <div className="animate-spin rounded-full h-16 w-16 border-2 border-white/10 border-t-orange-500" />
+          <p className="text-sm text-gray-400">Loading admin dashboard...</p>
         </div>
         {/* <Footer /> */}
       </>
@@ -651,8 +678,14 @@ export default function AdminPage() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <div className="relative min-h-screen bg-[#0a0a0a] text-white overflow-hidden">
+        {/* Ambient background glow */}
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="absolute -top-40 -left-32 h-96 w-96 rounded-full bg-orange-500/10 blur-3xl" />
+          <div className="absolute top-1/3 -right-32 h-96 w-96 rounded-full bg-yellow-400/5 blur-3xl" />
+        </div>
+
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           {/* Header */}
           <motion.div
             className="mb-8"
@@ -660,6 +693,10 @@ export default function AdminPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-xs font-medium text-orange-300 backdrop-blur mb-4">
+              <Shield className="h-3.5 w-3.5" />
+              Admin Panel
+            </div>
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2">
               <span className="bg-gradient-to-r from-orange-500 to-yellow-400 bg-clip-text text-transparent">
                 Admin Dashboard
@@ -670,84 +707,69 @@ export default function AdminPage() {
             </p>
           </motion.div>
 
-          {/* Stats Cards */}
+          {/* Stats Tiles */}
           <motion.div
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
+            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mb-8"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
           >
-            <Card className="bg-gradient-to-br from-blue-500/5 to-blue-600/5 border-blue-500/30 hover:border-blue-500/50 transition-all hover:shadow-lg hover:shadow-blue-500/20">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-blue-400 font-medium mb-2">
-                      Total Users
+            {[
+              {
+                label: "Total Users",
+                value: stats.totalUsers,
+                icon: Users,
+                color: "text-blue-400",
+                bg: "bg-blue-500/10",
+              },
+              {
+                label: "Total Scripts",
+                value: stats.totalScripts,
+                icon: Package,
+                color: "text-emerald-400",
+                bg: "bg-emerald-500/10",
+              },
+              {
+                label: "Total Giveaways",
+                value: stats.totalGiveaways,
+                icon: Gift,
+                color: "text-violet-400",
+                bg: "bg-violet-500/10",
+              },
+              {
+                label: "Total Props",
+                value: stats.totalProps,
+                icon: Package,
+                color: "text-orange-400",
+                bg: "bg-orange-500/10",
+              },
+              {
+                label: "Total Ads",
+                value: stats.totalAds,
+                icon: Megaphone,
+                color: "text-amber-400",
+                bg: "bg-amber-500/10",
+              },
+            ].map((tile) => (
+              <div
+                key={tile.label}
+                className="group rounded-2xl border border-white/[0.08] bg-white/[0.04] p-4 sm:p-5 backdrop-blur transition-all hover:border-white/[0.15] hover:bg-white/[0.06]"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-xs sm:text-sm text-gray-400 font-medium mb-1 truncate">
+                      {tile.label}
                     </p>
-                    <p className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-500 bg-clip-text text-transparent">
-                      {stats.totalUsers}
-                    </p>
-                  </div>
-                  <div className="p-3 bg-blue-500/20 rounded-xl">
-                    <Users className="h-8 w-8 text-blue-400" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-br from-emerald-500/5 to-emerald-600/5 border-emerald-500/30 hover:border-emerald-500/50 transition-all hover:shadow-lg hover:shadow-emerald-500/20">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-emerald-400 font-medium mb-2">
-                      Total Scripts
-                    </p>
-                    <p className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-emerald-500 bg-clip-text text-transparent">
-                      {stats.totalScripts}
-                    </p>
-                  </div>
-                  <div className="p-3 bg-emerald-500/20 rounded-xl">
-                    <Package className="h-8 w-8 text-emerald-400" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-br from-violet-500/5 to-violet-600/5 border-violet-500/30 hover:border-violet-500/50 transition-all hover:shadow-lg hover:shadow-violet-500/20">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-violet-400 font-medium mb-2">
-                      Total Giveaways
-                    </p>
-                    <p className="text-3xl font-bold bg-gradient-to-r from-violet-600 to-violet-500 bg-clip-text text-transparent">
-                      {stats.totalGiveaways}
-                    </p>
-                  </div>
-                  <div className="p-3 bg-violet-500/20 rounded-xl">
-                    <Gift className="h-8 w-8 text-violet-400" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-br from-amber-500/5 to-amber-600/5 border-amber-500/30 hover:border-amber-500/50 transition-all hover:shadow-lg hover:shadow-amber-500/20">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-amber-400 font-medium mb-2">
-                      Total Ads
-                    </p>
-                    <p className="text-3xl font-bold bg-gradient-to-r from-amber-600 to-amber-500 bg-clip-text text-transparent">
-                      {stats.totalAds}
+                    <p className="text-2xl sm:text-3xl font-bold text-white">
+                      {tile.value}
                     </p>
                   </div>
-                  <div className="p-3 bg-amber-500/20 rounded-xl">
-                    <Megaphone className="h-8 w-8 text-amber-400" />
+                  <div className={`p-2 sm:p-2.5 ${tile.bg} rounded-xl flex-shrink-0`}>
+                    <tile.icon className={`h-5 w-5 sm:h-6 sm:w-6 ${tile.color}`} />
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            ))}
           </motion.div>
 
           {/* Main Content */}
@@ -758,7 +780,7 @@ export default function AdminPage() {
           >
             {/* Mobile Tabs */}
             <div className="lg:hidden -mx-4 sm:-mx-6 px-4 sm:px-6 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-              <TabsList className="flex w-max min-w-full bg-gray-800/30 border border-gray-700/50 gap-2 p-1">
+              <TabsList className="flex w-max min-w-full bg-white/[0.04] border border-white/[0.08] backdrop-blur rounded-xl gap-2 p-1">
                 <TabsTrigger
                   value="dashboard"
                   className="data-[state=active]:bg-orange-500 data-[state=active]:text-white whitespace-nowrap px-3 py-2 text-xs flex-shrink-0"
@@ -806,7 +828,7 @@ export default function AdminPage() {
             <TabsList
               className={`hidden lg:grid w-full ${
                 isModerator || isFounder ? "grid-cols-6" : "grid-cols-4"
-              } bg-gray-800/30 border border-gray-700/50`}
+              } bg-white/[0.04] border border-white/[0.08] backdrop-blur rounded-xl p-1`}
             >
               <TabsTrigger
                 value="dashboard"
@@ -853,7 +875,7 @@ export default function AdminPage() {
             <TabsContent value="dashboard" className="mt-6">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Recent Activity */}
-                <Card className="bg-gray-800/30 border-gray-700/50">
+                <Card className="bg-white/[0.04] border-white/[0.08] backdrop-blur rounded-2xl">
                   <CardHeader>
                     <CardTitle className="text-white flex items-center gap-2">
                       <Clock className="h-5 w-5 text-orange-500" />
@@ -865,31 +887,37 @@ export default function AdminPage() {
                       {scripts.slice(0, 5).map((script) => (
                         <div
                           key={script.id}
-                          className="flex items-center gap-3 p-3 rounded-lg bg-gray-700/30"
+                          className="flex items-center gap-3 p-3 rounded-xl border border-white/[0.06] bg-white/[0.03]"
                         >
                           <Package className="h-5 w-5 text-green-400" />
-                          <div className="flex-1">
-                            <p className="text-white font-medium">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-white font-medium truncate">
                               {script.title}
                             </p>
-                            <p className="text-sm text-gray-400">
+                            <p className="text-sm text-gray-400 truncate">
                               by {script.seller_name}
                             </p>
                           </div>
                           <Badge
                             variant="secondary"
-                            className="bg-gray-600 text-gray-300"
+                            className="bg-white/[0.08] text-gray-300 flex-shrink-0"
                           >
                             {script.status}
                           </Badge>
                         </div>
                       ))}
+                      {scripts.length === 0 && (
+                        <div className="text-center py-8 text-gray-400">
+                          <Clock className="h-10 w-10 mx-auto mb-3 opacity-40" />
+                          <p className="text-sm">No recent activity to show.</p>
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
 
                 {/* System Status */}
-                <Card className="bg-gray-800/30 border-gray-700/50">
+                <Card className="bg-white/[0.04] border-white/[0.08] backdrop-blur rounded-2xl">
                   <CardHeader>
                     <CardTitle className="text-white flex items-center gap-2">
                       <Settings className="h-5 w-5 text-orange-500" />
@@ -898,19 +926,19 @@ export default function AdminPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      <div className="flex items-center justify-between p-3 rounded-lg bg-gray-700/30">
+                      <div className="flex items-center justify-between p-3 rounded-xl border border-white/[0.06] bg-white/[0.03]">
                         <span className="text-gray-300">Pending Scripts</span>
                         <Badge className="bg-yellow-500 text-white">
                           {stats.pendingScripts}
                         </Badge>
                       </div>
-                      <div className="flex items-center justify-between p-3 rounded-lg bg-gray-700/30">
+                      <div className="flex items-center justify-between p-3 rounded-xl border border-white/[0.06] bg-white/[0.03]">
                         <span className="text-gray-300">Total Ads</span>
                         <Badge className="bg-orange-500 text-white">
                           {stats.totalAds}
                         </Badge>
                       </div>
-                      <div className="flex items-center justify-between p-3 rounded-lg bg-gray-700/30">
+                      <div className="flex items-center justify-between p-3 rounded-xl border border-white/[0.06] bg-white/[0.03]">
                         <span className="text-gray-300">Total Giveaways</span>
                         <Badge className="bg-purple-500 text-white">
                           {stats.totalGiveaways}
@@ -924,7 +952,7 @@ export default function AdminPage() {
 
             {(isModerator || isFounder) && (
               <TabsContent value="users" className="mt-6">
-                <Card className="bg-gray-800/30 border-gray-700/50">
+                <Card className="bg-white/[0.04] border-white/[0.08] backdrop-blur rounded-2xl">
                   <CardHeader>
                     <CardTitle className="text-white flex items-center gap-2">
                       <Users className="h-5 w-5 text-orange-500" />
@@ -939,7 +967,7 @@ export default function AdminPage() {
                       {users.map((user) => (
                         <div
                           key={user.id}
-                          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-2 p-4 rounded-lg bg-gray-700/30"
+                          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-2 p-4 rounded-xl border border-white/[0.06] bg-white/[0.03] transition-colors hover:bg-white/[0.05]"
                         >
                           <div className="flex items-center gap-3 min-w-0 flex-1">
                             <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-r from-orange-500 to-yellow-400 flex items-center justify-center flex-shrink-0">
@@ -1007,13 +1035,20 @@ export default function AdminPage() {
                                 (user.roles.includes("moderator") ||
                                   user.roles.includes("founder"))
                               }
-                              className="border-gray-600 text-gray-300 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+                              className="border-white/[0.12] bg-white/[0.04] text-gray-300 hover:text-white hover:bg-white/[0.08] disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
                           </div>
                         </div>
                       ))}
+
+                      {users.length === 0 && (
+                        <div className="text-center py-8 text-gray-400">
+                          <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                          <p>No users found.</p>
+                        </div>
+                      )}
 
                       {/* Load More Button for Users */}
                       {hasMoreUsers && (
@@ -1022,7 +1057,7 @@ export default function AdminPage() {
                             onClick={() => fetchNextUsers()}
                             disabled={loadingMoreUsers}
                             variant="outline"
-                            className="border-gray-600 text-gray-300 hover:text-white hover:bg-gray-700"
+                            className="border-white/[0.12] bg-white/[0.04] text-gray-300 hover:text-white hover:bg-white/[0.08]"
                           >
                             {loadingMoreUsers ? (
                               <>
@@ -1042,7 +1077,7 @@ export default function AdminPage() {
             )}
 
             <TabsContent value="scripts" className="mt-6">
-              <Card className="bg-gray-800/30 border-gray-700/50">
+              <Card className="bg-white/[0.04] border-white/[0.08] backdrop-blur rounded-2xl">
                 <CardHeader>
                   <CardTitle className="text-white flex items-center gap-2">
                     <Package className="h-5 w-5 text-green-500" />
@@ -1118,7 +1153,7 @@ export default function AdminPage() {
                     {filteredScripts.map((script) => (
                       <div
                         key={script.id}
-                        className="border border-gray-700/50 rounded-lg p-4 bg-gray-700/20"
+                        className="border border-white/[0.08] rounded-2xl p-4 bg-white/[0.03] transition-colors hover:bg-white/[0.05]"
                       >
                         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
                           <div className="flex-1 min-w-0">
@@ -1267,7 +1302,7 @@ export default function AdminPage() {
                           onClick={() => fetchNextScripts()}
                           disabled={loadingMoreScripts}
                           variant="outline"
-                          className="border-gray-600 text-gray-300 hover:text-white hover:bg-gray-700"
+                          className="border-white/[0.12] bg-white/[0.04] text-gray-300 hover:text-white hover:bg-white/[0.08]"
                         >
                           {loadingMoreScripts ? (
                             <>
@@ -1286,7 +1321,7 @@ export default function AdminPage() {
             </TabsContent>
 
             <TabsContent value="giveaways" className="mt-6">
-              <Card className="bg-gray-800/30 border-gray-700/50">
+              <Card className="bg-white/[0.04] border-white/[0.08] backdrop-blur rounded-2xl">
                 <CardHeader>
                   <CardTitle className="text-white flex items-center gap-2">
                     <Gift className="h-5 w-5 text-purple-500" />
@@ -1367,7 +1402,7 @@ export default function AdminPage() {
                     {filteredGiveaways.map((giveaway) => (
                       <div
                         key={giveaway.id}
-                        className="border border-gray-700/50 rounded-lg p-4 bg-gray-700/20"
+                        className="border border-white/[0.08] rounded-2xl p-4 bg-white/[0.03] transition-colors hover:bg-white/[0.05]"
                       >
                         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
                           <div className="flex-1 min-w-0">
@@ -1441,7 +1476,7 @@ export default function AdminPage() {
                             onClick={() => setViewingGiveaway(giveaway)}
                             variant="outline"
                             size="sm"
-                            className="border-gray-600 text-gray-300 hover:text-white flex-shrink-0"
+                            className="border-white/[0.12] bg-white/[0.04] text-gray-300 hover:text-white hover:bg-white/[0.08] flex-shrink-0"
                           >
                             View Details
                           </Button>
@@ -1504,7 +1539,7 @@ export default function AdminPage() {
                           onClick={() => fetchNextGiveaways()}
                           disabled={loadingMoreGiveaways}
                           variant="outline"
-                          className="border-gray-600 text-gray-300 hover:text-white hover:bg-gray-700"
+                          className="border-white/[0.12] bg-white/[0.04] text-gray-300 hover:text-white hover:bg-white/[0.08]"
                         >
                           {loadingMoreGiveaways ? (
                             <>
@@ -1523,7 +1558,7 @@ export default function AdminPage() {
             </TabsContent>
 
             <TabsContent value="props" className="mt-6">
-              <Card className="bg-gray-800/30 border-gray-700/50">
+              <Card className="bg-white/[0.04] border-white/[0.08] backdrop-blur rounded-2xl">
                 <CardHeader>
                   <CardTitle className="text-white flex items-center gap-2">
                     <Package className="h-5 w-5 text-orange-500" />
@@ -1553,7 +1588,7 @@ export default function AdminPage() {
                     {filteredProps.map((prop) => (
                       <div
                         key={prop.id}
-                        className="border border-gray-700/50 rounded-lg p-4 bg-gray-700/20"
+                        className="border border-white/[0.08] rounded-2xl p-4 bg-white/[0.03] transition-colors hover:bg-white/[0.05]"
                       >
                         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
                           <div className="flex-1 min-w-0">
@@ -1651,7 +1686,7 @@ export default function AdminPage() {
                           onClick={() => fetchNextProps()}
                           disabled={loadingMoreProps}
                           variant="outline"
-                          className="border-gray-600 text-gray-300 hover:text-white hover:bg-gray-700"
+                          className="border-white/[0.12] bg-white/[0.04] text-gray-300 hover:text-white hover:bg-white/[0.08]"
                         >
                           {loadingMoreProps ? "Loading..." : "Load More Props"}
                         </Button>
@@ -1676,7 +1711,7 @@ export default function AdminPage() {
                         className={`${
                           activeAdFilter === "all"
                             ? "bg-orange-500 hover:bg-orange-600"
-                            : "border-gray-600 text-gray-300"
+                            : "border-white/[0.12] bg-white/[0.04] text-gray-300 hover:bg-white/[0.08]"
                         } whitespace-nowrap flex-shrink-0`}
                       >
                         All Ads
@@ -1689,7 +1724,7 @@ export default function AdminPage() {
                         className={`${
                           activeAdFilter === "pending"
                             ? "bg-orange-500 hover:bg-orange-600"
-                            : "border-gray-600 text-gray-300"
+                            : "border-white/[0.12] bg-white/[0.04] text-gray-300 hover:bg-white/[0.08]"
                         } whitespace-nowrap flex-shrink-0`}
                       >
                         Pending
@@ -1702,7 +1737,7 @@ export default function AdminPage() {
                         className={`${
                           activeAdFilter === "approved"
                             ? "bg-orange-500 hover:bg-orange-600"
-                            : "border-gray-600 text-gray-300"
+                            : "border-white/[0.12] bg-white/[0.04] text-gray-300 hover:bg-white/[0.08]"
                         } whitespace-nowrap flex-shrink-0`}
                       >
                         Approved
@@ -1715,7 +1750,7 @@ export default function AdminPage() {
                         className={`${
                           activeAdFilter === "rejected"
                             ? "bg-orange-500 hover:bg-orange-600"
-                            : "border-gray-600 text-gray-300"
+                            : "border-white/[0.12] bg-white/[0.04] text-gray-300 hover:bg-white/[0.08]"
                         } whitespace-nowrap flex-shrink-0`}
                       >
                         Rejected
@@ -1723,7 +1758,7 @@ export default function AdminPage() {
                     </div>
                   </div>
 
-                  <Card className="bg-gray-800/30 border-gray-700/50">
+                  <Card className="bg-white/[0.04] border-white/[0.08] backdrop-blur rounded-2xl">
                     <CardHeader>
                       <div className="flex items-center justify-between">
                         <div>
@@ -1739,7 +1774,7 @@ export default function AdminPage() {
                           open={showAdDialog}
                           onOpenChange={setShowAdDialog}
                         >
-                          <DialogContent className="bg-gray-800 border-gray-700">
+                          <DialogContent className="bg-[#0d0d0f] border-white/[0.08] rounded-2xl">
                             <DialogHeader>
                               <DialogTitle className="text-white">
                                 Create New Advertisement
@@ -1761,7 +1796,7 @@ export default function AdminPage() {
                                       title: e.target.value,
                                     })
                                   }
-                                  className="bg-gray-700 border-gray-600 text-white"
+                                  className="bg-white/[0.04] border-white/[0.08] text-white"
                                 />
                               </div>
                               <div>
@@ -1776,7 +1811,7 @@ export default function AdminPage() {
                                       description: e.target.value,
                                     })
                                   }
-                                  className="bg-gray-700 border-gray-600 text-white"
+                                  className="bg-white/[0.04] border-white/[0.08] text-white"
                                 />
                               </div>
                               <div>
@@ -1803,7 +1838,7 @@ export default function AdminPage() {
                                       linkUrl: e.target.value,
                                     })
                                   }
-                                  className="bg-gray-700 border-gray-600 text-white"
+                                  className="bg-white/[0.04] border-white/[0.08] text-white"
                                 />
                               </div>
                               <div>
@@ -1816,10 +1851,10 @@ export default function AdminPage() {
                                     setNewAd({ ...newAd, category: value })
                                   }
                                 >
-                                  <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                                  <SelectTrigger className="bg-white/[0.04] border-white/[0.08] text-white">
                                     <SelectValue placeholder="Select category" />
                                   </SelectTrigger>
-                                  <SelectContent className="bg-gray-700 border-gray-600">
+                                  <SelectContent className="bg-[#0d0d0f] border-white/[0.08]">
                                     <SelectItem value="scripts">
                                       Scripts
                                     </SelectItem>
@@ -1843,7 +1878,7 @@ export default function AdminPage() {
                                 <Button
                                   variant="outline"
                                   onClick={() => setShowAdDialog(false)}
-                                  className="border-gray-600 text-gray-300"
+                                  className="border-white/[0.12] bg-white/[0.04] text-gray-300 hover:text-white hover:bg-white/[0.08]"
                                 >
                                   Cancel
                                 </Button>
@@ -1901,7 +1936,7 @@ export default function AdminPage() {
                               return (
                                 <div
                                   key={ad.id}
-                                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-2 p-4 rounded-lg bg-gray-700/30"
+                                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-2 p-4 rounded-xl border border-white/[0.06] bg-white/[0.03] transition-colors hover:bg-white/[0.05]"
                                 >
                                   <div className="flex items-center gap-3 min-w-0 flex-1">
                                     <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-orange-500/20 to-yellow-400/20 flex items-center justify-center flex-shrink-0">
@@ -1918,7 +1953,7 @@ export default function AdminPage() {
                                         <div className="flex gap-2 mt-1 flex-wrap">
                                           <Badge
                                             variant="secondary"
-                                            className="bg-gray-600 text-gray-300"
+                                            className="bg-white/[0.08] text-gray-300"
                                           >
                                             {ad.category}
                                           </Badge>
@@ -2003,7 +2038,7 @@ export default function AdminPage() {
                               onClick={() => fetchNextAds()}
                               disabled={loadingMoreAds}
                               variant="outline"
-                              className="border-gray-600 text-gray-300 hover:text-white hover:bg-gray-700"
+                              className="border-white/[0.12] bg-white/[0.04] text-gray-300 hover:text-white hover:bg-white/[0.08]"
                             >
                               {loadingMoreAds ? (
                                 <>
@@ -2025,7 +2060,7 @@ export default function AdminPage() {
                     open={rejectingAd !== null}
                     onOpenChange={() => setRejectingAd(null)}
                   >
-                    <DialogContent className="bg-gray-800 border-gray-700">
+                    <DialogContent className="bg-[#0d0d0f] border-white/[0.08] rounded-2xl">
                       <DialogHeader>
                         <DialogTitle className="text-white">
                           Reject Advertisement
@@ -2040,7 +2075,7 @@ export default function AdminPage() {
                           value={adRejectionReason}
                           onChange={(e) => setAdRejectionReason(e.target.value)}
                           placeholder="Enter rejection reason..."
-                          className="bg-gray-700 border-gray-600 text-white"
+                          className="bg-white/[0.04] border-white/[0.08] text-white"
                           rows={3}
                         />
                         <div className="flex gap-2">
@@ -2068,7 +2103,7 @@ export default function AdminPage() {
                               setRejectingAd(null);
                               setAdRejectionReason("");
                             }}
-                            className="border-gray-600 text-gray-300"
+                            className="border-white/[0.12] bg-white/[0.04] text-gray-300 hover:text-white hover:bg-white/[0.08]"
                           >
                             Cancel
                           </Button>
@@ -2087,7 +2122,7 @@ export default function AdminPage() {
           open={!!selectedUser}
           onOpenChange={() => setSelectedUser(null)}
         >
-          <DialogContent className="bg-gray-800 border-gray-700">
+          <DialogContent className="bg-[#0d0d0f] border-white/[0.08] rounded-2xl">
             <DialogHeader>
               <DialogTitle className="text-white">
                 Manage User Roles
@@ -2143,7 +2178,7 @@ export default function AdminPage() {
                 <Button
                   variant="outline"
                   onClick={() => setSelectedUser(null)}
-                  className="border-gray-600 text-gray-300"
+                  className="border-white/[0.12] bg-white/[0.04] text-gray-300 hover:text-white hover:bg-white/[0.08]"
                 >
                   Cancel
                 </Button>
@@ -2157,7 +2192,7 @@ export default function AdminPage() {
           open={!!rejectingScript}
           onOpenChange={() => setRejectingScript(null)}
         >
-          <DialogContent className="bg-gray-800 border-gray-700">
+          <DialogContent className="bg-[#0d0d0f] border-white/[0.08] rounded-2xl">
             <DialogHeader>
               <DialogTitle className="text-white">Reject Script</DialogTitle>
               <DialogDescription className="text-gray-400">
@@ -2173,7 +2208,7 @@ export default function AdminPage() {
                   value={rejectionReason}
                   onChange={(e) => setRejectionReason(e.target.value)}
                   placeholder="Enter reason for rejection..."
-                  className="bg-gray-700 border-gray-600 text-white"
+                  className="bg-white/[0.04] border-white/[0.08] text-white"
                   rows={3}
                 />
               </div>
@@ -2197,7 +2232,7 @@ export default function AdminPage() {
                 <Button
                   variant="outline"
                   onClick={() => setRejectingScript(null)}
-                  className="border-gray-600 text-gray-300"
+                  className="border-white/[0.12] bg-white/[0.04] text-gray-300 hover:text-white hover:bg-white/[0.08]"
                 >
                   Cancel
                 </Button>
@@ -2211,7 +2246,7 @@ export default function AdminPage() {
           open={!!rejectingProp}
           onOpenChange={() => setRejectingProp(null)}
         >
-          <DialogContent className="bg-gray-800 border-gray-700">
+          <DialogContent className="bg-[#0d0d0f] border-white/[0.08] rounded-2xl">
             <DialogHeader>
               <DialogTitle className="text-white">Reject Prop</DialogTitle>
               <DialogDescription className="text-gray-400">
@@ -2227,7 +2262,7 @@ export default function AdminPage() {
                   value={propRejectionReason}
                   onChange={(e) => setPropRejectionReason(e.target.value)}
                   placeholder="Enter reason for rejection..."
-                  className="bg-gray-700 border-gray-600 text-white"
+                  className="bg-white/[0.04] border-white/[0.08] text-white"
                   rows={3}
                 />
               </div>
@@ -2249,7 +2284,7 @@ export default function AdminPage() {
                 <Button
                   variant="outline"
                   onClick={() => setRejectingProp(null)}
-                  className="border-gray-600 text-gray-300"
+                  className="border-white/[0.12] bg-white/[0.04] text-gray-300 hover:text-white hover:bg-white/[0.08]"
                 >
                   Cancel
                 </Button>
@@ -2263,7 +2298,7 @@ export default function AdminPage() {
           open={!!rejectingGiveaway}
           onOpenChange={() => setRejectingGiveaway(null)}
         >
-          <DialogContent className="bg-gray-800 border-gray-700">
+          <DialogContent className="bg-[#0d0d0f] border-white/[0.08] rounded-2xl">
             <DialogHeader>
               <DialogTitle className="text-white">Reject Giveaway</DialogTitle>
               <DialogDescription className="text-gray-400">
@@ -2279,7 +2314,7 @@ export default function AdminPage() {
                   value={giveawayRejectionReason}
                   onChange={(e) => setGiveawayRejectionReason(e.target.value)}
                   placeholder="Enter reason for rejection..."
-                  className="bg-gray-700 border-gray-600 text-white"
+                  className="bg-white/[0.04] border-white/[0.08] text-white"
                   rows={3}
                 />
               </div>
@@ -2305,7 +2340,7 @@ export default function AdminPage() {
                 <Button
                   variant="outline"
                   onClick={() => setRejectingGiveaway(null)}
-                  className="border-gray-600 text-gray-300"
+                  className="border-white/[0.12] bg-white/[0.04] text-gray-300 hover:text-white hover:bg-white/[0.08]"
                 >
                   Cancel
                 </Button>
@@ -2319,7 +2354,7 @@ export default function AdminPage() {
           open={!!viewingScript}
           onOpenChange={() => setViewingScript(null)}
         >
-          <DialogContent className="bg-gray-800 border-gray-700 max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="bg-[#0d0d0f] border-white/[0.08] rounded-2xl max-w-6xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="text-white flex items-center gap-2">
                 <FileText className="h-5 w-5 text-orange-500" />
@@ -2790,7 +2825,7 @@ export default function AdminPage() {
           open={!!viewingGiveaway}
           onOpenChange={() => setViewingGiveaway(null)}
         >
-          <DialogContent className="bg-gray-800 border-gray-700 max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="bg-[#0d0d0f] border-white/[0.08] rounded-2xl max-w-6xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="text-white flex items-center gap-2">
                 <Gift className="h-5 w-5 text-purple-500" />
@@ -2987,7 +3022,7 @@ export default function AdminPage() {
                               (requirement: any, index: number) => (
                                 <div
                                   key={index}
-                                  className="bg-gray-700/30 rounded-lg p-4 border border-gray-600/50"
+                                  className="bg-white/[0.03] rounded-xl p-4 border border-white/[0.08]"
                                 >
                                   <div className="flex items-center justify-between mb-2">
                                     <div className="flex items-center gap-2">
@@ -3043,7 +3078,7 @@ export default function AdminPage() {
                               (prize: any, index: number) => (
                                 <div
                                   key={index}
-                                  className="bg-gray-700/30 rounded-lg p-4 border border-gray-600/50"
+                                  className="bg-white/[0.03] rounded-xl p-4 border border-white/[0.08]"
                                 >
                                   <div className="flex items-center justify-between mb-2">
                                     <div className="flex items-center gap-2">
@@ -3430,7 +3465,7 @@ export default function AdminPage() {
 
         {/* Ad Details Dialog */}
         <Dialog open={!!viewingAd} onOpenChange={() => setViewingAd(null)}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-gray-900 border-gray-700">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-[#0d0d0f] border-white/[0.08] rounded-2xl">
             <DialogHeader>
               <DialogTitle className="text-white text-xl">
                 Ad Details

@@ -184,9 +184,9 @@ const benefitsData = [
 ]
 
 export default function AdvertisePage() {
-  const heroRef = useRef(null)
-  const pricingRef = useRef(null)
-  const benefitsRef = useRef(null)
+  const heroRef = useRef<HTMLDivElement>(null)
+  const pricingRef = useRef<HTMLDivElement>(null)
+  const benefitsRef = useRef<HTMLDivElement>(null)
   const { resolvedTheme } = useTheme()
 
   // State for selected tab (ad slots or featured script slots)
@@ -207,6 +207,9 @@ export default function AdvertisePage() {
     const itemId = `${packageType}:${pkg.packageId}:${durationAmount}`
 
     setAddingCartItemId(itemId)
+
+    const c = new AbortController()
+    const t = setTimeout(() => c.abort(), 8000)
 
     try {
       const response = await fetch("/api/cart/add", {
@@ -233,7 +236,10 @@ export default function AdvertisePage() {
             originalPrice: duration.originalPrice,
           },
         }),
+        signal: c.signal,
       })
+
+      clearTimeout(t)
 
       const data = await response.json().catch(() => ({}))
 
@@ -247,6 +253,7 @@ export default function AdvertisePage() {
       console.error("Add to cart error:", error)
       toast.error(error instanceof Error ? error.message : "Failed to add item to cart")
     } finally {
+      clearTimeout(t)
       setAddingCartItemId(null)
     }
   }
@@ -269,29 +276,57 @@ export default function AdvertisePage() {
         }}
       >
         {/* Hero Section */}
-        <div
+        <motion.div
           ref={heroRef}
-          className="max-w-7xl mx-auto pt-24 pb-8 px-10 flex flex-col items-center text-center gap-6"
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+          className="max-w-7xl mx-auto pt-28 sm:pt-32 pb-8 px-6 sm:px-10 flex flex-col items-center text-center gap-6"
         >
           {/* Eyebrow Pill */}
           <div className="inline-flex items-center gap-1 bg-[#f97316]/10 border border-[#f97316]/20 text-[#f97316] text-[11px] font-bold uppercase tracking-wider px-4 py-1.5 rounded-full">
-            <Zap className="w-3 h-3 mr-1" />
+            <Sparkles className="w-3 h-3 mr-1" />
             Advertising plans
           </div>
 
           {/* Title */}
-          <h1 className="text-[34px] font-bold text-white tracking-tight leading-tight max-w-2xl">
-            <span className="text-[#f97316]">Grow</span> Your Reach With Premium Advertising
+          <h1 className="text-4xl sm:text-5xl md:text-[56px] font-extrabold text-white tracking-tight leading-[1.05] max-w-4xl">
+            Advertise on <span className="text-[#f97316]">FiveCrux</span> —
+            <br className="hidden sm:block" />
+            <span className="bg-gradient-to-r from-[#f97316] to-[#facc15] bg-clip-text text-transparent">
+              {" "}reach thousands
+            </span>{" "}
+            of FiveM server owners
           </h1>
 
           {/* Subtitle */}
-          <p className="text-[14px] text-white/35 max-w-[420px] leading-relaxed">
-            Reach thousands of active FiveM server owners, developers, and players with our premium targeted advertising placements.
+          <p className="text-sm sm:text-base text-white/40 max-w-xl leading-relaxed">
+            Put your scripts, servers, and brand in front of the most active and engaged
+            FiveM community with premium targeted advertising placements.
           </p>
-        </div>
+
+          {/* Hero CTAs */}
+          <div className="flex flex-col sm:flex-row items-center gap-3 mt-2 w-full sm:w-auto">
+            <Button
+              type="button"
+              onClick={() => pricingRef.current?.scrollIntoView({ behavior: "smooth" })}
+              className="w-full sm:w-auto h-11 px-6 rounded-xl bg-[#f97316] hover:bg-[#ea6c0a] text-white text-sm font-semibold border-none shadow-[0_0_24px_rgba(249,115,22,0.25)]"
+            >
+              View pricing
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+            <Button
+              type="button"
+              onClick={() => benefitsRef.current?.scrollIntoView({ behavior: "smooth" })}
+              className="w-full sm:w-auto h-11 px-6 rounded-xl bg-white/[0.06] border border-white/[0.1] text-white/80 hover:bg-white/[0.1] hover:text-white text-sm font-semibold"
+            >
+              Why advertise?
+            </Button>
+          </div>
+        </motion.div>
 
         {/* Trust Bar */}
-        <div className="flex flex-wrap items-center justify-center gap-3 mt-4 mb-16 max-w-5xl mx-auto px-10">
+        <div className="flex flex-wrap items-center justify-center gap-3 mt-4 mb-16 max-w-5xl mx-auto px-6 sm:px-10">
           <div className="flex items-center gap-3 bg-white/[0.04] border border-white/[0.08] rounded-lg p-[8px_16px]">
             <Users className="w-5 h-5 text-[#f97316]" />
             <div className="flex flex-col items-start leading-tight">
@@ -329,9 +364,9 @@ export default function AdvertisePage() {
         </div>
 
         {/* Controls and Pricing Section */}
-        <div ref={pricingRef} className="max-w-7xl mx-auto mb-16">
+        <div ref={pricingRef} className="max-w-7xl mx-auto mb-16 scroll-mt-24">
           {/* Controls Section */}
-          <div className="flex flex-col items-center gap-[14px] mb-12">
+          <div className="flex flex-col items-center gap-[14px] mb-12 px-6">
             {/* Slot Type Toggle */}
             <div className="flex items-center bg-white/[0.04] border border-white/[0.08] rounded-[10px] p-1">
               <button
@@ -365,7 +400,7 @@ export default function AdvertisePage() {
             </div>
 
             {/* Duration Selector */}
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center justify-center gap-2">
               {currentPackages[0].durations.map((duration, durIndex) => {
                 const isActive = selectedDurationIndex === durIndex;
                 const savingsBadges = [null, "-43%", "-52%", "-57%"];
@@ -405,7 +440,7 @@ export default function AdvertisePage() {
           </div>
 
           {/* Pricing Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 px-10">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 px-6 sm:px-10">
             {currentPackages.map((pkg, index) => {
               const selectedDuration = pkg.durations[selectedDurationIndex];
               const discount = Math.round(((selectedDuration.originalPrice - selectedDuration.price) / selectedDuration.originalPrice) * 100);
@@ -431,16 +466,20 @@ export default function AdvertisePage() {
               const isPopular = pkg.popular;
 
               return (
-                <div
+                <motion.div
                   key={pkg.packageId}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-60px" }}
+                  transition={{ duration: 0.45, delay: index * 0.08, ease: "easeOut" }}
                   className={cn(
-                    "relative bg-[#16161a] rounded-[14px] p-[24px_22px] flex flex-col justify-between transition-all duration-200",
+                    "relative bg-[#16161a] rounded-2xl p-[24px_22px] flex flex-col justify-between transition-all duration-200 hover:-translate-y-1",
                     isPopular
-                      ? "border-2 border-[#f97316]"
+                      ? "border-2 border-[#f97316] md:scale-[1.03]"
                       : "border border-white/5 hover:border-[#f97316]/25"
                   )}
                   style={{
-                    boxShadow: isPopular ? "0 0 20px rgba(249, 115, 22, 0.15)" : "none",
+                    boxShadow: isPopular ? "0 0 24px rgba(249, 115, 22, 0.18)" : "none",
                   }}
                 >
                   {isPopular && (
@@ -530,14 +569,14 @@ export default function AdvertisePage() {
                     )}
                     {isAddingToCart ? "Adding..." : "Add to Cart"}
                   </Button>
-                </div>
+                </motion.div>
               );
             })}
           </div>
         </div>
 
         {/* Why Advertise Section */}
-        <div ref={benefitsRef} className="max-w-7xl mx-auto mb-16">
+        <div ref={benefitsRef} className="max-w-7xl mx-auto mb-16 scroll-mt-24">
           {/* Centered header */}
           <div className="text-center mb-10">
             <div className="text-[11px] font-bold text-[#f97316] uppercase tracking-wider mb-2">
@@ -552,13 +591,17 @@ export default function AdvertisePage() {
           </div>
 
           {/* 2x2 Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-[14px] px-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-[14px] px-6 sm:px-10">
             {benefitsData.map((benefit, index) => {
               const BenefitIcon = benefit.icon;
               return (
-                <div
+                <motion.div
                   key={index}
-                  className="bg-[#16161a] border border-white/5 rounded-xl p-[20px_18px] flex gap-4 items-start"
+                  initial={{ opacity: 0, y: 16 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-40px" }}
+                  transition={{ duration: 0.4, delay: index * 0.06, ease: "easeOut" }}
+                  className="bg-[#16161a] border border-white/5 rounded-2xl p-[20px_18px] flex gap-4 items-start transition-colors duration-200 hover:border-[#f97316]/25"
                 >
                   {/* Icon Block */}
                   <div
@@ -587,7 +630,7 @@ export default function AdvertisePage() {
                       {benefit.metric}
                     </span>
                   </div>
-                </div>
+                </motion.div>
               );
             })}
           </div>

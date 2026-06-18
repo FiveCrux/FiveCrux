@@ -3,6 +3,7 @@ const nextConfig = {
   images: {
     domains: ['localhost',
       'crux-marketplace-s3.s3.ap-south-1.amazonaws.com',
+      'img.forgemods.de',
     ],
   },
   serverExternalPackages: ['drizzle-orm', 'pg', 'postgres'],

@@ -37,6 +37,7 @@ import Footer from "@/componentss/shared/footer"
 import { toast } from "sonner"
 import FileUpload from "@/componentss/shared/file-upload"
 import { DateTimePicker } from "@/componentss/ui/date-time-picker"
+import Link from "next/link"
 
 // Animated background particles
 const AnimatedParticles = () => {
@@ -45,7 +46,7 @@ const AnimatedParticles = () => {
       {[...Array(15)].map((_, i) => (
         <motion.div
           key={i}
-          className="absolute w-1 h-1 bg-yellow-500/30 rounded-full"
+          className="absolute w-1 h-1 bg-[#f97316]/30 rounded-full"
           animate={{
             x: [0, Math.random() * 100 - 50],
             y: [0, Math.random() * 100 - 50],
@@ -144,7 +145,15 @@ export default function CreateGiveawayPage() {
 
   // Redirect if not authenticated
   if (status === "loading") {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>
+    return (
+      <div
+        className="min-h-screen flex items-center justify-center text-white"
+        style={{ backgroundColor: "#0d0d0f" }}
+      >
+        <Loader2 className="h-6 w-6 animate-spin text-[#f97316] mr-3" />
+        <span className="text-white/60 text-sm font-medium">Loading...</span>
+      </div>
+    )
   }
 
   if (!session) {
@@ -547,59 +556,52 @@ export default function CreateGiveawayPage() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen text-white relative overflow-hidden">
+      <div
+        className="min-h-screen text-white relative overflow-hidden pb-16"
+        style={{
+          backgroundColor: "#0d0d0f",
+          backgroundImage: `
+            linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+            radial-gradient(circle at 50% 0%, rgba(249, 115, 22, 0.07) 0%, transparent 60%)
+          `,
+          backgroundSize: "60px 100%, 100% 100%",
+        }}
+      >
         <AnimatedParticles />
-
-        {/* Animated background */}
-        <div className="fixed inset-0 -z-10">
-          <motion.div
-            className="absolute inset-0 bg-gradient-to-br from-black via-gray-900 to-black"
-            animate={{
-              background: [
-                "radial-gradient(circle at 20% 50%, rgba(234, 179, 8, 0.05) 0%, transparent 50%)",
-                "radial-gradient(circle at 80% 20%, rgba(249, 115, 22, 0.05) 0%, transparent 50%)",
-                "radial-gradient(circle at 40% 80%, rgba(234, 179, 8, 0.05) 0%, transparent 50%)",
-              ],
-            }}
-            transition={{
-              duration: 10,
-              repeat: Number.POSITIVE_INFINITY,
-              repeatType: "reverse",
-            }}
-          />
-        </div>
 
         {/* Header */}
         <motion.div
-          className="bg-gradient-to-r from-yellow-400/10 to-orange-500/10 py-12 px-4 sm:px-6 lg:px-8 border-b border-gray-800/50"
-          initial={{ opacity: 0, y: -50 }}
+          className="max-w-7xl mx-auto pt-24 pb-8 px-4 sm:px-6 lg:px-10 border-b border-white/5"
+          initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
-          <div className="max-w-7xl mx-auto text-center py-12">
-            <motion.h1
-              className="text-4xl md:text-5xl font-bold mb-4"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-            >
-              <Gift className="inline mr-3 text-yellow-400" />
-              <span className="bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
-                Create Giveaway
-              </span>
-            </motion.h1>
-            <motion.p
-              className="text-xl text-gray-300 max-w-3xl mx-auto"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-            >
-              Set up an exciting giveaway for your community with custom requirements and amazing prizes!
-            </motion.p>
-          </div>
+          <nav className="flex items-center space-x-2 text-[12px] font-medium tracking-wide mb-3">
+            <Link href="/" className="text-white/25 hover:text-white transition-colors">
+              Home
+            </Link>
+            <span className="text-white/25">/</span>
+            <Link href="/giveaways" className="text-white/25 hover:text-white transition-colors">
+              Giveaways
+            </Link>
+            <span className="text-white/25">/</span>
+            <span className="text-white/45">Create</span>
+          </nav>
+          <h1
+            className="text-[32px] md:text-[36px] font-bold tracking-tight text-white flex items-center gap-3"
+            style={{ letterSpacing: "-0.5px" }}
+          >
+            <Gift className="h-8 w-8 text-[#f97316]" />
+            <span>
+              <span className="text-[#f97316]">Create</span> Giveaway
+            </span>
+          </h1>
+          <p className="text-[14px] text-white/35 font-medium mt-2 max-w-2xl">
+            Set up an exciting giveaway for your community with custom requirements and amazing prizes.
+          </p>
         </motion.div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Form Section */}
             <motion.div
@@ -611,11 +613,11 @@ export default function CreateGiveawayPage() {
             >
               <form onSubmit={handleSubmit} className="space-y-8">
                 {/* Basic Information */}
-                <Card className="bg-gray-800/30 border-gray-700/50 backdrop-blur-sm">
+                <Card className="bg-white/[0.04] border-white/[0.08] backdrop-blur-md rounded-2xl">
                   <CardHeader>
                     <CardTitle className="text-white flex items-center gap-2">
-                      <FileText className="h-5 w-5 text-yellow-400" />
-                      Basic Information
+                      <FileText className="h-5 w-5 text-[#f97316]" />
+                      Giveaway Details
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6">
@@ -637,7 +639,7 @@ export default function CreateGiveawayPage() {
                           }
                         }}
                         placeholder="Enter an exciting title for your giveaway"
-                        className={`mt-2 bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-yellow-500 ${errors.title ? 'border-red-500' : ''}`}
+                        className={`mt-2 bg-black/30 border-white/10 text-white placeholder-white/30 focus:border-[#f97316] focus-visible:ring-1 focus-visible:ring-[#f97316]/40 ${errors.title ? 'border-red-500' : ''}`}
                         required
                       />
                       {errors.title && (
@@ -664,7 +666,7 @@ export default function CreateGiveawayPage() {
                         }}
                         placeholder="Describe your giveaway in detail..."
                         rows={4}
-                        className={`mt-2 bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-yellow-500 ${errors.description ? 'border-red-500' : ''}`}
+                        className={`mt-2 bg-black/30 border-white/10 text-white placeholder-white/30 focus:border-[#f97316] focus-visible:ring-1 focus-visible:ring-[#f97316]/40 ${errors.description ? 'border-red-500' : ''}`}
                         required
                       />
                       {errors.description && (
@@ -681,9 +683,9 @@ export default function CreateGiveawayPage() {
                           id="creatorName"
                           value={formData.creatorName}
                           readOnly
-                          className="mt-2 bg-gray-800/50 border-gray-600 text-gray-300 cursor-not-allowed"
+                          className="mt-2 bg-white/[0.02] border-white/10 text-white/50 cursor-not-allowed"
                         />
-                        <p className="text-xs text-gray-500 mt-1">Automatically filled from your Discord account</p>
+                        <p className="text-xs text-white/30 mt-1">Automatically filled from your Discord account</p>
                       </div>
 
                       <div>
@@ -695,9 +697,9 @@ export default function CreateGiveawayPage() {
                           type="email"
                           value={formData.creatorEmail}
                           readOnly
-                          className="mt-2 bg-gray-800/50 border-gray-600 text-gray-300 cursor-not-allowed"
+                          className="mt-2 bg-white/[0.02] border-white/10 text-white/50 cursor-not-allowed"
                         />
-                        <p className="text-xs text-gray-500 mt-1">Automatically filled from your Discord account</p>
+                        <p className="text-xs text-white/30 mt-1">Automatically filled from your Discord account</p>
                       </div>
                     </div>
 
@@ -730,7 +732,7 @@ export default function CreateGiveawayPage() {
                             disabled={false}
                             currencies="all"
                             variant="default"
-                            className={`bg-gray-900/50 border-gray-700 text-white ${errors.currency ? 'border-red-500' : ''}`}
+                            className={`bg-black/30 border-white/10 text-white ${errors.currency ? 'border-red-500' : ''}`}
                           />
                           <Input
                             id="value"
@@ -748,7 +750,7 @@ export default function CreateGiveawayPage() {
                               }
                             }}
                             placeholder="150"
-                            className={`bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-yellow-500 ${errors.value ? 'border-red-500' : ''}`}
+                            className={`bg-black/30 border-white/10 text-white placeholder-white/30 focus:border-[#f97316] focus-visible:ring-1 focus-visible:ring-[#f97316]/40 ${errors.value ? 'border-red-500' : ''}`}
                             required
                           />
                         </div>
@@ -815,14 +817,14 @@ export default function CreateGiveawayPage() {
                 </Card>
 
                 {/* Entry Requirements */}
-                <Card className="bg-gray-800/30 border-gray-700/50 backdrop-blur-sm">
+                <Card className="bg-white/[0.04] border-white/[0.08] backdrop-blur-md rounded-2xl">
                   <CardHeader>
                     <CardTitle className="text-white flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Target className="h-5 w-5 text-yellow-400" />
+                        <Target className="h-5 w-5 text-[#f97316]" />
                         Entry Requirements
                       </div>
-                      <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
+                      <Badge className="bg-[#facc15]/15 text-[#facc15] border-[#facc15]/30">
                         {totalPoints} total points
                       </Badge>
                     </CardTitle>
@@ -831,7 +833,7 @@ export default function CreateGiveawayPage() {
                     {requirements.map((requirement, index) => (
                       <motion.div
                         key={requirement.id}
-                        className="bg-gray-700/30 rounded-lg p-4 border border-gray-600/50"
+                        className="bg-white/[0.03] rounded-xl p-4 border border-white/10"
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.1 }}
@@ -863,10 +865,10 @@ export default function CreateGiveawayPage() {
                               value={requirement.type}
                               onValueChange={(value) => updateRequirement(requirement.id, "type", value)}
                             >
-                              <SelectTrigger className="mt-1 bg-gray-900/50 border-gray-600 text-white">
+                              <SelectTrigger className="mt-1 bg-black/30 border-white/10 text-white focus:border-[#f97316] focus-visible:ring-1 focus-visible:ring-[#f97316]/40">
                                 <SelectValue />
                               </SelectTrigger>
-                              <SelectContent className="bg-gray-900 border-gray-700">
+                              <SelectContent className="bg-[#141416] border-white/10">
                                 {requirementTypes.map((type) => (
                                   <SelectItem key={type.value} value={type.value}>
                                     {type.icon} {type.label}
@@ -893,7 +895,7 @@ export default function CreateGiveawayPage() {
                                   })
                                 }
                               }}
-                              className={`mt-1 bg-gray-900/50 border-gray-600 text-white ${errors[`requirement_${requirement.id}_points`] ? 'border-red-500' : ''}`}
+                              className={`mt-1 bg-black/30 border-white/10 text-white focus:border-[#f97316] focus-visible:ring-1 focus-visible:ring-[#f97316]/40 ${errors[`requirement_${requirement.id}_points`] ? 'border-red-500' : ''}`}
                             />
                             {errors[`requirement_${requirement.id}_points`] && (
                               <p className="text-red-400 text-xs mt-1">{errors[`requirement_${requirement.id}_points`]}</p>
@@ -939,18 +941,18 @@ export default function CreateGiveawayPage() {
                                 ? "https://youtube.com/@channel or https://youtu.be/..."
                                 : "Describe what users need to do..."
                             }
-                            className={`mt-1 bg-gray-900/50 border-gray-600 text-white placeholder-gray-400 ${errors[`requirement_${requirement.id}_description`] ? 'border-red-500' : ''}`}
+                            className={`mt-1 bg-black/30 border-white/10 text-white placeholder-white/30 focus:border-[#f97316] focus-visible:ring-1 focus-visible:ring-[#f97316]/40 ${errors[`requirement_${requirement.id}_description`] ? 'border-red-500' : ''}`}
                           />
                           {errors[`requirement_${requirement.id}_description`] && (
                             <p className="text-red-400 text-xs mt-1">{errors[`requirement_${requirement.id}_description`]}</p>
                           )}
                           {!errors[`requirement_${requirement.id}_description`] && requirement.type === "discord" && (
-                            <p className="text-xs text-gray-400 mt-1">
+                            <p className="text-xs text-white/40 mt-1">
                               Enter your Discord server invite link (e.g., https://discord.gg/abc123)
                             </p>
                           )}
                           {!errors[`requirement_${requirement.id}_description`] && requirement.type === "youtube" && (
-                            <p className="text-xs text-gray-400 mt-1">
+                            <p className="text-xs text-white/40 mt-1">
                               Enter your YouTube channel URL (e.g., https://youtube.com/@channel or https://youtu.be/videoId)
                             </p>
                           )}
@@ -962,7 +964,7 @@ export default function CreateGiveawayPage() {
                       type="button"
                       onClick={addRequirement}
                       variant="outline"
-                      className="w-full border-gray-600 text-gray-300 hover:text-white hover:border-yellow-500"
+                      className="w-full border-white/10 bg-white/[0.02] text-white/60 hover:text-white hover:border-[#f97316]/50 hover:bg-[#f97316]/5"
                     >
                       <Plus className="mr-2 h-4 w-4" />
                       Add Requirement
@@ -971,10 +973,10 @@ export default function CreateGiveawayPage() {
                 </Card>
 
                 {/* Prizes */}
-                <Card className="bg-gray-800/30 border-gray-700/50 backdrop-blur-sm">
+                <Card className="bg-white/[0.04] border-white/[0.08] backdrop-blur-md rounded-2xl">
                   <CardHeader>
                     <CardTitle className="text-white flex items-center gap-2">
-                      <Trophy className="h-5 w-5 text-yellow-400" />
+                      <Trophy className="h-5 w-5 text-[#f97316]" />
                       Prizes
                     </CardTitle>
                   </CardHeader>
@@ -982,7 +984,7 @@ export default function CreateGiveawayPage() {
                     {prizes.map((prize, index) => (
                       <motion.div
                         key={prize.id}
-                        className="bg-gray-700/30 rounded-lg p-4 border border-gray-600/50"
+                        className="bg-white/[0.03] rounded-xl p-4 border border-white/10"
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.1 }}
@@ -1017,7 +1019,7 @@ export default function CreateGiveawayPage() {
                               value={prize.name}
                               onChange={(e) => updatePrize(prize.id, "name", e.target.value)}
                               placeholder="Premium Script Bundle"
-                              className="mt-1 bg-gray-900/50 border-gray-600 text-white placeholder-gray-400"
+                              className="mt-1 bg-black/30 border-white/10 text-white placeholder-white/30 focus:border-[#f97316] focus-visible:ring-1 focus-visible:ring-[#f97316]/40"
                             />
                           </div>
 
@@ -1027,7 +1029,7 @@ export default function CreateGiveawayPage() {
                               value={prize.value}
                               onChange={(e) => updatePrize(prize.id, "value", e.target.value)}
                               placeholder="$50"
-                              className="mt-1 bg-gray-900/50 border-gray-600 text-white placeholder-gray-400"
+                              className="mt-1 bg-black/30 border-white/10 text-white placeholder-white/30 focus:border-[#f97316] focus-visible:ring-1 focus-visible:ring-[#f97316]/40"
                             />
                           </div>
 
@@ -1039,7 +1041,7 @@ export default function CreateGiveawayPage() {
                               value={prize.numberOfWinners || 1}
                               onChange={(e) => updatePrize(prize.id, "numberOfWinners", parseInt(e.target.value) || 1)}
                               placeholder="1"
-                              className="mt-1 bg-gray-900/50 border-gray-600 text-white placeholder-gray-400"
+                              className="mt-1 bg-black/30 border-white/10 text-white placeholder-white/30 focus:border-[#f97316] focus-visible:ring-1 focus-visible:ring-[#f97316]/40"
                             />
                           </div>
                         </div>
@@ -1051,7 +1053,7 @@ export default function CreateGiveawayPage() {
                             onChange={(e) => updatePrize(prize.id, "description", e.target.value)}
                             placeholder="Describe the prize in detail..."
                             rows={2}
-                            className="mt-1 bg-gray-900/50 border-gray-600 text-white placeholder-gray-400"
+                            className="mt-1 bg-black/30 border-white/10 text-white placeholder-white/30 focus:border-[#f97316] focus-visible:ring-1 focus-visible:ring-[#f97316]/40"
                           />
                         </div>
                       </motion.div>
@@ -1061,7 +1063,7 @@ export default function CreateGiveawayPage() {
                       type="button"
                       onClick={addPrize}
                       variant="outline"
-                      className="w-full border-gray-600 text-gray-300 hover:text-white hover:border-yellow-500"
+                      className="w-full border-white/10 bg-white/[0.02] text-white/60 hover:text-white hover:border-[#f97316]/50 hover:bg-[#f97316]/5"
                     >
                       <Plus className="mr-2 h-4 w-4" />
                       Add Prize
@@ -1070,10 +1072,10 @@ export default function CreateGiveawayPage() {
                 </Card>
 
                 {/* Media Upload */}
-                <Card className="bg-gray-800/30 border-gray-700/50 backdrop-blur-sm">
+                <Card className="bg-white/[0.04] border-white/[0.08] backdrop-blur-md rounded-2xl">
                   <CardHeader>
                     <CardTitle className="text-white flex items-center gap-2">
-                      <ImageIcon className="h-5 w-5 text-yellow-400" />
+                      <ImageIcon className="h-5 w-5 text-[#f97316]" />
                       Media & Images
                     </CardTitle>
                   </CardHeader>
@@ -1093,22 +1095,22 @@ export default function CreateGiveawayPage() {
                       />
                       <label
                         htmlFor="cover-upload"
-                        className={`mt-2 border-2 border-dashed border-gray-600 rounded-lg p-8 text-center transition-colors block ${
+                        className={`mt-2 border-2 border-dashed border-white/12 rounded-xl p-8 text-center transition-colors block bg-black/20 ${
                           uploadingCoverImage 
                             ? "opacity-50 cursor-not-allowed" 
-                            : "hover:border-yellow-500 cursor-pointer"
+                            : "hover:border-[#f97316]/60 hover:bg-[#f97316]/5 cursor-pointer"
                         }`}
                       >
                         {uploadingCoverImage ? (
                           <>
-                            <Loader2 className="h-12 w-12 text-yellow-500 mx-auto mb-4 animate-spin" />
-                            <p className="text-yellow-400">Uploading cover image...</p>
+                            <Loader2 className="h-12 w-12 text-[#f97316] mx-auto mb-4 animate-spin" />
+                            <p className="text-[#facc15]">Uploading cover image...</p>
                           </>
                         ) : (
                           <>
-                        <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                        <p className="text-gray-400">Click to upload cover image</p>
-                        <p className="text-sm text-gray-500 mt-2">PNG, JPG up to 5MB</p>
+                        <Upload className="h-12 w-12 text-white/40 mx-auto mb-4" />
+                        <p className="text-white/50">Click to upload cover image</p>
+                        <p className="text-sm text-white/30 mt-2">PNG, JPG up to 5MB</p>
                           </>
                         )}
                       </label>
@@ -1147,22 +1149,22 @@ export default function CreateGiveawayPage() {
                       />
                       <label
                         htmlFor="image-upload"
-                        className={`mt-2 border-2 border-dashed border-gray-600 rounded-lg p-8 text-center transition-colors block ${
+                        className={`mt-2 border-2 border-dashed border-white/12 rounded-xl p-8 text-center transition-colors block bg-black/20 ${
                           uploadingImages 
                             ? "opacity-50 cursor-not-allowed" 
-                            : "hover:border-yellow-500 cursor-pointer"
+                            : "hover:border-[#f97316]/60 hover:bg-[#f97316]/5 cursor-pointer"
                         }`}
                       >
                         {uploadingImages ? (
                           <>
-                            <Loader2 className="h-12 w-12 text-yellow-500 mx-auto mb-4 animate-spin" />
-                            <p className="text-yellow-400">Uploading images...</p>
+                            <Loader2 className="h-12 w-12 text-[#f97316] mx-auto mb-4 animate-spin" />
+                            <p className="text-[#facc15]">Uploading images...</p>
                           </>
                         ) : (
                           <>
-                        <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                        <p className="text-gray-400">Upload additional images</p>
-                        <p className="text-sm text-gray-500 mt-2">PNG, JPG up to 5MB each (max 10 images)</p>
+                        <Upload className="h-12 w-12 text-white/40 mx-auto mb-4" />
+                        <p className="text-white/50">Upload additional images</p>
+                        <p className="text-sm text-white/30 mt-2">PNG, JPG up to 5MB each (max 10 images)</p>
                           </>
                         )}
                       </label>
@@ -1208,22 +1210,22 @@ export default function CreateGiveawayPage() {
                       />
                       <label
                         htmlFor="video-upload"
-                        className={`mt-2 border-2 border-dashed border-gray-600 rounded-lg p-8 text-center transition-colors block ${
+                        className={`mt-2 border-2 border-dashed border-white/12 rounded-xl p-8 text-center transition-colors block bg-black/20 ${
                           uploadingVideos 
                             ? "opacity-50 cursor-not-allowed" 
-                            : "hover:border-yellow-500 cursor-pointer"
+                            : "hover:border-[#f97316]/60 hover:bg-[#f97316]/5 cursor-pointer"
                         }`}
                       >
                         {uploadingVideos ? (
                           <>
-                            <Loader2 className="h-12 w-12 text-yellow-500 mx-auto mb-4 animate-spin" />
-                            <p className="text-yellow-400">Uploading videos...</p>
+                            <Loader2 className="h-12 w-12 text-[#f97316] mx-auto mb-4 animate-spin" />
+                            <p className="text-[#facc15]">Uploading videos...</p>
                           </>
                         ) : (
                           <>
-                        <Video className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                        <p className="text-gray-400">Upload videos</p>
-                        <p className="text-sm text-gray-500 mt-2">MP4, WebM up to 50MB each (max 5 videos)</p>
+                        <Video className="h-12 w-12 text-white/40 mx-auto mb-4" />
+                        <p className="text-white/50">Upload videos</p>
+                        <p className="text-sm text-white/30 mt-2">MP4, WebM up to 50MB each (max 5 videos)</p>
                           </>
                         )}
                       </label>
@@ -1274,7 +1276,7 @@ export default function CreateGiveawayPage() {
                           }
                         }}
                         placeholder="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
-                        className={`mt-2 bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-yellow-500 ${errors.youtubeVideoLink ? 'border-red-500' : ''}`}
+                        className={`mt-2 bg-black/30 border-white/10 text-white placeholder-white/30 focus:border-[#f97316] focus-visible:ring-1 focus-visible:ring-[#f97316]/40 ${errors.youtubeVideoLink ? 'border-red-500' : ''}`}
                       />
                       {errors.youtubeVideoLink && (
                         <p className="text-red-400 text-xs mt-1">{errors.youtubeVideoLink}</p>
@@ -1282,7 +1284,7 @@ export default function CreateGiveawayPage() {
                       {youtubeLinkError && !errors.youtubeVideoLink && (
                         <p className="text-red-500 text-sm mt-1">{youtubeLinkError}</p>
                       )}
-                      <p className="text-sm text-gray-400 mt-2">
+                      <p className="text-sm text-white/45 mt-2">
                         Provide a direct link to a YouTube video showcasing your giveaway.
                       </p>
                     </div>
@@ -1290,34 +1292,41 @@ export default function CreateGiveawayPage() {
                 </Card>
 
                 {/* Submit Button */}
-                <motion.div className="flex gap-4" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                  <Button
-                    type="submit"
-                    className="flex-1 bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-black font-bold py-3 text-lg shadow-lg"
-                  >
-                    {
-                      submiting?(
-                        <>
-                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                        Creating Giveaway...
-                        </>
+                <div className="space-y-3">
+                  <motion.div className="flex flex-col sm:flex-row gap-4" whileTap={{ scale: 0.99 }}>
+                    <Button
+                      type="submit"
+                      disabled={submiting}
+                      className="flex-1 bg-gradient-to-r from-[#f97316] to-[#facc15] hover:opacity-90 text-[#0a0a0a] font-bold py-3 text-lg rounded-xl shadow-lg shadow-[#f97316]/30 transition-opacity disabled:opacity-60"
+                    >
+                      {
+                        submiting?(
+                          <>
+                          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                          Creating Giveaway...
+                          </>
 
-                      ):(
-                        <>
-                    <Sparkles className="mr-2 h-5 w-5" />
-                    Create Giveaway
-                        </>
-                      )
-                    }
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="px-8 border-gray-600 text-gray-300 hover:text-white hover:border-yellow-500"
-                  >
-                    Save Draft
-                  </Button>
-                </motion.div>
+                        ):(
+                          <>
+                      <Sparkles className="mr-2 h-5 w-5" />
+                      Create Giveaway
+                          </>
+                        )
+                      }
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="px-8 py-3 sm:py-0 border-white/10 bg-white/[0.02] text-white/60 hover:text-white hover:border-[#f97316]/50 hover:bg-[#f97316]/5 rounded-xl"
+                    >
+                      Save Draft
+                    </Button>
+                  </motion.div>
+                  <p className="flex items-center gap-2 text-xs text-white/40">
+                    <AlertCircle className="h-3.5 w-3.5 text-[#f97316] flex-shrink-0" />
+                    All submissions are reviewed by our team before going live.
+                  </p>
+                </div>
               </form>
             </motion.div>
 
@@ -1330,10 +1339,10 @@ export default function CreateGiveawayPage() {
               transition={{ duration: 0.8 }}
             >
               <div className="sticky top-24 space-y-6">
-                <Card className="bg-gray-800/30 border-gray-700/50 backdrop-blur-sm">
+                <Card className="bg-white/[0.04] border-white/[0.08] backdrop-blur-md rounded-2xl">
                   <CardHeader>
                     <CardTitle className="text-white flex items-center gap-2">
-                      <Zap className="h-5 w-5 text-yellow-400" />
+                      <Zap className="h-5 w-5 text-[#facc15]" />
                       Live Preview
                     </CardTitle>
                   </CardHeader>
@@ -1341,7 +1350,7 @@ export default function CreateGiveawayPage() {
                     <div className="space-y-4">
                       {/* Cover Image / Images Preview */}
                       {media.coverImage || media.images.length > 0 ? (
-                        <div className="aspect-video bg-gray-700 rounded-lg overflow-hidden">
+                        <div className="aspect-video bg-white/[0.04] rounded-xl overflow-hidden">
                           <img
                             src={media.coverImage || media.images[0]}
                             alt={media.coverImage ? "Cover image" : "Main image"}
@@ -1349,8 +1358,8 @@ export default function CreateGiveawayPage() {
                           />
                         </div>
                       ) : (
-                        <div className="aspect-video bg-gray-700 rounded-lg flex items-center justify-center">
-                          <ImageIcon className="h-12 w-12 text-gray-500" />
+                        <div className="aspect-video bg-white/[0.04] rounded-xl flex items-center justify-center">
+                          <ImageIcon className="h-12 w-12 text-white/25" />
                         </div>
                       )}
                       
@@ -1358,7 +1367,7 @@ export default function CreateGiveawayPage() {
                       {media.images.length > 1 && (
                         <div className="grid grid-cols-3 gap-2">
                           {media.images.slice(1, 4).map((image, index) => (
-                            <div key={index} className="aspect-square bg-gray-700 rounded-lg overflow-hidden">
+                            <div key={index} className="aspect-square bg-white/[0.04] rounded-xl overflow-hidden">
                               <img
                                 src={image}
                                 alt={`Image ${index + 2}`}
@@ -1367,8 +1376,8 @@ export default function CreateGiveawayPage() {
                             </div>
                           ))}
                           {media.images.length > 4 && (
-                            <div className="aspect-square bg-gray-700 rounded-lg flex items-center justify-center">
-                              <span className="text-gray-400 text-sm">+{media.images.length - 4}</span>
+                            <div className="aspect-square bg-white/[0.04] rounded-xl flex items-center justify-center">
+                              <span className="text-white/40 text-sm">+{media.images.length - 4}</span>
                             </div>
                           )}
                         </div>
@@ -1380,7 +1389,7 @@ export default function CreateGiveawayPage() {
                           <h4 className="text-white font-semibold text-sm">Videos ({media.videos.length})</h4>
                           <div className="space-y-2">
                             {media.videos.slice(0, 1).map((video, index) => (
-                              <div key={index} className="aspect-video bg-gray-700 rounded-lg overflow-hidden">
+                              <div key={index} className="aspect-video bg-white/[0.04] rounded-xl overflow-hidden">
                                 <video
                                   src={video}
                                   controls
@@ -1392,21 +1401,21 @@ export default function CreateGiveawayPage() {
                             ))}
                           </div>
                           {media.videos.length > 1 && (
-                            <span className="text-gray-400 text-xs">+{media.videos.length - 1} more video{media.videos.length > 2 ? 's' : ''}</span>
+                            <span className="text-white/40 text-xs">+{media.videos.length - 1} more video{media.videos.length > 2 ? 's' : ''}</span>
                           )}
                         </div>
                       )}
 
                       <div>
                         <h3 className="text-white font-bold text-lg">{formData.title || "Your Giveaway Title"}</h3>
-                        <p className="text-gray-400 text-sm mt-2">
+                        <p className="text-white/45 text-sm mt-2">
                           {formData.description || "Your giveaway description will appear here..."}
                         </p>
                       </div>
 
                       <div className="flex items-center justify-between">
-                        <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 flex items-center gap-1">
-                          <span className="text-yellow-400">
+                        <Badge className="bg-[#facc15]/15 text-[#facc15] border-[#facc15]/30 flex items-center gap-1">
+                          <span className="text-[#facc15]">
                             {formData.currencySymbol || "$"}
                           </span>
                           <span>{formData.value || "0"} Value</span>
@@ -1418,18 +1427,18 @@ export default function CreateGiveawayPage() {
                         {requirements.map((req, index) => (
                           <div key={req.id} className="flex items-center gap-2 text-sm">
                             <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span className="text-gray-300">
+                            <span className="text-white/70">
                               {req.description || requirementTypes.find((t) => t.value === req.type)?.label}
                             </span>
-                            <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30 text-xs">
+                            <Badge className="bg-[#f97316]/15 text-[#f97316] border-[#f97316]/30 text-xs">
                               {req.points}pt
                             </Badge>
                           </div>
                         ))}
                       </div>
 
-                      <div className="pt-4 border-t border-gray-700">
-                        <div className="flex items-center gap-2 text-sm text-gray-400">
+                      <div className="pt-4 border-t border-white/10">
+                        <div className="flex items-center gap-2 text-sm text-white/45">
                           <Clock className="h-4 w-4" />
                           <span>
                             {formData.endDate
@@ -1437,7 +1446,7 @@ export default function CreateGiveawayPage() {
                               : "End date not set"}
                           </span>
                         </div>
-                        <div className="flex items-center gap-2 text-sm text-gray-400 mt-1">
+                        <div className="flex items-center gap-2 text-sm text-white/45 mt-1">
                           <Users className="h-4 w-4" />
                           <span>Unlimited entries</span>
                         </div>
@@ -1446,28 +1455,28 @@ export default function CreateGiveawayPage() {
                   </CardContent>
                 </Card>
 
-                <Card className="bg-gray-800/30 border-gray-700/50 backdrop-blur-sm">
+                <Card className="bg-white/[0.04] border-white/[0.08] backdrop-blur-md rounded-2xl">
                   <CardHeader>
                     <CardTitle className="text-white flex items-center gap-2">
                       <AlertCircle className="h-5 w-5 text-orange-500" />
                       Tips
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-3 text-sm text-gray-400">
+                  <CardContent className="space-y-3 text-sm text-white/50">
                     <div className="flex items-start gap-2">
-                      <Star className="h-4 w-4 text-yellow-400 mt-0.5 flex-shrink-0" />
+                      <Star className="h-4 w-4 text-[#facc15] mt-0.5 flex-shrink-0" />
                       <span>Use high-quality images to attract more participants</span>
                     </div>
                     <div className="flex items-start gap-2">
-                      <Star className="h-4 w-4 text-yellow-400 mt-0.5 flex-shrink-0" />
+                      <Star className="h-4 w-4 text-[#facc15] mt-0.5 flex-shrink-0" />
                       <span>Set reasonable requirements to maximize engagement</span>
                     </div>
                     <div className="flex items-start gap-2">
-                      <Star className="h-4 w-4 text-yellow-400 mt-0.5 flex-shrink-0" />
+                      <Star className="h-4 w-4 text-[#facc15] mt-0.5 flex-shrink-0" />
                       <span>Featured giveaways get 3x more visibility</span>
                     </div>
                     <div className="flex items-start gap-2">
-                      <Star className="h-4 w-4 text-yellow-400 mt-0.5 flex-shrink-0" />
+                      <Star className="h-4 w-4 text-[#facc15] mt-0.5 flex-shrink-0" />
                       <span>Add multiple prizes to increase excitement</span>
                     </div>
                   </CardContent>

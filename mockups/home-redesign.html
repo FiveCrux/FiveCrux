@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FiveCrux — Homepage Redesign Mockup</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: { sans: ['Inter', 'sans-serif'] },
+        colors: { brand: { orange: '#f97316', yellow: '#facc15' } },
+      },
+    },
+  };
+</script>
+<style>
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Inter', sans-serif; background: #0a0a0a; }
+  ::-webkit-scrollbar { width: 10px; }
+  ::-webkit-scrollbar-track { background: #0a0a0a; }
+  ::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 8px; }
+  .glass { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); backdrop-filter: blur(12px); }
+  .glass-strong { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.10); backdrop-filter: blur(16px); }
+  .orange-glow { box-shadow: 0 0 0 1px rgba(249,115,22,0.5), 0 8px 32px rgba(249,115,22,0.35); }
+  .card-hover { transition: all .25s ease; }
+  .card-hover:hover { transform: translateY(-6px); border-color: rgba(249,115,22,0.35); box-shadow: 0 16px 48px rgba(0,0,0,0.5); }
+  .mesh {
+    background:
+      radial-gradient(60% 50% at 20% 0%, rgba(249,115,22,0.16) 0%, transparent 60%),
+      radial-gradient(50% 40% at 85% 10%, rgba(250,204,21,0.10) 0%, transparent 55%),
+      radial-gradient(40% 40% at 50% 100%, rgba(249,115,22,0.08) 0%, transparent 60%);
+  }
+  .noise { background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); opacity:.035; mix-blend-mode: overlay; }
+  @keyframes pulseDot { 0%,100%{opacity:.4} 50%{opacity:1} }
+  .pulse-dot { animation: pulseDot 2s ease-in-out infinite; }
+</style>
+</head>
+<body class="text-white antialiased overflow-x-hidden">
+
+<!-- ─────────────── NAVBAR ─────────────── -->
+<nav class="fixed top-4 inset-x-0 z-50 px-4">
+  <div class="max-w-6xl mx-auto glass-strong rounded-full px-5 py-2.5 flex items-center gap-6">
+    <a href="#" class="flex items-center gap-1 font-extrabold text-xl">
+      <span class="text-brand-orange">Five</span><span class="text-brand-yellow">Crux</span>
+    </a>
+    <div class="hidden md:flex items-center gap-1 text-sm font-medium text-white/70 ml-2">
+      <a class="px-3 py-1.5 rounded-full hover:bg-white/5 hover:text-white transition" href="#">Home</a>
+      <a class="px-3 py-1.5 rounded-full hover:bg-white/5 hover:text-white transition" href="#">Scripts</a>
+      <a class="px-3 py-1.5 rounded-full hover:bg-white/5 hover:text-white transition" href="#">Props</a>
+      <a class="px-3 py-1.5 rounded-full hover:bg-white/5 hover:text-white transition" href="#">Giveaways</a>
+      <a class="px-3 py-1.5 rounded-full hover:bg-white/5 hover:text-white transition" href="#">Advertise</a>
+    </div>
+    <div class="flex items-center gap-2.5 ml-auto">
+      <button class="relative h-9 w-9 grid place-items-center rounded-full bg-white/[0.07] hover:bg-white/[0.12] hover:text-brand-orange transition">
+        <i data-lucide="shopping-cart" class="h-4 w-4"></i>
+        <span class="absolute -top-1 -right-1 h-4 min-w-[1rem] grid place-items-center rounded-full bg-brand-orange px-1 text-[9px] font-bold text-black">2</span>
+      </button>
+      <button class="hidden sm:inline-flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-full bg-brand-orange text-white orange-glow hover:scale-105 transition">
+        <i data-lucide="upload" class="h-3.5 w-3.5"></i> Start Selling
+      </button>
+      <button class="text-sm font-semibold px-4 py-2 rounded-full glass hover:bg-white/10 transition">Login</button>
+    </div>
+  </div>
+</nav>
+
+<!-- ─────────────── HERO ─────────────── -->
+<header class="relative min-h-screen flex items-center justify-center px-4 pt-28 pb-16 overflow-hidden">
+  <div class="absolute inset-0 bg-[#0a0a0a]"></div>
+  <div class="absolute inset-0 mesh"></div>
+  <div class="absolute inset-0 noise pointer-events-none"></div>
+  <div class="absolute bottom-0 inset-x-0 h-40 bg-gradient-to-t from-[#0a0a0a] to-transparent"></div>
+
+  <div class="relative z-10 max-w-4xl mx-auto text-center">
+    <span class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold text-white/80 glass mb-8">
+      <span class="h-1.5 w-1.5 rounded-full bg-brand-orange pulse-dot"></span>
+      The #1 FiveM Marketplace &amp; Giveaway Platform
+    </span>
+
+    <h1 class="text-5xl sm:text-6xl md:text-7xl font-extrabold leading-[1.05] tracking-tight mb-6">
+      Discover Premium<br>
+      <span class="text-brand-orange">FiveM Scripts</span> &amp; <span class="text-brand-yellow">Mods</span>
+    </h1>
+    <p class="text-lg md:text-xl text-white/55 mb-10 max-w-2xl mx-auto leading-relaxed">
+      Buy verified scripts, enter giveaways, and grow your server — or list your own products and start earning. All in one place.
+    </p>
+
+    <!-- SEARCH BAR -->
+    <div class="max-w-2xl mx-auto mb-5">
+      <div class="glass-strong rounded-full p-1.5 flex items-center gap-2 focus-within:border-brand-orange/50 transition">
+        <div class="hidden sm:flex items-center gap-2 pl-4 pr-3 border-r border-white/10 text-sm font-medium text-white/70">
+          <i data-lucide="layers" class="h-4 w-4 text-brand-orange"></i>
+          All
+          <i data-lucide="chevron-down" class="h-3.5 w-3.5"></i>
+        </div>
+        <i data-lucide="search" class="h-5 w-5 text-white/40 ml-3 sm:ml-1"></i>
+        <input type="text" placeholder="Search scripts, props, MLOs, vehicles…"
+               class="flex-1 bg-transparent outline-none text-base placeholder:text-white/35 py-2.5" />
+        <button class="px-6 py-2.5 rounded-full bg-brand-orange text-white font-semibold orange-glow hover:scale-[1.03] transition">Search</button>
+      </div>
+    </div>
+    <div class="flex flex-wrap items-center justify-center gap-2 text-xs text-white/50 mb-12">
+      <span class="text-white/35">Popular:</span>
+      <span class="px-3 py-1 rounded-full glass hover:text-brand-orange cursor-pointer transition">ESX</span>
+      <span class="px-3 py-1 rounded-full glass hover:text-brand-orange cursor-pointer transition">QBCore</span>
+      <span class="px-3 py-1 rounded-full glass hover:text-brand-orange cursor-pointer transition">MLO</span>
+      <span class="px-3 py-1 rounded-full glass hover:text-brand-orange cursor-pointer transition">HUD</span>
+      <span class="px-3 py-1 rounded-full glass hover:text-brand-orange cursor-pointer transition">Vehicles</span>
+    </div>
+
+    <!-- STATS -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-3xl mx-auto">
+      <div class="glass rounded-2xl py-5"><div class="text-3xl font-extrabold text-brand-orange">1,200+</div><div class="text-xs text-white/50 mt-1">Scripts Listed</div></div>
+      <div class="glass rounded-2xl py-5"><div class="text-3xl font-extrabold text-brand-yellow">350+</div><div class="text-xs text-white/50 mt-1">Verified Creators</div></div>
+      <div class="glass rounded-2xl py-5"><div class="text-3xl font-extrabold text-brand-orange">48k+</div><div class="text-xs text-white/50 mt-1">Downloads</div></div>
+      <div class="glass rounded-2xl py-5"><div class="text-3xl font-extrabold text-brand-yellow">$25k+</div><div class="text-xs text-white/50 mt-1">Giveaway Value</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- ─────────────── CATEGORY TILES ─────────────── -->
+<section class="py-16 px-4">
+  <div class="max-w-6xl mx-auto">
+    <div class="flex items-end justify-between mb-8">
+      <div>
+        <h2 class="text-2xl md:text-3xl font-extrabold">Browse by Category</h2>
+        <p class="text-white/45 text-sm mt-1">Find exactly what your server needs</p>
+      </div>
+      <a href="#" class="text-sm font-semibold text-brand-orange hover:gap-2 inline-flex items-center gap-1 transition-all">View all <i data-lucide="arrow-right" class="h-4 w-4"></i></a>
+    </div>
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+      <a href="#" class="glass card-hover rounded-2xl p-6 flex flex-col items-center gap-3 group">
+        <div class="h-12 w-12 grid place-items-center rounded-xl bg-brand-orange/10 border border-brand-orange/20 group-hover:scale-110 transition"><i data-lucide="code" class="h-6 w-6 text-brand-orange"></i></div>
+        <span class="font-semibold">Scripts</span><span class="text-xs text-white/40">820 items</span>
+      </a>
+      <a href="#" class="glass card-hover rounded-2xl p-6 flex flex-col items-center gap-3 group">
+        <div class="h-12 w-12 grid place-items-center rounded-xl bg-brand-orange/10 border border-brand-orange/20 group-hover:scale-110 transition"><i data-lucide="box" class="h-6 w-6 text-brand-orange"></i></div>
+        <span class="font-semibold">Props</span><span class="text-xs text-white/40">240 items</span>
+      </a>
+      <a href="#" class="glass card-hover rounded-2xl p-6 flex flex-col items-center gap-3 group">
+        <div class="h-12 w-12 grid place-items-center rounded-xl bg-brand-orange/10 border border-brand-orange/20 group-hover:scale-110 transition"><i data-lucide="building-2" class="h-6 w-6 text-brand-orange"></i></div>
+        <span class="font-semibold">MLOs</span><span class="text-xs text-white/40">130 items</span>
+      </a>
+      <a href="#" class="glass card-hover rounded-2xl p-6 flex flex-col items-center gap-3 group">
+        <div class="h-12 w-12 grid place-items-center rounded-xl bg-brand-orange/10 border border-brand-orange/20 group-hover:scale-110 transition"><i data-lucide="car" class="h-6 w-6 text-brand-orange"></i></div>
+        <span class="font-semibold">Vehicles</span><span class="text-xs text-white/40">95 items</span>
+      </a>
+      <a href="#" class="glass card-hover rounded-2xl p-6 flex flex-col items-center gap-3 group">
+        <div class="h-12 w-12 grid place-items-center rounded-xl bg-brand-yellow/10 border border-brand-yellow/20 group-hover:scale-110 transition"><i data-lucide="gift" class="h-6 w-6 text-brand-yellow"></i></div>
+        <span class="font-semibold">Giveaways</span><span class="text-xs text-white/40">12 live</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────── FEATURED SCRIPTS ─────────────── -->
+<section class="py-16 px-4">
+  <div class="max-w-6xl mx-auto">
+    <div class="text-center mb-10">
+      <span class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold text-brand-orange bg-brand-orange/10 border border-brand-orange/20 mb-4"><i data-lucide="zap" class="h-4 w-4"></i> Featured</span>
+      <h2 class="text-3xl md:text-4xl font-extrabold">Featured Scripts</h2>
+      <p class="text-white/45 mt-2">Hand-picked, verified, and ready to deploy</p>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <!-- card -->
+      <div class="glass card-hover rounded-2xl overflow-hidden group">
+        <div class="relative h-44 bg-gradient-to-br from-orange-600/40 to-neutral-900 grid place-items-center">
+          <span class="text-white/30 font-bold text-lg">advanced_banking</span>
+          <span class="absolute top-3 left-3 px-2.5 py-1 rounded-full text-[10px] font-bold bg-brand-orange text-black">FEATURED</span>
+          <span class="absolute top-3 right-3 px-2 py-1 rounded-full text-[10px] font-semibold glass-strong flex items-center gap-1"><i data-lucide="star" class="h-3 w-3 text-brand-yellow fill-brand-yellow"></i> 4.9</span>
+        </div>
+        <div class="p-5">
+          <div class="flex gap-1.5 mb-2"><span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-white/5 text-white/60">ESX</span><span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-white/5 text-white/60">QBCore</span></div>
+          <h3 class="font-bold text-lg">Advanced Banking System</h3>
+          <p class="text-sm text-white/45 mt-1 line-clamp-2">Full-featured banking with ATMs, loans, and society accounts.</p>
+          <div class="flex items-center justify-between mt-4 pt-4 border-t border-white/5">
+            <div class="flex items-center gap-2"><div class="h-7 w-7 rounded-full bg-brand-orange/30"></div><span class="text-xs text-white/60">CruxDev</span></div>
+            <div class="text-right"><span class="text-xs text-white/35 line-through">$30</span> <span class="text-lg font-extrabold text-brand-orange">$19.99</span></div>
+          </div>
+        </div>
+      </div>
+      <!-- card -->
+      <div class="glass card-hover rounded-2xl overflow-hidden group">
+        <div class="relative h-44 bg-gradient-to-br from-yellow-600/40 to-neutral-900 grid place-items-center">
+          <span class="text-white/30 font-bold text-lg">police_mdt</span>
+          <span class="absolute top-3 left-3 px-2.5 py-1 rounded-full text-[10px] font-bold bg-brand-orange text-black">FEATURED</span>
+          <span class="absolute top-3 right-3 px-2 py-1 rounded-full text-[10px] font-semibold glass-strong flex items-center gap-1"><i data-lucide="star" class="h-3 w-3 text-brand-yellow fill-brand-yellow"></i> 5.0</span>
+        </div>
+        <div class="p-5">
+          <div class="flex gap-1.5 mb-2"><span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-white/5 text-white/60">QBCore</span></div>
+          <h3 class="font-bold text-lg">Police MDT &amp; Dispatch</h3>
+          <p class="text-sm text-white/45 mt-1 line-clamp-2">Modern computer-aided dispatch with warrants and reports.</p>
+          <div class="flex items-center justify-between mt-4 pt-4 border-t border-white/5">
+            <div class="flex items-center gap-2"><div class="h-7 w-7 rounded-full bg-brand-yellow/30"></div><span class="text-xs text-white/60">NightShift</span></div>
+            <div class="text-right"><span class="text-lg font-extrabold text-brand-orange">$24.99</span></div>
+          </div>
+        </div>
+      </div>
+      <!-- card -->
+      <div class="glass card-hover rounded-2xl overflow-hidden group">
+        <div class="relative h-44 bg-gradient-to-br from-orange-700/40 to-neutral-900 grid place-items-center">
+          <span class="text-white/30 font-bold text-lg">inventory_hud</span>
+          <span class="absolute top-3 left-3 px-2.5 py-1 rounded-full text-[10px] font-bold bg-green-500 text-black">FREE</span>
+          <span class="absolute top-3 right-3 px-2 py-1 rounded-full text-[10px] font-semibold glass-strong flex items-center gap-1"><i data-lucide="star" class="h-3 w-3 text-brand-yellow fill-brand-yellow"></i> 4.7</span>
+        </div>
+        <div class="p-5">
+          <div class="flex gap-1.5 mb-2"><span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-white/5 text-white/60">ESX</span><span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-white/5 text-white/60">Standalone</span></div>
+          <h3 class="font-bold text-lg">Inventory HUD Reloaded</h3>
+          <p class="text-sm text-white/45 mt-1 line-clamp-2">Slick drag-and-drop inventory with hotbar and weight system.</p>
+          <div class="flex items-center justify-between mt-4 pt-4 border-t border-white/5">
+            <div class="flex items-center gap-2"><div class="h-7 w-7 rounded-full bg-brand-orange/30"></div><span class="text-xs text-white/60">PixelForge</span></div>
+            <div class="text-right"><span class="text-lg font-extrabold text-green-400">Free</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────── START EARNING (CREATORS / MONEY) ─────────────── -->
+<section class="py-20 px-4">
+  <div class="max-w-6xl mx-auto glass-strong rounded-[32px] p-8 md:p-14 relative overflow-hidden">
+    <div class="absolute -top-24 -right-24 w-80 h-80 rounded-full bg-brand-orange/20 blur-3xl pointer-events-none"></div>
+    <div class="grid md:grid-cols-2 gap-12 items-center relative z-10">
+      <div>
+        <span class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold text-brand-yellow bg-brand-yellow/10 border border-brand-yellow/20 mb-5"><i data-lucide="trending-up" class="h-4 w-4"></i> For Creators</span>
+        <h2 class="text-3xl md:text-5xl font-extrabold leading-tight mb-4">Turn your scripts into <span class="text-brand-orange">income</span>.</h2>
+        <p class="text-white/55 text-lg mb-8 leading-relaxed">List your products in minutes, reach thousands of FiveM server owners, and <span class="text-white font-semibold">get paid directly via PayPal</span> — no third-party store needed.</p>
+        <div class="flex flex-wrap gap-3">
+          <button class="inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-brand-orange text-white font-semibold orange-glow hover:scale-105 transition"><i data-lucide="upload" class="h-4 w-4"></i> List Your Product</button>
+          <button class="inline-flex items-center gap-2 px-7 py-3.5 rounded-full glass hover:bg-white/10 font-semibold transition">How it works</button>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div class="glass rounded-2xl p-5"><i data-lucide="banknote" class="h-7 w-7 text-brand-orange mb-3"></i><h4 class="font-bold mb-1">Direct payouts</h4><p class="text-xs text-white/45">Money lands in your PayPal — not locked in a wallet.</p></div>
+        <div class="glass rounded-2xl p-5"><i data-lucide="zap" class="h-7 w-7 text-brand-orange mb-3"></i><h4 class="font-bold mb-1">Fast approval</h4><p class="text-xs text-white/45">Reviewed quickly so you start selling sooner.</p></div>
+        <div class="glass rounded-2xl p-5"><i data-lucide="megaphone" class="h-7 w-7 text-brand-orange mb-3"></i><h4 class="font-bold mb-1">Massive reach</h4><p class="text-xs text-white/45">Featured slots &amp; giveaways put you in front of thousands.</p></div>
+        <div class="glass rounded-2xl p-5"><i data-lucide="shield-check" class="h-7 w-7 text-brand-orange mb-3"></i><h4 class="font-bold mb-1">You keep ownership</h4><p class="text-xs text-white/45">Your code stays yours. We just help you sell it.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────── GIVEAWAY HIGHLIGHT ─────────────── -->
+<section class="py-16 px-4">
+  <div class="max-w-6xl mx-auto">
+    <div class="glass card-hover rounded-3xl p-8 md:p-10 grid md:grid-cols-[1fr_auto] gap-8 items-center relative overflow-hidden">
+      <div class="absolute -bottom-20 -left-20 w-72 h-72 rounded-full bg-brand-yellow/10 blur-3xl"></div>
+      <div class="relative z-10">
+        <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold text-brand-yellow bg-brand-yellow/10 border border-brand-yellow/20 mb-4"><span class="h-1.5 w-1.5 rounded-full bg-brand-yellow pulse-dot"></span> Live Giveaway</span>
+        <h2 class="text-3xl md:text-4xl font-extrabold mb-2">Win a Full Server Bundle 🎉</h2>
+        <p class="text-white/50 mb-5 max-w-lg">10 premium scripts + 3 MLOs worth <span class="text-brand-yellow font-bold">$450</span>. Enter free before the timer runs out.</p>
+        <div class="flex gap-3 text-center">
+          <div class="glass rounded-xl px-4 py-2"><div class="text-2xl font-extrabold">02</div><div class="text-[10px] text-white/40">DAYS</div></div>
+          <div class="glass rounded-xl px-4 py-2"><div class="text-2xl font-extrabold">14</div><div class="text-[10px] text-white/40">HRS</div></div>
+          <div class="glass rounded-xl px-4 py-2"><div class="text-2xl font-extrabold">37</div><div class="text-[10px] text-white/40">MIN</div></div>
+        </div>
+      </div>
+      <button class="relative z-10 inline-flex items-center gap-2 px-8 py-4 rounded-full bg-brand-yellow text-black font-bold hover:scale-105 transition"><i data-lucide="gift" class="h-5 w-5"></i> Enter Giveaway</button>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────── WHY FIVECRUX ─────────────── -->
+<section class="py-20 px-4">
+  <div class="max-w-6xl mx-auto">
+    <div class="text-center mb-12">
+      <span class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold text-white/70 glass mb-5"><span class="h-1.5 w-1.5 rounded-full bg-brand-orange"></span> Why Choose Us</span>
+      <h2 class="text-4xl md:text-5xl font-extrabold">Why Choose <span class="text-brand-orange">FiveCrux</span>?</h2>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div class="glass card-hover rounded-2xl p-7 text-center">
+        <div class="h-14 w-14 mx-auto grid place-items-center rounded-xl bg-brand-orange/10 border border-brand-orange/20 mb-5"><i data-lucide="users" class="h-7 w-7 text-brand-orange"></i></div>
+        <h3 class="font-bold text-lg mb-2">Community Driven</h3><p class="text-sm text-white/45">Built by FiveM devs, trusted by the community.</p>
+      </div>
+      <div class="glass card-hover rounded-2xl p-7 text-center">
+        <div class="h-14 w-14 mx-auto grid place-items-center rounded-xl bg-brand-orange/10 border border-brand-orange/20 mb-5"><i data-lucide="star" class="h-7 w-7 text-brand-orange"></i></div>
+        <h3 class="font-bold text-lg mb-2">Premium Quality</h3><p class="text-sm text-white/45">Only top-tier scripts that meet our standards.</p>
+      </div>
+      <div class="glass card-hover rounded-2xl p-7 text-center">
+        <div class="h-14 w-14 mx-auto grid place-items-center rounded-xl bg-brand-orange/10 border border-brand-orange/20 mb-5"><i data-lucide="shield" class="h-7 w-7 text-brand-orange"></i></div>
+        <h3 class="font-bold text-lg mb-2">Security Verified</h3><p class="text-sm text-white/45">Every resource is manually reviewed.</p>
+      </div>
+      <div class="glass card-hover rounded-2xl p-7 text-center">
+        <div class="h-14 w-14 mx-auto grid place-items-center rounded-xl bg-brand-orange/10 border border-brand-orange/20 mb-5"><i data-lucide="megaphone" class="h-7 w-7 text-brand-orange"></i></div>
+        <h3 class="font-bold text-lg mb-2">Maximum Reach</h3><p class="text-sm text-white/45">Get discovered by thousands of server owners.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────── CRUX ECOSYSTEM ─────────────── -->
+<section class="py-16 px-4">
+  <div class="max-w-5xl mx-auto">
+    <div class="text-center mb-10">
+      <span class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold text-white/70 glass mb-5"><span class="h-1.5 w-1.5 rounded-full bg-brand-orange"></span> Our Services</span>
+      <h2 class="text-3xl md:text-4xl font-extrabold">Powered by the <span class="text-brand-orange">Crux</span> Ecosystem</h2>
+    </div>
+    <div class="grid md:grid-cols-2 gap-6">
+      <a href="#" class="glass card-hover rounded-2xl p-7 block">
+        <div class="flex items-center gap-4 mb-4"><div class="h-12 w-12 rounded-xl bg-brand-orange/10 border border-brand-orange/20 grid place-items-center"><i data-lucide="gamepad-2" class="h-6 w-6 text-brand-orange"></i></div><div><h3 class="font-bold text-xl">GameCrux</h3><p class="text-brand-orange/70 text-xs uppercase tracking-wide font-medium">Gaming Platform</p></div></div>
+        <p class="text-white/45 text-sm">Discover, play, and enjoy a curated selection of exciting minigames.</p>
+        <span class="inline-flex items-center gap-1.5 text-brand-orange text-sm font-semibold mt-4">Visit GameCrux <i data-lucide="arrow-right" class="h-4 w-4"></i></span>
+      </a>
+      <a href="#" class="glass card-hover rounded-2xl p-7 block">
+        <div class="flex items-center gap-4 mb-4"><div class="h-12 w-12 rounded-xl bg-brand-orange/10 border border-brand-orange/20 grid place-items-center"><i data-lucide="store" class="h-6 w-6 text-brand-orange"></i></div><div><h3 class="font-bold text-xl">Crux Studio</h3><p class="text-brand-orange/70 text-xs uppercase tracking-wide font-medium">FiveM Marketplace</p></div></div>
+        <p class="text-white/45 text-sm">Premium FiveM assets crafted with passion and attention to detail.</p>
+        <span class="inline-flex items-center gap-1.5 text-brand-orange text-sm font-semibold mt-4">Visit Crux Studio <i data-lucide="arrow-right" class="h-4 w-4"></i></span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────── FAQ ─────────────── -->
+<section class="py-20 px-4">
+  <div class="max-w-3xl mx-auto">
+    <div class="text-center mb-10">
+      <span class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold text-white/70 glass mb-5"><span class="h-1.5 w-1.5 rounded-full bg-brand-orange"></span> FAQ</span>
+      <h2 class="text-3xl md:text-5xl font-extrabold">Frequently Asked <span class="text-brand-orange">Questions</span></h2>
+    </div>
+    <div class="glass rounded-[26px] p-1.5 flex flex-col gap-0.5" id="faq">
+      <button class="faq-q w-full text-left px-6 py-5 rounded-[22px] flex items-center justify-between hover:bg-brand-orange/5 transition">
+        <span class="font-semibold">How does publishing a script work?</span><span class="faq-icon h-7 w-7 grid place-items-center rounded-full bg-white/5 text-white/40 text-lg">+</span>
+      </button>
+      <button class="faq-q w-full text-left px-6 py-5 rounded-[22px] flex items-center justify-between hover:bg-brand-orange/5 transition">
+        <span class="font-semibold">How do I get paid?</span><span class="faq-icon h-7 w-7 grid place-items-center rounded-full bg-white/5 text-white/40 text-lg">+</span>
+      </button>
+      <button class="faq-q w-full text-left px-6 py-5 rounded-[22px] flex items-center justify-between hover:bg-brand-orange/5 transition">
+        <span class="font-semibold">Is there any publishing fee?</span><span class="faq-icon h-7 w-7 grid place-items-center rounded-full bg-white/5 text-white/40 text-lg">+</span>
+      </button>
+      <button class="faq-q w-full text-left px-6 py-5 rounded-[22px] flex items-center justify-between hover:bg-brand-orange/5 transition">
+        <span class="font-semibold">Can I host giveaways on FiveCrux?</span><span class="faq-icon h-7 w-7 grid place-items-center rounded-full bg-white/5 text-white/40 text-lg">+</span>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────── FOOTER ─────────────── -->
+<footer class="border-t border-white/5 py-12 px-4 mt-8">
+  <div class="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+    <div class="flex items-center gap-1 font-extrabold text-xl"><span class="text-brand-orange">Five</span><span class="text-brand-yellow">Crux</span></div>
+    <div class="flex gap-6 text-sm text-white/50">
+      <a href="#" class="hover:text-brand-orange transition">Scripts</a>
+      <a href="#" class="hover:text-brand-orange transition">Props</a>
+      <a href="#" class="hover:text-brand-orange transition">Giveaways</a>
+      <a href="#" class="hover:text-brand-orange transition">Advertise</a>
+      <a href="#" class="hover:text-brand-orange transition">Discord</a>
+    </div>
+    <p class="text-xs text-white/30">© 2026 FiveCrux. All rights reserved.</p>
+  </div>
+</footer>
+
+<script>
+  lucide.createIcons();
+  // FAQ toggle
+  document.querySelectorAll('.faq-q').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var icon = btn.querySelector('.faq-icon');
+      var open = btn.classList.toggle('bg-brand-orange/5');
+      icon.textContent = open ? '×' : '+';
+      icon.classList.toggle('text-brand-orange', open);
+    });
+  });
+</script>
+</body>
+</html>

@@ -52,6 +52,7 @@ import { isVerifiedCreator } from "@/lib/utils";
 import Image from "next/image";
 import { InfiniteMovingCards } from "@/componentss/ui/infinite-moving-cards";
 import FeaturedScriptCard from "@/componentss/featured-scripts/featured-script-card";
+import { MARKETPLACE_SEED } from "@/lib/marketplace-seed";
 // Animated background particles - Client only to avoid hydration issues
 const AnimatedParticles = () => {
   const [mounted, setMounted] = useState(false);
@@ -230,7 +231,54 @@ export default function PropsPage() {
     load();
   }, []);
 
+  // Demo fallback: when the API returns no props (empty DB / local dev), show the
+  // scraped marketplace seed so the page can be audited populated. Real data always wins.
+  // Prefer category 'prop', then fill with 'mlo'/'clothing'. All are surfaced under the
+  // page's single "props" category so the existing filters keep working.
+  // TODO: remove before production.
+  const seedProps: UIProp[] = useMemo(() => {
+    const PROP_CATEGORIES = ["prop", "mlo", "clothing"];
+    const ordered = [...MARKETPLACE_SEED]
+      .filter((p) => PROP_CATEGORIES.includes(p.category))
+      .sort(
+        (a, b) =>
+          PROP_CATEGORIES.indexOf(a.category) -
+          PROP_CATEGORIES.indexOf(b.category)
+      );
+    return ordered.map((p) => ({
+      id: Number(p.id),
+      title: p.title,
+      description: "",
+      price: p.price,
+      originalPrice: p.originalPrice,
+      currency_symbol: "$",
+      rating: p.rating ?? 0,
+      reviews: 0,
+      image: p.coverImage || "/placeholder.jpg",
+      category: "props",
+      categoryName: "Props",
+      seller: p.seller || "Unknown",
+      seller_image: p.sellerImage || null,
+      seller_roles: null,
+      discount:
+        p.originalPrice && p.originalPrice > p.price
+          ? Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100)
+          : 0,
+      framework: p.framework || [],
+      priceCategory:
+        p.price <= 15 ? "Budget" : p.price <= 30 ? "Standard" : "Premium",
+      tags: [],
+      lastUpdated: "",
+      featured: p.tag === "FEATURED",
+      free: !!p.free || p.price === 0,
+    }));
+  }, []);
 
+  useEffect(() => {
+    if (!loading && allProps.length === 0) {
+      setAllProps(seedProps);
+    }
+  }, [loading, allProps.length, seedProps]);
 
   const categories = [
     { id: "props", name: "Props" },
@@ -1458,12 +1506,12 @@ export default function PropsPage() {
               {/* Pagination */}
               {sortedProps.length > 0 && totalPages > 1 && (
                 <motion.div
-                  className="flex justify-center mt-12"
+                  className="flex justify-center mt-12 px-2"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5 }}
                 >
-                  <div className="flex space-x-2">
+                  <div className="flex flex-wrap justify-center gap-2">
                     {/* Previous Button */}
                     <motion.div
                       initial={{ opacity: 0, scale: 0.8 }}

@@ -1,17 +1,18 @@
 "use client"
 
 import type React from "react"
-import { useState, useRef, useEffect } from "react"
+import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { motion } from "framer-motion"
-import { Code, Package, DollarSign, Image as ImageIcon, Sparkles } from "lucide-react"
+import { Package, DollarSign, Image as ImageIcon, Sparkles, FileArchive, ShieldCheck, X, Upload } from "lucide-react"
 import { Button } from "@/componentss/ui/button"
 import { Input } from "@/componentss/ui/input"
 import { Textarea } from "@/componentss/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/componentss/ui/card"
 import { Label } from "@/componentss/ui/label"
 import Navbar from "@/componentss/shared/navbar"
+import Footer from "@/componentss/shared/footer"
 import { toast } from "sonner"
 
 export default function SubmitPropPage() {
@@ -40,10 +41,12 @@ export default function SubmitPropPage() {
     if (propId) {
       setIsEditMode(true)
       setIsLoadingProp(true)
-      
+
       const fetchProp = async () => {
+        const c = new AbortController()
+        const t = setTimeout(() => c.abort(), 8000)
         try {
-          const response = await fetch(`/api/props/${propId}`)
+          const response = await fetch(`/api/props/${propId}`, { signal: c.signal })
           if (response.ok) {
             const prop = await response.json()
             setFormData({
@@ -62,6 +65,7 @@ export default function SubmitPropPage() {
           toast.error("Failed to load prop")
           router.push('/props/submit')
         } finally {
+          clearTimeout(t)
           setIsLoadingProp(false)
         }
       }
@@ -70,7 +74,14 @@ export default function SubmitPropPage() {
   }, [propId, router])
 
   if (status === "loading" || isLoadingProp) {
-    return <div className="min-h-screen flex items-center justify-center text-white">Loading...</div>
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a] text-white">
+        <div className="flex flex-col items-center gap-3">
+          <div className="animate-spin w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full" />
+          <span className="text-gray-400">Loading...</span>
+        </div>
+      </div>
+    )
   }
 
   if (!session) {
@@ -188,140 +199,97 @@ export default function SubmitPropPage() {
     }
   }
 
+  const cardClass = "bg-white/[0.03] border border-white/10 backdrop-blur-xl rounded-2xl shadow-xl shadow-black/30"
+  const inputClass = "mt-2 bg-black/40 border-white/10 text-white placeholder:text-gray-500 rounded-xl focus-visible:ring-orange-500/60 focus-visible:ring-offset-0 focus-visible:border-orange-500/50"
+
   return (
     <>
       <Navbar />
-      <div className="min-h-screen text-white pt-24 pb-12 bg-black">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-            <h1 className="text-4xl font-bold mb-8 text-center bg-gradient-to-r from-orange-500 to-yellow-400 bg-clip-text text-transparent">
-              {isEditMode ? "Edit Prop" : "Submit New Prop"}
-            </h1>
+      <div className="min-h-screen text-white pt-24 pb-16 bg-[#0a0a0a] relative overflow-hidden">
+        {/* ambient glow */}
+        <div className="pointer-events-none absolute -top-32 left-1/2 -translate-x-1/2 h-72 w-[40rem] rounded-full bg-orange-500/10 blur-[120px]" />
+        <div className="pointer-events-none absolute top-1/3 -right-24 h-72 w-72 rounded-full bg-yellow-400/5 blur-[120px]" />
 
-            <form onSubmit={handleSubmit} className="space-y-8">
-              <Card className="bg-gray-800/50 border-gray-700">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+            {/* Header */}
+            <div className="text-center mb-10">
+              <div className="inline-flex items-center gap-2 rounded-full border border-orange-500/20 bg-orange-500/10 px-4 py-1.5 text-xs font-medium text-orange-400 mb-4">
+                <Sparkles className="h-3.5 w-3.5" />
+                {isEditMode ? "Editing your prop" : "Add to the marketplace"}
+              </div>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight bg-gradient-to-r from-orange-500 to-yellow-400 bg-clip-text text-transparent">
+                {isEditMode ? "Edit Prop" : "Submit New Prop"}
+              </h1>
+              <p className="mt-3 text-gray-400 max-w-xl mx-auto text-sm sm:text-base">
+                Share your FiveM prop with the community. Fill in the details below and upload your files.
+              </p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
+              {/* Basics */}
+              <Card className={cardClass}>
                 <CardHeader>
-                  <CardTitle className="text-white flex items-center gap-2">
-                    <Package className="h-5 w-5 text-orange-500" />
-                    Basic Details
+                  <CardTitle className="text-white flex items-center gap-3 text-lg">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-500/15 text-orange-400">
+                      <Package className="h-5 w-5" />
+                    </span>
+                    Basics
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-5">
                   <div>
-                    <Label className="text-white">Name *</Label>
+                    <Label className="text-gray-200">Name *</Label>
                     <Input
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       placeholder="Prop name"
-                      className="mt-2 bg-gray-900 border-gray-700 text-white"
+                      className={inputClass}
                       required
                     />
                   </div>
                   <div>
-                    <Label className="text-white">Description *</Label>
+                    <Label className="text-gray-200">Description *</Label>
                     <Textarea
                       value={formData.description}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      placeholder="Prop description"
-                      className="mt-2 bg-gray-900 border-gray-700 text-white"
+                      placeholder="Describe your prop, what it includes, and how to use it"
+                      className={`${inputClass} resize-y`}
                       rows={5}
                       required
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label className="text-white">Price (€) *</Label>
-                      <Input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={formData.price}
-                        onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                        className="mt-2 bg-gray-900 border-gray-700 text-white"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-white">Discount Percentage (%)</Label>
-                      <Input
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={formData.discountPercentage}
-                        onChange={(e) => setFormData({ ...formData, discountPercentage: e.target.value })}
-                        className="mt-2 bg-gray-900 border-gray-700 text-white"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <Label className="text-white">Prop ZIP File *</Label>
-                    <div className="mt-2 flex items-center gap-4">
-                      <label className="flex-1 max-w-xs border-2 border-dashed border-gray-600 hover:border-orange-500 rounded-lg p-4 cursor-pointer bg-gray-900/50 hover:bg-gray-800/50 transition-colors flex flex-col items-center justify-center text-center h-32">
-                        <input
-                          type="file"
-                          accept=".zip,application/zip,application/x-zip-compressed"
-                          className="hidden"
-                          onChange={handleZipUpload}
-                          disabled={uploadingZip}
-                        />
-                        {uploadingZip ? (
-                          <div className="flex flex-col items-center gap-2">
-                            <div className="animate-spin w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full" />
-                            <span className="text-sm text-gray-400">Uploading...</span>
-                          </div>
-                        ) : (
-                          <div className="flex flex-col items-center gap-2">
-                            <Package className="w-6 h-6 text-gray-400" />
-                            <span className="text-sm text-gray-400">
-                              {formData.zipFile ? "Change ZIP File" : "Upload ZIP File"}
-                            </span>
-                          </div>
-                        )}
-                      </label>
-                      {formData.zipFile && (
-                        <div className="flex-1 min-w-0 flex flex-col justify-center h-32 text-sm text-green-400 bg-green-400/10 p-4 rounded-lg border border-green-400/20">
-                          <span className="font-semibold mb-1">File ready:</span>
-                          <a href={formData.zipFile} target="_blank" rel="noopener noreferrer" className="text-white font-medium hover:underline truncate block" title={formData.zipFile.split('/').pop()}>
-                            {formData.zipFile.split('/').pop()}
-                          </a>
-                          <div className="mt-2">
-                            <Input 
-                              value={formData.zipFile} 
-                              readOnly 
-                              className="h-8 text-xs bg-gray-900 border-gray-700 text-gray-300" 
-                              onClick={(e) => e.currentTarget.select()}
-                            />
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
                 </CardContent>
               </Card>
 
-              <Card className="bg-gray-800/50 border-gray-700">
+              {/* Media / Images */}
+              <Card className={cardClass}>
                 <CardHeader>
-                  <CardTitle className="text-white flex items-center gap-2">
-                    <ImageIcon className="h-5 w-5 text-orange-500" />
+                  <CardTitle className="text-white flex items-center gap-3 text-lg">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-500/15 text-orange-400">
+                      <ImageIcon className="h-5 w-5" />
+                    </span>
                     Images
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  <p className="text-sm text-gray-400">Add up to 10 preview images. The first image is used as the thumbnail.</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
                     {media.images.map((img, i) => (
-                      <div key={i} className="relative aspect-video rounded-lg overflow-hidden bg-gray-900 border border-gray-700">
+                      <div key={i} className="relative aspect-video rounded-xl overflow-hidden bg-black/40 border border-white/10 group">
                         <img src={img} alt={`Image ${i}`} className="w-full h-full object-cover" />
                         <button
                           type="button"
                           onClick={() => removeImage(i)}
-                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs"
+                          aria-label="Remove image"
+                          className="absolute top-1.5 right-1.5 bg-red-500/90 hover:bg-red-500 text-white rounded-full w-7 h-7 flex items-center justify-center shadow-lg transition-colors"
                         >
-                          X
+                          <X className="h-3.5 w-3.5" />
                         </button>
                       </div>
                     ))}
                     {media.images.length < 10 && (
-                      <label className="aspect-video rounded-lg border-2 border-dashed border-gray-600 hover:border-orange-500 flex flex-col items-center justify-center cursor-pointer bg-gray-900/50 hover:bg-gray-800/50 transition-colors">
+                      <label className="aspect-video rounded-xl border-2 border-dashed border-white/15 hover:border-orange-500 flex flex-col items-center justify-center gap-1.5 cursor-pointer bg-black/30 hover:bg-orange-500/5 transition-colors text-center">
                         <input
                           type="file"
                           accept="image/*"
@@ -333,7 +301,10 @@ export default function SubmitPropPage() {
                         {uploadingImages ? (
                           <div className="animate-spin w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full" />
                         ) : (
-                          <span className="text-sm text-gray-400">Add Images</span>
+                          <>
+                            <ImageIcon className="w-5 h-5 text-gray-400" />
+                            <span className="text-xs sm:text-sm text-gray-400">Add Images</span>
+                          </>
                         )}
                       </label>
                     )}
@@ -341,11 +312,115 @@ export default function SubmitPropPage() {
                 </CardContent>
               </Card>
 
-              <div className="flex justify-end pt-6 border-t border-gray-800">
+              {/* Files / Upload */}
+              <Card className={cardClass}>
+                <CardHeader>
+                  <CardTitle className="text-white flex items-center gap-3 text-lg">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-500/15 text-orange-400">
+                      <FileArchive className="h-5 w-5" />
+                    </span>
+                    Files
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <Label className="text-gray-200">Prop ZIP File *</Label>
+                  <div className="flex flex-col sm:flex-row items-stretch gap-4">
+                    <label className="flex-1 max-w-full sm:max-w-xs border-2 border-dashed border-white/15 hover:border-orange-500 rounded-xl p-4 cursor-pointer bg-black/30 hover:bg-orange-500/5 transition-colors flex flex-col items-center justify-center text-center h-32">
+                      <input
+                        type="file"
+                        accept=".zip,application/zip,application/x-zip-compressed"
+                        className="hidden"
+                        onChange={handleZipUpload}
+                        disabled={uploadingZip}
+                      />
+                      {uploadingZip ? (
+                        <div className="flex flex-col items-center gap-2">
+                          <div className="animate-spin w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full" />
+                          <span className="text-sm text-gray-400">Uploading...</span>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center gap-2">
+                          <Upload className="w-6 h-6 text-gray-400" />
+                          <span className="text-sm text-gray-400">
+                            {formData.zipFile ? "Change ZIP File" : "Upload ZIP File"}
+                          </span>
+                        </div>
+                      )}
+                    </label>
+                    {formData.zipFile && (
+                      <div className="flex-1 min-w-0 flex flex-col justify-center sm:h-32 text-sm text-green-400 bg-green-500/10 p-4 rounded-xl border border-green-500/20">
+                        <span className="font-semibold mb-1">File ready:</span>
+                        <a href={formData.zipFile} target="_blank" rel="noopener noreferrer" className="text-white font-medium hover:underline truncate block" title={formData.zipFile.split('/').pop()}>
+                          {formData.zipFile.split('/').pop()}
+                        </a>
+                        <div className="mt-2">
+                          <Input
+                            value={formData.zipFile}
+                            readOnly
+                            className="h-8 text-xs bg-black/40 border-white/10 text-gray-300 rounded-lg"
+                            onClick={(e) => e.currentTarget.select()}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Pricing */}
+              <Card className={cardClass}>
+                <CardHeader>
+                  <CardTitle className="text-white flex items-center gap-3 text-lg">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-500/15 text-orange-400">
+                      <DollarSign className="h-5 w-5" />
+                    </span>
+                    Pricing
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+                    <div>
+                      <Label className="text-gray-200">Price (€) *</Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={formData.price}
+                        onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                        placeholder="0.00"
+                        className={inputClass}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-gray-200">Discount Percentage (%)</Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={formData.discountPercentage}
+                        onChange={(e) => setFormData({ ...formData, discountPercentage: e.target.value })}
+                        className={inputClass}
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Review note */}
+              <div className="flex items-start gap-3 rounded-2xl border border-orange-500/20 bg-orange-500/[0.06] p-4">
+                <ShieldCheck className="h-5 w-5 text-orange-400 shrink-0 mt-0.5" />
+                <p className="text-sm text-gray-300">
+                  All submissions are <span className="font-semibold text-white">reviewed by our team before going live</span> on the marketplace. You will be notified once your prop is approved.
+                </p>
+              </div>
+
+              {/* Submit */}
+              <div className="flex flex-col sm:flex-row sm:justify-end gap-3 pt-2">
                 <Button
                   type="submit"
                   disabled={isSubmitting}
-                  className="bg-gradient-to-r from-orange-500 to-yellow-400 hover:from-orange-600 hover:to-yellow-500 text-black font-bold px-8 py-2 h-auto text-lg w-full md:w-auto"
+                  className="bg-gradient-to-r from-orange-500 to-yellow-400 hover:from-orange-600 hover:to-yellow-500 text-black font-bold px-8 py-3 h-auto text-base sm:text-lg rounded-xl w-full sm:w-auto shadow-lg shadow-orange-500/20 disabled:opacity-60"
                 >
                   {isSubmitting ? "Submitting..." : isEditMode ? "Update Prop" : "Submit Prop"}
                 </Button>
@@ -354,6 +429,7 @@ export default function SubmitPropPage() {
           </motion.div>
         </div>
       </div>
+      <Footer />
     </>
   )
 }

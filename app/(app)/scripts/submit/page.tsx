@@ -107,6 +107,8 @@ export default function SubmitScriptPage() {
     featured: false,
     currency: "",
     currencySymbol: "",
+    tebexStoreToken: "",
+    tebexPackageId: "",
   })
 
   const [selectedCurrency, setSelectedCurrency] = useState<Currency | null>(null)
@@ -149,8 +151,11 @@ export default function SubmitScriptPage() {
       setIsLoadingScript(true)
       
       const fetchScript = async () => {
+        const c = new AbortController()
+        const t = setTimeout(() => c.abort(), 8000)
         try {
-          const response = await fetch(`/api/scripts/${scriptId}`)
+          const response = await fetch(`/api/scripts/${scriptId}`, { signal: c.signal })
+          clearTimeout(t)
           if (response.ok) {
             const script = await response.json()
             
@@ -167,6 +172,8 @@ export default function SubmitScriptPage() {
               featured: script.featured || false,
               currency: script.currency || "",
               currencySymbol: script.currency_symbol || "",
+              tebexStoreToken: script.tebexStoreToken || script.tebex_store_token || "",
+              tebexPackageId: script.tebexPackageId || script.tebex_package_id || "",
             })
             
             // Set selected currency if it exists
@@ -227,6 +234,7 @@ export default function SubmitScriptPage() {
           console.error('Error fetching script:', error)
           router.push('/scripts/submit')
         } finally {
+          clearTimeout(t)
           setIsLoadingScript(false)
         }
       }
@@ -237,7 +245,14 @@ export default function SubmitScriptPage() {
 
   // Redirect if not authenticated
   if (status === "loading" || isLoadingScript) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a] text-white">
+        <div className="flex items-center gap-3 text-gray-300">
+          <Loader2 className="h-5 w-5 animate-spin text-orange-500" />
+          <span>Loading...</span>
+        </div>
+      </div>
+    )
   }
 
   if (!session) {
@@ -484,6 +499,9 @@ export default function SubmitScriptPage() {
         screenshots: media.screenshots,
         cover_image: media.coverImage,
         youtube_video_link: youtubeVideoLink.trim() || null,
+        // Tebex Headless integration (per-seller webstore). Optional; null until linked.
+        tebexStoreToken: formData.tebexStoreToken.trim() || null,
+        tebexPackageId: formData.tebexPackageId.trim() || null,
         status: "pending" as const,
       }
 
@@ -544,13 +562,13 @@ export default function SubmitScriptPage() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen text-white relative overflow-hidden">
+      <div className="min-h-screen bg-[#0a0a0a] text-white relative overflow-hidden">
         <AnimatedParticles />
 
         {/* Animated background */}
         <div className="fixed inset-0 -z-10">
           <motion.div
-            className="absolute inset-0 bg-gradient-to-br from-black via-gray-900 to-black"
+            className="absolute inset-0 bg-gradient-to-br from-[#0a0a0a] via-[#0d0d0f] to-[#0a0a0a]"
             animate={{
               background: [
                 "radial-gradient(circle at 20% 50%, rgba(249, 115, 22, 0.05) 0%, transparent 50%)",
@@ -568,14 +586,14 @@ export default function SubmitScriptPage() {
 
         {/* Header */}
         <motion.div
-          className="bg-gradient-to-r from-orange-500/10 to-yellow-400/10 py-12 px-4 sm:px-6 lg:px-8 border-b border-gray-800/50"
+          className="bg-gradient-to-r from-orange-500/10 to-yellow-400/10 py-8 sm:py-12 px-4 sm:px-6 lg:px-8 border-b border-white/[0.08]"
           initial={{ opacity: 0, y: -50 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
-          <div className="max-w-7xl mx-auto text-center py-12">
+          <div className="max-w-7xl mx-auto text-center py-8 sm:py-12">
             <motion.h1
-              className="text-4xl md:text-5xl font-bold mb-4"
+              className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
@@ -586,7 +604,7 @@ export default function SubmitScriptPage() {
               </span>
             </motion.h1>
             <motion.p
-              className="text-xl text-gray-300 max-w-3xl mx-auto"
+              className="text-base sm:text-xl text-gray-300 max-w-3xl mx-auto px-2"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
@@ -596,8 +614,8 @@ export default function SubmitScriptPage() {
           </div>
         </motion.div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
             {/* Form Section */}
             <motion.div
               ref={formRef}
@@ -608,7 +626,7 @@ export default function SubmitScriptPage() {
             >
               <form onSubmit={handleSubmit} className="space-y-8">
                 {/* Basic Information */}
-                <Card className="bg-gray-800/30 border-gray-700/50 backdrop-blur-sm">
+                <Card className="bg-white/[0.04] border-white/[0.08] backdrop-blur-xl rounded-2xl">
                   <CardHeader>
                     <CardTitle className="text-white flex items-center gap-2">
                       <FileText className="h-5 w-5 text-orange-500" />
@@ -625,7 +643,7 @@ export default function SubmitScriptPage() {
                         value={formData.title}
                         onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                         placeholder="Enter your script title"
-                        className="mt-2 bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-orange-500"
+                        className="mt-2 bg-white/[0.03] border-white/[0.08] text-white placeholder-gray-500 focus:border-orange-500 focus-visible:ring-orange-500/40 focus-visible:ring-2"
                         required
                       />
                     </div>
@@ -640,7 +658,7 @@ export default function SubmitScriptPage() {
                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                         placeholder="Describe your script in detail..."
                         rows={4}
-                        className="mt-2 bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-orange-500"
+                        className="mt-2 bg-white/[0.03] border-white/[0.08] text-white placeholder-gray-500 focus:border-orange-500 focus-visible:ring-orange-500/40 focus-visible:ring-2"
                         required
                       />
                     </div>
@@ -654,10 +672,10 @@ export default function SubmitScriptPage() {
                           value={formData.category}
                           onValueChange={(value) => setFormData({ ...formData, category: value })}
                         >
-                          <SelectTrigger className="mt-2 bg-gray-900/50 border-gray-700 text-white">
+                          <SelectTrigger className="mt-2 bg-white/[0.03] border-white/[0.08] text-white focus:ring-orange-500/40">
                             <SelectValue placeholder="Select category" />
                           </SelectTrigger>
-                          <SelectContent className="bg-gray-900 border-gray-700">
+                          <SelectContent className="bg-[#0d0d0f] border-white/[0.08] text-white">
                             {scriptCategories.map((category) => (
                               <SelectItem key={category.value} value={category.value}>
                                 {category.label}
@@ -675,8 +693,8 @@ export default function SubmitScriptPage() {
                               type="button"
                               variant="outline"
                               className={cn(
-                                "mt-2 w-full justify-between bg-gray-900/50 border-gray-700 text-white hover:bg-gray-800/50",
-                                formData.framework.length === 0 && "text-gray-400"
+                                "mt-2 w-full justify-between bg-white/[0.03] border-white/[0.08] text-white hover:bg-white/[0.06] hover:text-white",
+                                formData.framework.length === 0 && "text-gray-500"
                               )}
                             >
                               {formData.framework.length > 0
@@ -685,14 +703,14 @@ export default function SubmitScriptPage() {
                               <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
                             </Button>
                           </PopoverTrigger>
-                          <PopoverContent className="w-[200px] p-0 bg-gray-900 border-gray-700" align="start">
+                          <PopoverContent className="w-[200px] p-0 bg-[#0d0d0f] border-white/[0.08]" align="start">
                             <div className="p-2 space-y-2">
                               {frameworks.map((fw) => {
                                 const checked = formData.framework.includes(fw.value)
                                 return (
                                   <label
                                     key={fw.value}
-                                    className="flex items-center gap-2 px-2 py-1.5 rounded-sm hover:bg-gray-800 cursor-pointer"
+                                    className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-white/[0.06] cursor-pointer"
                                   >
                                     <Checkbox
                                       checked={checked}
@@ -702,7 +720,7 @@ export default function SubmitScriptPage() {
                                           : formData.framework.filter((v) => v !== fw.value)
                                         setFormData({ ...formData, framework: next })
                                       }}
-                                      className="border-gray-600 data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500"
+                                      className="border-white/[0.2] data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500"
                                     />
                                     <span className="text-sm text-white">{fw.label}</span>
                                   </label>
@@ -738,7 +756,7 @@ export default function SubmitScriptPage() {
                           id="sellerName"
                           value={formData.sellerName}
                           readOnly
-                          className="mt-2 bg-gray-800/50 border-gray-600 text-gray-300 cursor-not-allowed"
+                          className="mt-2 bg-white/[0.02] border-white/[0.06] text-gray-400 cursor-not-allowed"
                         />
                         <p className="text-xs text-gray-500 mt-1">Automatically filled from your Discord account</p>
                       </div>
@@ -752,7 +770,7 @@ export default function SubmitScriptPage() {
                           type="email"
                           value={formData.sellerEmail}
                           readOnly
-                          className="mt-2 bg-gray-800/50 border-gray-600 text-gray-300 cursor-not-allowed"
+                          className="mt-2 bg-white/[0.02] border-white/[0.06] text-gray-400 cursor-not-allowed"
                         />
                         <p className="text-xs text-gray-500 mt-1">Automatically filled from your Discord account</p>
                       </div>
@@ -761,7 +779,7 @@ export default function SubmitScriptPage() {
                 </Card>
 
                 {/* Pricing */}
-                <Card className="bg-gray-800/30 border-gray-700/50 backdrop-blur-sm">
+                <Card className="bg-white/[0.04] border-white/[0.08] backdrop-blur-xl rounded-2xl">
                   <CardHeader>
                     <CardTitle className="text-white flex items-center gap-2">
                       <DollarSign className="h-5 w-5 text-orange-500" />
@@ -770,7 +788,7 @@ export default function SubmitScriptPage() {
                   </CardHeader>
                   <CardContent className="space-y-6">
                     {/* Free Toggle */}
-                    <div className="flex items-center space-x-2 pb-4 border-b border-gray-700">
+                    <div className="flex items-center space-x-2 pb-4 border-b border-white/[0.08]">
                       <Switch
                         id="isFree"
                         checked={isFree}
@@ -823,7 +841,7 @@ export default function SubmitScriptPage() {
                             currencies="all"
                             variant="default"
                             className={cn(
-                              "bg-gray-900/50 border-gray-700 text-white",
+                              "bg-white/[0.03] border-white/[0.08] text-white",
                               isFree && "cursor-not-allowed opacity-50"
                             )}
                           />
@@ -845,7 +863,7 @@ export default function SubmitScriptPage() {
                               onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                               placeholder="25.99"
                               className={cn(
-                                "pr-10 bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-orange-500",
+                                "pr-10 bg-white/[0.03] border-white/[0.08] text-white placeholder-gray-500 focus:border-orange-500 focus-visible:ring-orange-500/40 focus-visible:ring-2",
                                 isFree && "cursor-not-allowed opacity-50 bg-gray-800/30"
                               )}
                               required={!isFree}
@@ -873,7 +891,7 @@ export default function SubmitScriptPage() {
                               onChange={(e) => setFormData({ ...formData, originalPrice: e.target.value })}
                               placeholder="35.99"
                               className={cn(
-                                "pr-10 bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-orange-500",
+                                "pr-10 bg-white/[0.03] border-white/[0.08] text-white placeholder-gray-500 focus:border-orange-500 focus-visible:ring-orange-500/40 focus-visible:ring-2",
                                 isFree && "cursor-not-allowed opacity-50 bg-gray-800/30"
                               )}
                               disabled={isFree || !selectedCurrency}
@@ -902,7 +920,7 @@ export default function SubmitScriptPage() {
                   </CardContent>
                 </Card>
                 {/* Link */}
-                <Card className="bg-gray-800/30 border-gray-700/50 backdrop-blur-sm">
+                <Card className="bg-white/[0.04] border-white/[0.08] backdrop-blur-xl rounded-2xl">
                   <CardHeader>
                     <CardTitle className="text-white flex items-center gap-2">
                       <ExternalLink className="h-7 w-5 text-orange-500" />
@@ -914,7 +932,7 @@ export default function SubmitScriptPage() {
                       value={link}
                       onChange={(e) => setLink(e.target.value)}
                       placeholder="https://demo.example.com"
-                      className="bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-orange-500"
+                      className="bg-white/[0.03] border-white/[0.08] text-white placeholder-gray-500 focus:border-orange-500 focus-visible:ring-orange-500/40 focus-visible:ring-2"
                       type="url"
                     />
                     <p className="text-sm text-gray-400 mt-2">
@@ -923,8 +941,50 @@ export default function SubmitScriptPage() {
                   </CardContent>
                 </Card>
 
+                {/* Tebex Integration */}
+                <Card className="bg-white/[0.04] border-white/[0.08] backdrop-blur-xl rounded-2xl">
+                  <CardHeader>
+                    <CardTitle className="text-white flex items-center gap-2">
+                      <Package className="h-5 w-5 text-orange-500" />
+                      Tebex Integration
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <p className="text-sm text-gray-400">
+                      Add these to sell this script directly via your Tebex store
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="tebexStoreToken" className="text-white font-medium">
+                          Tebex Store Token (Optional)
+                        </Label>
+                        <Input
+                          id="tebexStoreToken"
+                          value={formData.tebexStoreToken}
+                          onChange={(e) => setFormData({ ...formData, tebexStoreToken: e.target.value })}
+                          placeholder="e.g. abcd1234efgh5678"
+                          className="mt-2 bg-white/[0.03] border-white/[0.08] text-white placeholder-gray-500 focus:border-orange-500 focus-visible:ring-orange-500/40 focus-visible:ring-2"
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="tebexPackageId" className="text-white font-medium">
+                          Tebex Package ID (Optional)
+                        </Label>
+                        <Input
+                          id="tebexPackageId"
+                          value={formData.tebexPackageId}
+                          onChange={(e) => setFormData({ ...formData, tebexPackageId: e.target.value })}
+                          placeholder="e.g. 1234567"
+                          className="mt-2 bg-white/[0.03] border-white/[0.08] text-white placeholder-gray-500 focus:border-orange-500 focus-visible:ring-orange-500/40 focus-visible:ring-2"
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
                 {/* Features */}
-                <Card className="bg-gray-800/30 border-gray-700/50 backdrop-blur-sm">
+                <Card className="bg-white/[0.04] border-white/[0.08] backdrop-blur-xl rounded-2xl">
                   <CardHeader>
                     <CardTitle className="text-white flex items-center gap-2">
                       <Zap className="h-5 w-5 text-orange-500" />
@@ -944,7 +1004,7 @@ export default function SubmitScriptPage() {
                           value={feature.text}
                           onChange={(e) => updateFeature(feature.id, e.target.value)}
                           placeholder="Describe a key feature..."
-                          className="flex-1 bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-orange-500"
+                          className="flex-1 bg-white/[0.03] border-white/[0.08] text-white placeholder-gray-500 focus:border-orange-500 focus-visible:ring-orange-500/40 focus-visible:ring-2"
                         />
                         {features.length > 1 && (
                           <Button
@@ -964,7 +1024,7 @@ export default function SubmitScriptPage() {
                       type="button"
                       onClick={addFeature}
                       variant="outline"
-                      className="w-full border-gray-600 text-gray-300 hover:text-white hover:border-orange-500"
+                      className="w-full border-white/[0.12] bg-transparent text-gray-300 hover:text-white hover:border-orange-500 hover:bg-white/[0.04]"
                     >
                       <Plus className="mr-2 h-4 w-4" />
                       Add Feature
@@ -973,7 +1033,7 @@ export default function SubmitScriptPage() {
                 </Card>
 
                 {/* Requirements */}
-                <Card className="bg-gray-800/30 border-gray-700/50 backdrop-blur-sm">
+                <Card className="bg-white/[0.04] border-white/[0.08] backdrop-blur-xl rounded-2xl">
                   <CardHeader>
                     <CardTitle className="text-white flex items-center gap-2">
                       <Package className="h-5 w-5 text-orange-500" />
@@ -993,7 +1053,7 @@ export default function SubmitScriptPage() {
                           value={requirement.text}
                           onChange={(e) => updateRequirement(requirement.id, e.target.value)}
                           placeholder="e.g., QBCore Framework, MySQL Database..."
-                          className="flex-1 bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-orange-500"
+                          className="flex-1 bg-white/[0.03] border-white/[0.08] text-white placeholder-gray-500 focus:border-orange-500 focus-visible:ring-orange-500/40 focus-visible:ring-2"
                         />
                         {requirements.length > 1 && (
                           <Button
@@ -1013,7 +1073,7 @@ export default function SubmitScriptPage() {
                       type="button"
                       onClick={addRequirement}
                       variant="outline"
-                      className="w-full border-gray-600 text-gray-300 hover:text-white hover:border-orange-500"
+                      className="w-full border-white/[0.12] bg-transparent text-gray-300 hover:text-white hover:border-orange-500 hover:bg-white/[0.04]"
                     >
                       <Plus className="mr-2 h-4 w-4" />
                       Add Requirement
@@ -1022,7 +1082,7 @@ export default function SubmitScriptPage() {
                 </Card>
 
                 {/* Other Links */}
-                <Card className="bg-gray-800/30 border-gray-700/50 backdrop-blur-sm">
+                <Card className="bg-white/[0.04] border-white/[0.08] backdrop-blur-xl rounded-2xl">
                   <CardHeader>
                     <CardTitle className="text-white flex items-center gap-2">
                       <ExternalLink className="h-5 w-5 text-orange-500" />
@@ -1042,7 +1102,7 @@ export default function SubmitScriptPage() {
                           value={otherLink.text}
                           onChange={(e) => updateOtherLink(otherLink.id, e.target.value)}
                           placeholder="https://example.com/documentation"
-                          className="flex-1 bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-orange-500"
+                          className="flex-1 bg-white/[0.03] border-white/[0.08] text-white placeholder-gray-500 focus:border-orange-500 focus-visible:ring-orange-500/40 focus-visible:ring-2"
                         />
                         {otherLinks.length > 1 && (
                           <Button
@@ -1062,7 +1122,7 @@ export default function SubmitScriptPage() {
                       type="button"
                       onClick={addOtherLink}
                       variant="outline"
-                      className="w-full border-gray-600 text-gray-300 hover:text-white hover:border-orange-500"
+                      className="w-full border-white/[0.12] bg-transparent text-gray-300 hover:text-white hover:border-orange-500 hover:bg-white/[0.04]"
                     >
                       <Plus className="mr-2 h-4 w-4" />
                       Add Link
@@ -1071,7 +1131,7 @@ export default function SubmitScriptPage() {
                 </Card>
 
                 {/* Media Upload */}
-                <Card className="bg-gray-800/30 border-gray-700/50 backdrop-blur-sm">
+                <Card className="bg-white/[0.04] border-white/[0.08] backdrop-blur-xl rounded-2xl">
                   <CardHeader>
                     <CardTitle className="text-white flex items-center gap-2">
                       <ImageIcon className="h-5 w-5 text-orange-500" />
@@ -1091,7 +1151,7 @@ export default function SubmitScriptPage() {
                       />
                       <label
                         htmlFor="cover-image-upload"
-                        className={`mt-2 border-2 border-dashed border-gray-600 rounded-lg p-8 text-center transition-colors block ${
+                        className={`mt-2 border-2 border-dashed border-white/[0.12] bg-white/[0.02] rounded-xl p-6 sm:p-8 text-center transition-colors block ${
                           uploadingCoverImage 
                             ? "opacity-50 cursor-not-allowed" 
                             : "hover:border-orange-500 cursor-pointer"
@@ -1145,7 +1205,7 @@ export default function SubmitScriptPage() {
                       />
                       <label
                         htmlFor="screenshot-upload"
-                        className={`mt-2 border-2 border-dashed border-gray-600 rounded-lg p-8 text-center transition-colors block ${
+                        className={`mt-2 border-2 border-dashed border-white/[0.12] bg-white/[0.02] rounded-xl p-6 sm:p-8 text-center transition-colors block ${
                           uploadingScreenshots 
                             ? "opacity-50 cursor-not-allowed" 
                             : "hover:border-orange-500 cursor-pointer"
@@ -1201,7 +1261,7 @@ export default function SubmitScriptPage() {
                       />
                       <label
                         htmlFor="video-upload"
-                        className={`mt-2 border-2 border-dashed border-gray-600 rounded-lg p-8 text-center transition-colors block ${
+                        className={`mt-2 border-2 border-dashed border-white/[0.12] bg-white/[0.02] rounded-xl p-6 sm:p-8 text-center transition-colors block ${
                           uploadingVideos 
                             ? "opacity-50 cursor-not-allowed" 
                             : "hover:border-orange-500 cursor-pointer"
@@ -1254,7 +1314,7 @@ export default function SubmitScriptPage() {
                         value={youtubeVideoLink}
                         onChange={(e) => handleYoutubeLinkChange(e.target.value)}
                         placeholder="https://www.youtube.com/watch?v=..."
-                        className={`mt-2 bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-orange-500 ${
+                        className={`mt-2 bg-white/[0.03] border-white/[0.08] text-white placeholder-gray-500 focus:border-orange-500 focus-visible:ring-orange-500/40 focus-visible:ring-2 ${
                           youtubeLinkError ? "border-red-500 focus:border-red-500" : ""
                         }`}
                       />
@@ -1269,32 +1329,42 @@ export default function SubmitScriptPage() {
                 </Card>
 
                 {/* Submit Button */}
-                <motion.div className="flex gap-4" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                  <Button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="flex-1 bg-gradient-to-r from-orange-500 to-yellow-400 hover:from-orange-600 hover:to-yellow-500 text-black font-bold py-3 text-lg shadow-lg disabled:opacity-50"
+                <div className="space-y-4">
+                  <div className="flex items-start gap-2 rounded-xl border border-white/[0.08] bg-white/[0.02] p-4 text-sm text-gray-400">
+                    <AlertCircle className="h-4 w-4 text-orange-500 mt-0.5 flex-shrink-0" />
+                    <span>All submissions are reviewed by our team before going live. This usually takes 1-3 business days.</span>
+                  </div>
+                  <motion.div
+                    className="flex flex-col sm:flex-row gap-4"
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
                   >
-                    {isSubmitting ? (
-                      <>
-                        <Settings className="mr-2 h-5 w-5 animate-spin" />
-                        {isEditMode ? 'Updating...' : 'Submitting...'}
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="mr-2 h-5 w-5" />
-                        {isEditMode ? 'Update Script' : 'Submit Script'}
-                      </>
-                    )}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="px-8 border-gray-600 text-gray-300 hover:text-white hover:border-orange-500"
-                  >
-                    Save Draft
-                  </Button>
-                </motion.div>
+                    <Button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="flex-1 w-full bg-gradient-to-r from-orange-500 to-yellow-400 hover:from-orange-600 hover:to-yellow-500 text-black font-bold py-3 text-base sm:text-lg shadow-lg disabled:opacity-50"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <Settings className="mr-2 h-5 w-5 animate-spin" />
+                          {isEditMode ? 'Updating...' : 'Submitting...'}
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="mr-2 h-5 w-5" />
+                          {isEditMode ? 'Update Script' : 'Submit Script'}
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full sm:w-auto px-8 border-white/[0.12] bg-transparent text-gray-300 hover:text-white hover:border-orange-500 hover:bg-white/[0.04]"
+                    >
+                      Save Draft
+                    </Button>
+                  </motion.div>
+                </div>
               </form>
             </motion.div>
 
@@ -1307,7 +1377,7 @@ export default function SubmitScriptPage() {
               transition={{ duration: 0.5 }}
             >
               <div className="sticky top-24 space-y-6">
-                <Card className="bg-gray-800/30 border-gray-700/50 backdrop-blur-sm">
+                <Card className="bg-white/[0.04] border-white/[0.08] backdrop-blur-xl rounded-2xl">
                   <CardHeader>
                     <CardTitle className="text-white flex items-center gap-2">
                       <Zap className="h-5 w-5 text-orange-500" />
@@ -1318,7 +1388,7 @@ export default function SubmitScriptPage() {
                     <div className="space-y-4">
                       {/* Cover Image / Screenshots Preview */}
                       {media.coverImage || media.screenshots.length > 0 ? (
-                        <div className="aspect-video bg-gray-700 rounded-lg overflow-hidden">
+                        <div className="aspect-video bg-white/[0.04] rounded-xl overflow-hidden">
                           <img
                             src={media.coverImage || media.screenshots[0]}
                             alt={media.coverImage ? "Cover image" : "Main screenshot"}
@@ -1326,7 +1396,7 @@ export default function SubmitScriptPage() {
                           />
                         </div>
                       ) : (
-                        <div className="aspect-video bg-gray-700 rounded-lg flex items-center justify-center">
+                        <div className="aspect-video bg-white/[0.04] rounded-xl flex items-center justify-center border border-white/[0.06]">
                           <ImageIcon className="h-12 w-12 text-gray-500" />
                         </div>
                       )}
@@ -1335,7 +1405,7 @@ export default function SubmitScriptPage() {
                       {media.screenshots.length > 1 && (
                         <div className="grid grid-cols-3 gap-2">
                           {media.screenshots.slice(1, 4).map((screenshot, index) => (
-                            <div key={index} className="aspect-square bg-gray-700 rounded-lg overflow-hidden">
+                            <div key={index} className="aspect-square bg-white/[0.04] rounded-lg overflow-hidden">
                               <img
                                 src={screenshot}
                                 alt={`Screenshot ${index + 2}`}
@@ -1344,7 +1414,7 @@ export default function SubmitScriptPage() {
                             </div>
                           ))}
                           {media.screenshots.length > 4 && (
-                            <div className="aspect-square bg-gray-700 rounded-lg flex items-center justify-center">
+                            <div className="aspect-square bg-white/[0.04] rounded-lg flex items-center justify-center border border-white/[0.06]">
                               <span className="text-gray-400 text-sm">+{media.screenshots.length - 4}</span>
                             </div>
                           )}
@@ -1400,7 +1470,7 @@ export default function SubmitScriptPage() {
                           ))}
                       </div>
 
-                      <div className="pt-4 border-t border-gray-700">
+                      <div className="pt-4 border-t border-white/[0.08]">
                         <div className="text-sm text-gray-400">
                           <div className="flex items-center gap-2">
                             <Star className="h-4 w-4" />
@@ -1412,7 +1482,7 @@ export default function SubmitScriptPage() {
                   </CardContent>
                 </Card>
 
-                <Card className="bg-gray-800/30 border-gray-700/50 backdrop-blur-sm">
+                <Card className="bg-white/[0.04] border-white/[0.08] backdrop-blur-xl rounded-2xl">
                   <CardHeader>
                     <CardTitle className="text-white flex items-center gap-2">
                       <AlertCircle className="h-5 w-5 text-orange-500" />

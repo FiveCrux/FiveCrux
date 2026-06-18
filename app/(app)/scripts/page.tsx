@@ -55,6 +55,7 @@ import { isVerifiedCreator } from "@/lib/utils";
 import Image from "next/image";
 import { InfiniteMovingCards } from "@/componentss/ui/infinite-moving-cards";
 import FeaturedScriptCard from "@/componentss/featured-scripts/featured-script-card";
+import { MARKETPLACE_SEED } from "@/lib/marketplace-seed";
 // Animated background particles - Client only to avoid hydration issues
 const AnimatedParticles = () => {
   const [mounted, setMounted] = useState(false);
@@ -123,8 +124,13 @@ export default function ScriptsPage() {
   >([]);
   const [onSaleOnly, setOnSaleOnly] = useState(false);
   const [freeOnly, setFreeOnly] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(searchParams.get("search") ?? "");
   const [openFilter, setOpenFilter] = useState<string | null>(null);
+
+  // Sync search box with the ?search= URL param (e.g. coming from the homepage hero search).
+  useEffect(() => {
+    setSearchQuery(searchParams.get("search") ?? "");
+  }, [searchParams]);
   const [activeTab, setActiveTab] = useState<"all" | "featured" | "onsale">("all");
 
   type UIScript = {
@@ -168,12 +174,21 @@ export default function ScriptsPage() {
       try {
         setLoading(true);
         console.log("Loading scripts...");
-        const [scriptsRes, adsRes] = await Promise.all([
-          fetch(`/api/scripts`, { cache: "no-store" }),
-          fetch(`/api/ads/scripts`, { cache: "no-store" }),
+        // Per-request 8s timeout + allSettled so one slow/hanging endpoint
+        // (e.g. ads when the DB is unreachable) never blocks the whole catalog.
+        const fetchT = (url: string) => {
+          const c = new AbortController();
+          const t = setTimeout(() => c.abort(), 8000);
+          return fetch(url, { cache: "no-store", signal: c.signal }).finally(() => clearTimeout(t));
+        };
+        const [scriptsR, adsR] = await Promise.allSettled([
+          fetchT(`/api/scripts`),
+          fetchT(`/api/ads/scripts`),
         ]);
+        const scriptsRes = scriptsR.status === "fulfilled" ? scriptsR.value : null;
+        const adsRes = adsR.status === "fulfilled" ? adsR.value : null;
 
-        if (scriptsRes.ok) {
+        if (scriptsRes && scriptsRes.ok) {
           const data = await scriptsRes.json();
           console.log("Scripts API data:", data);
           console.log("Scripts count:", data.scripts?.length || 0);
@@ -251,7 +266,7 @@ export default function ScriptsPage() {
           }
         }
 
-        if (adsRes.ok) {
+        if (adsRes && adsRes.ok) {
           const adsData = await adsRes.json();
           setAds(adsData.ads || []);
         }
@@ -269,7 +284,10 @@ export default function ScriptsPage() {
     const fetchFeaturedScripts = async () => {
       try {
         setScriptsLoading(true);
-        const response = await fetch("/api/featured-scripts?status=active", { cache: "no-store" });
+        const c = new AbortController();
+        const t = setTimeout(() => c.abort(), 8000);
+        const response = await fetch("/api/featured-scripts?status=active", { cache: "no-store", signal: c.signal });
+        clearTimeout(t);
 
         if (response.ok) {
           const data = await response.json();
@@ -305,6 +323,44 @@ export default function ScriptsPage() {
 
     fetchFeaturedScripts();
   }, []);
+
+  // Demo fallback: when the API returns no scripts (empty DB / local dev), show the
+  // scraped marketplace seed so the page can be audited populated. Real data always wins.
+  // TODO: remove before production.
+  const seedScripts: UIScript[] = useMemo(
+    () =>
+      MARKETPLACE_SEED.map((p) => ({
+        id: Number(p.id),
+        title: p.title,
+        description: "",
+        price: p.price,
+        originalPrice: p.originalPrice,
+        currency_symbol: "$",
+        rating: p.rating ?? 0,
+        reviews: 0,
+        image: p.coverImage || "/placeholder.jpg",
+        category:
+          p.category === "mlo" ? "maps" : p.category === "vehicle" ? "vehicles" : p.category === "weapon" ? "scripts" : p.category === "prop" ? "props" : p.category,
+        categoryName: p.category,
+        seller: p.seller || "Unknown",
+        seller_image: p.sellerImage || null,
+        seller_roles: null,
+        discount: p.originalPrice && p.originalPrice > p.price ? Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100) : 0,
+        framework: p.framework || [],
+        priceCategory: p.price <= 15 ? "Budget" : p.price <= 30 ? "Standard" : "Premium",
+        tags: [],
+        lastUpdated: "",
+        featured: p.tag === "FEATURED",
+        free: !!p.free || p.price === 0,
+      })),
+    []
+  );
+
+  useEffect(() => {
+    if (!loading && allScripts.length === 0) {
+      setAllScripts(seedScripts);
+    }
+  }, [loading, allScripts.length, seedScripts]);
 
   const categories = [
     { id: "scripts", name: "Scripts" },
