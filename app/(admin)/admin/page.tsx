@@ -441,7 +441,7 @@ export default function AdminPage() {
 
         // Abort the upload after 8s so the dialog never hangs indefinitely.
         const c = new AbortController();
-        const t = setTimeout(() => c.abort(), 8000);
+        const t = setTimeout(() => c.abort(), 3000);
         let uploadResponse: Response;
         try {
           uploadResponse = await fetch("/api/upload", {

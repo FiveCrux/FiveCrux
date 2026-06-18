@@ -209,7 +209,7 @@ export default function AdvertisePage() {
     setAddingCartItemId(itemId)
 
     const c = new AbortController()
-    const t = setTimeout(() => c.abort(), 8000)
+    const t = setTimeout(() => c.abort(), 3000)
 
     try {
       const response = await fetch("/api/cart/add", {

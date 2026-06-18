@@ -142,7 +142,7 @@ export default function CategoryPage() {
     const fetchScripts = async () => {
       // 8s timeout guard — DB may be absent in dev, so never infinite-spin.
       const c = new AbortController()
-      const t = setTimeout(() => c.abort(), 8000)
+      const t = setTimeout(() => c.abort(), 3000)
       try {
         setLoading(true)
         const response = await fetch(`/api/scripts?status=all`, { signal: c.signal })

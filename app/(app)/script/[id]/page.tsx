@@ -520,7 +520,7 @@ export default function ScriptDetailPage() {
         // Abort a hanging/slow request (e.g. DB unreachable) after 8s so the page
         // falls back to the seed/error state instead of spinning forever.
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 8000);
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
         const response = await fetch(`/api/scripts/${scriptId}`, { signal: controller.signal });
         clearTimeout(timeoutId);
 

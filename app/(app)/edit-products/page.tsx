@@ -47,7 +47,7 @@ export default function EditProductsPage() {
       // Guard the blocking fetch with an 8s timeout so the loading state
       // never spins forever if the DB/API is unavailable (e.g. in dev).
       const c = new AbortController()
-      const t = setTimeout(() => c.abort(), 8000)
+      const t = setTimeout(() => c.abort(), 3000)
       try {
         const [scriptsRes, giveawaysRes] = await Promise.all([
           fetch('/api/scripts', { signal: c.signal }),
