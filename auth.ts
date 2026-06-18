@@ -28,8 +28,11 @@ export const authOptions: NextAuthOptions = {
 				})
 				return true
 			} catch (e) {
-				console.error("signIn upsert error", e)
-				return false
+				// Don't hard-fail login just because the user upsert hit a transient
+				// error (e.g. DB unreachable). Allow sign-in; profile/roles will sync
+				// on a later request once the DB is reachable.
+				console.error("signIn upsert error (allowing login anyway)", e)
+				return true
 			}
 		},
 		async jwt({ token, account }) {
