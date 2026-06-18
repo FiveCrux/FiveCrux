@@ -19,6 +19,19 @@ import { tebexOrders } from "@/lib/db/schema";
  * and returns the hosted checkout URL. Provisioning happens later via webhook.
  *
  * Body: { packageId, quantity?, returnUrl?, completeUrl?, custom? }
+ *
+ * The `custom` object is echoed back on the basket + every webhook payload, so
+ * it MUST carry everything the webhook needs to provision the entitlement once
+ * payment completes (see app/api/tebex/webhook/route.ts). For platform fees we
+ * mirror the metadata that app/api/cart/capture/route.ts reads from PayPal:
+ *   {
+ *     userId: string,                            // who to provision for
+ *     packageType: 'ads' | 'featured-scripts',   // which entitlement
+ *     packageId: 'starter'|'premium'|'executive',
+ *     slotsToAdd: number,                         // how many slots
+ *     durationMonths?: number,                    // ads: 1|3|6|12
+ *     durationWeeks?: number,                     // featured-scripts: 1|2|4|8
+ *   }
  */
 export async function POST(request: NextRequest) {
   try {
@@ -58,10 +71,18 @@ export async function POST(request: NextRequest) {
     const checkoutUrl = getCheckoutUrl(basket);
 
     // 4. Record the platform-fee order for later webhook reconciliation.
+    // Pull the userId out of `custom` (when provided) so the webhook can
+    // provision the entitlement for the right user. The full provisioning
+    // details live in `custom` and are echoed back on the webhook payload.
+    const provisioningUserId =
+      custom && typeof custom === "object" && typeof (custom as any).userId === "string"
+        ? (custom as any).userId
+        : null;
+
     await db.insert(tebexOrders).values({
       id: randomUUID(),
       basketIdent: basket.ident,
-      userId: null,
+      userId: provisioningUserId,
       kind: "platform_fee",
       storeToken,
       packageIds: [String(packageId)],

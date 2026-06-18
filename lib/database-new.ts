@@ -634,10 +634,13 @@ export async function createScript(scriptData: NewScript & { framework?: string 
     requirements: scriptData.requirements || [],
     link: scriptData.link || null,
     otherLinks: (scriptData as any).otherLinks || [],
+    // Tebex Headless integration: seller's own store token + package id (nullable).
+    tebexStoreToken: (scriptData as any).tebexStoreToken ?? null,
+    tebexPackageId: (scriptData as any).tebexPackageId ?? null,
     // Normalize framework as text[] for DB with validation
     framework: validatedFrameworks,
   };
-  
+
   const result = await db
     .insert(pendingScripts)
     .values(scriptWithDefaults)
@@ -874,6 +877,9 @@ export async function createProp(propData: Omit<NewPendingProp, 'id'> & { id?: s
       ...propData,
       id,
       images: propData.images || [],
+      // Tebex Headless integration: lister's own store token + package id (nullable).
+      tebexStoreToken: (propData as any).tebexStoreToken ?? null,
+      tebexPackageId: (propData as any).tebexPackageId ?? null,
     })
     .returning({ id: pendingProps.id });
 
@@ -1189,6 +1195,9 @@ export async function updateScriptForReapproval(id: number, updateData: any) {
     assignIfDefined('version', updateData.version);
     if (updateData.featured !== undefined) assignIfDefined('featured', Boolean(updateData.featured));
     if (updateData.free !== undefined) assignIfDefined('free', Boolean(updateData.free));
+    // Tebex Headless integration fields (nullable, accept null to clear)
+    if (updateData.tebexStoreToken !== undefined) assignIfDefined('tebexStoreToken', updateData.tebexStoreToken);
+    if (updateData.tebexPackageId !== undefined) assignIfDefined('tebexPackageId', updateData.tebexPackageId);
 
     console.log('Mapped update object for re-approval:', mappedUpdate);
 
@@ -1277,6 +1286,9 @@ export async function updatePendingScript(id: number, updateData: any) {
     assignIfDefined('version', updateData.version);
     if (updateData.featured !== undefined) assignIfDefined('featured', Boolean(updateData.featured));
     if (updateData.free !== undefined) assignIfDefined('free', Boolean(updateData.free));
+    // Tebex Headless integration fields (nullable, accept null to clear)
+    if (updateData.tebexStoreToken !== undefined) assignIfDefined('tebexStoreToken', updateData.tebexStoreToken);
+    if (updateData.tebexPackageId !== undefined) assignIfDefined('tebexPackageId', updateData.tebexPackageId);
 
     const result = await db.update(pendingScripts)
       .set(mappedUpdate)
@@ -1338,6 +1350,9 @@ export async function updateRejectedScriptForReapproval(id: number, updateData: 
     assignIfDefined('version', updateData.version);
     if (updateData.featured !== undefined) assignIfDefined('featured', Boolean(updateData.featured));
     if (updateData.free !== undefined) assignIfDefined('free', Boolean(updateData.free));
+    // Tebex Headless integration fields (nullable, accept null to clear)
+    if (updateData.tebexStoreToken !== undefined) assignIfDefined('tebexStoreToken', updateData.tebexStoreToken);
+    if (updateData.tebexPackageId !== undefined) assignIfDefined('tebexPackageId', updateData.tebexPackageId);
 
     const result = await db.transaction(async (tx) => {
       await tx.delete(rejectedScripts).where(eq(rejectedScripts.id, id));
@@ -1405,6 +1420,9 @@ export async function updateScript(id: number, updateData: any) {
     if (updateData.youtube_video_link !== undefined) assignIfDefined('youtubeVideoLink', updateData.youtube_video_link);
     assignIfDefined('version', updateData.version);
     if (updateData.featured !== undefined) assignIfDefined('featured', Boolean(updateData.featured));
+    // Tebex Headless integration fields (nullable, accept null to clear)
+    if (updateData.tebexStoreToken !== undefined) assignIfDefined('tebexStoreToken', updateData.tebexStoreToken);
+    if (updateData.tebexPackageId !== undefined) assignIfDefined('tebexPackageId', updateData.tebexPackageId);
 
     console.log('Mapped update object (approved_scripts):', mappedUpdate);
 

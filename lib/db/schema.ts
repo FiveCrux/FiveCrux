@@ -136,6 +136,11 @@ const basePropFields = {
   images: text('images').array().default([]),
   zipFile: text('zip_file').notNull(),
   createdBy: text('created_by').notNull().references(() => users.id),
+  // Tebex Headless integration: prop owner's OWN webstore public token and the
+  // Tebex package id that backs this prop. Nullable until the lister has linked
+  // their Tebex store / package.
+  tebexStoreToken: text('tebex_store_token'),
+  tebexPackageId: text('tebex_package_id'),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 };

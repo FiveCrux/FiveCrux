@@ -3,6 +3,7 @@ import { verifyTebexWebhook, type TebexWebhookPayload } from "@/lib/tebex";
 import { db } from "@/lib/db/client";
 import { tebexOrders } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { createAdSlots, createFeaturedScriptSlots } from "@/lib/database-new";
 
 /**
  * POST /api/tebex/webhook
@@ -87,6 +88,96 @@ async function updateOrderStatus(
   return null;
 }
 
+/**
+ * Provision a completed platform-fee purchase, MIRRORING the entitlement logic
+ * in app/api/cart/capture/route.ts (createAdSlots / createFeaturedScriptSlots).
+ *
+ * The provisioning details come from the order's stored `custom` JSON, falling
+ * back to the webhook payload's `custom` field (Tebex echoes the basket custom
+ * back on the payment subject). Expected shape (set by the platform-basket
+ * route):
+ *   {
+ *     userId, packageType: 'ads' | 'featured-scripts',
+ *     packageId, slotsToAdd, durationMonths?, durationWeeks?
+ *   }
+ *
+ * Resilient by design: never throws to the caller — logs and returns a result
+ * flag so the webhook still returns 200 and Tebex stops retrying.
+ */
+async function provisionPlatformFee(
+  order: { id: string; userId: string | null; custom: unknown },
+  payloadCustom: unknown,
+  fallbackOrderId: string
+): Promise<{ provisioned: boolean; reason?: string }> {
+  try {
+    // Normalize custom from either source (order row preferred, then payload).
+    const parse = (v: unknown): Record<string, any> | null => {
+      if (!v) return null;
+      if (typeof v === "string") {
+        try {
+          return JSON.parse(v);
+        } catch {
+          return null;
+        }
+      }
+      if (typeof v === "object") return v as Record<string, any>;
+      return null;
+    };
+
+    const meta = parse(order.custom) ?? parse(payloadCustom);
+    if (!meta) {
+      console.warn("Tebex webhook: platform_fee order has no usable custom metadata", order.id);
+      return { provisioned: false, reason: "no_custom_metadata" };
+    }
+
+    // userId: prefer the value persisted on the order row, then custom.
+    const userId: string | undefined =
+      order.userId ?? (typeof meta.userId === "string" ? meta.userId : undefined);
+    if (!userId) {
+      console.warn("Tebex webhook: platform_fee order missing userId", order.id);
+      return { provisioned: false, reason: "missing_user" };
+    }
+
+    const packageType: string | undefined = meta.packageType;
+    const packageId: string | undefined = meta.packageId;
+    const slotsToAdd: number = Number(meta.slotsToAdd ?? meta.slotsPerMonth ?? 1) || 1;
+    const durationMonths: number = Number(meta.durationMonths ?? 1) || 1;
+    const durationWeeks: number | undefined =
+      meta.durationWeeks != null ? Number(meta.durationWeeks) : undefined;
+
+    if (!packageId) {
+      console.warn("Tebex webhook: platform_fee order missing packageId", order.id);
+      return { provisioned: false, reason: "missing_package" };
+    }
+
+    // Mirror cart/capture: createAdSlots / createFeaturedScriptSlots expect one
+    // order-reference id per slot. PayPal used the PayPal order id; here we use
+    // the Tebex order id (basket-backed) as the per-slot reference.
+    const orderRefIds = Array(slotsToAdd).fill(fallbackOrderId);
+
+    if (packageType === "ads") {
+      await createAdSlots(userId, slotsToAdd, orderRefIds, packageId, durationMonths);
+      return { provisioned: true };
+    } else if (packageType === "featured-scripts") {
+      await createFeaturedScriptSlots(
+        userId,
+        slotsToAdd,
+        orderRefIds,
+        packageId,
+        0,
+        durationWeeks
+      );
+      return { provisioned: true };
+    }
+
+    console.warn("Tebex webhook: unknown platform_fee packageType", packageType);
+    return { provisioned: false, reason: "unknown_package_type" };
+  } catch (error) {
+    console.error("Tebex webhook: platform-fee provisioning failed:", error);
+    return { provisioned: false, reason: "provisioning_error" };
+  }
+}
+
 export async function POST(request: NextRequest) {
   // 1. Read the RAW body (required for signature verification).
   const rawBody = await request.text();
@@ -117,17 +208,23 @@ export async function POST(request: NextRequest) {
         const ids = extractIdentifiers(payload.subject);
         const updated = await updateOrderStatus("completed", ids);
 
-        // TODO(platform provisioning): when the matched order has
-        // kind === 'platform_fee', provision the purchased entitlements here,
-        // mirroring app/api/cart/capture/route.ts:
-        //   - parse the order's `custom` for { packageType, packageId,
-        //     slotsToAdd, durationMonths | durationWeeks, userId }
-        //   - call createAdSlots(...) for ads
-        //   - call createFeaturedScriptSlots(...) for featured scripts
-        // For kind === 'seller_product', the buyer is fulfilled by the
-        // seller's own Tebex store; we only need to mark the order completed.
-        if (updated && updated[0]?.kind === "platform_fee") {
-          // Provisioning intentionally left as a TODO for the wiring phase.
+        // When the matched order is a platform fee (ads / featured-script slots
+        // bought through FiveCrux's own Tebex store), provision the entitlement
+        // here, mirroring app/api/cart/capture/route.ts. For kind ===
+        // 'seller_product' the buyer is fulfilled by the seller's own Tebex
+        // store, so we only need the status update above.
+        const order = updated?.[0];
+        if (order && order.kind === "platform_fee") {
+          // Tebex echoes the basket `custom` back on the payment subject; use it
+          // as a fallback if the order row's custom is unavailable.
+          const payloadCustom = (payload.subject as any)?.custom;
+          const result = await provisionPlatformFee(order, payloadCustom, order.id);
+          if (!result.provisioned) {
+            console.warn(
+              "Tebex webhook: platform_fee order marked completed but NOT provisioned:",
+              { orderId: order.id, reason: result.reason }
+            );
+          }
         }
 
         return NextResponse.json({ ok: true });

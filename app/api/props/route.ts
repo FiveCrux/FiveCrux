@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { name, description, price, discountPercentage = 0, images, zipFile } = body;
+    const { name, description, price, discountPercentage = 0, images, zipFile, tebexStoreToken, tebexPackageId } = body;
 
     if (!name || !description || price === undefined || !zipFile) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -64,6 +64,9 @@ export async function POST(request: NextRequest) {
       images: images || [],
       zipFile,
       createdBy: (session.user as any).id,
+      // Tebex Headless integration: lister's own store token + package id (nullable)
+      tebexStoreToken: tebexStoreToken || null,
+      tebexPackageId: tebexPackageId || null,
     });
 
     return NextResponse.json({
