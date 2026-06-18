@@ -158,7 +158,7 @@ export default function CategoryPage() {
         )
         setScripts(categoryScripts)
       } catch (error) {
-        console.error("Error fetching scripts:", error)
+        if ((error as any)?.name !== "AbortError") console.error("Error fetching scripts:", error)
       } finally {
         clearTimeout(t)
         setLoading(false)

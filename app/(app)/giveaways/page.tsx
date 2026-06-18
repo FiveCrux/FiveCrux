@@ -301,7 +301,7 @@ export default function GiveawaysPage() {
           setEnteredGiveaways([]);
         }
       } catch (error) {
-        console.error("Error loading giveaways:", error);
+        if ((error as any)?.name !== "AbortError") console.error("Error loading giveaways:", error);
       } finally {
         clearTimeout(t);
         // SEED FALLBACK: on empty/error/timeout, show demo giveaways.
