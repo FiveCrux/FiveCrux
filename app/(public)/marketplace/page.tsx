@@ -83,7 +83,7 @@ export default function MarketplacePage() {
 
     const fetchProducts = async () => {
       const controller = new AbortController()
-      const timeout = setTimeout(() => controller.abort(), 8000)
+      const timeout = setTimeout(() => controller.abort(), 3000)
       try {
         setLoading(true)
         const res = await fetch("/api/scripts?status=all", { signal: controller.signal })

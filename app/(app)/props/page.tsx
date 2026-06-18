@@ -93,7 +93,7 @@ export default function PropsPage() {
         // (e.g. ads when the DB is unreachable) never blocks the whole catalog.
         const fetchT = (url: string) => {
           const c = new AbortController();
-          const t = setTimeout(() => c.abort(), 8000);
+          const t = setTimeout(() => c.abort(), 3000);
           return fetch(url, { cache: "no-store", signal: c.signal }).finally(() => clearTimeout(t));
         };
         const [propsR, adsR] = await Promise.allSettled([

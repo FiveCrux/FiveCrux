@@ -152,7 +152,7 @@ export default function SubmitScriptPage() {
       
       const fetchScript = async () => {
         const c = new AbortController()
-        const t = setTimeout(() => c.abort(), 8000)
+        const t = setTimeout(() => c.abort(), 3000)
         try {
           const response = await fetch(`/api/scripts/${scriptId}`, { signal: c.signal })
           clearTimeout(t)

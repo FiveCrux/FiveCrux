@@ -109,7 +109,7 @@ export default function ScriptsPage() {
         // (e.g. ads when the DB is unreachable) never blocks the whole catalog.
         const fetchT = (url: string) => {
           const c = new AbortController();
-          const t = setTimeout(() => c.abort(), 8000);
+          const t = setTimeout(() => c.abort(), 3000);
           return fetch(url, { cache: "no-store", signal: c.signal }).finally(() => clearTimeout(t));
         };
         const [scriptsR, adsR] = await Promise.allSettled([
@@ -216,7 +216,7 @@ export default function ScriptsPage() {
       try {
         setScriptsLoading(true);
         const c = new AbortController();
-        const t = setTimeout(() => c.abort(), 8000);
+        const t = setTimeout(() => c.abort(), 3000);
         const response = await fetch("/api/featured-scripts?status=active", { cache: "no-store", signal: c.signal });
         clearTimeout(t);
 

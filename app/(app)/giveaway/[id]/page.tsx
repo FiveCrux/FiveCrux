@@ -509,7 +509,7 @@ export default function GiveawayDetailPage() {
 
       // 8s timeout so we never infinite-spin if the DB/API is absent in dev.
       const c = new AbortController()
-      const t = setTimeout(() => c.abort(), 8000)
+      const t = setTimeout(() => c.abort(), 3000)
       try {
         fetchRefs.current.giveaway = true
         setFetchingStates(prev => ({ ...prev, giveaway: true }))
@@ -555,7 +555,7 @@ export default function GiveawayDetailPage() {
 
       // 8s timeout so the "More Giveaways" skeletons never spin forever.
       const c = new AbortController()
-      const t = setTimeout(() => c.abort(), 8000)
+      const t = setTimeout(() => c.abort(), 3000)
       try {
         fetchRefs.current.related = true
         setFetchingStates(prev => ({ ...prev, related: true }))

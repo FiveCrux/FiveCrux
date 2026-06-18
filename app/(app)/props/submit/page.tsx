@@ -46,7 +46,7 @@ export default function SubmitPropPage() {
 
       const fetchProp = async () => {
         const c = new AbortController()
-        const t = setTimeout(() => c.abort(), 8000)
+        const t = setTimeout(() => c.abort(), 3000)
         try {
           const response = await fetch(`/api/props/${propId}`, { signal: c.signal })
           if (response.ok) {

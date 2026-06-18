@@ -223,7 +223,7 @@ export default function GiveawaysPage() {
       // 8s timeout so the page never infinite-spins if the API is slow/down
       // (the DB may be absent in dev).
       const c = new AbortController();
-      const t = setTimeout(() => c.abort(), 8000);
+      const t = setTimeout(() => c.abort(), 3000);
       let gotGiveaways = false;
       try {
         setLoading(true);

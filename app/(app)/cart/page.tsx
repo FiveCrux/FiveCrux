@@ -43,7 +43,7 @@ export default function CartPage() {
     // Wrap the cart-loading fetch with an 8s AbortController timeout so the
     // page never infinite-spins when the DB is unavailable (e.g. in dev).
     const c = new AbortController()
-    const t = setTimeout(() => c.abort(), 8000)
+    const t = setTimeout(() => c.abort(), 3000)
 
     try {
       const response = await fetch("/api/cart", { signal: c.signal })
