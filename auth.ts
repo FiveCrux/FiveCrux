@@ -1,6 +1,28 @@
 import type { NextAuthOptions } from "next-auth"
 import Discord from "next-auth/providers/discord"
+import Credentials from "next-auth/providers/credentials"
 import { upsertUser, getUserById, getUserProfilePicture } from "@/lib/database-new"
+import { ensureDevUser } from "@/lib/dev-auth"
+
+// TODO: remove before production — local-only dev login. When ALLOW_DEV_LOGIN=true
+// the Impersonation widget can issue a REAL next-auth session (JWT cookie) for a
+// fixed test identity, so server routes (getServerSession) recognise it too.
+const ALLOW_DEV_LOGIN = process.env.ALLOW_DEV_LOGIN === "true"
+
+const devProviders = ALLOW_DEV_LOGIN
+	? [
+			Credentials({
+				id: "dev-credentials",
+				name: "Dev Login",
+				credentials: { key: { label: "Preset", type: "text" } },
+				async authorize(credentials) {
+					const u = await ensureDevUser(String(credentials?.key || ""))
+					if (!u) return null
+					return { id: u.id, name: u.name, email: u.email, username: u.username, roles: u.roles }
+				},
+			}),
+	  ]
+	: []
 
 export const authOptions: NextAuthOptions = {
 	providers: [
@@ -13,6 +35,7 @@ export const authOptions: NextAuthOptions = {
 				},
 			},
 		}),
+		...devProviders,
 	],
 	callbacks: {
 		async signIn({ user, profile }) {
