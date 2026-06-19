@@ -37,13 +37,21 @@ export async function PATCH(
     const { id } = await params
     const adId = parseInt(id)
     const ad = await getAdById(adId)
-    
+
     if (!ad) {
       return NextResponse.json({ error: "Ad not found" }, { status: 404 })
     }
 
+    // SECURITY: only the ad's owner or a staff member may edit it. (Previously
+    // any logged-in user could rewrite ANY public ad — e.g. its link → phishing.)
+    const roles = (session.user as any).roles || []
+    const isStaff = roles.includes("admin") || roles.includes("founder") || roles.includes("moderator")
+    if (!isStaff && ad.createdBy !== (session.user as any).id) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
+
     const body = await request.json()
-    
+
     // Check if ad is being updated and needs re-approval
     const needsReapproval = ad.status === 'active' && body.status === 'pending'
     
@@ -113,9 +121,16 @@ export async function DELETE(
     const { id } = await params
     const adId = parseInt(id)
     const ad = await getAdById(adId)
-    
+
     if (!ad) {
       return NextResponse.json({ error: "Ad not found" }, { status: 404 })
+    }
+
+    // SECURITY: only the ad's owner or staff may delete it.
+    const roles = (session.user as any).roles || []
+    const isStaff = roles.includes("admin") || roles.includes("founder") || roles.includes("moderator")
+    if (!isStaff && ad.createdBy !== (session.user as any).id) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
     // Delete the ad

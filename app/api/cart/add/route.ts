@@ -18,6 +18,8 @@ import {
     sql,
 } from "drizzle-orm";
 
+import { resolvePackage, parsePackageItemId } from "@/lib/ad-pricing";
+
 function generateNumericId() {
     return Math.floor(Date.now() / 1000) + Math.floor(Math.random() * 10000);
 }
@@ -30,10 +32,13 @@ function normalizeMetadata(metadata: unknown) {
     return metadata as Record<string, unknown>;
 }
 
+// Build a platform-slot cart item. SECURITY: the price and slot count come from
+// the server-side price table (lib/ad-pricing), derived from the itemId — NEVER
+// from the client. A tampered price / slotsToAdd is simply ignored.
 function getCustomPackageItem(
     itemType: string,
+    itemId: unknown,
     title: unknown,
-    price: unknown,
     metadata: unknown
 ) {
     const normalizedMetadata = normalizeMetadata(metadata);
@@ -42,8 +47,6 @@ function getCustomPackageItem(
 
     if (
         itemType !== "subscription" ||
-        typeof title !== "string" ||
-        price === undefined ||
         !normalizedMetadata ||
         !["ads", "featured-scripts"].includes(String(packageType)) ||
         !["Ad Slots", "Featured Script Slots"].includes(String(couponScope))
@@ -51,16 +54,30 @@ function getCustomPackageItem(
         return null;
     }
 
-    const parsedPrice = Number(price);
-
-    if (Number.isNaN(parsedPrice) || parsedPrice < 0) {
-        return { error: "Invalid price" } as const;
+    const parsed = parsePackageItemId(itemId);
+    if (!parsed) return { error: "Invalid package" } as const;
+    const pkg = resolvePackage(parsed.packageType, parsed.packageId, parsed.duration);
+    // packageType from itemId must agree with the metadata's packageType.
+    if (!pkg || pkg.packageType !== String(packageType)) {
+        return { error: "Unknown or invalid package" } as const;
     }
 
+    // Server-authoritative metadata: overwrite anything the client tried to set
+    // that affects price or provisioning.
+    const safeMetadata = {
+        ...normalizedMetadata,
+        packageType: pkg.packageType,
+        packageId: pkg.packageId,
+        slotsToAdd: pkg.slots,
+        slotsPerMonth: pkg.slots,
+        durationMonths: pkg.durationMonths,
+        ...(pkg.durationWeeks != null ? { durationWeeks: pkg.durationWeeks } : {}),
+    };
+
     return {
-        title,
-        price: parsedPrice,
-        metadata: normalizedMetadata,
+        title: typeof title === "string" && title.trim() ? title : `${couponScope} - ${pkg.packageId}`,
+        price: pkg.price,
+        metadata: safeMetadata,
     };
 }
 
@@ -128,7 +145,7 @@ export async function POST(request: NextRequest) {
         // 3. Fetch actual item or use provided package data
         let item;
 
-        const customPackageItem = getCustomPackageItem(itemType, title, price, metadata);
+        const customPackageItem = getCustomPackageItem(itemType, itemId, title, metadata);
 
         if (customPackageItem && "error" in customPackageItem) {
             return NextResponse.json(
@@ -143,25 +160,20 @@ export async function POST(request: NextRequest) {
             item = await db.query.subscriptions.findFirst({
                 where: eq(subscriptions.id, itemId),
             });
-        } else if (itemType === "prop" && typeof title === "string" && price !== undefined) {
-            const parsedPrice = Number(price);
-
-            if (Number.isNaN(parsedPrice)) {
-                return NextResponse.json(
-                    { error: "Invalid price" },
-                    { status: 400 }
-                );
-            }
-
-            item = {
-                title,
-                price: parsedPrice,
-                metadata: metadata ?? null,
-            } as any;
         } else {
-            item = await db.query.approvedProps.findFirst({
+            // Props: ALWAYS price from the DB (never the client). A tampered
+            // title/price in the request body is ignored.
+            const prop = await db.query.approvedProps.findFirst({
                 where: eq(approvedProps.id, itemId),
             });
+            if (prop) {
+                const dbPrice = prop.discountedPrice ?? prop.price;
+                item = {
+                    title: prop.name,
+                    price: Number(dbPrice),
+                    metadata: metadata ?? null,
+                } as any;
+            }
         }
 
         if (!item) {

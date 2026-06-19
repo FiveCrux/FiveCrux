@@ -51,7 +51,10 @@ export async function POST(request: NextRequest) {
       screenshots: body.screenshots || [],
       coverImage: body.cover_image || null,
       youtubeVideoLink: body.youtube_video_link || null,
-      featured: body.featured || false,
+      // SECURITY: "featured" is a paid placement (sold via featured-script slots).
+      // Only founders/admins may set it directly; a normal seller's submission is
+      // always featured:false regardless of what the request body claims.
+      featured: isFounderOrAdmin ? (body.featured || false) : false,
       free: body.free || false,
       // Tebex Headless integration: seller's own store token + package id (nullable)
       tebexStoreToken: body.tebexStoreToken || null,
