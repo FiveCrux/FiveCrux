@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import {
   Users,
@@ -34,7 +34,22 @@ import {
   Star,
   Tag,
   Video,
+  LayoutDashboard,
+  Inbox,
+  FileCode2,
+  Box,
+  Activity,
+  ChevronDown,
+  Check,
+  X,
+  Eye,
+  Menu,
+  LogOut,
+  CalendarDays,
 } from "lucide-react";
+// DEMO FALLBACK (TODO: remove before production): seed data so the dashboard
+// looks populated for design review when the real React Query lists are empty.
+import { MARKETPLACE_SEED } from "@/lib/marketplace-seed";
 import { Button } from "@/componentss/ui/button";
 import {
   Card,
@@ -348,6 +363,7 @@ export default function AdminPage() {
   }, [isFetching]);
 
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   // Check if user has moderator role
   const userRoles = (session?.user as any)?.roles || [];
@@ -501,6 +517,199 @@ export default function AdminPage() {
     pendingScripts: scripts.filter((s) => s.status === "pending").length,
     activeAds: ads.filter((a) => a.status === "active").length,
   };
+
+  // ---------------------------------------------------------------------------
+  // DEMO FALLBACK (TODO: remove before production)
+  // There is no DB in dev so the React Query lists are empty. To let the design
+  // be reviewed against the "Sidebar Console" mockup we present fallback numbers
+  // and a few demo pending rows pulled from MARKETPLACE_SEED. These are used
+  // ONLY when the corresponding real list is empty — real data + real handlers
+  // always take precedence. Demo rows' Approve/Reject are disabled (no-ops).
+  // ---------------------------------------------------------------------------
+  const hasRealData =
+    users.length > 0 ||
+    scripts.length > 0 ||
+    giveaways.length > 0 ||
+    props.length > 0 ||
+    ads.length > 0;
+
+  const DEMO_STATS = {
+    totalUsers: 1240,
+    totalScripts: 820,
+    totalGiveaways: 12,
+    totalProps: 240,
+    totalAds: 34,
+    pendingReview: 7,
+  };
+
+  // Display stats: prefer real counts, fall back to demo numbers when empty.
+  const displayStats = {
+    totalUsers: stats.totalUsers || (hasRealData ? 0 : DEMO_STATS.totalUsers),
+    totalScripts:
+      stats.totalScripts || (hasRealData ? 0 : DEMO_STATS.totalScripts),
+    totalGiveaways:
+      stats.totalGiveaways || (hasRealData ? 0 : DEMO_STATS.totalGiveaways),
+    totalProps: stats.totalProps || (hasRealData ? 0 : DEMO_STATS.totalProps),
+    totalAds: stats.totalAds || (hasRealData ? 0 : DEMO_STATS.totalAds),
+  };
+
+  // Real pending submissions across all content types, mapped into a single
+  // shape for the "Pending approvals" table.
+  type PendingRow = {
+    key: string;
+    title: string;
+    image: string;
+    type: "Script" | "Prop" | "Giveaway" | "Ad";
+    submitter: string;
+    when: string;
+    onApprove?: () => void;
+    onReject?: () => void;
+    onView?: () => void;
+    demo?: boolean;
+  };
+
+  const timeAgo = (iso?: string) => {
+    if (!iso) return "—";
+    const d = new Date(iso).getTime();
+    if (Number.isNaN(d)) return "—";
+    const diff = Date.now() - d;
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return "just now";
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    const days = Math.floor(hrs / 24);
+    return `${days}d ago`;
+  };
+
+  const realPendingRows: PendingRow[] = [
+    ...scripts
+      .filter((s) => s.status === "pending")
+      .map<PendingRow>((s) => ({
+        key: `script-${s.id}`,
+        title: s.title,
+        image: s.cover_image || s.images?.[0] || "",
+        type: "Script",
+        submitter: s.seller_name,
+        when: timeAgo(s.created_at),
+        onApprove: () => handleScriptAction(s.id, "approved"),
+        onReject: () => setRejectingScript(s.id),
+        onView: () => setViewingScript(s),
+      })),
+    ...props
+      .filter((p) => p.status === "pending")
+      .map<PendingRow>((p) => ({
+        key: `prop-${p.id}`,
+        title: p.name,
+        image: p.images?.[0] || "",
+        type: "Prop",
+        submitter: p.createdBy,
+        when: timeAgo(p.created_at),
+        onApprove: () => handlePropAction(p.id, "approved"),
+        onReject: () => setRejectingProp(p.id),
+      })),
+    ...giveaways
+      .filter((g) => g.status === "pending")
+      .map<PendingRow>((g) => ({
+        key: `giveaway-${g.id}`,
+        title: g.title,
+        image: (g as any).coverImage || g.images?.[0] || "",
+        type: "Giveaway",
+        submitter: g.creator_name,
+        when: timeAgo(g.created_at),
+        onApprove: () => handleGiveawayAction(g.id, "approved"),
+        onReject: () => setRejectingGiveaway(g.id),
+        onView: () => setViewingGiveaway(g),
+      })),
+    ...ads
+      .filter((a) => !a.status || a.status === "pending")
+      .map<PendingRow>((a) => ({
+        key: `ad-${a.id}`,
+        title: a.title,
+        image: (a as any).imageUrl || a.image || "",
+        type: "Ad",
+        submitter: a.creator_name,
+        when: timeAgo(a.created_at),
+        onApprove: () => handleAdAction(a.id, "approved"),
+        onReject: () => setRejectingAd(a.id),
+        onView: () => setViewingAd(a),
+      })),
+  ];
+
+  // Demo rows shown only when there are no real pending submissions.
+  const demoPendingRows: PendingRow[] = [
+    {
+      key: "demo-1",
+      title: MARKETPLACE_SEED[1]?.title ?? "Los Santos Medical Center",
+      image: MARKETPLACE_SEED[1]?.coverImage ?? "",
+      type: "Script",
+      submitter: MARKETPLACE_SEED[1]?.seller ?? "Kivo Studios",
+      when: "2h ago",
+      demo: true,
+    },
+    {
+      key: "demo-2",
+      title: MARKETPLACE_SEED[3]?.title ?? "Midnight Heist Garage",
+      image: MARKETPLACE_SEED[3]?.coverImage ?? "",
+      type: "Prop",
+      submitter: MARKETPLACE_SEED[3]?.seller ?? "DoItDigital",
+      when: "5h ago",
+      demo: true,
+    },
+    {
+      key: "demo-3",
+      title: MARKETPLACE_SEED[0]?.title ?? "LS Legion Square Park",
+      image: MARKETPLACE_SEED[0]?.coverImage ?? "",
+      type: "Giveaway",
+      submitter: MARKETPLACE_SEED[0]?.seller ?? "Forge Studios",
+      when: "1d ago",
+      demo: true,
+    },
+    {
+      key: "demo-4",
+      title: MARKETPLACE_SEED[5]?.title ?? "GAMING",
+      image: MARKETPLACE_SEED[5]?.coverImage ?? "",
+      type: "Ad",
+      submitter: MARKETPLACE_SEED[5]?.seller ?? "Atenea Store",
+      when: "3h ago",
+      demo: true,
+    },
+  ];
+
+  const pendingRows =
+    realPendingRows.length > 0 ? realPendingRows : demoPendingRows;
+  const pendingCount = realPendingRows.length || DEMO_STATS.pendingReview;
+
+  // Type badge colors for the pending table (semantic-ish per content type).
+  const typeBadgeClass: Record<PendingRow["type"], string> = {
+    Script: "bg-sky-500/10 text-sky-400 ring-sky-500/20",
+    Prop: "bg-amber-500/10 text-amber-400 ring-amber-500/20",
+    Giveaway: "bg-orange-500/10 text-orange-400 ring-orange-500/20",
+    Ad: "bg-fuchsia-500/10 text-fuchsia-400 ring-fuchsia-500/20",
+  };
+
+  // Sidebar navigation -> drives the SAME activeTab state as the original tabs.
+  // Items gated to moderator/founder mirror the original tab visibility rules.
+  const navItems: {
+    value: string;
+    label: string;
+    icon: any;
+    badge?: number;
+    gated?: boolean;
+  }[] = [
+    { value: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+    {
+      value: "pending",
+      label: "Pending",
+      icon: Inbox,
+      badge: pendingCount,
+    },
+    { value: "users", label: "Users", icon: Users, gated: true },
+    { value: "scripts", label: "Scripts", icon: FileCode2 },
+    { value: "giveaways", label: "Giveaways", icon: Gift },
+    { value: "props", label: "Props", icon: Box },
+    { value: "ads", label: "Ads", icon: Megaphone, gated: true },
+  ];
 
   // Filter scripts based on active filter
   const filteredScripts = scripts.filter((script) => {
@@ -675,280 +884,477 @@ export default function AdminPage() {
     return null; // useEffect will handle redirect
   }
 
+  // Pending-approvals table (shared by Dashboard + Pending sections). Maps the
+  // mapped pending rows (real or demo) into the mockup's table; Approve = green,
+  // Reject = red, View = neutral — all calling the existing handlers/dialogs.
+  const renderPendingTable = () => (
+    <div className="overflow-hidden rounded-2xl border border-white/[0.06] bg-[#0e0e0e]">
+      <div className="flex items-center justify-between border-b border-white/[0.06] px-5 py-4">
+        <div className="flex items-center gap-2.5">
+          <h2 className="text-sm font-bold">Pending approvals</h2>
+          <span className="rounded-full bg-orange-500/12 px-2 py-0.5 text-[11px] font-bold text-orange-400 ring-1 ring-orange-500/25 [font-variant-numeric:tabular-nums]">
+            {pendingCount} waiting
+          </span>
+          {realPendingRows.length === 0 && (
+            <span className="rounded-full bg-white/[0.06] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white/40 ring-1 ring-white/10">
+              Demo
+            </span>
+          )}
+        </div>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[640px] text-left">
+          <thead>
+            <tr className="border-b border-white/[0.05] text-[11px] font-semibold uppercase tracking-[0.14em] text-white/30">
+              <th className="px-5 py-3 font-semibold">Submission</th>
+              <th className="px-3 py-3 font-semibold">Type</th>
+              <th className="px-3 py-3 font-semibold">Submitter</th>
+              <th className="px-3 py-3 font-semibold">When</th>
+              <th className="px-5 py-3 text-right font-semibold">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/[0.05]">
+            {pendingRows.map((row) => (
+              <tr key={row.key} className="group hover:bg-white/[0.015]">
+                <td className="px-5 py-3.5">
+                  <div className="flex items-center gap-3">
+                    {row.image ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={row.image}
+                        alt={row.title}
+                        className="h-11 w-16 shrink-0 rounded-lg object-cover ring-1 ring-white/10"
+                      />
+                    ) : (
+                      <div className="grid h-11 w-16 shrink-0 place-items-center rounded-lg bg-white/[0.04] ring-1 ring-white/10">
+                        <ImageIcon className="h-4 w-4 text-white/25" />
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <div className="truncate text-[13px] font-semibold">
+                        {row.title}
+                      </div>
+                      <div className="text-[11px] text-white/35">
+                        {row.demo ? "Demo submission" : row.key}
+                      </div>
+                    </div>
+                  </div>
+                </td>
+                <td className="px-3 py-3.5">
+                  <span
+                    className={`rounded-md px-2 py-1 text-[11px] font-bold ring-1 ${typeBadgeClass[row.type]}`}
+                  >
+                    {row.type}
+                  </span>
+                </td>
+                <td className="px-3 py-3.5">
+                  <div className="flex items-center gap-2">
+                    <span className="grid h-6 w-6 place-items-center rounded-full bg-white/10 text-[10px] font-bold text-white/80">
+                      {(row.submitter || "?").charAt(0).toUpperCase()}
+                    </span>
+                    <span className="truncate text-[13px] font-medium text-white/80">
+                      {row.submitter || "Unknown"}
+                    </span>
+                  </div>
+                </td>
+                <td className="px-3 py-3.5 text-[12px] text-white/45">
+                  {row.when}
+                </td>
+                <td className="px-5 py-3.5">
+                  <div className="flex items-center justify-end gap-1.5">
+                    <button
+                      type="button"
+                      onClick={row.onApprove}
+                      disabled={row.demo || !row.onApprove}
+                      title={row.demo ? "Demo — disabled" : "Approve"}
+                      className="grid h-8 w-8 place-items-center rounded-lg bg-emerald-500/12 text-emerald-400 ring-1 ring-emerald-500/25 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      <Check className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={row.onReject}
+                      disabled={row.demo || !row.onReject}
+                      title={row.demo ? "Demo — disabled" : "Reject"}
+                      className="grid h-8 w-8 place-items-center rounded-lg bg-red-500/12 text-red-400 ring-1 ring-red-500/25 hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={row.onView}
+                      disabled={row.demo || !row.onView}
+                      title={row.demo ? "Demo — disabled" : "View"}
+                      className="grid h-8 w-8 place-items-center rounded-lg text-white/45 ring-1 ring-white/10 hover:bg-white/5 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+            {pendingRows.length === 0 && (
+              <tr>
+                <td colSpan={5} className="px-5 py-10 text-center text-sm text-white/40">
+                  Nothing waiting for review.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+
   return (
     <>
       <Navbar />
-      <div className="relative min-h-screen bg-[#0a0a0a] text-white overflow-hidden">
-        {/* Ambient background glow */}
-        <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          <div className="absolute -top-40 -left-32 h-96 w-96 rounded-full bg-orange-500/10 blur-3xl" />
-          <div className="absolute top-1/3 -right-32 h-96 w-96 rounded-full bg-yellow-400/5 blur-3xl" />
-        </div>
-
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          {/* Header */}
-          <motion.div
-            className="mb-8"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
+      <div className="relative min-h-screen bg-[#0a0a0a] text-white">
+        {/* Admin top bar (logo + Admin Panel tag, avatar + Logout) */}
+        <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-white/[0.06] bg-[#0a0a0a]/85 px-4 backdrop-blur-xl sm:px-6">
+          <button
+            type="button"
+            onClick={() => setMobileNavOpen((v) => !v)}
+            className="grid h-9 w-9 place-items-center rounded-lg text-white/50 hover:bg-white/5 lg:hidden"
+            aria-label="Toggle navigation"
           >
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-xs font-medium text-orange-300 backdrop-blur mb-4">
-              <Shield className="h-3.5 w-3.5" />
+            <Menu className="h-5 w-5" />
+          </button>
+          <div className="flex items-center gap-2.5">
+            <span className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-to-br from-orange-500 to-amber-400 text-sm font-black text-black">
+              F
+            </span>
+            <span className="text-[17px] font-extrabold tracking-tight">
+              FiveCrux
+            </span>
+            <span className="ml-1 rounded-md bg-orange-500/12 px-2 py-0.5 text-[11px] font-bold text-orange-400 ring-1 ring-orange-500/25">
               Admin Panel
+            </span>
+          </div>
+          <div className="ml-auto flex items-center gap-2.5 rounded-xl border border-white/[0.07] py-1 pl-1 pr-2.5">
+            <div className="grid h-7 w-7 place-items-center rounded-lg bg-gradient-to-br from-orange-500 to-yellow-400 text-xs font-bold text-black">
+              {session?.user?.name?.[0]?.toUpperCase() || "A"}
             </div>
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2">
-              <span className="bg-gradient-to-r from-orange-500 to-yellow-400 bg-clip-text text-transparent">
-                Admin Dashboard
-              </span>
-            </h1>
-            <p className="text-gray-400 text-sm sm:text-base">
-              Manage users, scripts, giveaways, and advertisements
-            </p>
-          </motion.div>
-
-          {/* Stats Tiles */}
-          <motion.div
-            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mb-8"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
+            <div className="hidden leading-tight sm:block">
+              <div className="text-[13px] font-semibold">
+                {session?.user?.name || "Admin"}
+              </div>
+              <div className="text-[10px] text-white/40">
+                {isFounder ? "Founder" : isModerator ? "Moderator" : "Admin"}
+              </div>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => signOut()}
+            className="flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-[13px] font-semibold text-white/55 hover:bg-white/5 hover:text-white"
           >
-            {[
-              {
-                label: "Total Users",
-                value: stats.totalUsers,
-                icon: Users,
-                color: "text-blue-400",
-                bg: "bg-blue-500/10",
-              },
-              {
-                label: "Total Scripts",
-                value: stats.totalScripts,
-                icon: Package,
-                color: "text-emerald-400",
-                bg: "bg-emerald-500/10",
-              },
-              {
-                label: "Total Giveaways",
-                value: stats.totalGiveaways,
-                icon: Gift,
-                color: "text-violet-400",
-                bg: "bg-violet-500/10",
-              },
-              {
-                label: "Total Props",
-                value: stats.totalProps,
-                icon: Package,
-                color: "text-orange-400",
-                bg: "bg-orange-500/10",
-              },
-              {
-                label: "Total Ads",
-                value: stats.totalAds,
-                icon: Megaphone,
-                color: "text-amber-400",
-                bg: "bg-amber-500/10",
-              },
-            ].map((tile) => (
-              <div
-                key={tile.label}
-                className="group rounded-2xl border border-white/[0.08] bg-white/[0.04] p-4 sm:p-5 backdrop-blur transition-all hover:border-white/[0.15] hover:bg-white/[0.06]"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="text-xs sm:text-sm text-gray-400 font-medium mb-1 truncate">
-                      {tile.label}
-                    </p>
-                    <p className="text-2xl sm:text-3xl font-bold text-white">
-                      {tile.value}
-                    </p>
+            <LogOut className="h-4 w-4" />
+            <span className="hidden sm:inline">Logout</span>
+          </button>
+        </header>
+
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <div className="flex">
+            {/* Left vertical nav — drives the SAME activeTab state */}
+            <aside
+              className={`${
+                mobileNavOpen ? "flex" : "hidden"
+              } absolute z-20 h-[calc(100vh-4rem)] w-60 flex-col border-r border-white/[0.06] bg-[#0a0a0a] px-3 py-5 lg:sticky lg:top-16 lg:flex lg:shrink-0 lg:bg-transparent`}
+            >
+              <div className="px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/30">
+                Workspace
+              </div>
+              <nav className="mt-2 space-y-0.5">
+                {navItems
+                  .filter((item) => !item.gated || isModerator || isFounder)
+                  .map((item) => {
+                    const active = activeTab === item.value;
+                    const Icon = item.icon;
+                    return (
+                      <button
+                        key={item.value}
+                        type="button"
+                        onClick={() => {
+                          setActiveTab(item.value);
+                          setMobileNavOpen(false);
+                        }}
+                        className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors ${
+                          active
+                            ? "bg-orange-500/12 font-semibold text-orange-400 ring-1 ring-inset ring-orange-500/20"
+                            : "font-medium text-white/60 hover:bg-white/[0.04] hover:text-white"
+                        }`}
+                      >
+                        <Icon className="h-[18px] w-[18px]" />
+                        {item.label}
+                        {item.badge ? (
+                          <span className="ml-auto rounded-full bg-orange-500 px-1.5 py-0.5 text-[10px] font-bold text-black [font-variant-numeric:tabular-nums]">
+                            {item.badge}
+                          </span>
+                        ) : null}
+                      </button>
+                    );
+                  })}
+              </nav>
+              <div className="mt-6 px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/30">
+                System
+              </div>
+              <nav className="mt-2 space-y-0.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab("settings");
+                    setMobileNavOpen(false);
+                  }}
+                  className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors ${
+                    activeTab === "settings"
+                      ? "bg-orange-500/12 font-semibold text-orange-400 ring-1 ring-inset ring-orange-500/20"
+                      : "font-medium text-white/60 hover:bg-white/[0.04] hover:text-white"
+                  }`}
+                >
+                  <Settings className="h-[18px] w-[18px]" />
+                  Settings
+                </button>
+              </nav>
+              <div className="mt-auto rounded-2xl border border-white/[0.06] bg-white/[0.02] p-3.5">
+                <div className="flex items-center gap-2 text-[13px] font-semibold">
+                  <Activity className="h-4 w-4 text-emerald-400" />
+                  All systems normal
+                </div>
+                <p className="mt-1 text-[11px] leading-relaxed text-white/40">
+                  Moderation queue is healthy.
+                </p>
+              </div>
+            </aside>
+
+            {/* Main area */}
+            <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8">
+              <div className="flex flex-wrap items-end justify-between gap-3">
+                <div>
+                  <div className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-xs font-medium text-orange-300 mb-3">
+                    <Shield className="h-3.5 w-3.5" />
+                    Admin Panel
                   </div>
-                  <div className={`p-2 sm:p-2.5 ${tile.bg} rounded-xl flex-shrink-0`}>
-                    <tile.icon className={`h-5 w-5 sm:h-6 sm:w-6 ${tile.color}`} />
-                  </div>
+                  <h1 className="text-2xl font-extrabold tracking-tight">
+                    Dashboard
+                  </h1>
+                  <p className="mt-1 text-sm text-white/45">
+                    Overview of the FiveCrux marketplace and moderation queue.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 text-[13px] text-white/45">
+                  <CalendarDays className="h-4 w-4" />
+                  {new Date().toLocaleDateString("en-US", {
+                    weekday: "short",
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
                 </div>
               </div>
-            ))}
-          </motion.div>
 
-          {/* Main Content */}
-          <Tabs
-            value={activeTab}
-            onValueChange={setActiveTab}
-            className="w-full"
-          >
-            {/* Mobile Tabs */}
-            <div className="lg:hidden -mx-4 sm:-mx-6 px-4 sm:px-6 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-              <TabsList className="flex w-max min-w-full bg-white/[0.04] border border-white/[0.08] backdrop-blur rounded-xl gap-2 p-1">
-                <TabsTrigger
-                  value="dashboard"
-                  className="data-[state=active]:bg-orange-500 data-[state=active]:text-white whitespace-nowrap px-3 py-2 text-xs flex-shrink-0"
-                >
-                  Dashboard
-                </TabsTrigger>
-                {(isModerator || isFounder) && (
-                  <TabsTrigger
-                    value="users"
-                    className="data-[state=active]:bg-orange-500 data-[state=active]:text-white whitespace-nowrap px-3 py-2 text-xs flex-shrink-0"
+              {/* Summary stat cards */}
+              <motion.section
+                className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+              >
+                {[
+                  { label: "Users", value: displayStats.totalUsers, icon: Users },
+                  { label: "Scripts", value: displayStats.totalScripts, icon: FileCode2 },
+                  { label: "Giveaways", value: displayStats.totalGiveaways, icon: Gift },
+                  { label: "Props", value: displayStats.totalProps, icon: Box },
+                  { label: "Ads", value: displayStats.totalAds, icon: Megaphone },
+                ].map((tile) => (
+                  <div
+                    key={tile.label}
+                    className="rounded-2xl border border-white/[0.06] bg-[#0e0e0e] p-4"
                   >
-                    Users
-                  </TabsTrigger>
-                )}
-                <TabsTrigger
-                  value="scripts"
-                  className="data-[state=active]:bg-orange-500 data-[state=active]:text-white whitespace-nowrap px-3 py-2 text-xs flex-shrink-0"
-                >
-                  Scripts
-                </TabsTrigger>
-                <TabsTrigger
-                  value="giveaways"
-                  className="data-[state=active]:bg-orange-500 data-[state=active]:text-white whitespace-nowrap px-3 py-2 text-xs flex-shrink-0"
-                >
-                  Giveaways
-                </TabsTrigger>
-                <TabsTrigger
-                  value="props"
-                  className="data-[state=active]:bg-orange-500 data-[state=active]:text-white whitespace-nowrap px-3 py-2 text-xs flex-shrink-0"
-                >
-                  Props
-                </TabsTrigger>
-                {(isModerator || isFounder) && (
-                  <TabsTrigger
-                    value="ads"
-                    className="data-[state=active]:bg-orange-500 data-[state=active]:text-white whitespace-nowrap px-3 py-2 text-xs flex-shrink-0"
-                  >
-                    Ads
-                  </TabsTrigger>
-                )}
-              </TabsList>
-            </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/35">
+                        {tile.label}
+                      </span>
+                      <tile.icon className="h-4 w-4 text-white/25" />
+                    </div>
+                    <div className="mt-3 text-2xl font-extrabold tracking-tight [font-variant-numeric:tabular-nums]">
+                      {tile.value.toLocaleString()}
+                    </div>
+                  </div>
+                ))}
+                <div className="rounded-2xl border border-orange-500/25 bg-orange-500/[0.06] p-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-orange-400/80">
+                      Pending review
+                    </span>
+                    <Clock className="h-4 w-4 text-orange-400/70" />
+                  </div>
+                  <div className="mt-3 text-2xl font-extrabold tracking-tight text-orange-400 [font-variant-numeric:tabular-nums]">
+                    {pendingCount}
+                  </div>
+                  <div className="mt-1 text-[11px] font-medium text-orange-400/70">
+                    Needs attention
+                  </div>
+                </div>
+              </motion.section>
 
-            {/* Desktop Tabs */}
-            <TabsList
-              className={`hidden lg:grid w-full ${
-                isModerator || isFounder ? "grid-cols-6" : "grid-cols-4"
-              } bg-white/[0.04] border border-white/[0.08] backdrop-blur rounded-xl p-1`}
-            >
-              <TabsTrigger
-                value="dashboard"
-                className="data-[state=active]:bg-orange-500 data-[state=active]:text-white"
-              >
-                Dashboard
-              </TabsTrigger>
-              {(isModerator || isFounder) && (
-                <TabsTrigger
-                  value="users"
-                  className="data-[state=active]:bg-orange-500 data-[state=active]:text-white"
-                >
-                  Users
-                </TabsTrigger>
-              )}
-              <TabsTrigger
-                value="scripts"
-                className="data-[state=active]:bg-orange-500 data-[state=active]:text-white"
-              >
-                Scripts
-              </TabsTrigger>
-              <TabsTrigger
-                value="giveaways"
-                className="data-[state=active]:bg-orange-500 data-[state=active]:text-white"
-              >
-                Giveaways
-              </TabsTrigger>
-              <TabsTrigger
-                value="props"
-                className="data-[state=active]:bg-orange-500 data-[state=active]:text-white"
-              >
-                Props
-              </TabsTrigger>
-              {(isModerator || isFounder) && (
-                <TabsTrigger
-                  value="ads"
-                  className="data-[state=active]:bg-orange-500 data-[state=active]:text-white"
-                >
-                  Ads
-                </TabsTrigger>
-              )}
-            </TabsList>
+              <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-3">
+                {/* Dashboard / Pending share the pending table + users panel */}
+                <TabsContent value="dashboard" className="m-0 xl:col-span-2 space-y-6">
+                  {renderPendingTable()}
 
-            <TabsContent value="dashboard" className="mt-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Recent Activity */}
-                <Card className="bg-white/[0.04] border-white/[0.08] backdrop-blur rounded-2xl">
-                  <CardHeader>
-                    <CardTitle className="text-white flex items-center gap-2">
-                      <Clock className="h-5 w-5 text-orange-500" />
-                      Recent Activity
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {scripts.slice(0, 5).map((script) => (
-                        <div
-                          key={script.id}
-                          className="flex items-center gap-3 p-3 rounded-xl border border-white/[0.06] bg-white/[0.03]"
+                  {/* Users management panel */}
+                  {(isModerator || isFounder) && (
+                    <div className="overflow-hidden rounded-2xl border border-white/[0.06] bg-[#0e0e0e]">
+                      <div className="flex items-center justify-between border-b border-white/[0.06] px-5 py-4">
+                        <h2 className="text-sm font-bold">Users</h2>
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab("users")}
+                          className="text-[12px] font-semibold text-white/45 hover:text-white"
                         >
-                          <Package className="h-5 w-5 text-green-400" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-white font-medium truncate">
-                              {script.title}
-                            </p>
-                            <p className="text-sm text-gray-400 truncate">
-                              by {script.seller_name}
-                            </p>
+                          Manage →
+                        </button>
+                      </div>
+                      <div className="divide-y divide-white/[0.05]">
+                        {users.slice(0, 6).map((user) => {
+                          const profilePic = getUserProfilePicture(user);
+                          const primaryRole = roleOptions.find((r) =>
+                            user.roles.includes(r.value)
+                          );
+                          const restricted =
+                            isModerator &&
+                            !isFounder &&
+                            (user.roles.includes("moderator") ||
+                              user.roles.includes("founder"));
+                          return (
+                            <div
+                              key={user.id}
+                              className="flex items-center gap-3 px-5 py-3.5"
+                            >
+                              <div className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-full bg-gradient-to-br from-orange-500 to-yellow-400 text-sm font-bold text-black">
+                                {profilePic ? (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img
+                                    src={profilePic}
+                                    alt={user.name || "User"}
+                                    className="h-full w-full object-cover"
+                                  />
+                                ) : (
+                                  user.name?.[0]?.toUpperCase() || "U"
+                                )}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="truncate text-[13px] font-semibold">
+                                  {user.name || "Unknown"}
+                                </div>
+                                <div className="truncate text-[11px] text-white/35">
+                                  {user.email}
+                                </div>
+                              </div>
+                              {primaryRole && (
+                                <span
+                                  className={`hidden rounded-md px-2 py-1 text-[11px] font-bold text-white sm:inline ${primaryRole.color}`}
+                                >
+                                  {primaryRole.label}
+                                </span>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedUser(user);
+                                  setEditingRoles([...user.roles]);
+                                }}
+                                disabled={restricted}
+                                className="flex items-center gap-1 rounded-lg border border-white/10 px-2.5 py-1.5 text-[12px] font-semibold text-white/60 hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40"
+                              >
+                                Change role
+                                <ChevronDown className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          );
+                        })}
+                        {users.length === 0 && (
+                          <div className="px-5 py-8 text-center text-sm text-white/40">
+                            No users to display.
                           </div>
-                          <Badge
-                            variant="secondary"
-                            className="bg-white/[0.08] text-gray-300 flex-shrink-0"
-                          >
-                            {script.status}
-                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </TabsContent>
+
+                {/* Recent activity timeline */}
+                <section className="xl:col-span-1">
+                  <div className="overflow-hidden rounded-2xl border border-white/[0.06] bg-[#0e0e0e]">
+                    <div className="flex items-center justify-between border-b border-white/[0.06] px-5 py-4">
+                      <h2 className="text-sm font-bold">Recent activity</h2>
+                      <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/30">
+                        Audit log
+                      </span>
+                    </div>
+                    <div className="px-5 py-4">
+                      {scripts.length > 0 ? (
+                        <div className="space-y-4">
+                          {scripts.slice(0, 5).map((script) => (
+                            <div
+                              key={script.id}
+                              className="flex items-start gap-3"
+                            >
+                              <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full bg-emerald-500/15 text-emerald-400">
+                                <Package className="h-3.5 w-3.5" />
+                              </span>
+                              <div className="min-w-0">
+                                <p className="truncate text-[13px] leading-snug">
+                                  <span className="font-semibold">
+                                    {script.title}
+                                  </span>
+                                </p>
+                                <p className="mt-0.5 text-[11px] text-white/35">
+                                  by {script.seller_name} · {script.status}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                      {scripts.length === 0 && (
-                        <div className="text-center py-8 text-gray-400">
-                          <Clock className="h-10 w-10 mx-auto mb-3 opacity-40" />
-                          <p className="text-sm">No recent activity to show.</p>
-                        </div>
+                      ) : (
+                        /* DEMO FALLBACK (TODO: remove before production) */
+                        <ol className="space-y-4">
+                          {[
+                            { icon: Check, color: "bg-emerald-500/15 text-emerald-400", text: "Approved 'Phone System v2'", meta: "by Sam · 14m ago" },
+                            { icon: X, color: "bg-red-500/15 text-red-400", text: "Rejected 'Cracked HUD Pack'", meta: "by Sam · 2h ago" },
+                            { icon: UserCheck, color: "bg-sky-500/15 text-sky-400", text: "Promoted MapMasters to Creator", meta: "by Sam · 5h ago" },
+                            { icon: Check, color: "bg-emerald-500/15 text-emerald-400", text: "Approved 'Vinewood Mansion'", meta: "by NightShift · 8h ago" },
+                          ].map((ev, i) => (
+                            <li key={i} className="flex items-start gap-3">
+                              <span className={`mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full ${ev.color}`}>
+                                <ev.icon className="h-3.5 w-3.5" />
+                              </span>
+                              <div>
+                                <p className="text-[13px] leading-snug">{ev.text}</p>
+                                <p className="mt-0.5 text-[11px] text-white/35">{ev.meta}</p>
+                              </div>
+                            </li>
+                          ))}
+                        </ol>
                       )}
                     </div>
-                  </CardContent>
-                </Card>
-
-                {/* System Status */}
-                <Card className="bg-white/[0.04] border-white/[0.08] backdrop-blur rounded-2xl">
-                  <CardHeader>
-                    <CardTitle className="text-white flex items-center gap-2">
-                      <Settings className="h-5 w-5 text-orange-500" />
-                      System Status
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between p-3 rounded-xl border border-white/[0.06] bg-white/[0.03]">
-                        <span className="text-gray-300">Pending Scripts</span>
-                        <Badge className="bg-yellow-500 text-white">
-                          {stats.pendingScripts}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center justify-between p-3 rounded-xl border border-white/[0.06] bg-white/[0.03]">
-                        <span className="text-gray-300">Total Ads</span>
-                        <Badge className="bg-orange-500 text-white">
-                          {stats.totalAds}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center justify-between p-3 rounded-xl border border-white/[0.06] bg-white/[0.03]">
-                        <span className="text-gray-300">Total Giveaways</span>
-                        <Badge className="bg-purple-500 text-white">
-                          {stats.totalGiveaways}
-                        </Badge>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </section>
               </div>
-            </TabsContent>
+
+              {/* Pending section (full table) */}
+              <TabsContent value="pending" className="m-0 mt-6">
+                {renderPendingTable()}
+              </TabsContent>
+
+              {/* Settings placeholder section */}
+              <TabsContent value="settings" className="m-0 mt-6">
+                <div className="rounded-2xl border border-white/[0.06] bg-[#0e0e0e] p-8 text-center text-sm text-white/45">
+                  <Settings className="mx-auto mb-3 h-8 w-8 text-white/25" />
+                  Settings panel coming soon.
+                </div>
+              </TabsContent>
 
             {(isModerator || isFounder) && (
               <TabsContent value="users" className="mt-6">
@@ -2114,8 +2520,9 @@ export default function AdminPage() {
                 </div>
               </TabsContent>
             )}
+            </main>
+          </div>
           </Tabs>
-        </div>
 
         {/* Role Management Dialog */}
         <Dialog
