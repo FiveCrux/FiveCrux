@@ -23,10 +23,13 @@ if (process.env.NODE_ENV === "production") {
 	if (
 		process.env.ALLOW_DEV_LOGIN === "true" ||
 		process.env.USE_PGLITE === "true" ||
-		process.env.NEXT_PUBLIC_MOCK_AUTH === "true" ||
-		process.env.TEBEX_MOCK === "true"
+		process.env.NEXT_PUBLIC_MOCK_AUTH === "true"
 	) {
-		throw new Error("Dev test-harness flags (ALLOW_DEV_LOGIN / USE_PGLITE / NEXT_PUBLIC_MOCK_AUTH / TEBEX_MOCK) must be OFF in production.")
+		throw new Error("Dev test-harness flags (ALLOW_DEV_LOGIN / USE_PGLITE / NEXT_PUBLIC_MOCK_AUTH) must be OFF in production.")
+	}
+	// The Tebex endpoint must point at the real API in production.
+	if (process.env.TEBEX_HEADLESS_BASE_URL && !process.env.TEBEX_HEADLESS_BASE_URL.includes("tebex.io")) {
+		throw new Error("TEBEX_HEADLESS_BASE_URL must point to the real Tebex API in production (unset it to use the default).")
 	}
 }
 

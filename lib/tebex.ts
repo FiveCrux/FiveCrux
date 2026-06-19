@@ -26,8 +26,13 @@ import { createHash, createHmac, timingSafeEqual } from "crypto";
  * Base URL for the Tebex Headless API.
  * Account-scoped endpoints live under `/accounts/{token}`, basket-scoped
  * mutation endpoints live under `/baskets/{basketIdent}`.
+ *
+ * Overridable via TEBEX_HEADLESS_BASE_URL so tests can point the client at a
+ * local mock server (scripts/mock-tebex-server.mjs) — the app code stays the
+ * real integration; only the endpoint is swapped, exactly like any HTTP client.
  */
-export const TEBEX_HEADLESS_BASE_URL = "https://headless.tebex.io/api";
+export const TEBEX_HEADLESS_BASE_URL =
+  process.env.TEBEX_HEADLESS_BASE_URL || "https://headless.tebex.io/api";
 
 /**
  * FiveCrux's OWN webstore public token (project/public token).

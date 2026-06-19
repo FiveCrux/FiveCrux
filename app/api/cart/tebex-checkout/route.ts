@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { randomUUID, createHash, createHmac } from "crypto";
+import { randomUUID } from "crypto";
 
 import { authOptions } from "@/auth";
 import { db } from "@/lib/db/client";
@@ -15,7 +15,7 @@ import {
   applyCoupon,
   FIVECRUX_TEBEX_PUBLIC_TOKEN,
 } from "@/lib/tebex";
-import { getTebexPackageId, isTebexMock } from "@/lib/tebex-packages";
+import { getTebexPackageId } from "@/lib/tebex-packages";
 
 function generateNumericId() {
   return Math.floor(Date.now() / 1000) + Math.floor(Math.random() * 10000);
@@ -31,10 +31,6 @@ function generateNumericId() {
  *
  * Provisioning + order completion happen later in the Tebex webhook
  * (payment.completed) — NOT here — exactly like Tebex's async payment model.
- *
- * Set TEBEX_MOCK=true to exercise the full flow locally with no real store: the
- * basket/checkout call is synthesized and the webhook is fired by the test
- * harness (scripts/e2e-tebex.mjs).
  */
 export async function POST(request: NextRequest) {
   try {
@@ -43,9 +39,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     const user = session.user as any;
-    const mock = isTebexMock();
 
-    if (!mock && !FIVECRUX_TEBEX_PUBLIC_TOKEN) {
+    if (!FIVECRUX_TEBEX_PUBLIC_TOKEN) {
       return NextResponse.json(
         { error: "FiveCrux Tebex store token not configured (TEBEX_PUBLIC_TOKEN)" },
         { status: 501 }
@@ -119,18 +114,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // In real mode every item MUST map to a Tebex package id.
-    if (!mock) {
-      const unmapped = provItems.filter((i) => i.tebexPackageId == null);
-      if (unmapped.length > 0) {
-        return NextResponse.json(
-          {
-            error: "Tebex packages not configured for some cart items. Fill lib/tebex-packages.ts.",
-            unmapped: unmapped.map((i) => `${i.packageType}:${i.packageId}`),
-          },
-          { status: 501 }
-        );
-      }
+    // Every item MUST map to a Tebex package id in FiveCrux's store.
+    const unmapped = provItems.filter((i) => i.tebexPackageId == null);
+    if (unmapped.length > 0) {
+      return NextResponse.json(
+        {
+          error: "Tebex packages not configured for some cart items. Fill lib/tebex-packages.ts.",
+          unmapped: unmapped.map((i) => `${i.packageType}:${i.packageId}`),
+        },
+        { status: 501 }
+      );
     }
 
     // 4. Create the FiveCrux order (pending) + coupon bookkeeping — same as PayPal.
@@ -177,67 +170,33 @@ export async function POST(request: NextRequest) {
     const completeUrl = `${siteUrl}/cart?payment=success&provider=tebex`;
     const returnUrl = `${siteUrl}/cart?payment=cancelled`;
 
-    let basketIdent: string;
-    let checkoutUrl: string;
-
-    if (mock) {
-      // Local mock: no real Tebex call. Synthesize a basket + checkout URL.
-      basketIdent = `mock-${randomUUID()}`;
-      checkoutUrl = `${completeUrl}&mock=1&order=${order.id}`;
-    } else {
-      const storeToken = FIVECRUX_TEBEX_PUBLIC_TOKEN;
-      const created = await createBasket(storeToken, { completeUrl, returnUrl, custom });
-      for (const i of provItems) {
-        await addPackageToBasket(storeToken, created.ident, i.tebexPackageId as number, i.quantity);
-      }
-      if (appliedCoupon) {
-        // Best-effort: only works if a matching Tebex coupon exists in the store.
-        try { await applyCoupon(storeToken, created.ident, appliedCoupon.code); } catch { /* non-fatal */ }
-      }
-      const basket = await getBasket(storeToken, created.ident);
-      basketIdent = basket.ident;
-      checkoutUrl = getCheckoutUrl(basket);
+    // 6. Create the Tebex basket on FiveCrux's own store, add packages, get link.
+    const storeToken = FIVECRUX_TEBEX_PUBLIC_TOKEN;
+    const created = await createBasket(storeToken, { completeUrl, returnUrl, custom });
+    for (const i of provItems) {
+      await addPackageToBasket(storeToken, created.ident, i.tebexPackageId as number, i.quantity);
     }
+    if (appliedCoupon) {
+      // Best-effort: only works if a matching Tebex coupon exists in the store.
+      try { await applyCoupon(storeToken, created.ident, appliedCoupon.code); } catch { /* non-fatal */ }
+    }
+    const basket = await getBasket(storeToken, created.ident);
+    const checkoutUrl = getCheckoutUrl(basket);
 
-    // 6. Record the Tebex order for webhook reconciliation/provisioning.
+    // 7. Record the Tebex order for webhook reconciliation/provisioning.
     await db.insert(tebexOrders).values({
       id: randomUUID(),
-      basketIdent,
+      basketIdent: basket.ident,
       userId: user.id,
       kind: "platform_fee", // webhook provisions platform fees; custom carries the cart items[]
-      storeToken: mock ? "mock" : FIVECRUX_TEBEX_PUBLIC_TOKEN,
+      storeToken,
       packageIds: provItems.map((i) => i.tebexPackageId).filter((x) => x != null),
       status: "pending",
       amount: payableAmount.toFixed(2),
       custom,
     });
 
-    // MOCK ONLY: Tebex's real payment.completed webhook can't reach localhost, so
-    // simulate it here (correctly signed) — exercising the REAL webhook handler —
-    // so manual browser testing provisions instantly. No-op in real mode.
-    if (mock) {
-      try {
-        const payload = JSON.stringify({
-          type: "payment.completed",
-          subject: {
-            basket_ident: basketIdent,
-            transaction_id: `mock-${order.id}`,
-            price: { amount: Number(payableAmount.toFixed(2)), currency: "EUR" },
-          },
-        });
-        const bodyHash = createHash("sha256").update(payload).digest("hex");
-        const signature = createHmac("sha256", process.env.TEBEX_WEBHOOK_SECRET || "").update(bodyHash).digest("hex");
-        await fetch(`${siteUrl}/api/tebex/webhook`, {
-          method: "POST",
-          headers: { "content-type": "application/json", "x-signature": signature },
-          body: payload,
-        });
-      } catch (e) {
-        console.error("Tebex mock webhook self-fire failed:", e);
-      }
-    }
-
-    return NextResponse.json({ success: true, order, basketIdent, checkoutUrl, mock });
+    return NextResponse.json({ success: true, order, basketIdent: basket.ident, checkoutUrl });
   } catch (error) {
     console.error("Tebex cart checkout error:", error);
     return NextResponse.json(
