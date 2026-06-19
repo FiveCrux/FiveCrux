@@ -62,10 +62,11 @@ async function main() {
   ok("added featured-slot package to cart", add.status === 200, `status=${add.status}`)
   ok("cart has 1 item", (await cartItems(buyer)) === 1)
 
-  // 2. Tebex checkout (mock) — creates order + tebex_orders, returns checkoutUrl.
+  // 2. Tebex checkout (real route → mock Tebex server) — creates order +
+  //    tebex_orders, returns the hosted checkout URL.
   const co = await jf(buyer, "/api/cart/tebex-checkout", J({}))
   const coBody = await co.json().catch(() => ({}))
-  ok("tebex-checkout 200 + mock", co.status === 200 && coBody.mock === true, `status=${co.status} ${JSON.stringify(coBody).slice(0,160)}`)
+  ok("tebex-checkout 200", co.status === 200, `status=${co.status} ${JSON.stringify(coBody).slice(0,180)}`)
   ok("returned a basketIdent + checkoutUrl", !!coBody.basketIdent && !!coBody.checkoutUrl)
   const basketIdent = coBody.basketIdent
 

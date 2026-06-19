@@ -12,10 +12,13 @@
 // Key = the cart itemId convention `${packageType}:${packageId}:${duration}`
 // (duration = months for ads, weeks for featured-scripts) — see lib/ad-pricing.ts.
 //
-// Until these are filled, /api/cart/tebex-checkout returns a clear 501 unless
-// TEBEX_MOCK is on (local testing).
+// Until these are filled, /api/cart/tebex-checkout returns a clear 501.
+//
+// The map can also be augmented via the TEBEX_PACKAGE_MAP_JSON env var (a JSON
+// object of the same shape) — convenient for staging/test stores without code
+// changes. Env entries override the hard-coded ones below.
 
-export const TEBEX_PACKAGE_MAP: Record<string, number> = {
+const STATIC_TEBEX_PACKAGE_MAP: Record<string, number> = {
   // --- Ad slots (key: ads:<tier>:<months>) ---
   // "ads:starter:1": 0000000,
   // "ads:starter:3": 0000000,
@@ -30,10 +33,19 @@ export const TEBEX_PACKAGE_MAP: Record<string, number> = {
   // ... etc (weeks 1/2/4/8 × starter/premium/executive)
 }
 
-/** True when running the local mock-Tebex path (no real store/tokens needed). */
-export function isTebexMock(): boolean {
-  return process.env.TEBEX_MOCK === "true"
+// Merge static map with an optional env-provided JSON map (env wins).
+function loadPackageMap(): Record<string, number> {
+  let envMap: Record<string, number> = {}
+  try {
+    const raw = process.env.TEBEX_PACKAGE_MAP_JSON
+    if (raw) envMap = JSON.parse(raw)
+  } catch {
+    /* ignore malformed env map */
+  }
+  return { ...STATIC_TEBEX_PACKAGE_MAP, ...envMap }
 }
+
+export const TEBEX_PACKAGE_MAP: Record<string, number> = loadPackageMap()
 
 /** Build the map key from an itemId or its parts. */
 export function tebexPackageKey(packageType: string, packageId: string, duration: number | string): string {
