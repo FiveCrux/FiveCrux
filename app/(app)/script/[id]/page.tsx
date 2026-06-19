@@ -1,51 +1,31 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { motion } from "framer-motion";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
+import Image from "next/image";
 import {
   Package,
-  CheckCircle,
   AlertCircle,
-  Info,
-  ExternalLink,
   ArrowLeft,
-  ChevronLeft,
   ChevronRight,
   Play,
   X,
-  Maximize2,
   ShoppingCart,
-  MessageCircle,
-  BookOpen,
-  Github,
-  Globe,
-  HelpCircle,
   Star,
   ShieldCheck,
   Loader2,
+  Zap,
+  Check,
+  Download,
+  Images,
+  BadgeCheck,
+  LifeBuoy,
+  ArrowRight,
 } from "lucide-react";
 import { Button } from "@/componentss/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/componentss/ui/card";
-import { Badge } from "@/componentss/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/componentss/ui/avatar";
-import {
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  TabsContent,
-} from "@/componentss/ui/tabs";
 import Navbar from "@/componentss/shared/navbar";
 import Footer from "@/componentss/shared/footer";
-import { VerifiedIcon } from "@/componentss/shared/verified-icon";
-import { ProductCard } from "@/componentss/marketplace/product-card";
 import { isVerifiedCreator } from "@/lib/utils";
 import { MARKETPLACE_SEED } from "@/lib/marketplace-seed";
 import Link from "next/link";
@@ -134,55 +114,36 @@ function scriptFromSeed(id: number): Script | null {
   };
 }
 
-// Media Carousel with swipe / fullscreen support.
-const MediaCarousel = ({
-  images,
-  screenshots,
-  videos,
-  title,
-  coverImage,
-  youtubeVideoLink,
-}: {
-  images: string[];
-  screenshots: string[];
-  videos: string[];
-  title: string;
-  coverImage?: string;
-  youtubeVideoLink?: string;
-}) => {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
-  const [startX, setStartX] = useState(0);
-  const [scrollLeft, setScrollLeft] = useState(0);
-  const [dragDistance, setDragDistance] = useState(0);
-  const [isMainDragging, setIsMainDragging] = useState(false);
-  const [mainStartX, setMainStartX] = useState(0);
-  const [mainDragDistance, setMainDragDistance] = useState(0);
-  const thumbnailRef = useRef<HTMLDivElement>(null);
-  const mainImageRef = useRef<HTMLDivElement>(null);
+type MediaItem = {
+  type: "image" | "video" | "youtube";
+  url: string;
+  youtubeId?: string;
+};
 
-  const getYouTubeVideoId = (url: string): string | null => {
-    if (!url) return null;
-    const patterns = [
-      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
-      /youtube\.com\/watch\?.*v=([^&\n?#]+)/,
-    ];
-    for (const pattern of patterns) {
-      const match = url.match(pattern);
-      if (match && match[1]) {
-        return match[1];
-      }
+const getYouTubeVideoId = (url: string): string | null => {
+  if (!url) return null;
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
+    /youtube\.com\/watch\?.*v=([^&\n?#]+)/,
+  ];
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match && match[1]) {
+      return match[1];
     }
-    return null;
-  };
+  }
+  return null;
+};
 
-  type MediaItem = {
-    type: "image" | "video" | "youtube";
-    url: string;
-    youtubeId?: string;
-  };
-
+// Build the unified, de-duplicated media list (cover first), reusing the exact
+// ordering rules from the previous carousel implementation.
+function buildMedia(
+  images: string[],
+  screenshots: string[],
+  videos: string[],
+  coverImage?: string,
+  youtubeVideoLink?: string
+): MediaItem[] {
   let allMedia: MediaItem[] = [
     ...images.map((url) => ({ type: "image" as const, url })),
     ...screenshots.map((url) => ({ type: "image" as const, url })),
@@ -201,299 +162,208 @@ const MediaCarousel = ({
     allMedia = [{ type: "image" as const, url: coverImage }, ...allMedia];
   }
 
-  if (allMedia.length === 0) return null;
+  return allMedia;
+}
 
-  const nextSlide = () => {
-    setCurrentIndex((prev) => (prev + 1) % allMedia.length);
-  };
+// Gallery-first bento hero. The large lead tile shows the active media item;
+// the two smaller tiles and the thumbnail strip switch the active item.
+const BentoGallery = ({
+  media,
+  title,
+  categoryLabel,
+}: {
+  media: MediaItem[];
+  title: string;
+  categoryLabel: string;
+}) => {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
-  const prevSlide = () => {
-    setCurrentIndex((prev) => (prev - 1 + allMedia.length) % allMedia.length);
-  };
+  const active = media[activeIndex] ?? media[0];
+  // Small bento tiles: the next two items after the lead (falls back to start).
+  const small1 = media.length > 1 ? media[1] : null;
+  const small2 = media.length > 2 ? media[2] : null;
+  const extraCount = Math.max(0, media.length - 3);
 
-  const isVideo = (media: MediaItem) => media.type === "video";
-
-  const MediaContent = ({
-    media,
-    index,
+  const Media = ({
+    item,
     className = "",
+    sizes,
   }: {
-    media: MediaItem;
-    index: number;
+    item: MediaItem;
     className?: string;
+    sizes?: string;
   }) => {
-    if (media.type === "youtube" && media.youtubeId) {
+    if (item.type === "youtube" && item.youtubeId) {
       return (
-        <div className={`w-full h-full bg-black ${className}`}>
-          <iframe
-            src={`https://www.youtube.com/embed/${media.youtubeId}?rel=0&modestbranding=1`}
-            className="w-full h-full"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-            title={`${title} - YouTube Video`}
-          />
-        </div>
-      );
-    }
-
-    if (isVideo(media)) {
-      return (
-        <video
-          src={media.url}
-          controls
-          preload="metadata"
-          className={`w-full h-full object-contain bg-black ${className}`}
+        <iframe
+          src={`https://www.youtube.com/embed/${item.youtubeId}?rel=0&modestbranding=1`}
+          className={`h-full w-full bg-black ${className}`}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          title={`${title} - YouTube Video`}
         />
       );
     }
-
+    if (item.type === "video") {
+      return (
+        <video
+          src={item.url}
+          controls
+          preload="metadata"
+          className={`h-full w-full bg-black object-contain ${className}`}
+        />
+      );
+    }
     return (
-      <img
-        src={media.url}
-        alt={`${title} - Media ${index + 1}`}
-        className={`w-full h-full object-cover bg-black ${className}`}
-        loading="lazy"
+      <Image
+        src={item.url}
+        alt={title}
+        fill
+        sizes={sizes || "100vw"}
+        className={`object-cover ${className}`}
       />
     );
   };
 
   return (
     <>
-      {/* Main Carousel */}
-      <div className="overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.04] backdrop-blur-md shadow-[0_16px_48px_rgba(0,0,0,0.5)]">
-        <div className="relative bg-transparent overflow-hidden">
-          {/* Main Display */}
-          <div
-            ref={mainImageRef}
-            className="relative aspect-video"
-            onMouseDown={(e) => {
-              if (allMedia.length <= 1) return;
-              setIsMainDragging(true);
-              setMainDragDistance(0);
-              setMainStartX(e.pageX);
-            }}
-            onMouseUp={() => {
-              if (isMainDragging && Math.abs(mainDragDistance) > 50) {
-                if (mainDragDistance < 0) {
-                  nextSlide();
-                } else {
-                  prevSlide();
-                }
-              }
-              setIsMainDragging(false);
-              setMainDragDistance(0);
-            }}
-            onMouseLeave={() => {
-              setIsMainDragging(false);
-              setMainDragDistance(0);
-            }}
-            onMouseMove={(e) => {
-              if (!isMainDragging) return;
-              const distance = e.pageX - mainStartX;
-              setMainDragDistance(distance);
-            }}
-            onTouchStart={(e) => {
-              if (allMedia.length <= 1) return;
-              setIsMainDragging(true);
-              setMainDragDistance(0);
-              setMainStartX(e.touches[0].pageX);
-            }}
-            onTouchEnd={() => {
-              if (isMainDragging && Math.abs(mainDragDistance) > 50) {
-                if (mainDragDistance < 0) {
-                  nextSlide();
-                } else {
-                  prevSlide();
-                }
-              }
-              setIsMainDragging(false);
-              setMainDragDistance(0);
-            }}
-            onTouchMove={(e) => {
-              if (!isMainDragging) return;
-              const distance = e.touches[0].pageX - mainStartX;
-              setMainDragDistance(distance);
-            }}
+      {/* Bento grid */}
+      <section className="grid grid-cols-1 gap-2.5 sm:grid-cols-4 sm:grid-rows-2">
+        {/* large lead */}
+        <figure className="group relative col-span-1 row-span-2 overflow-hidden rounded-[22px] border border-white/[0.07] sm:col-span-2 lg:col-span-3">
+          <button
+            type="button"
+            onClick={() => setIsFullscreen(true)}
+            className="block h-[280px] w-full sm:h-full"
           >
-            <div className="absolute inset-0">
-              <MediaContent media={allMedia[currentIndex]} index={currentIndex} />
-            </div>
+            <span className="relative block h-[280px] w-full sm:h-full">
+              <Media
+                item={active}
+                sizes="(max-width: 1024px) 100vw, 75vw"
+                className="transition duration-700 group-hover:scale-[1.03]"
+              />
+            </span>
+            <span className="absolute inset-0 bg-gradient-to-tr from-black/40 via-transparent to-transparent" />
+            <span className="absolute left-4 top-4 rounded-full bg-black/45 px-2.5 py-1 text-[11px] font-semibold tracking-wide text-white/85 ring-1 ring-white/10 backdrop-blur-md">
+              {categoryLabel}
+            </span>
+          </button>
+        </figure>
 
-            {/* Navigation Arrows */}
-            {allMedia.length > 1 && (
-              <>
-                <button
-                  onClick={prevSlide}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/70 hover:bg-orange-500 text-white p-3 rounded-full transition-colors z-10"
-                >
-                  <ChevronLeft className="h-6 w-6" />
-                </button>
-                <button
-                  onClick={nextSlide}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/70 hover:bg-orange-500 text-white p-3 rounded-full transition-colors z-10"
-                >
-                  <ChevronRight className="h-6 w-6" />
-                </button>
-              </>
-            )}
-
-            {/* Fullscreen Button */}
+        {/* small 1 */}
+        {small1 && (
+          <figure className="group relative hidden overflow-hidden rounded-[22px] border border-white/[0.07] sm:block">
             <button
-              onClick={() => setIsFullscreen(true)}
-              className="absolute top-4 right-4 bg-black/70 hover:bg-orange-500 text-white p-2 rounded-full transition-colors z-10"
+              type="button"
+              onClick={() => setActiveIndex(1)}
+              className="block h-full min-h-[140px] w-full"
             >
-              <Maximize2 className="h-5 w-5" />
+              <span className="relative block h-full min-h-[140px] w-full">
+                <Media
+                  item={small1}
+                  sizes="25vw"
+                  className="transition duration-700 group-hover:scale-[1.04]"
+                />
+              </span>
             </button>
+          </figure>
+        )}
 
-            {/* Counter */}
-            <div className="absolute bottom-4 right-4 bg-black/70 text-white px-4 py-2 rounded-full text-sm font-semibold">
-              {currentIndex + 1} / {allMedia.length}
-            </div>
-          </div>
+        {/* small 2 */}
+        {small2 && (
+          <figure className="group relative hidden overflow-hidden rounded-[22px] border border-white/[0.07] sm:block">
+            <button
+              type="button"
+              onClick={() => setActiveIndex(2)}
+              className="block h-full min-h-[140px] w-full"
+            >
+              <span className="relative block h-full min-h-[140px] w-full">
+                <Media
+                  item={small2}
+                  sizes="25vw"
+                  className="transition duration-700 group-hover:scale-[1.04]"
+                />
+              </span>
+              {extraCount > 0 && (
+                <span className="absolute inset-0 flex items-center justify-center bg-black/55 opacity-100 transition group-hover:bg-black/65">
+                  <span className="flex items-center gap-1.5 text-sm font-semibold text-white">
+                    <Images className="h-4 w-4" /> +{extraCount} more
+                  </span>
+                </span>
+              )}
+            </button>
+          </figure>
+        )}
+      </section>
 
-          {/* Thumbnail Navigation */}
-          {allMedia.length > 1 && (
-            <div className="p-4 bg-transparent">
-              <div
-                ref={thumbnailRef}
-                className="thumbnail-scrollbar flex gap-3 overflow-x-auto pb-2 cursor-grab active:cursor-grabbing select-none"
-                style={{ scrollbarWidth: "none" }}
-                onMouseDown={(e) => {
-                  if (!thumbnailRef.current) return;
-                  setIsDragging(true);
-                  setDragDistance(0);
-                  setStartX(e.pageX - thumbnailRef.current.offsetLeft);
-                  setScrollLeft(thumbnailRef.current.scrollLeft);
-                }}
-                onMouseLeave={() => {
-                  setIsDragging(false);
-                  setDragDistance(0);
-                }}
-                onMouseUp={() => {
-                  setIsDragging(false);
-                  setDragDistance(0);
-                }}
-                onMouseMove={(e) => {
-                  if (!isDragging || !thumbnailRef.current) return;
-                  e.preventDefault();
-                  const x = e.pageX - thumbnailRef.current.offsetLeft;
-                  const walk = (x - startX) * 2;
-                  const distance = Math.abs(x - startX);
-                  setDragDistance(distance);
-                  thumbnailRef.current.scrollLeft = scrollLeft - walk;
-                }}
-                onTouchStart={(e) => {
-                  if (!thumbnailRef.current) return;
-                  setIsDragging(true);
-                  setDragDistance(0);
-                  setStartX(e.touches[0].pageX - thumbnailRef.current.offsetLeft);
-                  setScrollLeft(thumbnailRef.current.scrollLeft);
-                }}
-                onTouchEnd={() => {
-                  setIsDragging(false);
-                  setDragDistance(0);
-                }}
-                onTouchMove={(e) => {
-                  if (!isDragging || !thumbnailRef.current) return;
-                  e.preventDefault();
-                  const x = e.touches[0].pageX - thumbnailRef.current.offsetLeft;
-                  const walk = (x - startX) * 2;
-                  const distance = Math.abs(x - startX);
-                  setDragDistance(distance);
-                  thumbnailRef.current.scrollLeft = scrollLeft - walk;
-                }}
-              >
-                {allMedia.map((media, index) => (
-                  <button
-                    key={index}
-                    onClick={(e) => {
-                      if (dragDistance > 5) {
-                        e.preventDefault();
-                        return;
-                      }
-                      setCurrentIndex(index);
-                    }}
-                    className={`flex-shrink-0 w-24 h-16 rounded-lg overflow-hidden border-2 transition-colors ${
-                      index === currentIndex
-                        ? "border-orange-500"
-                        : "border-white/10 hover:border-orange-500/50"
-                    }`}
-                  >
-                    {media.type === "youtube" ? (
-                      <div className="relative w-full h-full bg-red-600 flex items-center justify-center">
-                        <Play className="h-5 w-5 text-white" />
-                      </div>
-                    ) : isVideo(media) ? (
-                      <div className="relative w-full h-full bg-neutral-800 flex items-center justify-center">
-                        <Play className="h-5 w-5 text-orange-500" />
-                      </div>
-                    ) : (
-                      <img
-                        src={media.url}
-                        alt={`Thumbnail ${index + 1}`}
-                        className="w-full h-full object-cover"
-                        draggable={false}
-                      />
-                    )}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+      {/* thumbnail strip */}
+      {media.length > 1 && (
+        <div
+          className="mt-2.5 flex gap-2.5 overflow-x-auto pb-1"
+          style={{ scrollbarWidth: "none" }}
+        >
+          {media.map((item, index) => (
+            <button
+              key={index}
+              type="button"
+              onClick={() => setActiveIndex(index)}
+              className={`relative h-16 w-28 flex-none overflow-hidden rounded-xl border object-cover transition ${
+                index === activeIndex
+                  ? "border-orange-500 opacity-100 ring-2 ring-orange-500/60"
+                  : "border-white/[0.07] opacity-80 hover:opacity-100"
+              }`}
+            >
+              {item.type === "youtube" ? (
+                <span className="flex h-full w-full items-center justify-center bg-red-600">
+                  <Play className="h-5 w-5 text-white" />
+                </span>
+              ) : item.type === "video" ? (
+                <span className="flex h-full w-full items-center justify-center bg-neutral-800">
+                  <Play className="h-5 w-5 text-orange-500" />
+                </span>
+              ) : (
+                <Image
+                  src={item.url}
+                  alt={`${title} thumbnail ${index + 1}`}
+                  fill
+                  sizes="112px"
+                  className="object-cover"
+                />
+              )}
+            </button>
+          ))}
         </div>
-      </div>
+      )}
 
-      {/* Fullscreen Modal */}
+      {/* Fullscreen modal */}
       {isFullscreen && (
         <div
-          className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/95 p-4"
           onClick={() => setIsFullscreen(false)}
         >
           <button
             onClick={() => setIsFullscreen(false)}
-            className="absolute top-4 right-4 bg-black/80 hover:bg-orange-500 text-white p-3 rounded-full transition-colors z-10"
+            className="absolute right-4 top-4 z-10 rounded-full bg-black/80 p-3 text-white transition-colors hover:bg-orange-500"
           >
             <X className="h-6 w-6" />
           </button>
-
-          {allMedia.length > 1 && (
-            <>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  prevSlide();
-                }}
-                className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/80 hover:bg-orange-500 text-white p-4 rounded-full transition-colors z-10"
-              >
-                <ChevronLeft className="h-8 w-8" />
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  nextSlide();
-                }}
-                className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/80 hover:bg-orange-500 text-white p-4 rounded-full transition-colors z-10"
-              >
-                <ChevronRight className="h-8 w-8" />
-              </button>
-            </>
-          )}
-
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/80 text-white px-6 py-3 rounded-full text-sm font-semibold">
-            {currentIndex + 1} / {allMedia.length}
-          </div>
-
           <div
-            className="w-full h-full flex items-center justify-center"
+            className="relative flex h-full max-h-[90vh] w-full max-w-7xl items-center justify-center"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="max-w-7xl max-h-full">
-              <MediaContent
-                media={allMedia[currentIndex]}
-                index={currentIndex}
-                className="max-h-[90vh]"
+            {active.type === "image" ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={active.url}
+                alt={title}
+                className="max-h-[90vh] max-w-full object-contain"
               />
-            </div>
+            ) : (
+              <div className="aspect-video w-full max-w-5xl">
+                <Media item={active} sizes="90vw" />
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -691,11 +561,27 @@ export default function ScriptDetailPage() {
     toast.error("No purchase option is available for this product yet.");
   };
 
+  // Unified media list for the bento gallery — must be declared before any
+  // early return to satisfy the rules of hooks (script may still be null).
+  const media = useMemo(
+    () =>
+      script
+        ? buildMedia(
+            script.images || [],
+            script.screenshots || [],
+            script.videos || [],
+            script.cover_image,
+            script.youtube_video_link
+          )
+        : [],
+    [script]
+  );
+
   if (loading) {
     return (
       <>
         <Navbar />
-        <div className="min-h-screen text-white flex items-center justify-center">
+        <div className="min-h-screen text-white flex items-center justify-center bg-[#0a0a0a]">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-orange-500" />
         </div>
       </>
@@ -706,7 +592,7 @@ export default function ScriptDetailPage() {
     return (
       <>
         <Navbar />
-        <div className="min-h-screen text-white flex items-center justify-center">
+        <div className="min-h-screen text-white flex items-center justify-center bg-[#0a0a0a]">
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-4">Script Not Found</h1>
             <p className="text-gray-400 mb-6">
@@ -731,502 +617,444 @@ export default function ScriptDetailPage() {
         ((script.original_price - script.price) / script.original_price) * 100
       )
     : 0;
-  const allMedia = [
-    ...(script.images || []),
-    ...(script.videos || []),
-    ...(script.screenshots || []),
-  ];
-  const hasMedia = allMedia.length > 0 || !!script.youtube_video_link;
   const verified = isVerifiedCreator(script.seller_roles);
   const currency = script.currency_symbol || "$";
   const canBuy = !!(
     (script.tebexPackageId && script.tebexStoreToken) ||
     script.link
   );
+  const sellerInitial = script.seller_name
+    ? script.seller_name.charAt(0).toUpperCase()
+    : "?";
+  const categoryLabel = script.category || "Script";
+  const hasFeatures = script.features && script.features.length > 0;
+  const hasRequirements = script.requirements && script.requirements.length > 0;
+  const lastUpdated = script.last_updated
+    ? new Date(script.last_updated).toLocaleDateString("en-US", {
+        month: "short",
+        year: "numeric",
+      })
+    : null;
 
   return (
     <>
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `
-        .thumbnail-scrollbar::-webkit-scrollbar { display: none; }
-        .thumbnail-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-      `,
-        }}
-      />
       <Navbar />
-      <div className="min-h-screen text-white bg-[#0a0a0a]">
-        {/* Ambient hero glow built from the cover image */}
-        <div className="relative">
-          {script.cover_image && (
-            <div
-              aria-hidden
-              className="pointer-events-none absolute inset-x-0 top-0 h-[480px] opacity-30 blur-2xl"
-              style={{
-                backgroundImage: `url(${script.cover_image})`,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-              }}
+      <main className="min-h-screen bg-[#0a0a0a] text-white antialiased [font-variant-numeric:tabular-nums]">
+        <div className="mx-auto max-w-[1240px] px-5 pb-24 pt-20">
+          {/* Breadcrumb */}
+          <nav className="flex items-center gap-2 py-5 text-[13px] text-white/35">
+            <Link href="/scripts" className="transition hover:text-white/70">
+              Marketplace
+            </Link>
+            <ChevronRight className="h-3.5 w-3.5" />
+            <Link href="/scripts" className="transition hover:text-white/70">
+              Scripts
+            </Link>
+            <ChevronRight className="h-3.5 w-3.5" />
+            <span className="truncate text-white/60">{script.title}</span>
+          </nav>
+
+          {/* Bento gallery hero */}
+          {media.length > 0 ? (
+            <BentoGallery
+              media={media}
+              title={script.title}
+              categoryLabel={categoryLabel}
             />
+          ) : (
+            <div className="flex aspect-[21/9] items-center justify-center rounded-[22px] border border-white/[0.07] bg-white/[0.03]">
+              <Package className="h-16 w-16 text-gray-600" />
+            </div>
           )}
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-[480px] bg-gradient-to-b from-[#0a0a0a]/40 via-[#0a0a0a]/80 to-[#0a0a0a]" />
 
-          <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-16">
-            {/* Back Button */}
-            <Button
-              onClick={() => router.push("/scripts")}
-              variant="ghost"
-              className="mb-6 text-gray-400 hover:text-white hover:bg-white/10"
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Scripts
-            </Button>
-
-            {/* Two Column Layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-              {/* Left Column - Media + Title */}
-              <div className="lg:col-span-2 space-y-6">
-                {hasMedia ? (
-                  <MediaCarousel
-                    images={script.images || []}
-                    screenshots={script.screenshots || []}
-                    videos={script.videos || []}
-                    title={script.title}
-                    coverImage={script.cover_image}
-                    youtubeVideoLink={script.youtube_video_link}
-                  />
-                ) : (
-                  <div className="aspect-video bg-white/[0.04] rounded-2xl flex items-center justify-center border border-white/[0.08]">
-                    <Package className="h-16 w-16 text-gray-600" />
-                  </div>
-                )}
-
-                {/* Title block */}
-                <div>
-                  <div className="flex flex-wrap items-center gap-2 mb-3">
-                    <Badge className="bg-orange-500/15 text-orange-400 border border-orange-500/30 font-semibold px-3 py-1 capitalize">
-                      {script.category}
-                    </Badge>
-                    {script.framework &&
-                      script.framework.map((fw, idx) => (
-                        <Badge
-                          key={idx}
-                          className="bg-white/10 text-white border border-white/15 text-[10px] font-bold rounded px-2 py-0.5 uppercase tracking-wide hover:bg-white/10"
-                        >
-                          {fw}
-                        </Badge>
-                      ))}
-                  </div>
-                  <h1 className="text-3xl lg:text-5xl font-black text-white mb-4 leading-tight">
-                    {script.title}
-                  </h1>
-                  <div className="flex flex-wrap items-center gap-4 text-sm">
-                    {typeof script.rating === "number" && script.rating > 0 && (
-                      <span className="flex items-center gap-1.5 font-semibold text-yellow-400">
-                        <Star className="h-4 w-4 fill-yellow-400" />
-                        {script.rating.toFixed(1)}
-                        {script.review_count > 0 && (
-                          <span className="text-gray-500 font-normal">
-                            ({script.review_count} reviews)
-                          </span>
-                        )}
+          {/* Title + meta + price/CTA bar */}
+          <section className="mt-6 flex flex-col gap-6 rounded-[24px] border border-white/[0.07] bg-[#0e0e0e] p-6 shadow-[0_24px_60px_-30px_rgba(0,0,0,0.9)] lg:flex-row lg:items-center lg:gap-8 lg:p-7">
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-md bg-white/[0.06] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/55">
+                  {categoryLabel}
+                </span>
+                {script.framework &&
+                  script.framework.map((fw, idx) => (
+                    <span
+                      key={idx}
+                      className="rounded-md bg-sky-500/10 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-sky-300 ring-1 ring-sky-500/20"
+                    >
+                      {fw}
+                    </span>
+                  ))}
+              </div>
+              <h1 className="mt-3 text-[28px] font-extrabold leading-tight tracking-tight sm:text-[32px]">
+                {script.title}
+              </h1>
+              <div className="mt-2.5 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
+                <span className="flex items-center gap-2 text-white/55">
+                  <span className="grid h-6 w-6 place-items-center rounded-full bg-gradient-to-br from-orange-500 to-amber-400 text-[10px] font-black text-black">
+                    {sellerInitial}
+                  </span>
+                  {script.seller_name}
+                  {verified && <BadgeCheck className="h-4 w-4 text-orange-500" />}
+                </span>
+                {typeof script.rating === "number" && script.rating > 0 && (
+                  <span className="flex items-center gap-1.5 text-white/55">
+                    <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+                    <span className="font-semibold text-white">
+                      {script.rating.toFixed(1)}
+                    </span>
+                    {script.review_count > 0 && (
+                      <span className="text-white/35">
+                        ({script.review_count} reviews)
                       </span>
                     )}
+                  </span>
+                )}
+                {script.downloads > 0 && (
+                  <span className="flex items-center gap-1.5 text-white/45">
+                    <Download className="h-4 w-4" />
+                    <span>{script.downloads.toLocaleString()}</span> downloads
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* price + cta */}
+            <div className="lg:w-[320px] lg:flex-none lg:border-l lg:border-white/[0.07] lg:pl-8">
+              <div className="flex items-end gap-3">
+                {isFree ? (
+                  <span className="text-[38px] font-extrabold leading-none tracking-tight text-green-400">
+                    Free
+                  </span>
+                ) : (
+                  <>
+                    <span className="text-[38px] font-extrabold leading-none tracking-tight">
+                      {currency}
+                      {script.price}
+                    </span>
+                    {script.original_price && (
+                      <span className="mb-1 text-base text-white/35 line-through">
+                        {currency}
+                        {script.original_price}
+                      </span>
+                    )}
+                    {script.original_price && discount > 0 && (
+                      <span className="mb-1 rounded-md bg-emerald-500/12 px-2 py-0.5 text-xs font-bold text-emerald-400 ring-1 ring-emerald-500/25">
+                        −{discount}%
+                      </span>
+                    )}
+                  </>
+                )}
+              </div>
+              <div className="mt-4 flex flex-col gap-2.5">
+                <Button
+                  onClick={handleBuy}
+                  disabled={!canBuy || buying}
+                  className="group flex h-auto w-full items-center justify-center gap-2 rounded-2xl bg-orange-500 py-3.5 font-bold text-black transition hover:bg-orange-400 disabled:opacity-50"
+                >
+                  {buying ? (
+                    <>
+                      <Loader2 className="h-[18px] w-[18px] animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <ShoppingCart className="h-[18px] w-[18px]" />
+                      {isFree ? "Get it Free" : "Add to Cart"}
+                    </>
+                  )}
+                </Button>
+                <Button
+                  onClick={handleBuy}
+                  disabled={!canBuy || buying}
+                  className="flex h-auto w-full items-center justify-center gap-2 rounded-2xl border border-white/[0.1] bg-white/[0.04] py-3.5 font-bold text-white transition hover:bg-white/[0.08] disabled:opacity-50"
+                >
+                  <Zap className="h-[18px] w-[18px] text-orange-500" />
+                  Buy via Tebex
+                </Button>
+              </div>
+              {canBuy ? (
+                <p className="mt-3 flex items-center justify-center gap-1.5 text-[12px] text-white/35">
+                  <ShieldCheck className="h-3.5 w-3.5" /> Instant delivery · escrow
+                  protected
+                </p>
+              ) : (
+                <p className="mt-3 flex items-center justify-center gap-1.5 text-[12px] text-white/35">
+                  <AlertCircle className="h-3.5 w-3.5" /> No purchase link
+                  available
+                </p>
+              )}
+            </div>
+          </section>
+
+          {/* Body: content + seller */}
+          <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-[1fr_320px]">
+            {/* LEFT: content */}
+            <div className="min-w-0">
+              {/* Overview */}
+              <section>
+                <h2 className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/40">
+                  Overview
+                </h2>
+                <p className="mt-3 whitespace-pre-line text-[15px] leading-relaxed text-white/65">
+                  {script.description}
+                </p>
+              </section>
+
+              {/* Features */}
+              {hasFeatures && (
+                <section className="mt-9">
+                  <h2 className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/40">
+                    Features
+                  </h2>
+                  <div className="mt-4 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                    {script.features.map((feature, index) => (
+                      <div
+                        key={index}
+                        className="flex items-start gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4"
+                      >
+                        <span className="mt-0.5 grid h-8 w-8 flex-none place-items-center rounded-lg bg-orange-500/12 text-orange-500">
+                          <Check className="h-4 w-4" />
+                        </span>
+                        <div className="text-sm font-semibold leading-snug text-white/85">
+                          {feature}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {/* Requirements */}
+              {hasRequirements && (
+                <section className="mt-9">
+                  <h2 className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/40">
+                    Requirements
+                  </h2>
+                  <ul className="mt-4 divide-y divide-white/[0.05] overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02]">
+                    {script.requirements.map((requirement, index) => (
+                      <li
+                        key={index}
+                        className="flex items-center gap-3 px-4 py-3 text-sm text-white/75"
+                      >
+                        <Check className="h-4 w-4 flex-none text-emerald-400" />
+                        {requirement}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+
+              {/* meta strip */}
+              <section className="mt-9 grid grid-cols-3 overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02]">
+                <div className="border-r border-white/[0.05] p-4 text-center">
+                  <div className="text-[11px] uppercase tracking-[0.14em] text-white/35">
+                    Version
+                  </div>
+                  <div className="mt-1 text-sm font-semibold">
+                    v{script.version}
                   </div>
                 </div>
+                <div className="border-r border-white/[0.05] p-4 text-center">
+                  <div className="text-[11px] uppercase tracking-[0.14em] text-white/35">
+                    Updated
+                  </div>
+                  <div className="mt-1 text-sm font-semibold">
+                    {lastUpdated || "—"}
+                  </div>
+                </div>
+                <div className="p-4 text-center">
+                  <div className="text-[11px] uppercase tracking-[0.14em] text-white/35">
+                    Downloads
+                  </div>
+                  <div className="mt-1 text-sm font-semibold">
+                    {script.downloads > 0
+                      ? script.downloads.toLocaleString()
+                      : "—"}
+                  </div>
+                </div>
+              </section>
+            </div>
 
-                {/* Description card */}
-                <Card className="bg-white/[0.04] border border-white/[0.08] backdrop-blur-md rounded-2xl">
-                  <CardContent className="p-6">
-                    <h2 className="text-lg font-bold text-white mb-3">
-                      About this product
-                    </h2>
-                    <p className="text-gray-300 leading-relaxed whitespace-pre-line">
-                      {script.description}
-                    </p>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Right Column - Sticky purchase panel */}
-              <div className="lg:col-span-1">
-                <div className="lg:sticky lg:top-24 space-y-4">
-                  {/* Purchase Card */}
-                  <Card className="bg-white/[0.04] border border-white/[0.08] backdrop-blur-md rounded-2xl shadow-[0_16px_48px_rgba(0,0,0,0.5)]">
-                    <CardContent className="p-6 space-y-5">
-                      {/* Price */}
-                      <div className="space-y-2">
-                        {isFree ? (
-                          <span className="text-4xl font-black text-green-400 leading-none">
-                            Free
-                          </span>
-                        ) : (
-                          <>
-                            <div className="flex items-end gap-3 flex-wrap">
-                              {script.original_price && (
-                                <span className="text-xl text-gray-500 line-through font-medium">
-                                  {currency}
-                                  {script.original_price}
-                                </span>
-                              )}
-                              <div className="flex items-center gap-2">
-                                <span className="text-4xl font-black text-white leading-none">
-                                  {currency}
-                                  {script.price}
-                                </span>
-                                {script.original_price && discount > 0 && (
-                                  <Badge className="bg-gradient-to-r from-orange-500 to-yellow-400 text-black px-2.5 py-1 rounded-md text-xs font-bold">
-                                    -{discount}%
-                                  </Badge>
-                                )}
-                              </div>
-                            </div>
-                            {script.original_price && (
-                              <p className="text-sm text-gray-400">
-                                Save {currency}
-                                {(script.original_price - script.price).toFixed(2)}
-                              </p>
-                            )}
-                          </>
-                        )}
-                      </div>
-
-                      <div className="h-px bg-gradient-to-r from-transparent via-orange-500/30 to-transparent" />
-
-                      {/* Buy Button */}
-                      <Button
-                        onClick={handleBuy}
-                        disabled={!canBuy || buying}
-                        className="w-full bg-gradient-to-r from-orange-500 to-yellow-400 text-black hover:from-orange-400 hover:to-yellow-300 font-bold py-6 text-lg shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl disabled:opacity-50"
-                      >
-                        {buying ? (
-                          <>
-                            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                            Processing...
-                          </>
-                        ) : (
-                          <>
-                            <ShoppingCart className="mr-2 h-5 w-5" />
-                            {isFree ? "Get it Free" : "Buy Now"}
-                          </>
-                        )}
-                      </Button>
-
-                      {!canBuy && (
-                        <p className="text-sm text-gray-400 flex items-center justify-center gap-2">
-                          <AlertCircle className="h-4 w-4" />
-                          No purchase link available
-                        </p>
+            {/* RIGHT: seller card */}
+            <aside className="lg:sticky lg:top-24 lg:h-fit">
+              <div className="rounded-[22px] border border-white/[0.07] bg-[#0e0e0e] p-5">
+                <div className="flex items-center gap-3">
+                  {script.seller_image ? (
+                    <span className="relative h-12 w-12 overflow-hidden rounded-2xl ring-2 ring-orange-500/40">
+                      <Image
+                        src={script.seller_image}
+                        alt={script.seller_name}
+                        fill
+                        sizes="48px"
+                        className="object-cover"
+                      />
+                    </span>
+                  ) : (
+                    <span className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-orange-500 to-amber-400 text-lg font-black text-black">
+                      {sellerInitial}
+                    </span>
+                  )}
+                  <div className="leading-tight">
+                    <div className="flex items-center gap-1.5 font-semibold">
+                      {script.seller_name}
+                      {verified && (
+                        <BadgeCheck className="h-4 w-4 text-orange-500" />
                       )}
-
-                      <div className="flex items-center justify-center gap-2 text-xs text-gray-500">
-                        <ShieldCheck className="h-4 w-4 text-green-500" />
-                        Secure checkout
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  {/* Seller Card */}
-                  <Card className="bg-white/[0.04] border border-white/[0.08] backdrop-blur-md rounded-2xl">
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-4">
-                        <Avatar className="h-14 w-14 ring-2 ring-orange-500/40">
-                          <AvatarImage
-                            src={script.seller_image || "/placeholder-user.jpg"}
-                          />
-                          <AvatarFallback className="bg-orange-500 text-white font-bold text-lg">
-                            {script.seller_name ? script.seller_name[0] : "?"}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h3 className="text-white font-bold text-lg truncate">
-                              {script.seller_name}
-                            </h3>
-                            {verified && <VerifiedIcon size="md" />}
-                          </div>
-                          {verified && (
-                            <span className="flex items-center gap-1 text-sm text-gray-400">
-                              <span className="w-2 h-2 bg-green-500 rounded-full" />
-                              Verified Creator
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Tabs Section - Features / Requirements / Support */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
-          <Card className="bg-white/[0.04] border border-white/[0.08] backdrop-blur-md rounded-2xl overflow-hidden">
-            {(() => {
-              const hasFeatures = script.features && script.features.length > 0;
-              const hasRequirements =
-                script.requirements && script.requirements.length > 0;
-              const hasSupport =
-                script.other_links && script.other_links.length > 0;
-
-              const visibleTabsCount =
-                (hasFeatures ? 1 : 0) +
-                (hasRequirements ? 1 : 0) +
-                (hasSupport ? 1 : 0);
-
-              if (visibleTabsCount === 0) return null;
-
-              const gridClassMap: Record<number, string> = {
-                1: "grid-cols-1",
-                2: "grid-cols-2",
-                3: "grid-cols-3",
-              };
-              const gridClass = gridClassMap[visibleTabsCount] || "grid-cols-1";
-
-              const defaultTab = hasFeatures
-                ? "features"
-                : hasRequirements
-                ? "requirements"
-                : "Other Links";
-
-              return (
-                <Tabs
-                  key={`tabs-${visibleTabsCount}`}
-                  defaultValue={defaultTab}
-                  className="w-full"
-                >
-                  <TabsList
-                    className={`grid w-full ${gridClass} bg-white/[0.03] p-0 h-auto gap-0`}
-                  >
-                    {hasFeatures && (
-                      <TabsTrigger
-                        value="features"
-                        className="data-[state=active]:bg-orange-500 data-[state=active]:text-black text-white py-3 px-4 font-medium transition-colors"
-                      >
-                        Features
-                      </TabsTrigger>
-                    )}
-                    {hasRequirements && (
-                      <TabsTrigger
-                        value="requirements"
-                        className="data-[state=active]:bg-orange-500 data-[state=active]:text-black text-white py-3 px-4 font-medium transition-colors"
-                      >
-                        Requirements
-                      </TabsTrigger>
-                    )}
-                    {hasSupport && (
-                      <TabsTrigger
-                        value="Other Links"
-                        className="data-[state=active]:bg-orange-500 data-[state=active]:text-black text-white py-3 px-4 font-medium transition-colors"
-                      >
-                        Support
-                      </TabsTrigger>
-                    )}
-                  </TabsList>
-
-                  {hasFeatures && (
-                    <TabsContent value="features" className="mt-0">
-                      <CardContent className="p-6">
-                        <div className="flex items-center gap-2 mb-6">
-                          <Package className="h-6 w-6 text-orange-500" />
-                          <h3 className="text-white text-xl font-bold">
-                            Features &amp; Capabilities
-                          </h3>
-                        </div>
-                        <div className="space-y-3">
-                          {script.features.map((feature, index) => (
-                            <div
-                              key={index}
-                              className="flex items-start gap-3 p-4 rounded-lg bg-white/[0.03] border border-white/[0.08]"
-                            >
-                              <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                              <span className="text-gray-300 leading-relaxed">
-                                {feature}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </CardContent>
-                    </TabsContent>
-                  )}
-
-                  {hasRequirements && (
-                    <TabsContent value="requirements" className="mt-0">
-                      <CardContent className="p-6">
-                        <div className="flex items-center gap-2 mb-6">
-                          <AlertCircle className="h-6 w-6 text-orange-500" />
-                          <h3 className="text-white text-xl font-bold">
-                            System Requirements
-                          </h3>
-                        </div>
-                        <div className="space-y-3">
-                          {script.requirements.map((requirement, index) => (
-                            <div
-                              key={index}
-                              className="flex items-center gap-3 p-4 rounded-lg bg-white/[0.03] border border-white/[0.08]"
-                            >
-                              <Package className="h-5 w-5 text-blue-500 flex-shrink-0" />
-                              <span className="text-gray-300 leading-relaxed">
-                                {requirement}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </CardContent>
-                    </TabsContent>
-                  )}
-
-                  {hasSupport && (
-                    <TabsContent value="Other Links" className="mt-0">
-                      <CardContent className="p-6">
-                        <div className="flex items-center gap-2 mb-6">
-                          <Info className="h-6 w-6 text-orange-500" />
-                          <h3 className="text-white text-xl font-bold">
-                            Other Links
-                          </h3>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {script.other_links!.map((link, index) => {
-                            const getLinkInfo = (url: string) => {
-                              const lowerUrl = url.toLowerCase();
-                              let domain = "";
-                              try {
-                                const urlObj = new URL(
-                                  url.startsWith("http") ? url : `https://${url}`
-                                );
-                                domain = urlObj.hostname.replace("www.", "");
-                              } catch {
-                                domain = lowerUrl;
-                              }
-
-                              if (
-                                domain.includes("discord") ||
-                                lowerUrl.includes("discord.gg")
-                              )
-                                return { label: "Discord", icon: MessageCircle };
-                              if (
-                                domain.includes("youtube") ||
-                                domain.includes("youtu.be")
-                              )
-                                return { label: "YouTube", icon: Play };
-                              if (domain.includes("github"))
-                                return { label: "GitHub", icon: Github };
-                              if (
-                                domain.includes("docs") ||
-                                domain.includes("documentation") ||
-                                domain.includes("wiki")
-                              )
-                                return { label: "Documentation", icon: BookOpen };
-                              if (
-                                domain.includes("support") ||
-                                domain.includes("help")
-                              )
-                                return { label: "Support", icon: HelpCircle };
-
-                              const cleaned = domain.split(".")[0];
-                              return {
-                                label:
-                                  cleaned.charAt(0).toUpperCase() +
-                                    cleaned.slice(1) || "External Link",
-                                icon: Globe,
-                              };
-                            };
-
-                            const linkInfo = getLinkInfo(link);
-                            const IconComponent = linkInfo.icon;
-
-                            return (
-                              <motion.a
-                                key={index}
-                                href={link}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-4 p-5 rounded-xl border border-white/[0.08] bg-white/[0.03] hover:border-orange-500/40 hover:bg-white/[0.06] transition-all duration-300 cursor-pointer group"
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: index * 0.1 }}
-                              >
-                                <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-orange-500/10 border border-orange-500/30 flex items-center justify-center">
-                                  <IconComponent className="h-6 w-6 text-orange-400" />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <h4 className="text-white font-semibold mb-1 group-hover:text-orange-400 transition-colors">
-                                    {linkInfo.label}
-                                  </h4>
-                                  <p className="text-sm text-gray-400 truncate">
-                                    {link
-                                      .replace(/^https?:\/\//, "")
-                                      .replace(/^www\./, "")}
-                                  </p>
-                                </div>
-                                <ExternalLink className="h-5 w-5 text-orange-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
-                              </motion.a>
-                            );
-                          })}
-                        </div>
-                      </CardContent>
-                    </TabsContent>
-                  )}
-                </Tabs>
-              );
-            })()}
-          </Card>
-        </div>
-
-        {/* More Scripts Section */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
-          <div className="mb-8">
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-2">
-              More Scripts
-            </h2>
-            <p className="text-gray-400">Discover other premium FiveM scripts</p>
-          </div>
-
-          {loadingOtherScripts ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {[...Array(4)].map((_, i) => (
-                <div
-                  key={i}
-                  className="rounded-2xl border border-white/[0.08] bg-white/[0.04] overflow-hidden"
-                >
-                  <div className="h-36 bg-white/[0.06] animate-pulse" />
-                  <div className="p-3.5 space-y-2">
-                    <div className="h-4 bg-white/[0.06] rounded animate-pulse" />
-                    <div className="h-4 bg-white/[0.06] rounded w-2/3 animate-pulse" />
-                    <div className="h-6 bg-white/[0.06] rounded w-1/3 animate-pulse" />
+                    </div>
+                    <div className="text-xs text-white/40">
+                      {verified ? "Verified seller" : "Seller"}
+                    </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          ) : otherScripts.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 justify-items-center">
-              {otherScripts.map((p) => (
-                <ProductCard key={p.id} product={p} className="w-full max-w-[320px]" />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <Package className="h-16 w-16 text-gray-500 mx-auto mb-4" />
-              <p className="text-gray-400">
-                No other scripts available at the moment.
-              </p>
-            </div>
-          )}
+                <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+                  <div className="rounded-xl bg-white/[0.03] py-2.5">
+                    <div className="text-sm font-bold">
+                      {typeof script.rating === "number" && script.rating > 0
+                        ? script.rating.toFixed(1)
+                        : "—"}
+                    </div>
+                    <div className="text-[10px] uppercase tracking-wide text-white/35">
+                      Rating
+                    </div>
+                  </div>
+                  <div className="rounded-xl bg-white/[0.03] py-2.5">
+                    <div className="text-sm font-bold">
+                      {script.review_count > 0 ? script.review_count : "—"}
+                    </div>
+                    <div className="text-[10px] uppercase tracking-wide text-white/35">
+                      Reviews
+                    </div>
+                  </div>
+                  <div className="rounded-xl bg-white/[0.03] py-2.5">
+                    <div className="text-sm font-bold">
+                      {script.downloads > 0
+                        ? script.downloads.toLocaleString()
+                        : "—"}
+                    </div>
+                    <div className="text-[10px] uppercase tracking-wide text-white/35">
+                      Sales
+                    </div>
+                  </div>
+                </div>
+                {script.seller_id && (
+                  <Link
+                    href={`/seller/${script.seller_id}`}
+                    className="mt-4 block w-full rounded-xl border border-white/[0.1] bg-white/[0.04] py-2.5 text-center text-sm font-semibold transition hover:bg-white/[0.08]"
+                  >
+                    View store
+                  </Link>
+                )}
+              </div>
 
-          {/* Browse-all link preserved for navigation */}
-          <div className="mt-10 text-center">
-            <Link
-              href="/scripts"
-              className="inline-flex items-center gap-2 text-orange-400 hover:text-orange-300 font-semibold"
-            >
-              Browse all scripts
-              <ChevronRight className="h-4 w-4" />
-            </Link>
+              <div className="mt-4 rounded-[22px] border border-white/[0.07] bg-white/[0.02] p-5">
+                <div className="flex items-center gap-2 text-sm font-semibold">
+                  <LifeBuoy className="h-4 w-4 text-orange-500" /> Support
+                  included
+                </div>
+                <p className="mt-1.5 text-[13px] leading-snug text-white/45">
+                  Active Discord, documentation and free updates from the seller.
+                </p>
+              </div>
+            </aside>
           </div>
+
+          {/* Related: More from seller */}
+          <section className="mt-14">
+            <div className="flex items-end justify-between">
+              <h2 className="text-lg font-extrabold tracking-tight">
+                More from {script.seller_name}
+              </h2>
+              <Link
+                href="/scripts"
+                className="flex items-center gap-1 text-sm font-semibold text-white/50 transition hover:text-white"
+              >
+                View all <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+
+            {loadingOtherScripts ? (
+              <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
+                {[...Array(3)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="overflow-hidden rounded-[20px] border border-white/[0.07] bg-[#0e0e0e]"
+                  >
+                    <div className="h-36 animate-pulse bg-white/[0.06]" />
+                    <div className="space-y-2 p-4">
+                      <div className="h-4 animate-pulse rounded bg-white/[0.06]" />
+                      <div className="h-4 w-2/3 animate-pulse rounded bg-white/[0.06]" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : otherScripts.length > 0 ? (
+              <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
+                {otherScripts.slice(0, 6).map((p) => (
+                  <Link
+                    key={p.id}
+                    href={p.href}
+                    className="group overflow-hidden rounded-[20px] border border-white/[0.07] bg-[#0e0e0e] transition hover:border-white/[0.14]"
+                  >
+                    <div className="relative h-36 overflow-hidden">
+                      {p.coverImage ? (
+                        <Image
+                          src={p.coverImage}
+                          alt={p.title}
+                          fill
+                          sizes="(max-width: 640px) 100vw, 33vw"
+                          className="object-cover transition duration-700 group-hover:scale-105"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center bg-white/[0.04]">
+                          <Package className="h-10 w-10 text-white/15" />
+                        </div>
+                      )}
+                      <span className="absolute left-3 top-3 rounded-full bg-black/45 px-2 py-0.5 text-[10px] font-semibold uppercase ring-1 ring-white/10 backdrop-blur-md">
+                        {(p.framework && p.framework[0]) || "Script"}
+                      </span>
+                    </div>
+                    <div className="p-4">
+                      <div className="truncate text-sm font-semibold">
+                        {p.title}
+                      </div>
+                      <div className="mt-1 flex items-center justify-between">
+                        <span className="text-base font-bold">
+                          {p.free || p.price === 0
+                            ? "Free"
+                            : `$${Number(p.price).toFixed(2)}`}
+                        </span>
+                        {typeof p.rating === "number" && p.rating > 0 && (
+                          <span className="flex items-center gap-1 text-xs text-white/45">
+                            <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                            {p.rating.toFixed(1)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className="mt-5 rounded-[20px] border border-white/[0.07] bg-white/[0.02] py-12 text-center">
+                <Package className="mx-auto mb-4 h-12 w-12 text-gray-500" />
+                <p className="text-gray-400">
+                  No other scripts available at the moment.
+                </p>
+              </div>
+            )}
+
+            {/* Browse-all link preserved for navigation */}
+            <div className="mt-10 text-center">
+              <Link
+                href="/scripts"
+                className="inline-flex items-center gap-2 font-semibold text-orange-400 transition hover:text-orange-300"
+              >
+                Browse all scripts
+                <ChevronRight className="h-4 w-4" />
+              </Link>
+            </div>
+          </section>
         </div>
-      </div>
+      </main>
       <Footer />
     </>
   );

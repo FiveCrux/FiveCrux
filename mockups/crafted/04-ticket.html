@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FiveCrux — Entry Card (ticket)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+<script>tailwind.config={theme:{extend:{fontFamily:{sans:["Inter","sans-serif"],mono:["JetBrains Mono","monospace"]},colors:{brand:{orange:"#f97316"}}}}}</script>
+<style>
+  body{font-family:Inter,sans-serif;background:#070707;color:#fff}
+  .num{font-variant-numeric:tabular-nums}
+  .mono{font-family:'JetBrains Mono',monospace}
+
+  /* the ticket body — warm paper-dark, soft shadow */
+  .ticket{
+    background:#111010;
+    box-shadow:0 28px 64px -22px rgba(0,0,0,0.85);
+  }
+
+  /* perforation row: two side notches punched out + dashed tear line */
+  .perf{position:relative}
+  .perf::before,.perf::after{
+    content:"";position:absolute;top:50%;transform:translateY(-50%);
+    width:22px;height:22px;border-radius:9999px;background:#070707;
+  }
+  .perf::before{left:-11px}
+  .perf::after{right:-11px}
+  .tear{
+    height:0;border-top:2px dashed rgba(255,255,255,0.14);
+    margin:0 14px;
+  }
+</style>
+</head>
+<body class="grid min-h-screen place-items-center px-6 py-12">
+
+<div class="w-full max-w-[390px]">
+  <div class="ticket overflow-hidden rounded-[24px] ring-1 ring-white/[0.08]">
+
+    <!-- ===== STUB (tear-off): admit one + prize worth ===== -->
+    <div class="relative px-6 pt-5 pb-4">
+      <!-- faint orange wash on the stub -->
+      <div class="pointer-events-none absolute inset-0 bg-gradient-to-b from-orange-500/[0.07] to-transparent"></div>
+
+      <div class="relative flex items-start justify-between">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-[11px] font-bold uppercase tracking-[0.28em] text-orange-400">Admit One</span>
+            <span class="inline-flex items-center gap-1 rounded-full bg-emerald-500/12 px-2 py-0.5 text-[10px] font-bold text-emerald-400 ring-1 ring-emerald-500/25">
+              <i data-lucide="ticket" class="h-3 w-3"></i> Free
+            </span>
+          </div>
+          <div class="mono mt-2 text-[13px] font-bold tracking-[0.12em] text-white/55">FC-0451-LS</div>
+        </div>
+
+        <!-- prize worth lives on the stub -->
+        <div class="text-right">
+          <div class="text-[10px] font-medium uppercase tracking-[0.16em] text-white/40">Prize worth</div>
+          <div class="num mt-0.5 text-[26px] font-extrabold leading-none tracking-tight">$19.99</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PERFORATION / TEAR LINE ===== -->
+    <div class="perf"><div class="tear"></div></div>
+
+    <!-- ===== BODY: prize + entry as the main action ===== -->
+    <div class="px-6 pb-6 pt-5">
+
+      <!-- prize hero -->
+      <div class="flex items-center gap-3.5">
+        <div class="h-16 w-16 shrink-0 overflow-hidden rounded-xl ring-1 ring-white/10">
+          <img src="https://img.forgemods.de/images/thumb/images/4f205008-65c0-4591-9561-33c232a2bc20_gta5map_ls_legion_square_park_bed357ad-959c-4e1e-9420-c793a2ad905f.webp" class="h-full w-full object-cover" />
+        </div>
+        <div class="min-w-0">
+          <div class="text-[10px] font-medium uppercase tracking-[0.18em] text-white/40">FiveM · MLO</div>
+          <h3 class="mt-0.5 truncate text-[19px] font-extrabold leading-tight tracking-tight">LS Legion Square Park</h3>
+        </div>
+      </div>
+
+      <!-- countdown line -->
+      <div class="mt-5">
+        <div class="flex items-baseline justify-between">
+          <span class="text-[11px] font-medium uppercase tracking-[0.16em] text-white/40">Closes in</span>
+          <span class="num text-sm font-semibold">
+            <span class="text-white">4d</span> <span class="text-white">23h</span> <span class="text-white/45">33m</span>
+          </span>
+        </div>
+        <div class="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/[0.07]">
+          <div class="h-full rounded-full bg-gradient-to-r from-orange-500 to-orange-400" style="width:62%"></div>
+        </div>
+        <div class="mt-1.5 flex justify-between text-[11px] text-white/30">
+          <span>Opened Jun 19</span><span>Draws Jun 24, 2026</span>
+        </div>
+      </div>
+
+      <!-- MAIN ACTION: enter -->
+      <button class="group mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-orange-500 py-3.5 font-bold text-black transition hover:bg-orange-400">
+        <i data-lucide="ticket" class="h-4 w-4"></i>
+        Enter Giveaway
+        <i data-lucide="arrow-right" class="h-4 w-4 transition-transform group-hover:translate-x-0.5"></i>
+      </button>
+      <p class="mt-2.5 flex items-center justify-center gap-1.5 text-[12px] text-white/35">
+        <i data-lucide="shield-check" class="h-3.5 w-3.5"></i> Winner drawn automatically &amp; fairly
+      </p>
+
+      <!-- social proof -->
+      <div class="mt-5 flex items-center gap-3">
+        <div class="flex -space-x-2">
+          <span class="grid h-7 w-7 place-items-center rounded-full bg-orange-500/80 text-[10px] font-bold text-black ring-2 ring-[#111010]">A</span>
+          <span class="grid h-7 w-7 place-items-center rounded-full bg-sky-500/80 text-[10px] font-bold text-black ring-2 ring-[#111010]">R</span>
+          <span class="grid h-7 w-7 place-items-center rounded-full bg-violet-500/80 text-[10px] font-bold text-black ring-2 ring-[#111010]">K</span>
+          <span class="grid h-7 w-7 place-items-center rounded-full bg-white/10 text-[10px] font-bold ring-2 ring-[#111010]">+</span>
+        </div>
+        <p class="text-sm text-white/55"><span class="num font-semibold text-white">1,277</span> entered — <span class="text-white/40">you haven't yet</span></p>
+      </div>
+    </div>
+
+    <!-- ===== HOST FOOTER ===== -->
+    <div class="flex items-center gap-3 border-t border-white/[0.06] bg-white/[0.015] px-6 py-4">
+      <span class="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-orange-500 to-amber-400 text-sm font-black text-black">F</span>
+      <div class="leading-tight">
+        <div class="flex items-center gap-1 text-sm font-semibold">Forge Studios <i data-lucide="badge-check" class="h-3.5 w-3.5 text-orange-400"></i></div>
+        <div class="text-xs text-white/40">Giveaway host</div>
+      </div>
+      <button class="ml-auto text-xs font-semibold text-white/60 transition hover:text-white">View →</button>
+    </div>
+  </div>
+
+  <p class="mt-4 text-center text-xs text-white/30">Refined raffle-ticket concept — tear-off stub holds the prize value.</p>
+</div>
+
+<script>lucide.createIcons()</script>
+</body>
+</html>
