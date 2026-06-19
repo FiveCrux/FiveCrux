@@ -57,3 +57,8 @@ S3_SETUP_CHECKLIST.md
 GIVEAWAY_WINNER_SETUP.md
 # QA audit artifacts (screenshots + scratch scripts)
 mockups/_audit/
+
+# Local screenshots / scratch images
+/image.png
+/image copy.png
+image*.png
