@@ -59,6 +59,7 @@ export default function ImpersonationWidget() {
             return (
               <button
                 key={p.key}
+                data-testid={`impersonate-${p.key}`}
                 disabled={busy}
                 onClick={() => pick(p.key)}
                 className={`flex w-full items-start gap-2.5 rounded-xl px-2.5 py-2 text-left transition hover:bg-white/[0.06] disabled:opacity-50 ${isActive ? "text-orange-400" : "text-white/85"}`}
@@ -79,6 +80,7 @@ export default function ImpersonationWidget() {
         </div>
       )}
       <button
+        data-testid="impersonate-toggle"
         onClick={() => setOpen((o) => !o)}
         className="flex items-center gap-2 rounded-full border border-orange-500/40 bg-[#0e0e0e]/95 px-3.5 py-2 font-semibold text-orange-400 shadow-[0_10px_30px_-8px_rgba(0,0,0,0.8)] backdrop-blur"
       >

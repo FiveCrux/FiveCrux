@@ -65,3 +65,4 @@ image*.png
 
 # local dev DB (PGlite test harness)
 .pglite/
+.pglite-studio/
