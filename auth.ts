@@ -20,8 +20,13 @@ if (process.env.NODE_ENV === "production") {
 	if (!secret || secret === "dev-secret-change-me") {
 		throw new Error("NEXTAUTH_SECRET must be set to a strong, unique value in production.")
 	}
-	if (process.env.ALLOW_DEV_LOGIN === "true" || process.env.USE_PGLITE === "true" || process.env.NEXT_PUBLIC_MOCK_AUTH === "true") {
-		throw new Error("Dev test-harness flags (ALLOW_DEV_LOGIN / USE_PGLITE / NEXT_PUBLIC_MOCK_AUTH) must be OFF in production.")
+	if (
+		process.env.ALLOW_DEV_LOGIN === "true" ||
+		process.env.USE_PGLITE === "true" ||
+		process.env.NEXT_PUBLIC_MOCK_AUTH === "true" ||
+		process.env.TEBEX_MOCK === "true"
+	) {
+		throw new Error("Dev test-harness flags (ALLOW_DEV_LOGIN / USE_PGLITE / NEXT_PUBLIC_MOCK_AUTH / TEBEX_MOCK) must be OFF in production.")
 	}
 }
 

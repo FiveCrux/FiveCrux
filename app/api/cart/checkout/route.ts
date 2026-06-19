@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/auth";
-import { validateCouponSchedule } from "@/lib/coupon-utils";
 import { env } from "@/lib/env";
+import { validateCoupon } from "@/lib/cart-checkout-utils";
 
 import { db } from "@/lib/db/client";
 
@@ -56,98 +56,6 @@ async function getPayPalAccessToken(): Promise<string> {
 
     const data = await response.json();
     return data.access_token;
-}
-
-function getMatchingItemsTotal(items: any[], scope: string) {
-    const isTargetedScope = ["Ad Slots", "Featured Script Slots", "Props"].includes(scope);
-
-    const matchingItems = items.filter((item) => {
-        if (!isTargetedScope) return true;
-
-        const metadata = typeof item.metadata === "string"
-            ? (() => { try { return JSON.parse(item.metadata) } catch { return null } })()
-            : item.metadata;
-
-        if (scope === "Props") {
-            return item.itemType === "prop";
-        }
-        if (scope === "Ad Slots") {
-            return metadata?.couponScope === "Ad Slots" || metadata?.category === "Ad Slots" || metadata?.packageType === "ads";
-        }
-        if (scope === "Featured Script Slots") {
-            return metadata?.couponScope === "Featured Script Slots" || metadata?.category === "Featured Script Slots" || metadata?.packageType === "featured-scripts";
-        }
-        return false;
-    });
-
-    return {
-        items: matchingItems,
-        total: matchingItems.reduce(
-            (sum, item) => sum + Number(item.price) * item.quantity,
-            0
-        ),
-    };
-}
-
-function calculateDiscount(total: number, coupon: typeof coupons.$inferSelect) {
-    const value = Number(coupon.discountValue);
-
-    if (coupon.discountType === "Percentage") {
-        return Math.min(total, (total * value) / 100);
-    }
-
-    return Math.min(total, value);
-}
-
-async function validateCoupon(couponCode: string, userId: string, total: number, items: any[]) {
-    const code = couponCode.trim().toUpperCase();
-
-    if (!code) {
-        return null;
-    }
-
-    const coupon = await db.query.coupons.findFirst({
-        where: eq(coupons.code, code),
-    });
-
-    if (!coupon || coupon.isActive === false) {
-        return { error: "Invalid coupon code" };
-    }
-
-    const scheduleError = validateCouponSchedule(coupon.startDate, coupon.expiryDate);
-    if (scheduleError) {
-        return scheduleError;
-    }
-
-    if (Number(coupon.minCartValue) > total) {
-        return { error: `Minimum cart value for this coupon is ${Number(coupon.minCartValue).toFixed(2)}` };
-    }
-
-    if (coupon.maxUses && coupon.usedCount >= coupon.maxUses) {
-        return { error: "Coupon usage limit has been reached" };
-    }
-
-    const existingRedemption = await db.query.couponRedemptions.findFirst({
-        where: and(
-            eq(couponRedemptions.couponId, coupon.id),
-            eq(couponRedemptions.userId, userId)
-        ),
-    });
-
-    if (existingRedemption) {
-        return { error: "This coupon cannot be used again" };
-    }
-
-    const { items: matchingItems, total: matchingTotal } = getMatchingItemsTotal(items, coupon.scope);
-
-    if (matchingItems.length === 0 && ["Ad Slots", "Featured Script Slots", "Props"].includes(coupon.scope)) {
-        return { error: `This coupon is only valid for items of type "${coupon.scope}"` };
-    }
-
-    return {
-        coupon,
-        discountAmount: calculateDiscount(matchingTotal, coupon),
-    };
 }
 
 export async function POST(request: NextRequest) {
