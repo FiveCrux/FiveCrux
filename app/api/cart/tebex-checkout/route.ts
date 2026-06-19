@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { randomUUID } from "crypto";
+import { randomUUID, createHash, createHmac } from "crypto";
 
 import { authOptions } from "@/auth";
 import { db } from "@/lib/db/client";
@@ -211,6 +211,31 @@ export async function POST(request: NextRequest) {
       amount: payableAmount.toFixed(2),
       custom,
     });
+
+    // MOCK ONLY: Tebex's real payment.completed webhook can't reach localhost, so
+    // simulate it here (correctly signed) — exercising the REAL webhook handler —
+    // so manual browser testing provisions instantly. No-op in real mode.
+    if (mock) {
+      try {
+        const payload = JSON.stringify({
+          type: "payment.completed",
+          subject: {
+            basket_ident: basketIdent,
+            transaction_id: `mock-${order.id}`,
+            price: { amount: Number(payableAmount.toFixed(2)), currency: "EUR" },
+          },
+        });
+        const bodyHash = createHash("sha256").update(payload).digest("hex");
+        const signature = createHmac("sha256", process.env.TEBEX_WEBHOOK_SECRET || "").update(bodyHash).digest("hex");
+        await fetch(`${siteUrl}/api/tebex/webhook`, {
+          method: "POST",
+          headers: { "content-type": "application/json", "x-signature": signature },
+          body: payload,
+        });
+      } catch (e) {
+        console.error("Tebex mock webhook self-fire failed:", e);
+      }
+    }
 
     return NextResponse.json({ success: true, order, basketIdent, checkoutUrl, mock });
   } catch (error) {
