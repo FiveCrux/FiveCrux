@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FiveCrux — Advertise · Pricing</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<script>
+  tailwind.config = {
+    theme: { extend: {
+      fontFamily: { sans: ['Inter','sans-serif'] },
+      colors: { brand: { orange: '#f97316' } }
+    } }
+  }
+</script>
+<style>
+  body{font-family:'Inter',sans-serif;background:#0a0a0a;color:#fff}
+  .num{font-variant-numeric:tabular-nums}
+  .label{text-transform:uppercase;letter-spacing:.18em;font-weight:600}
+  .hairline{border-color:rgba(255,255,255,0.07)}
+  .glass{background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.07)}
+  .grain{background:
+    radial-gradient(60% 50% at 50% -10%, rgba(249,115,22,0.13), transparent 70%);}
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-track{background:#0a0a0a}
+  ::-webkit-scrollbar-thumb{background:#262626;border-radius:6px}
+  details[open] .faq-chev{transform:rotate(180deg)}
+</style>
+</head>
+<body class="antialiased selection:bg-brand-orange/30">
+
+<!-- ===== NAV ===== -->
+<header class="sticky top-0 z-50 border-b hairline bg-[#0a0a0a]/80 backdrop-blur-xl">
+  <nav class="mx-auto flex max-w-7xl items-center gap-7 px-5 py-4">
+    <a href="#" class="text-xl font-extrabold tracking-tight shrink-0"><span class="text-brand-orange">Five</span><span class="text-white">Crux</span></a>
+    <ul class="ml-2 hidden items-center gap-7 text-sm font-medium text-white/55 lg:flex">
+      <li><a href="#" class="transition hover:text-white">Home</a></li>
+      <li><a href="#" class="transition hover:text-white">Scripts</a></li>
+      <li><a href="#" class="transition hover:text-white">Props</a></li>
+      <li><a href="#" class="transition hover:text-white">Giveaways</a></li>
+      <li><a href="#" class="font-semibold text-white">Advertise</a></li>
+    </ul>
+    <div class="ml-auto flex items-center gap-3">
+      <button class="relative rounded-xl border hairline p-2.5 transition hover:bg-white/5">
+        <i data-lucide="shopping-cart" class="h-5 w-5"></i>
+        <span class="num absolute -right-1.5 -top-1.5 grid h-5 w-5 place-items-center rounded-full bg-brand-orange text-[11px] font-bold text-black">2</span>
+      </button>
+      <button class="rounded-xl border hairline px-4 py-2.5 text-sm font-medium transition hover:bg-white/5">Login</button>
+    </div>
+  </nav>
+</header>
+
+<!-- ===== HERO ===== -->
+<section class="grain border-b hairline">
+  <div class="mx-auto max-w-7xl px-5 py-20 text-center md:py-28">
+    <span class="inline-flex items-center gap-2 rounded-full border hairline bg-white/[0.03] px-3.5 py-1.5 text-[11px] label text-white/55">
+      <i data-lucide="megaphone" class="h-3.5 w-3.5 text-brand-orange"></i> Concept · Classic Pricing
+    </span>
+    <h1 class="mx-auto mt-7 max-w-3xl text-4xl font-extrabold leading-[1.05] tracking-tight md:text-6xl">
+      Advertise on <span class="text-brand-orange">FiveCrux</span>
+    </h1>
+    <p class="mx-auto mt-5 max-w-xl text-lg text-white/55">
+      Put your scripts, server, or brand in front of thousands of active FiveM server owners.
+    </p>
+
+    <div class="mt-9 flex flex-wrap items-center justify-center gap-3">
+      <a href="#pricing" class="group inline-flex items-center gap-2 rounded-2xl bg-brand-orange px-6 py-3.5 font-bold text-black transition hover:bg-orange-400">
+        Get started <i data-lucide="arrow-right" class="h-4 w-4 transition-transform group-hover:translate-x-0.5"></i>
+      </a>
+      <a href="#how" class="inline-flex items-center gap-2 rounded-2xl border hairline px-6 py-3.5 font-semibold text-white/80 transition hover:bg-white/5">
+        How it works
+      </a>
+    </div>
+
+    <!-- stat pills -->
+    <div class="mx-auto mt-12 flex max-w-3xl flex-wrap items-center justify-center gap-x-3 gap-y-3">
+      <div class="inline-flex items-baseline gap-2 rounded-full border hairline bg-white/[0.02] px-4 py-2">
+        <span class="num text-base font-extrabold">2,400+</span><span class="text-sm text-white/45">active servers</span>
+      </div>
+      <div class="inline-flex items-baseline gap-2 rounded-full border hairline bg-white/[0.02] px-4 py-2">
+        <span class="num text-base font-extrabold">48k+</span><span class="text-sm text-white/45">monthly views</span>
+      </div>
+      <div class="inline-flex items-baseline gap-2 rounded-full border hairline bg-white/[0.02] px-4 py-2">
+        <span class="num text-base font-extrabold">8.4%</span><span class="text-sm text-white/45">avg CTR</span>
+      </div>
+      <div class="inline-flex items-center gap-2 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-400">
+        <span class="relative flex h-2 w-2"><span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span><span class="relative inline-flex h-2 w-2 rounded-full bg-emerald-400"></span></span>
+        Live now
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== BENEFITS ROW ===== -->
+<section class="border-b hairline">
+  <div class="mx-auto grid max-w-7xl grid-cols-2 gap-px overflow-hidden lg:grid-cols-4">
+    <div class="px-6 py-8">
+      <i data-lucide="eye" class="h-5 w-5 text-brand-orange"></i>
+      <h3 class="mt-3 font-semibold">Maximum visibility</h3>
+      <p class="mt-1 text-sm text-white/45">Prime placements across the marketplace and every listing page.</p>
+    </div>
+    <div class="px-6 py-8 lg:border-l hairline">
+      <i data-lucide="crosshair" class="h-5 w-5 text-brand-orange"></i>
+      <h3 class="mt-3 font-semibold">Targeted FiveM audience</h3>
+      <p class="mt-1 text-sm text-white/45">Reach buyers who are actively shopping for scripts and props.</p>
+    </div>
+    <div class="border-t hairline px-6 py-8 lg:border-t-0 lg:border-l">
+      <i data-lucide="line-chart" class="h-5 w-5 text-brand-orange"></i>
+      <h3 class="mt-3 font-semibold">Real-time analytics</h3>
+      <p class="mt-1 text-sm text-white/45">Track impressions, clicks and CTR from your seller dashboard.</p>
+    </div>
+    <div class="border-t hairline px-6 py-8 lg:border-t-0 lg:border-l">
+      <i data-lucide="headset" class="h-5 w-5 text-brand-orange"></i>
+      <h3 class="mt-3 font-semibold">Priority support</h3>
+      <p class="mt-1 text-sm text-white/45">Dedicated help getting your creative live and performing.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== PRICING ===== -->
+<section id="pricing" class="mx-auto max-w-7xl px-5 py-20 md:py-24">
+  <div class="mx-auto max-w-2xl text-center">
+    <div class="label text-[11px] text-brand-orange">Pricing</div>
+    <h2 class="mt-3 text-3xl font-extrabold tracking-tight md:text-4xl">Pick the slot that fits your launch</h2>
+    <p class="mt-3 text-white/50">Two ad products — <span class="text-white/75">Banner Ad Slots</span> &amp; <span class="text-white/75">Featured Script Slots</span> — bundled into three simple tiers. Cancel anytime.</p>
+  </div>
+
+  <div class="mt-12 grid items-start gap-6 lg:grid-cols-3">
+    <!-- Starter -->
+    <div class="glass flex flex-col rounded-3xl p-7">
+      <div class="label text-[11px] text-white/40">Starter</div>
+      <p class="mt-2 text-sm text-white/50">For your first campaign and smaller scripts.</p>
+      <div class="mt-6 flex items-baseline gap-1.5">
+        <span class="num text-5xl font-extrabold tracking-tight">$9.99</span>
+        <span class="text-sm text-white/45">/wk</span>
+      </div>
+      <p class="num mt-1.5 text-xs text-white/35">Billed for a 1-week run · $9.99 total</p>
+      <button class="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-2xl border hairline py-3 font-semibold transition hover:bg-white/5">
+        <i data-lucide="shopping-cart" class="h-4 w-4"></i> Add to cart
+      </button>
+      <ul class="mt-7 space-y-3.5 text-sm">
+        <li class="flex gap-3"><i data-lucide="check" class="mt-0.5 h-4 w-4 shrink-0 text-brand-orange"></i><span><span class="num font-semibold">1</span> banner ad slot</span></li>
+        <li class="flex gap-3"><i data-lucide="check" class="mt-0.5 h-4 w-4 shrink-0 text-brand-orange"></i>Standard placement</li>
+        <li class="flex gap-3"><i data-lucide="check" class="mt-0.5 h-4 w-4 shrink-0 text-brand-orange"></i>Real-time analytics</li>
+        <li class="flex gap-3 text-white/35"><i data-lucide="minus" class="mt-0.5 h-4 w-4 shrink-0"></i>Featured script slot</li>
+        <li class="flex gap-3 text-white/35"><i data-lucide="minus" class="mt-0.5 h-4 w-4 shrink-0"></i>Priority support</li>
+      </ul>
+    </div>
+
+    <!-- Premium (highlighted) -->
+    <div class="relative rounded-3xl bg-[#0e0e0e] p-7 shadow-[0_30px_70px_-25px_rgba(249,115,22,0.45)] ring-1 ring-brand-orange/60 lg:-mt-4 lg:scale-[1.03]">
+      <span class="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-brand-orange px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-black">Most popular</span>
+      <div class="label text-[11px] text-brand-orange">Premium</div>
+      <p class="mt-2 text-sm text-white/50">The sweet spot for a serious release.</p>
+      <div class="mt-6 flex items-baseline gap-1.5">
+        <span class="num text-5xl font-extrabold tracking-tight">$24.99</span>
+        <span class="text-sm text-white/45">/wk</span>
+      </div>
+      <p class="num mt-1.5 text-xs text-white/35">Billed for a 2-week run · $49.98 total</p>
+      <button class="group mt-7 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-brand-orange py-3 font-bold text-black transition hover:bg-orange-400">
+        Get started <i data-lucide="arrow-right" class="h-4 w-4 transition-transform group-hover:translate-x-0.5"></i>
+      </button>
+      <ul class="mt-7 space-y-3.5 text-sm">
+        <li class="flex gap-3"><i data-lucide="check" class="mt-0.5 h-4 w-4 shrink-0 text-brand-orange"></i><span><span class="num font-semibold">3</span> banner ad slots</span></li>
+        <li class="flex gap-3"><i data-lucide="check" class="mt-0.5 h-4 w-4 shrink-0 text-brand-orange"></i><span class="font-semibold text-white">Premium placement</span></li>
+        <li class="flex gap-3"><i data-lucide="check" class="mt-0.5 h-4 w-4 shrink-0 text-brand-orange"></i><span><span class="num font-semibold">1</span> featured script slot</span></li>
+        <li class="flex gap-3"><i data-lucide="check" class="mt-0.5 h-4 w-4 shrink-0 text-brand-orange"></i>Real-time analytics</li>
+        <li class="flex gap-3"><i data-lucide="check" class="mt-0.5 h-4 w-4 shrink-0 text-brand-orange"></i>Priority support</li>
+      </ul>
+    </div>
+
+    <!-- Executive -->
+    <div class="glass flex flex-col rounded-3xl p-7">
+      <div class="label text-[11px] text-white/40">Executive</div>
+      <p class="mt-2 text-sm text-white/50">Maximum reach with homepage spotlight.</p>
+      <div class="mt-6 flex items-baseline gap-1.5">
+        <span class="num text-5xl font-extrabold tracking-tight">$49.99</span>
+        <span class="text-sm text-white/45">/wk</span>
+      </div>
+      <p class="num mt-1.5 text-xs text-white/35">Billed for a 4-week run · $199.96 total</p>
+      <button class="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-2xl border hairline py-3 font-semibold transition hover:bg-white/5">
+        <i data-lucide="shopping-cart" class="h-4 w-4"></i> Add to cart
+      </button>
+      <ul class="mt-7 space-y-3.5 text-sm">
+        <li class="flex gap-3"><i data-lucide="check" class="mt-0.5 h-4 w-4 shrink-0 text-brand-orange"></i><span><span class="num font-semibold">6</span> banner ad slots</span></li>
+        <li class="flex gap-3"><i data-lucide="check" class="mt-0.5 h-4 w-4 shrink-0 text-brand-orange"></i><span class="font-semibold text-white">Homepage spotlight</span></li>
+        <li class="flex gap-3"><i data-lucide="check" class="mt-0.5 h-4 w-4 shrink-0 text-brand-orange"></i><span><span class="num font-semibold">3</span> featured script slots</span></li>
+        <li class="flex gap-3"><i data-lucide="check" class="mt-0.5 h-4 w-4 shrink-0 text-brand-orange"></i>Real-time analytics</li>
+        <li class="flex gap-3"><i data-lucide="check" class="mt-0.5 h-4 w-4 shrink-0 text-brand-orange"></i>Priority support + onboarding</li>
+      </ul>
+    </div>
+  </div>
+  <p class="mt-8 text-center text-sm text-white/35">All tiers include both ad products. Prices in USD. Slots subject to availability.</p>
+</section>
+
+<!-- ===== HOW IT WORKS ===== -->
+<section id="how" class="border-y hairline bg-white/[0.015]">
+  <div class="mx-auto max-w-7xl px-5 py-20">
+    <div class="text-center">
+      <div class="label text-[11px] text-brand-orange">How it works</div>
+      <h2 class="mt-3 text-3xl font-extrabold tracking-tight">Live in three steps</h2>
+    </div>
+    <div class="mt-12 grid gap-6 md:grid-cols-3">
+      <div class="glass rounded-3xl p-7">
+        <div class="num flex h-10 w-10 items-center justify-center rounded-full border border-brand-orange/40 text-sm font-bold text-brand-orange">01</div>
+        <h3 class="mt-5 text-lg font-bold">Choose a slot</h3>
+        <p class="mt-2 text-sm text-white/50">Pick banner placements, a featured script slot, or a tier that bundles both.</p>
+      </div>
+      <div class="glass rounded-3xl p-7">
+        <div class="num flex h-10 w-10 items-center justify-center rounded-full border border-brand-orange/40 text-sm font-bold text-brand-orange">02</div>
+        <h3 class="mt-5 text-lg font-bold">Submit your creative</h3>
+        <p class="mt-2 text-sm text-white/50">Upload a banner or select the script you want boosted. We review within hours.</p>
+      </div>
+      <div class="glass rounded-3xl p-7">
+        <div class="num flex h-10 w-10 items-center justify-center rounded-full border border-brand-orange/40 text-sm font-bold text-brand-orange">03</div>
+        <h3 class="mt-5 text-lg font-bold">Go live &amp; track</h3>
+        <p class="mt-2 text-sm text-white/50">Your ad rotates across FiveCrux. Watch impressions and CTR in real time.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FAQ ===== -->
+<section class="mx-auto max-w-3xl px-5 py-20">
+  <div class="text-center">
+    <div class="label text-[11px] text-brand-orange">FAQ</div>
+    <h2 class="mt-3 text-3xl font-extrabold tracking-tight">Common questions</h2>
+  </div>
+  <div class="mt-10 divide-y hairline border-y hairline">
+    <details class="group">
+      <summary class="flex cursor-pointer list-none items-center justify-between py-5 font-semibold">What's the difference between the two ad products?<i data-lucide="chevron-down" class="faq-chev h-5 w-5 text-white/40 transition-transform"></i></summary>
+      <p class="pb-5 text-sm text-white/50">Banner Ad Slots are rotating image placements across the marketplace and listing pages. Featured Script Slots boost one of your scripts into the Featured rows and homepage spotlight.</p>
+    </details>
+    <details class="group">
+      <summary class="flex cursor-pointer list-none items-center justify-between py-5 font-semibold">Can I change my creative after going live?<i data-lucide="chevron-down" class="faq-chev h-5 w-5 text-white/40 transition-transform"></i></summary>
+      <p class="pb-5 text-sm text-white/50">Yes. Swap banners or change the boosted script anytime from your dashboard — changes go through a quick review and update within hours.</p>
+    </details>
+    <details class="group">
+      <summary class="flex cursor-pointer list-none items-center justify-between py-5 font-semibold">How is CTR measured?<i data-lucide="chevron-down" class="faq-chev h-5 w-5 text-white/40 transition-transform"></i></summary>
+      <p class="pb-5 text-sm text-white/50">CTR is clicks divided by impressions, updated in real time. The marketplace currently averages 8.4% across active ad slots.</p>
+    </details>
+    <details class="group">
+      <summary class="flex cursor-pointer list-none items-center justify-between py-5 font-semibold">Do prices include both products?<i data-lucide="chevron-down" class="faq-chev h-5 w-5 text-white/40 transition-transform"></i></summary>
+      <p class="pb-5 text-sm text-white/50">Every tier includes banner slots, and Premium and Executive add Featured Script Slots. You can also buy products individually from your dashboard.</p>
+    </details>
+  </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer class="border-t hairline">
+  <div class="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-5 py-10 text-sm text-white/40 sm:flex-row">
+    <a href="#" class="text-lg font-extrabold tracking-tight"><span class="text-brand-orange">Five</span><span class="text-white">Crux</span></a>
+    <div class="flex flex-wrap items-center justify-center gap-5">
+      <a href="#" class="transition hover:text-white">Scripts</a>
+      <a href="#" class="transition hover:text-white">Props</a>
+      <a href="#" class="transition hover:text-white">Giveaways</a>
+      <a href="#" class="transition hover:text-white">Advertise</a>
+      <a href="#" class="transition hover:text-white">Support</a>
+    </div>
+    <p>© 2026 FiveCrux. Not affiliated with Rockstar / Cfx.re.</p>
+  </div>
+</footer>
+
+<script>lucide.createIcons()</script>
+</body>
+</html>
