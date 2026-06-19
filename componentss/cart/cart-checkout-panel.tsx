@@ -13,6 +13,12 @@ type CartCheckoutPanelProps = {
   total: number
 }
 
+// Default payment provider for the primary Checkout button. Flip to "tebex" via
+// NEXT_PUBLIC_PAYMENT_PROVIDER once the FiveCrux Tebex store + package map are
+// configured. The secondary button always uses Tebex.
+const DEFAULT_PROVIDER: "paypal" | "tebex" =
+  process.env.NEXT_PUBLIC_PAYMENT_PROVIDER === "tebex" ? "tebex" : "paypal"
+
 export default function CartCheckoutPanel({ total }: CartCheckoutPanelProps) {
   const [couponCode, setCouponCode] = useState("")
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null)
@@ -55,13 +61,14 @@ export default function CartCheckoutPanel({ total }: CartCheckoutPanelProps) {
     }
   }
 
-  const checkout = async () => {
+  const checkout = async (provider: "paypal" | "tebex" = DEFAULT_PROVIDER) => {
     setIsCheckingOut(true)
     setError(null)
     setMessage(null)
 
     try {
-      const response = await fetch("/api/cart/checkout", {
+      const endpoint = provider === "tebex" ? "/api/cart/tebex-checkout" : "/api/cart/checkout"
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -75,11 +82,13 @@ export default function CartCheckoutPanel({ total }: CartCheckoutPanelProps) {
         throw new Error(data.error || "Checkout failed")
       }
 
-      if (!data.approvalUrl) {
-        throw new Error("Payment gateway did not return an approval URL")
+      // PayPal returns `approvalUrl`; Tebex returns `checkoutUrl`.
+      const redirectUrl = data.checkoutUrl || data.approvalUrl
+      if (!redirectUrl) {
+        throw new Error("Payment gateway did not return a redirect URL")
       }
 
-      window.location.href = data.approvalUrl
+      window.location.href = redirectUrl
     } catch (err) {
       setError(err instanceof Error ? err.message : "Checkout failed")
       setIsCheckingOut(false)
@@ -175,7 +184,7 @@ export default function CartCheckoutPanel({ total }: CartCheckoutPanelProps) {
 
         <button
           type="button"
-          onClick={checkout}
+          onClick={() => checkout()}
           disabled={isCheckingOut}
           className="group mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-orange-500 py-4 text-[15px] font-bold text-black transition hover:bg-orange-400 disabled:cursor-not-allowed disabled:opacity-60"
         >
@@ -184,7 +193,7 @@ export default function CartCheckoutPanel({ total }: CartCheckoutPanelProps) {
         </button>
         <button
           type="button"
-          onClick={checkout}
+          onClick={() => checkout("tebex")}
           disabled={isCheckingOut}
           className="mt-2.5 flex w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] py-3.5 text-sm font-semibold text-white/85 transition hover:bg-white/[0.07] disabled:cursor-not-allowed disabled:opacity-60"
         >

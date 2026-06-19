@@ -1,9 +1,92 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { verifyTebexWebhook, type TebexWebhookPayload } from "@/lib/tebex";
 import { db } from "@/lib/db/client";
-import { tebexOrders } from "@/lib/db/schema";
+import { tebexOrders, orders, orderItems, carts, cartItems } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { createAdSlots, createFeaturedScriptSlots } from "@/lib/database-new";
+
+function generateNumericId() {
+  return Math.floor(Date.now() / 1000) + Math.floor(Math.random() * 10000);
+}
+
+/** Provision ONE platform entitlement (ad slots or featured-script slots). */
+async function provisionEntitlement(
+  userId: string,
+  meta: { packageType?: string; packageId?: string; slotsToAdd?: unknown; slotsPerMonth?: unknown; durationMonths?: unknown; durationWeeks?: unknown },
+  orderRef: string
+): Promise<boolean> {
+  const packageId = meta.packageId;
+  if (!packageId) return false;
+  const slotsToAdd = Number(meta.slotsToAdd ?? meta.slotsPerMonth ?? 1) || 1;
+  const durationMonths = Number(meta.durationMonths ?? 1) || 1;
+  const durationWeeks = meta.durationWeeks != null ? Number(meta.durationWeeks) : undefined;
+  const orderRefIds = Array(slotsToAdd).fill(orderRef);
+  if (meta.packageType === "ads") {
+    await createAdSlots(userId, slotsToAdd, orderRefIds, packageId, durationMonths);
+    return true;
+  }
+  if (meta.packageType === "featured-scripts") {
+    await createFeaturedScriptSlots(userId, slotsToAdd, orderRefIds, packageId, 0, durationWeeks);
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Provision a whole-cart Tebex order (custom.kind === 'platform_cart'): provision
+ * every item, populate order_items, mark the FiveCrux order paid, and clear the
+ * cart — mirroring app/api/cart/capture/route.ts. Idempotent against webhook
+ * retries via the FiveCrux order status.
+ */
+async function provisionCart(
+  meta: Record<string, any>,
+  userId: string,
+  orderRef: string
+): Promise<{ provisioned: boolean; reason?: string }> {
+  const fivecruxOrderId = meta.fivecruxOrderId;
+  const cartId = meta.cartId;
+  const items: any[] = Array.isArray(meta.items) ? meta.items : [];
+  if (items.length === 0) return { provisioned: false, reason: "no_items" };
+
+  // Idempotency: if the FiveCrux order is already paid AND has order_items, this
+  // event was already processed (Tebex retry) — do nothing.
+  if (fivecruxOrderId != null) {
+    const dbOrder = await db.query.orders.findFirst({ where: eq(orders.id, Number(fivecruxOrderId)) });
+    const existing = await db.query.orderItems.findMany({ where: eq(orderItems.orderId, Number(fivecruxOrderId)), limit: 1 });
+    if (dbOrder?.status === "paid" && existing.length > 0) {
+      return { provisioned: true };
+    }
+  }
+
+  // 1. Provision each platform entitlement.
+  for (const item of items) {
+    await provisionEntitlement(userId, item, orderRef);
+  }
+
+  // 2. Populate order_items from the cart, mark order paid, clear the cart.
+  if (cartId != null) {
+    const cart = await db.query.carts.findFirst({ where: eq(carts.id, Number(cartId)), with: { items: true } });
+    if (cart) {
+      for (const ci of cart.items) {
+        await db.insert(orderItems).values({
+          id: generateNumericId(),
+          orderId: Number(fivecruxOrderId),
+          itemType: ci.itemType,
+          itemId: ci.itemId,
+          title: ci.title,
+          price: ci.price,
+          quantity: ci.quantity,
+        });
+      }
+      await db.delete(cartItems).where(eq(cartItems.cartId, Number(cartId)));
+      await db.update(carts).set({ status: "completed", updatedAt: new Date() }).where(eq(carts.id, Number(cartId)));
+    }
+  }
+  if (fivecruxOrderId != null) {
+    await db.update(orders).set({ status: "paid", updatedAt: new Date() }).where(eq(orders.id, Number(fivecruxOrderId)));
+  }
+  return { provisioned: true };
+}
 
 /**
  * POST /api/tebex/webhook
@@ -136,6 +219,12 @@ async function provisionPlatformFee(
     if (!userId) {
       console.warn("Tebex webhook: platform_fee order missing userId", order.id);
       return { provisioned: false, reason: "missing_user" };
+    }
+
+    // Whole-cart order (from /api/cart/tebex-checkout): provision every item +
+    // complete the FiveCrux order + clear the cart.
+    if (Array.isArray(meta.items)) {
+      return await provisionCart(meta, userId, fallbackOrderId);
     }
 
     const packageType: string | undefined = meta.packageType;
