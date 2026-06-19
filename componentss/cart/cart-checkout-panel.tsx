@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
+import { Receipt, BadgeCheck, Lock, CreditCard, ShieldCheck } from "lucide-react"
 
 type AppliedCoupon = {
   id: number
@@ -86,69 +87,127 @@ export default function CartCheckoutPanel({ total }: CartCheckoutPanelProps) {
   }
 
   return (
-    <div className="rounded-3xl border border-gray-800 bg-neutral-900/70 p-8">
-      <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-        <div className="flex-1 space-y-5">
-          <div>
-            <p className="text-sm uppercase tracking-[0.2em] text-gray-500">Order summary</p>
-            <p className="mt-2 text-lg text-gray-300">
-              Ready to proceed when you are.
-            </p>
+    <div className="relative overflow-hidden rounded-3xl border border-white/[0.08] bg-[#0e0e0e] shadow-[0_24px_60px_-20px_rgba(0,0,0,0.85)]">
+      {/* Receipt header */}
+      <div className="flex items-center justify-between border-b border-dashed border-white/[0.12] px-6 py-5">
+        <div>
+          <div className="text-base font-extrabold tracking-tight text-white">Receipt</div>
+          <div className="mt-0.5 text-[11px] uppercase tracking-[0.16em] tabular-nums text-white/35">
+            Order summary
           </div>
-          <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
-            <label className="block">
-              <span className="text-sm text-gray-400">Coupon code</span>
-              <input
-                type="text"
-                value={couponCode}
-                onChange={(event) => {
-                  setCouponCode(event.target.value.toUpperCase())
-                  setAppliedCoupon(null)
-                  setMessage(null)
-                  setError(null)
-                }}
-                placeholder="Enter coupon code"
-                className="mt-3 w-full rounded-2xl border border-gray-800 bg-[#0d0d0d] px-4 py-3 text-white outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
-              />
-            </label>
-            <button
-              type="button"
-              onClick={applyCoupon}
-              disabled={isApplying || !couponCode.trim()}
-              className="inline-flex h-full min-h-[3rem] items-center justify-center rounded-2xl bg-slate-800 px-5 py-3 text-sm font-semibold text-gray-200 transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:text-gray-500"
-            >
-              {isApplying ? "Applying..." : "Apply"}
-            </button>
-          </div>
-          {message && <p className="text-sm text-green-400">{message}</p>}
-          {error && <p className="text-sm text-red-400">{error}</p>}
         </div>
-
-        <div className="rounded-2xl bg-[#121212] px-5 py-6 text-right w-full lg:w-[320px]">
-          {appliedCoupon && (
-            <div className="mb-4 space-y-1 text-sm">
-              <div className="flex justify-between gap-3 text-gray-400">
-                <span>Subtotal</span>
-                <span>€{total.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between gap-3 text-green-400">
-                <span>Discount</span>
-                <span>-€{appliedCoupon.discountAmount.toFixed(2)}</span>
-              </div>
-            </div>
-          )}
-          <p className="text-sm text-gray-400">Total</p>
-          <p className="text-3xl font-bold text-white">€{payableAmount.toFixed(2)}</p>
-          <button
-            type="button"
-            onClick={checkout}
-            disabled={isCheckingOut}
-            className="mt-5 w-full rounded-full bg-orange-500 px-5 py-3 text-sm font-semibold text-black transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isCheckingOut ? "Redirecting..." : "Checkout"}
-          </button>
+        <div className="grid h-10 w-10 place-items-center rounded-xl bg-orange-500/15">
+          <Receipt className="h-5 w-5 text-orange-500" />
         </div>
       </div>
+
+      <div className="px-6 py-5">
+        {/* Coupon */}
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={couponCode}
+            onChange={(event) => {
+              setCouponCode(event.target.value.toUpperCase())
+              setAppliedCoupon(null)
+              setMessage(null)
+              setError(null)
+            }}
+            placeholder="Coupon code"
+            className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3.5 py-2.5 text-sm font-semibold tracking-wide tabular-nums text-white outline-none transition focus:border-orange-500/50"
+          />
+          <button
+            type="button"
+            onClick={applyCoupon}
+            disabled={isApplying || !couponCode.trim()}
+            className="rounded-xl bg-white/[0.08] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/[0.14] disabled:cursor-not-allowed disabled:text-white/40"
+          >
+            {isApplying ? "Applying..." : "Apply"}
+          </button>
+        </div>
+
+        {appliedCoupon && (
+          <div className="mt-2.5 inline-flex items-center gap-2 rounded-full bg-emerald-500/12 px-3 py-1 text-xs font-bold text-emerald-400 ring-1 ring-emerald-500/25">
+            <BadgeCheck className="h-3.5 w-3.5" />
+            {appliedCoupon.code} applied
+            <span className="tabular-nums text-emerald-300">
+              −€{appliedCoupon.discountAmount.toFixed(2)}
+            </span>
+          </div>
+        )}
+
+        {message && !appliedCoupon && <p className="mt-2.5 text-sm text-emerald-400">{message}</p>}
+        {error && <p className="mt-2.5 text-sm text-red-400">{error}</p>}
+
+        <div className="my-4 border-t border-dashed border-white/[0.12]"></div>
+
+        {/* Totals */}
+        <dl className="space-y-2.5 text-sm">
+          <div className="flex items-center justify-between">
+            <dt className="text-white/50">Subtotal</dt>
+            <dd className="font-semibold tabular-nums text-white">€{total.toFixed(2)}</dd>
+          </div>
+          {appliedCoupon && (
+            <div className="flex items-center justify-between">
+              <dt className="text-white/50">Discount</dt>
+              <dd className="font-semibold tabular-nums text-emerald-400">
+                −€{appliedCoupon.discountAmount.toFixed(2)}
+              </dd>
+            </div>
+          )}
+          <div className="flex items-center justify-between">
+            <dt className="text-white/50">Processing</dt>
+            <dd className="font-semibold tabular-nums text-white/60">€0.00</dd>
+          </div>
+        </dl>
+
+        <div className="my-4 border-t border-dashed border-white/[0.12]"></div>
+
+        <div className="flex items-end justify-between">
+          <div>
+            <div className="text-[11px] uppercase tracking-[0.16em] text-white/40">Total due</div>
+            <div className="text-xs text-white/30">EUR · one-time</div>
+          </div>
+          <div className="text-[38px] font-extrabold leading-none tracking-tight tabular-nums text-white">
+            €{payableAmount.toFixed(2)}
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={checkout}
+          disabled={isCheckingOut}
+          className="group mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-orange-500 py-4 text-[15px] font-bold text-black transition hover:bg-orange-400 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          <Lock className="h-4 w-4" />
+          {isCheckingOut ? "Redirecting..." : `Checkout — €${payableAmount.toFixed(2)}`}
+        </button>
+        <button
+          type="button"
+          onClick={checkout}
+          disabled={isCheckingOut}
+          className="mt-2.5 flex w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] py-3.5 text-sm font-semibold text-white/85 transition hover:bg-white/[0.07] disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          <CreditCard className="h-4 w-4" />
+          Buy via Tebex
+        </button>
+
+        <p className="mt-4 flex items-center justify-center gap-1.5 text-[12px] text-white/35">
+          <ShieldCheck className="h-3.5 w-3.5 text-emerald-400/80" />
+          Secure checkout · instant delivery
+        </p>
+      </div>
+
+      {/* Perforated bottom edge */}
+      <div
+        className="h-3 w-full opacity-40"
+        style={{
+          backgroundImage:
+            "radial-gradient(circle, rgba(255,255,255,0.14) 1.5px, transparent 1.5px)",
+          backgroundSize: "14px 14px",
+          backgroundPosition: "center",
+        }}
+      ></div>
     </div>
   )
 }
