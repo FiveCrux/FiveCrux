@@ -20,9 +20,7 @@ const g = globalThis as unknown as { __fivecruxDb?: DB };
 function createDb(): DB {
   if (USE_PGLITE) {
     // Lazy require so the WASM Postgres is never bundled/loaded in production.
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { PGlite } = require('@electric-sql/pglite');
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { drizzle: drizzlePglite } = require('drizzle-orm/pglite');
     const dataDir = process.env.PGLITE_DIR || './.pglite';
     const client = new PGlite(dataDir);
