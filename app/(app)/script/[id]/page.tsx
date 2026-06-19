@@ -229,9 +229,9 @@ const BentoGallery = ({
   return (
     <>
       {/* Bento grid */}
-      <section className="grid grid-cols-1 gap-2.5 sm:grid-cols-4 sm:grid-rows-2">
+      <section className="grid grid-cols-1 gap-2.5 sm:grid-cols-4 sm:grid-rows-2 sm:h-[440px]">
         {/* large lead */}
-        <figure className="group relative col-span-1 row-span-2 overflow-hidden rounded-[22px] border border-white/[0.07] sm:col-span-2 lg:col-span-3">
+        <figure className={`group relative col-span-1 row-span-2 overflow-hidden rounded-[22px] border border-white/[0.07] ${small1 ? "sm:col-span-2 lg:col-span-3" : "sm:col-span-4"}`}>
           <button
             type="button"
             onClick={() => setIsFullscreen(true)}

@@ -291,9 +291,9 @@ export default function PropDetailPage() {
           )}
 
           {/* ===== BENTO GALLERY HERO ===== */}
-          <section className="grid grid-cols-1 gap-2.5 sm:grid-cols-4 sm:grid-rows-2">
+          <section className="grid grid-cols-1 gap-2.5 sm:grid-cols-4 sm:grid-rows-2 sm:h-[440px]">
             {/* large lead */}
-            <figure className="group relative col-span-1 row-span-2 overflow-hidden rounded-[22px] border border-white/[0.07] sm:col-span-2 lg:col-span-3">
+            <figure className={`group relative col-span-1 row-span-2 overflow-hidden rounded-[22px] border border-white/[0.07] ${images.length > 1 ? "sm:col-span-2 lg:col-span-3" : "sm:col-span-4"}`}>
               {leadImage ? (
                 <motion.div key={activeImage} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full w-full">
                   <Image
@@ -330,7 +330,7 @@ export default function PropDetailPage() {
             </figure>
 
             {/* small tile 1 */}
-            <figure className="group relative hidden min-h-[140px] overflow-hidden rounded-[22px] border border-white/[0.07] sm:block">
+            <figure className={`group relative hidden min-h-[140px] overflow-hidden rounded-[22px] border border-white/[0.07] ${images.length > 1 ? "sm:block" : ""}`}>
               {smallTile1 ? (
                 <Image
                   src={smallTile1}
@@ -345,7 +345,7 @@ export default function PropDetailPage() {
             </figure>
 
             {/* small tile 2 */}
-            <figure className="group relative hidden min-h-[140px] overflow-hidden rounded-[22px] border border-white/[0.07] sm:block">
+            <figure className={`group relative hidden min-h-[140px] overflow-hidden rounded-[22px] border border-white/[0.07] ${images.length > 1 ? "sm:block" : ""}`}>
               {smallTile2 ? (
                 <Image
                   src={smallTile2}
