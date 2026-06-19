@@ -7,7 +7,23 @@ import { ensureDevUser } from "@/lib/dev-auth"
 // TODO: remove before production — local-only dev login. When ALLOW_DEV_LOGIN=true
 // the Impersonation widget can issue a REAL next-auth session (JWT cookie) for a
 // fixed test identity, so server routes (getServerSession) recognise it too.
-const ALLOW_DEV_LOGIN = process.env.ALLOW_DEV_LOGIN === "true"
+//
+// SECURITY: hard-gated to non-production. Even if ALLOW_DEV_LOGIN=true leaks into
+// a production deploy, the provider stays OFF — otherwise anyone could POST to
+// /api/auth/callback/dev-credentials and obtain an admin session with no password.
+const ALLOW_DEV_LOGIN = process.env.ALLOW_DEV_LOGIN === "true" && process.env.NODE_ENV !== "production"
+
+// SECURITY: refuse to boot in production with the throwaway dev secret — a known
+// NEXTAUTH_SECRET lets anyone forge admin session JWTs.
+if (process.env.NODE_ENV === "production") {
+	const secret = process.env.NEXTAUTH_SECRET
+	if (!secret || secret === "dev-secret-change-me") {
+		throw new Error("NEXTAUTH_SECRET must be set to a strong, unique value in production.")
+	}
+	if (process.env.ALLOW_DEV_LOGIN === "true" || process.env.USE_PGLITE === "true" || process.env.NEXT_PUBLIC_MOCK_AUTH === "true") {
+		throw new Error("Dev test-harness flags (ALLOW_DEV_LOGIN / USE_PGLITE / NEXT_PUBLIC_MOCK_AUTH) must be OFF in production.")
+	}
+}
 
 const devProviders = ALLOW_DEV_LOGIN
 	? [
