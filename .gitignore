@@ -62,3 +62,6 @@ mockups/_audit/
 /image.png
 /image copy.png
 image*.png
+
+# local dev DB (PGlite test harness)
+.pglite/
