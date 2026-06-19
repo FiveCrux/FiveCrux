@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FiveCrux — Cart (Checkout / Receipt)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<script>tailwind.config={theme:{extend:{fontFamily:{sans:["Inter","sans-serif"]},colors:{brand:{orange:"#f97316"}}}}}</script>
+<style>
+  body{font-family:Inter,sans-serif;background:#0a0a0a;color:#fff}
+  .num{font-variant-numeric:tabular-nums}
+  .micro{font-size:11px;letter-spacing:.16em;text-transform:uppercase}
+  .perf{background-image:radial-gradient(circle,rgba(255,255,255,0.14) 1.5px,transparent 1.5px);background-size:14px 14px;background-position:center}
+</style>
+</head>
+<body class="min-h-screen antialiased">
+
+<!-- NAV -->
+<header class="sticky top-0 z-50 border-b border-white/[0.06] bg-[#0a0a0a]/85 backdrop-blur-xl">
+  <div class="mx-auto flex h-16 max-w-6xl items-center gap-8 px-5">
+    <a href="#" class="text-lg font-extrabold tracking-tight"><span class="text-brand-orange">Five</span><span class="text-white">Crux</span></a>
+    <nav class="hidden items-center gap-7 text-sm text-white/55 md:flex">
+      <a href="#" class="transition hover:text-white">Home</a>
+      <a href="#" class="transition hover:text-white">Scripts</a>
+      <a href="#" class="transition hover:text-white">Props</a>
+      <a href="#" class="transition hover:text-white">Giveaways</a>
+      <a href="#" class="transition hover:text-white">Advertise</a>
+    </nav>
+    <div class="ml-auto flex items-center gap-2">
+      <button class="relative grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-white/[0.03] transition hover:bg-white/[0.07]">
+        <i data-lucide="shopping-cart" class="h-[18px] w-[18px] text-white/80"></i>
+        <span class="num absolute -right-1.5 -top-1.5 grid h-5 min-w-5 place-items-center rounded-full bg-brand-orange px-1 text-[11px] font-bold text-black">3</span>
+      </button>
+      <button class="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm font-semibold text-white/85 transition hover:bg-white/[0.07]">Login</button>
+    </div>
+  </div>
+</header>
+
+<main class="mx-auto max-w-6xl px-5 py-8 md:py-12">
+
+  <span class="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 micro text-white/45">
+    <span class="h-1.5 w-1.5 rounded-full bg-brand-orange"></span> Concept 03 · Checkout / Receipt
+  </span>
+
+  <div class="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_400px]">
+
+    <!-- LEFT: compact item rows + extras -->
+    <section>
+      <div class="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 class="text-[26px] font-extrabold tracking-tight md:text-[32px]">Review &amp; Checkout</h1>
+          <p class="mt-1 text-sm text-white/45">Confirm your <span class="num font-semibold text-white/70">3 items</span> before paying</p>
+        </div>
+        <a href="#" class="inline-flex items-center gap-1.5 text-sm font-semibold text-white/55 transition hover:text-white"><i data-lucide="arrow-left" class="h-4 w-4"></i> Continue shopping</a>
+      </div>
+
+      <!-- compact rows -->
+      <div class="mt-6 overflow-hidden rounded-3xl border border-white/[0.07] bg-[#0e0e0e]">
+        <div class="flex items-center justify-between border-b border-white/[0.06] px-5 py-3.5">
+          <span class="micro text-white/40">Cart items</span>
+          <span class="num micro text-white/30">3 · qty 3</span>
+        </div>
+
+        <!-- row -->
+        <div class="flex items-center gap-3.5 px-5 py-3.5 transition hover:bg-white/[0.015]">
+          <img src="https://img.forgemods.de/images/thumb/images/gta5map_gaming_e83b6804-9d4f-4a0c-bb8f-ed72882d7d9b.webp" class="h-12 w-16 flex-none rounded-lg object-cover ring-1 ring-white/10" />
+          <div class="min-w-0 flex-1">
+            <h3 class="truncate text-sm font-bold tracking-tight">Advanced Banking System</h3>
+            <p class="micro mt-0.5 text-white/40">ESX · QBCore</p>
+          </div>
+          <div class="flex items-center rounded-lg border border-white/10 bg-white/[0.03]">
+            <button class="grid h-7 w-7 place-items-center text-white/55 transition hover:text-white"><i data-lucide="minus" class="h-3.5 w-3.5"></i></button>
+            <span class="num w-6 text-center text-xs font-semibold">1</span>
+            <button class="grid h-7 w-7 place-items-center text-white/55 transition hover:text-white"><i data-lucide="plus" class="h-3.5 w-3.5"></i></button>
+          </div>
+          <div class="num w-16 text-right text-sm font-bold">$19.99</div>
+          <button class="grid h-7 w-7 flex-none place-items-center rounded-lg text-white/30 transition hover:bg-red-500/10 hover:text-red-400"><i data-lucide="trash-2" class="h-4 w-4"></i></button>
+        </div>
+        <div class="mx-5 h-px bg-white/[0.05]"></div>
+
+        <!-- row -->
+        <div class="flex items-center gap-3.5 px-5 py-3.5 transition hover:bg-white/[0.015]">
+          <img src="https://img.forgemods.de/images/thumb/images/gta5map_vinewood_lake_villa_03_33f120b6-d81c-4c10-973d-c4522420e975.webp" class="h-12 w-16 flex-none rounded-lg object-cover ring-1 ring-white/10" />
+          <div class="min-w-0 flex-1">
+            <h3 class="truncate text-sm font-bold tracking-tight">Luxury Apartments MLO</h3>
+            <p class="micro mt-0.5 text-white/40">Standalone</p>
+          </div>
+          <div class="flex items-center rounded-lg border border-white/10 bg-white/[0.03]">
+            <button class="grid h-7 w-7 place-items-center text-white/55 transition hover:text-white"><i data-lucide="minus" class="h-3.5 w-3.5"></i></button>
+            <span class="num w-6 text-center text-xs font-semibold">1</span>
+            <button class="grid h-7 w-7 place-items-center text-white/55 transition hover:text-white"><i data-lucide="plus" class="h-3.5 w-3.5"></i></button>
+          </div>
+          <div class="num w-16 text-right text-sm font-bold">$34.99</div>
+          <button class="grid h-7 w-7 flex-none place-items-center rounded-lg text-white/30 transition hover:bg-red-500/10 hover:text-red-400"><i data-lucide="trash-2" class="h-4 w-4"></i></button>
+        </div>
+        <div class="mx-5 h-px bg-white/[0.05]"></div>
+
+        <!-- row: promotion -->
+        <div class="flex items-center gap-3.5 px-5 py-3.5 transition hover:bg-white/[0.015]">
+          <div class="grid h-12 w-16 flex-none place-items-center rounded-lg bg-gradient-to-br from-orange-500/20 to-amber-400/5 ring-1 ring-brand-orange/25"><i data-lucide="star" class="h-5 w-5 text-brand-orange"></i></div>
+          <div class="min-w-0 flex-1">
+            <h3 class="truncate text-sm font-bold tracking-tight">Featured Script Slot — 2 weeks</h3>
+            <p class="micro mt-0.5 text-orange-300/70">Promotion</p>
+          </div>
+          <div class="flex items-center rounded-lg border border-white/10 bg-white/[0.03]">
+            <button class="grid h-7 w-7 place-items-center text-white/55 transition hover:text-white"><i data-lucide="minus" class="h-3.5 w-3.5"></i></button>
+            <span class="num w-6 text-center text-xs font-semibold">1</span>
+            <button class="grid h-7 w-7 place-items-center text-white/55 transition hover:text-white"><i data-lucide="plus" class="h-3.5 w-3.5"></i></button>
+          </div>
+          <div class="num w-16 text-right text-sm font-bold">$15.00</div>
+          <button class="grid h-7 w-7 flex-none place-items-center rounded-lg text-white/30 transition hover:bg-red-500/10 hover:text-red-400"><i data-lucide="trash-2" class="h-4 w-4"></i></button>
+        </div>
+      </div>
+
+      <!-- trust badges row -->
+      <div class="mt-5 grid grid-cols-3 gap-3">
+        <div class="rounded-2xl border border-white/[0.06] bg-[#0e0e0e] px-4 py-3.5">
+          <i data-lucide="zap" class="h-5 w-5 text-brand-orange"></i>
+          <div class="mt-2 text-sm font-semibold">Instant delivery</div>
+          <div class="text-xs text-white/40">Files unlock now</div>
+        </div>
+        <div class="rounded-2xl border border-white/[0.06] bg-[#0e0e0e] px-4 py-3.5">
+          <i data-lucide="shield-check" class="h-5 w-5 text-emerald-400"></i>
+          <div class="mt-2 text-sm font-semibold">Secure payment</div>
+          <div class="text-xs text-white/40">Encrypted checkout</div>
+        </div>
+        <div class="rounded-2xl border border-white/[0.06] bg-[#0e0e0e] px-4 py-3.5">
+          <i data-lucide="refresh-cw" class="h-5 w-5 text-sky-400"></i>
+          <div class="mt-2 text-sm font-semibold">Lifetime updates</div>
+          <div class="text-xs text-white/40">Free re-downloads</div>
+        </div>
+      </div>
+
+      <!-- you might also like -->
+      <div class="mt-6">
+        <h2 class="micro text-white/40">You might also like</h2>
+        <div class="mt-3 grid grid-cols-2 gap-3">
+          <div class="flex items-center gap-3 rounded-2xl border border-white/[0.06] bg-[#0e0e0e] p-3 transition hover:border-white/[0.12]">
+            <div class="grid h-11 w-11 flex-none place-items-center rounded-lg bg-white/[0.05]"><i data-lucide="car" class="h-5 w-5 text-white/60"></i></div>
+            <div class="min-w-0 flex-1"><div class="truncate text-sm font-semibold">Vehicle Garage v3</div><div class="num text-xs text-white/40">$12.99</div></div>
+            <button class="grid h-8 w-8 flex-none place-items-center rounded-lg bg-brand-orange/15 text-brand-orange transition hover:bg-brand-orange/25"><i data-lucide="plus" class="h-4 w-4"></i></button>
+          </div>
+          <div class="flex items-center gap-3 rounded-2xl border border-white/[0.06] bg-[#0e0e0e] p-3 transition hover:border-white/[0.12]">
+            <div class="grid h-11 w-11 flex-none place-items-center rounded-lg bg-white/[0.05]"><i data-lucide="building-2" class="h-5 w-5 text-white/60"></i></div>
+            <div class="min-w-0 flex-1"><div class="truncate text-sm font-semibold">Police MLO Pack</div><div class="num text-xs text-white/40">$24.99</div></div>
+            <button class="grid h-8 w-8 flex-none place-items-center rounded-lg bg-brand-orange/15 text-brand-orange transition hover:bg-brand-orange/25"><i data-lucide="plus" class="h-4 w-4"></i></button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT: receipt rail -->
+    <aside class="lg:sticky lg:top-24 lg:self-start">
+      <div class="relative overflow-hidden rounded-3xl border border-white/[0.08] bg-[#0e0e0e] shadow-[0_24px_60px_-20px_rgba(0,0,0,0.85)]">
+        <!-- receipt header -->
+        <div class="flex items-center justify-between border-b border-dashed border-white/[0.12] px-6 py-5">
+          <div>
+            <div class="text-base font-extrabold tracking-tight">Receipt</div>
+            <div class="num micro mt-0.5 text-white/35">Order #FC-20418</div>
+          </div>
+          <div class="grid h-10 w-10 place-items-center rounded-xl bg-brand-orange/15"><i data-lucide="receipt" class="h-5 w-5 text-brand-orange"></i></div>
+        </div>
+
+        <div class="px-6 py-5">
+          <!-- itemized -->
+          <dl class="space-y-2.5 text-sm">
+            <div class="flex items-center justify-between"><dt class="truncate pr-3 text-white/55">Advanced Banking System</dt><dd class="num font-semibold">$19.99</dd></div>
+            <div class="flex items-center justify-between"><dt class="truncate pr-3 text-white/55">Luxury Apartments MLO</dt><dd class="num font-semibold">$34.99</dd></div>
+            <div class="flex items-center justify-between"><dt class="truncate pr-3 text-white/55">Featured Script Slot</dt><dd class="num font-semibold">$15.00</dd></div>
+          </dl>
+
+          <div class="my-4 border-t border-dashed border-white/[0.12]"></div>
+
+          <!-- coupon -->
+          <div class="flex gap-2">
+            <input value="CRUX10" class="num w-full rounded-xl border border-white/10 bg-white/[0.03] px-3.5 py-2.5 text-sm font-semibold tracking-wide outline-none focus:border-brand-orange/50" />
+            <button class="rounded-xl bg-white/[0.08] px-4 py-2.5 text-sm font-semibold transition hover:bg-white/[0.14]">Apply</button>
+          </div>
+          <div class="mt-2.5 inline-flex items-center gap-2 rounded-full bg-emerald-500/12 px-3 py-1 text-xs font-bold text-emerald-400 ring-1 ring-emerald-500/25">
+            <i data-lucide="badge-check" class="h-3.5 w-3.5"></i> CRUX10 applied <span class="num text-emerald-300">−$7.00</span>
+          </div>
+
+          <div class="my-4 border-t border-dashed border-white/[0.12]"></div>
+
+          <dl class="space-y-2.5 text-sm">
+            <div class="flex items-center justify-between"><dt class="text-white/50">Subtotal</dt><dd class="num font-semibold">$69.98</dd></div>
+            <div class="flex items-center justify-between"><dt class="text-white/50">Discount</dt><dd class="num font-semibold text-emerald-400">−$7.00</dd></div>
+            <div class="flex items-center justify-between"><dt class="text-white/50">Processing</dt><dd class="num font-semibold text-white/60">$0.00</dd></div>
+          </dl>
+
+          <div class="my-4 border-t border-dashed border-white/[0.12]"></div>
+
+          <div class="flex items-end justify-between">
+            <div>
+              <div class="micro text-white/40">Total due</div>
+              <div class="text-xs text-white/30">USD · one-time</div>
+            </div>
+            <div class="num text-[38px] font-extrabold leading-none tracking-tight">$62.98</div>
+          </div>
+
+          <button class="group mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-brand-orange py-4 text-[15px] font-bold text-black transition hover:bg-orange-400">
+            <i data-lucide="lock" class="h-4 w-4"></i> Checkout — $62.98
+          </button>
+          <button class="mt-2.5 flex w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] py-3.5 text-sm font-semibold text-white/85 transition hover:bg-white/[0.07]">
+            <i data-lucide="credit-card" class="h-4 w-4"></i> Buy via Tebex
+          </button>
+
+          <p class="mt-4 flex items-center justify-center gap-1.5 text-[12px] text-white/35">
+            <i data-lucide="shield-check" class="h-3.5 w-3.5 text-emerald-400/80"></i> Secure checkout · instant delivery
+          </p>
+        </div>
+
+        <!-- perforated bottom edge -->
+        <div class="perf h-3 w-full opacity-40"></div>
+      </div>
+    </aside>
+  </div>
+</main>
+
+<!-- FOOTER -->
+<footer class="mt-16 border-t border-white/[0.06]">
+  <div class="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-5 py-8 text-sm text-white/40 sm:flex-row">
+    <div class="text-base font-extrabold tracking-tight"><span class="text-brand-orange">Five</span><span class="text-white">Crux</span></div>
+    <p>© 2026 FiveCrux. The FiveM marketplace.</p>
+    <div class="flex gap-5">
+      <a href="#" class="transition hover:text-white">Terms</a>
+      <a href="#" class="transition hover:text-white">Privacy</a>
+      <a href="#" class="transition hover:text-white">Support</a>
+    </div>
+  </div>
+</footer>
+
+<script>lucide.createIcons()</script>
+</body>
+</html>
