@@ -1,28 +1,18 @@
 "use client"
 
 import { SessionProvider as NextAuthSessionProvider } from "next-auth/react"
-import type { Session } from "next-auth"
+import { getActiveImpersonationPreset } from "@/lib/dev-impersonation"
 
-// TODO: remove before production — local-only mock login so auth-gated pages can be
-// reviewed without Discord/DB. Enabled via NEXT_PUBLIC_MOCK_AUTH=true in .env.local.
+// TODO: remove before production — local-only mock login + role impersonation so
+// auth-gated pages can be tested without Discord/DB. Enabled via
+// NEXT_PUBLIC_MOCK_AUTH=true. The active identity is chosen in the dev
+// Impersonation widget and persisted in localStorage (see lib/dev-impersonation).
 const MOCK_AUTH = process.env.NEXT_PUBLIC_MOCK_AUTH === "true"
-const mockSession: Session | undefined = MOCK_AUTH
-	? ({
-			user: {
-				id: "mock-dev",
-				name: "Dev Tester",
-				email: "dev@fivecrux.local",
-				image: null,
-				username: "devtester",
-				roles: ["admin", "founder", "moderator", "prop_lister"],
-				profilePicture: null,
-				Profile_picture: null,
-			},
-			expires: "2999-01-01T00:00:00.000Z",
-		} as unknown as Session)
-	: undefined
 
 export default function SessionProvider({ children }: { children: React.ReactNode }) {
+	// null = guest (logged out, no fetch); undefined = real next-auth fetch.
+	const mockSession = MOCK_AUTH ? getActiveImpersonationPreset().session : undefined
+
 	return (
 		<NextAuthSessionProvider
 			session={mockSession}
