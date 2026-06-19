@@ -66,3 +66,6 @@ image*.png
 # local dev DB (PGlite test harness)
 .pglite/
 .pglite-studio/
+
+# allow the prod env template (no secrets)
+!.env.production.example
