@@ -603,9 +603,9 @@ export default function ScriptsPage() {
   }, []);
 
   // Featured items come from /api/featured-scripts with a slightly different shape.
-  const featuredProducts: MarketProduct[] = useMemo(
-    () =>
-      featuredScripts.map((item: any) => {
+  const featuredProducts: MarketProduct[] = useMemo(() => {
+    if (featuredScripts.length > 0) {
+      return featuredScripts.map((item: any) => {
         const isFree = !!item.free || Number(item.price) === 0;
         return {
           id: item.id,
@@ -627,9 +627,25 @@ export default function ScriptsPage() {
           tag: "FEATURED",
           href: `/script/${item.id}`,
         } as MarketProduct;
-      }),
-    [featuredScripts]
-  );
+      });
+    }
+    // TODO: remove before production — seed fallback so the Featured Scripts row
+    // shows when the API/DB returns nothing (mirrors the main grid's seed fallback).
+    return MARKETPLACE_SEED.filter((p) => p.tag === "FEATURED").map((p) => ({
+      id: Number(p.id),
+      title: p.title,
+      framework: p.framework || [],
+      price: p.price,
+      originalPrice: p.originalPrice,
+      free: !!p.free || p.price === 0,
+      rating: p.rating,
+      seller: p.seller,
+      sellerImage: p.sellerImage,
+      coverImage: p.coverImage,
+      tag: "FEATURED",
+      href: `/script/${p.id}`,
+    })) as MarketProduct[];
+  }, [featuredScripts]);
 
   const hasActiveFilters = activeFiltersCount > 0 || searchQuery.length > 0 || activeTab !== "all";
 
