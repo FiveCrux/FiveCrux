@@ -4,10 +4,22 @@ import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { motion } from "framer-motion"
-import { Package, Download, Heart, Share2, Star, CheckCircle, ChevronRight, User, Calendar, FileArchive, ShoppingCart } from "lucide-react"
-import { Button } from "@/componentss/ui/button"
-import { Card, CardContent } from "@/componentss/ui/card"
-import { Badge } from "@/componentss/ui/badge"
+import Image from "next/image"
+import {
+  Package,
+  Download,
+  Star,
+  CheckCircle,
+  ChevronRight,
+  User,
+  Calendar,
+  ShoppingCart,
+  Zap,
+  ShieldCheck,
+  BadgeCheck,
+  Images,
+  LifeBuoy,
+} from "lucide-react"
 import Navbar from "@/componentss/shared/navbar"
 import Footer from "@/componentss/shared/footer"
 import { toast } from "sonner"
@@ -99,6 +111,17 @@ export default function PropDetailPage() {
   const hasDiscount = parseFloat(prop.discountPercentage) > 0
   // Tebex Model B is available only when the prop carries seller webstore fields.
   const hasTebex = Boolean(prop.tebexPackageId && prop.tebexStoreToken)
+
+  const images: string[] = Array.isArray(prop.images) ? prop.images : []
+  const hasImages = images.length > 0
+  const sellerName = prop.user?.name || prop.user?.username || "FiveCrux Community"
+  const sellerAvatar = prop.user?.profilePicture || prop.user?.image || null
+  const sellerInitial = sellerName.charAt(0).toUpperCase()
+  // Bento tiles: main lead = active image; the next two distinct images fill the small tiles.
+  const leadImage = hasImages ? images[activeImage] : null
+  const smallTile1 = hasImages ? images[(activeImage + 1) % images.length] : null
+  const smallTile2 = hasImages ? images[(activeImage + 2) % images.length] : null
+  const extraCount = Math.max(images.length - 3, 0)
 
   const handleAddToCart = async () => {
     if (!session) {
@@ -194,310 +217,346 @@ export default function PropDetailPage() {
     }
   }
 
+  // Primary CTA — preserves button priority: purchased→Download, else hasTebex→Buy Now, else Add to Cart.
+  const renderPrimaryCta = () => {
+    if (prop.hasPurchased) {
+      return (
+        <button
+          onClick={handleDownload}
+          disabled={downloading}
+          className="group flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-green-500 to-emerald-500 py-3.5 font-bold text-black transition hover:from-green-600 hover:to-emerald-600 disabled:opacity-70"
+        >
+          {downloading ? (
+            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-black"></div>
+          ) : (
+            <>
+              <Download className="h-[18px] w-[18px] group-hover:animate-bounce" /> Download Prop File
+            </>
+          )}
+        </button>
+      )
+    }
+    if (hasTebex) {
+      return (
+        <button
+          onClick={handleTebexBuy}
+          disabled={buyingTebex}
+          className="group flex w-full items-center justify-center gap-2 rounded-2xl bg-orange-500 py-3.5 font-bold text-black transition hover:bg-orange-400 disabled:opacity-70"
+        >
+          {buyingTebex ? (
+            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-black"></div>
+          ) : (
+            <>
+              <Zap className="h-[18px] w-[18px]" /> Buy via Tebex
+            </>
+          )}
+        </button>
+      )
+    }
+    return (
+      <button
+        onClick={handleAddToCart}
+        disabled={addingToCart}
+        className="group flex w-full items-center justify-center gap-2 rounded-2xl bg-orange-500 py-3.5 font-bold text-black transition hover:bg-orange-400 disabled:opacity-70"
+      >
+        {addingToCart ? (
+          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-black"></div>
+        ) : (
+          <>
+            <ShoppingCart className="h-[18px] w-[18px]" /> {isFree ? "Add to Library" : "Add to Cart"}
+          </>
+        )}
+      </button>
+    )
+  }
+
   return (
     <>
       <Navbar />
-      <div className="min-h-screen text-white bg-[#0a0a0a] pt-24 pb-12 relative overflow-hidden">
-        {/* Ambient background */}
-        <div className="fixed inset-0 pointer-events-none -z-10">
-          <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-orange-500/10 blur-[120px]" />
-          <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-yellow-500/10 blur-[120px]" />
-        </div>
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <main className="min-h-screen bg-[#0a0a0a] text-white pt-20 [font-variant-numeric:tabular-nums]">
+        <div className="mx-auto max-w-[1240px] px-5 pb-24">
           {/* Breadcrumb */}
-          <div className="flex items-center text-sm text-gray-400 mb-8 space-x-2">
-            <span className="hover:text-white cursor-pointer" onClick={() => router.push('/')}>Home</span>
-            <ChevronRight className="h-4 w-4" />
-            <span className="hover:text-white cursor-pointer" onClick={() => router.push('/props')}>Props</span>
-            <ChevronRight className="h-4 w-4" />
-            <span className="text-orange-400 truncate max-w-[200px]">{prop.name}</span>
-          </div>
+          <nav className="flex items-center gap-2 py-5 text-[13px] text-white/35">
+            <span className="cursor-pointer transition hover:text-white/70" onClick={() => router.push('/')}>Home</span>
+            <ChevronRight className="h-3.5 w-3.5" />
+            <span className="cursor-pointer transition hover:text-white/70" onClick={() => router.push('/props')}>Props</span>
+            <ChevronRight className="h-3.5 w-3.5" />
+            <span className="truncate max-w-[220px] text-white/60">{prop.name}</span>
+          </nav>
 
           {prop.__seed && (
-            <div className="mb-6 rounded-xl border border-yellow-500/30 bg-yellow-500/10 px-4 py-2 text-xs text-yellow-300">
+            <div className="mb-5 rounded-xl border border-yellow-500/30 bg-yellow-500/10 px-4 py-2 text-xs text-yellow-300">
               Showing demo seed content (no matching prop found in the database).
             </div>
           )}
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Left Column: Media + Description */}
-            <div className="lg:col-span-2 space-y-6">
-              <Card className="rounded-2xl border border-white/[0.08] bg-white/[0.04] overflow-hidden backdrop-blur-md shadow-2xl shadow-orange-500/5">
-                <div className="aspect-video relative group bg-black/50">
-                  {prop.images && prop.images.length > 0 ? (
-                    <motion.img
-                      key={activeImage}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      src={prop.images[activeImage]}
-                      alt={prop.name}
-                      className="w-full h-full object-contain"
-                    />
+          {/* ===== BENTO GALLERY HERO ===== */}
+          <section className="grid grid-cols-1 gap-2.5 sm:grid-cols-4 sm:grid-rows-2">
+            {/* large lead */}
+            <figure className="group relative col-span-1 row-span-2 overflow-hidden rounded-[22px] border border-white/[0.07] sm:col-span-2 lg:col-span-3">
+              {leadImage ? (
+                <motion.div key={activeImage} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full w-full">
+                  <Image
+                    src={leadImage}
+                    alt={prop.name}
+                    fill
+                    sizes="(max-width: 640px) 100vw, 75vw"
+                    className="object-cover transition duration-700 group-hover:scale-[1.03]"
+                  />
+                </motion.div>
+              ) : (
+                <div className="flex h-[280px] w-full flex-col items-center justify-center bg-black/50 text-gray-500 sm:h-full">
+                  <Package className="mb-3 h-14 w-14 opacity-50" />
+                  <span>No images available</span>
+                </div>
+              )}
+              {!leadImage && <div className="min-h-[280px] sm:min-h-[420px]" />}
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-tr from-black/40 via-transparent to-transparent" />
+              {hasDiscount && (
+                <span className="absolute right-4 top-4 rounded-full bg-emerald-500/90 px-2.5 py-1 text-[11px] font-bold text-black shadow-lg backdrop-blur-md">
+                  −{prop.discountPercentage}%
+                </span>
+              )}
+              {isFree && (
+                <span className="absolute left-4 top-4 rounded-full bg-green-500 px-2.5 py-1 text-[11px] font-bold text-black shadow-lg">
+                  FREE
+                </span>
+              )}
+              {leadImage && !isFree && !hasDiscount && (
+                <span className="absolute left-4 top-4 rounded-full bg-black/45 px-2.5 py-1 text-[11px] font-semibold tracking-wide text-white/85 ring-1 ring-white/10 backdrop-blur-md">
+                  FiveM Prop
+                </span>
+              )}
+            </figure>
+
+            {/* small tile 1 */}
+            <figure className="group relative hidden min-h-[140px] overflow-hidden rounded-[22px] border border-white/[0.07] sm:block">
+              {smallTile1 ? (
+                <Image
+                  src={smallTile1}
+                  alt=""
+                  fill
+                  sizes="25vw"
+                  className="object-cover transition duration-700 group-hover:scale-[1.04]"
+                />
+              ) : (
+                <div className="h-full w-full bg-white/[0.03]" />
+              )}
+            </figure>
+
+            {/* small tile 2 */}
+            <figure className="group relative hidden min-h-[140px] overflow-hidden rounded-[22px] border border-white/[0.07] sm:block">
+              {smallTile2 ? (
+                <Image
+                  src={smallTile2}
+                  alt=""
+                  fill
+                  sizes="25vw"
+                  className="object-cover transition duration-700 group-hover:scale-[1.04]"
+                />
+              ) : (
+                <div className="h-full w-full bg-white/[0.03]" />
+              )}
+              {extraCount > 0 && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/55 opacity-0 transition group-hover:opacity-100">
+                  <span className="flex items-center gap-1.5 text-sm font-semibold">
+                    <Images className="h-4 w-4" /> +{extraCount} more
+                  </span>
+                </div>
+              )}
+            </figure>
+          </section>
+
+          {/* thumbnail strip — switches the main tile */}
+          {images.length > 1 && (
+            <div className="hide-scroll mt-2.5 flex gap-2.5 overflow-x-auto">
+              {images.map((img, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setActiveImage(idx)}
+                  className={`relative h-16 w-28 flex-none overflow-hidden rounded-xl border object-cover transition ${
+                    activeImage === idx
+                      ? 'border-orange-500/60 opacity-100 ring-2 ring-orange-500/60'
+                      : 'border-white/[0.07] opacity-80 hover:opacity-100'
+                  }`}
+                >
+                  <Image src={img} alt="" fill sizes="112px" className="object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* ===== TITLE + PRICE BAR ===== */}
+          <section className="mt-6 flex flex-col gap-6 rounded-[24px] border border-white/[0.07] bg-[#0e0e0e] p-6 shadow-[0_24px_60px_-30px_rgba(0,0,0,0.9)] lg:flex-row lg:items-center lg:gap-8 lg:p-7">
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-md bg-white/[0.06] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/55">
+                  FiveM Prop
+                </span>
+              </div>
+              <h1 className="mt-3 text-[28px] font-extrabold leading-tight tracking-tight sm:text-[32px]">
+                {prop.name}
+              </h1>
+              <div className="mt-2.5 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
+                <span className="flex items-center gap-2 text-white/55">
+                  {sellerAvatar ? (
+                    <span className="relative grid h-6 w-6 place-items-center overflow-hidden rounded-full bg-white/10">
+                      <Image src={sellerAvatar} alt={sellerName} fill sizes="24px" className="object-cover" />
+                    </span>
                   ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center text-gray-500">
-                      <Package className="h-16 w-16 mb-4 opacity-50" />
-                      <span>No images available</span>
-                    </div>
+                    <span className="grid h-6 w-6 place-items-center rounded-full bg-gradient-to-br from-orange-500 to-amber-400 text-[10px] font-black text-black">
+                      {sellerInitial}
+                    </span>
+                  )}
+                  {sellerName} <BadgeCheck className="h-4 w-4 text-orange-500" />
+                </span>
+                <span className="flex items-center gap-1.5 text-white/55">
+                  <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+                  <span className="font-semibold text-white">5.0</span>
+                  <span className="text-white/35">(0 reviews)</span>
+                </span>
+                {prop.createdAt && (
+                  <span className="flex items-center gap-1.5 text-white/45">
+                    <Calendar className="h-4 w-4" /> Added {new Date(prop.createdAt).toLocaleDateString()}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* price + cta */}
+            <div className="lg:w-[320px] lg:flex-none lg:border-l lg:border-white/[0.07] lg:pl-8">
+              {isFree ? (
+                <span className="text-[38px] font-extrabold leading-none tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-500">
+                  FREE
+                </span>
+              ) : (
+                <div className="flex items-end gap-3">
+                  <span className="text-[38px] font-extrabold leading-none tracking-tight">
+                    €{finalPrice.toFixed(2)}
+                  </span>
+                  {hasDiscount && (
+                    <span className="mb-1 text-base text-white/35 line-through">
+                      €{parseFloat(prop.price).toFixed(2)}
+                    </span>
                   )}
                   {hasDiscount && (
-                    <div className="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded-full font-bold shadow-lg">
-                      -{prop.discountPercentage}%
-                    </div>
-                  )}
-                  {isFree && (
-                    <span className="absolute top-4 left-4 rounded-full bg-green-500 px-3 py-1 text-xs font-bold text-black shadow-lg">
-                      FREE
+                    <span className="mb-1 rounded-md bg-emerald-500/12 px-2 py-0.5 text-xs font-bold text-emerald-400 ring-1 ring-emerald-500/25">
+                      −{prop.discountPercentage}%
                     </span>
                   )}
                 </div>
+              )}
+              <div className="mt-4 flex flex-col gap-2.5">
+                {renderPrimaryCta()}
+              </div>
+              <p className="mt-3 flex items-center justify-center gap-1.5 text-[12px] text-white/35">
+                <ShieldCheck className="h-3.5 w-3.5" /> Instant delivery · escrow protected
+              </p>
+            </div>
+          </section>
 
-                {/* Thumbnails */}
-                {prop.images && prop.images.length > 1 && (
-                  <div className="p-4 bg-black/40 border-t border-white/[0.08] overflow-x-auto custom-scrollbar">
-                    <div className="flex gap-3 min-w-max">
-                      {prop.images.map((img: string, idx: number) => (
-                        <button
-                          key={idx}
-                          onClick={() => setActiveImage(idx)}
-                          className={`relative w-24 h-16 rounded-lg overflow-hidden border-2 transition-all duration-300 ${
-                            activeImage === idx ? 'border-orange-500 scale-105 opacity-100 shadow-lg shadow-orange-500/20' : 'border-transparent opacity-60 hover:opacity-100'
-                          }`}
-                        >
-                          <img src={img} alt="" className="w-full h-full object-cover" />
-                        </button>
-                      ))}
+          {/* ===== BODY: content + seller ===== */}
+          <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-[1fr_320px]">
+            {/* LEFT: content */}
+            <div className="min-w-0">
+              {/* description */}
+              <section>
+                <h2 className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/40">Overview</h2>
+                <p className="mt-3 whitespace-pre-wrap text-[15px] leading-relaxed text-white/65">
+                  {prop.description}
+                </p>
+              </section>
+
+              {/* what's included */}
+              <section className="mt-9">
+                <h2 className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/40">What&apos;s included</h2>
+                <ul className="mt-4 divide-y divide-white/[0.05] overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02]">
+                  <li className="flex items-center gap-3 px-4 py-3 text-sm">
+                    <CheckCircle className="h-4 w-4 text-emerald-400" /> Instant digital delivery
+                  </li>
+                  <li className="flex items-center gap-3 px-4 py-3 text-sm">
+                    <CheckCircle className="h-4 w-4 text-emerald-400" /> FiveM resource ready
+                  </li>
+                  <li className="flex items-center gap-3 px-4 py-3 text-sm">
+                    <CheckCircle className="h-4 w-4 text-emerald-400" /> Verified high optimization
+                  </li>
+                </ul>
+              </section>
+
+              {/* files & technical */}
+              <section className="mt-9">
+                <h2 className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/40">Files &amp; technical</h2>
+                <div className="mt-4 grid grid-cols-2 overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] sm:grid-cols-4">
+                  <div className="border-r border-white/[0.05] p-4 text-center">
+                    <div className="text-[11px] uppercase tracking-[0.14em] text-white/35">Format</div>
+                    <div className="mt-1 text-sm font-semibold">YDR / YTD</div>
+                  </div>
+                  <div className="border-white/[0.05] p-4 text-center sm:border-r">
+                    <div className="text-[11px] uppercase tracking-[0.14em] text-white/35">File Type</div>
+                    <div className="mt-1 text-sm font-semibold">ZIP Archive</div>
+                  </div>
+                  <div className="border-r border-t border-white/[0.05] p-4 text-center sm:border-t-0">
+                    <div className="text-[11px] uppercase tracking-[0.14em] text-white/35">Delivery</div>
+                    <div className="mt-1 flex items-center justify-center gap-1.5 text-sm font-semibold">
+                      <CheckCircle className="h-4 w-4 text-emerald-400" /> Instant
                     </div>
                   </div>
-                )}
-              </Card>
-
-              {/* Description */}
-              <Card className="rounded-2xl border border-white/[0.08] bg-white/[0.04] backdrop-blur-md">
-                <CardContent className="p-6 md:p-8">
-                  <h2 className="text-2xl font-bold mb-6 flex items-center gap-2 border-b border-white/[0.08] pb-4">
-                    <Package className="text-orange-500" />
-                    Description
-                  </h2>
-                  <div className="prose prose-invert max-w-none text-gray-300 whitespace-pre-wrap leading-relaxed">
-                    {prop.description}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Files & Technical */}
-              <Card className="rounded-2xl border border-white/[0.08] bg-white/[0.04] backdrop-blur-md">
-                <CardContent className="p-6 md:p-8">
-                  <h2 className="text-2xl font-bold mb-6 flex items-center gap-2 border-b border-white/[0.08] pb-4">
-                    <FileArchive className="text-orange-500" />
-                    Files & Technical
-                  </h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="bg-black/30 p-4 rounded-xl border border-white/[0.08]">
-                      <div className="text-gray-400 text-xs uppercase tracking-wider mb-1">Format</div>
-                      <div className="text-white font-medium">FiveM Prop (YDR/YTD)</div>
-                    </div>
-                    <div className="bg-black/30 p-4 rounded-xl border border-white/[0.08]">
-                      <div className="text-gray-400 text-xs uppercase tracking-wider mb-1">File Type</div>
-                      <div className="text-white font-medium">ZIP Archive</div>
-                    </div>
-                    <div className="bg-black/30 p-4 rounded-xl border border-white/[0.08]">
-                      <div className="text-gray-400 text-xs uppercase tracking-wider mb-1">Delivery</div>
-                      <div className="text-white font-medium flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-green-500" />
-                        Instant
-                      </div>
-                    </div>
-                    <div className="bg-black/30 p-4 rounded-xl border border-white/[0.08]">
-                      <div className="text-gray-400 text-xs uppercase tracking-wider mb-1">Optimized</div>
-                      <div className="text-white font-medium flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-green-500" />
-                        High Efficiency
-                      </div>
+                  <div className="border-t border-white/[0.05] p-4 text-center sm:border-t-0">
+                    <div className="text-[11px] uppercase tracking-[0.14em] text-white/35">Optimized</div>
+                    <div className="mt-1 flex items-center justify-center gap-1.5 text-sm font-semibold">
+                      <CheckCircle className="h-4 w-4 text-emerald-400" /> High
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </section>
             </div>
 
-            {/* Right Column: Purchase / Download panel */}
-            <div className="space-y-6">
-              <Card className="rounded-2xl bg-gradient-to-br from-white/[0.06] to-black/40 border border-white/[0.08] sticky top-24 backdrop-blur-xl shadow-2xl shadow-orange-500/5 overflow-hidden">
-                <div className="h-1 bg-gradient-to-r from-orange-500 to-yellow-400" />
-                <CardContent className="p-6 md:p-8">
-                  <div className="flex justify-between items-start mb-4">
-                    <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30 uppercase tracking-widest px-3 py-1">
-                      FiveM Prop
-                    </Badge>
-                    <div className="flex items-center gap-1 text-yellow-400">
-                      <Star className="h-4 w-4 fill-yellow-400" />
-                      <span className="font-bold">5.0</span>
-                      <span className="text-xs text-gray-400 ml-1">(0)</span>
+            {/* RIGHT: seller card (sticky) */}
+            <aside className="lg:sticky lg:top-24 lg:h-fit">
+              <div className="rounded-[22px] border border-white/[0.07] bg-[#0e0e0e] p-5">
+                <div className="flex items-center gap-3">
+                  {sellerAvatar ? (
+                    <span className="relative grid h-12 w-12 place-items-center overflow-hidden rounded-2xl bg-white/10">
+                      <Image src={sellerAvatar} alt={sellerName} fill sizes="48px" className="object-cover" />
+                    </span>
+                  ) : (
+                    <span className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-orange-500 to-amber-400 text-lg font-black text-black">
+                      {sellerInitial}
+                    </span>
+                  )}
+                  <div className="leading-tight">
+                    <div className="flex items-center gap-1.5 font-semibold">
+                      {sellerName} <BadgeCheck className="h-4 w-4 text-orange-500" />
                     </div>
+                    <div className="text-xs text-white/40">Verified seller</div>
                   </div>
+                </div>
+                <button className="mt-4 w-full rounded-xl border border-white/[0.1] bg-white/[0.04] py-2.5 text-sm font-semibold transition hover:bg-white/[0.08]">
+                  View store
+                </button>
+              </div>
 
-                  <h1 className="text-3xl font-bold text-white mb-6 leading-tight">
-                    {prop.name}
-                  </h1>
-
-                  {/* Seller */}
-                  <div className="space-y-4 mb-8">
-                    <div className="flex items-center gap-4 p-4 bg-white/5 rounded-2xl border border-white/5 hover:bg-white/10 transition-colors group">
-                      <div className="h-12 w-12 rounded-full bg-gradient-to-br from-orange-500 to-yellow-400 p-0.5 shadow-lg shadow-orange-500/20">
-                        <div className="h-full w-full rounded-full bg-gray-900 overflow-hidden">
-                          {prop.user?.image || prop.user?.profilePicture ? (
-                            <img
-                              src={prop.user?.profilePicture || prop.user?.image}
-                              alt={prop.user?.name || "Creator"}
-                              className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500"
-                            />
-                          ) : (
-                            <div className="h-full w-full flex items-center justify-center">
-                              <User className="h-6 w-6 text-orange-500" />
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-[10px] text-orange-500 font-bold uppercase tracking-[0.2em] mb-0.5">Verified Creator</span>
-                        <span className="text-base font-bold text-white group-hover:text-orange-400 transition-colors">
-                          {prop.user?.name || prop.user?.username || "FiveCrux Community"}
-                        </span>
-                      </div>
-                    </div>
-                    {prop.createdAt && (
-                      <div className="flex items-center gap-3 text-gray-400">
-                        <Calendar className="h-4 w-4" />
-                        <span className="text-sm">Added on {new Date(prop.createdAt).toLocaleDateString()}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Price */}
-                  <div className="mb-8 p-4 bg-white/5 rounded-2xl border border-white/5">
-                    {isFree ? (
-                      <div className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-500">
-                        FREE
-                      </div>
-                    ) : (
-                      <div className="flex flex-col">
-                        <div className="text-gray-400 text-sm mb-1 uppercase tracking-tighter">Total Price</div>
-                        <div className="flex items-end gap-3">
-                          <span className="text-5xl font-black text-white">
-                            €{finalPrice.toFixed(2)}
-                          </span>
-                          {hasDiscount && (
-                            <span className="text-xl text-gray-500 line-through mb-1">
-                              €{parseFloat(prop.price).toFixed(2)}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Primary action */}
-                  <div className="space-y-4 mb-8">
-                    {prop.hasPurchased ? (
-                      <Button
-                        className="w-full py-7 text-lg font-bold rounded-2xl transition-all shadow-xl shadow-green-500/20 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-black hover:scale-[1.02] active:scale-95 group"
-                        onClick={handleDownload}
-                        disabled={downloading}
-                      >
-                        {downloading ? (
-                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-black"></div>
-                        ) : (
-                          <span className="flex items-center gap-2">
-                            <Download className="h-5 w-5 group-hover:animate-bounce" />
-                            Download Prop File
-                          </span>
-                        )}
-                      </Button>
-                    ) : hasTebex ? (
-                      <Button
-                        className="w-full py-7 text-lg font-bold rounded-2xl transition-all shadow-xl shadow-orange-500/20 bg-gradient-to-r from-orange-500 to-yellow-400 hover:from-orange-600 hover:to-yellow-500 text-black hover:scale-[1.02] active:scale-95 group"
-                        onClick={handleTebexBuy}
-                        disabled={buyingTebex}
-                      >
-                        {buyingTebex ? (
-                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-black"></div>
-                        ) : (
-                          <span className="flex items-center gap-2">
-                            <ShoppingCart className="h-5 w-5" />
-                            Buy Now
-                          </span>
-                        )}
-                      </Button>
-                    ) : (
-                      <Button
-                        className="w-full py-7 text-lg font-bold rounded-2xl transition-all shadow-xl shadow-orange-500/20 bg-gradient-to-r from-orange-500 to-yellow-400 hover:from-orange-600 hover:to-yellow-500 text-black hover:scale-[1.02] active:scale-95 group"
-                        onClick={handleAddToCart}
-                        disabled={addingToCart}
-                      >
-                        {addingToCart ? (
-                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-black"></div>
-                        ) : (
-                          <span className="flex items-center gap-2">
-                            <ShoppingCart className="h-5 w-5" />
-                            {isFree ? "Add to Library" : "Add to Cart"}
-                          </span>
-                        )}
-                      </Button>
-                    )}
-
-                    <div className="flex gap-4">
-                      <Button variant="outline" className="flex-1 py-6 border-white/[0.12] bg-white/[0.04] hover:bg-white/[0.08] rounded-xl transition-all">
-                        <Heart className="h-5 w-5" />
-                      </Button>
-                      <Button variant="outline" className="flex-1 py-6 border-white/[0.12] bg-white/[0.04] hover:bg-white/[0.08] rounded-xl transition-all">
-                        <Share2 className="h-5 w-5" />
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Trust badges */}
-                  <div className="space-y-4 pt-6 border-t border-white/[0.08]">
-                    <div className="flex items-center gap-3 text-gray-300">
-                      <div className="h-8 w-8 rounded-full bg-green-500/10 flex items-center justify-center">
-                        <CheckCircle className="h-5 w-5 text-green-500" />
-                      </div>
-                      <span className="text-sm">Instant Digital Delivery</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-gray-300">
-                      <div className="h-8 w-8 rounded-full bg-green-500/10 flex items-center justify-center">
-                        <CheckCircle className="h-5 w-5 text-green-500" />
-                      </div>
-                      <span className="text-sm">FiveM Resource Ready</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-gray-300">
-                      <div className="h-8 w-8 rounded-full bg-green-500/10 flex items-center justify-center">
-                        <CheckCircle className="h-5 w-5 text-green-500" />
-                      </div>
-                      <span className="text-sm">Verified High Optimization</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+              <div className="mt-4 rounded-[22px] border border-white/[0.07] bg-white/[0.02] p-5">
+                <div className="flex items-center gap-2 text-sm font-semibold">
+                  <LifeBuoy className="h-4 w-4 text-orange-500" /> Support included
+                </div>
+                <p className="mt-1.5 text-[13px] leading-snug text-white/45">
+                  Active Discord, documentation and free updates for the lifetime of this resource.
+                </p>
+              </div>
+            </aside>
           </div>
         </div>
-      </div>
+      </main>
       <Footer />
 
       <style jsx global>{`
-        .custom-scrollbar::-webkit-scrollbar {
-          height: 6px;
+        .hide-scroll::-webkit-scrollbar {
+          display: none;
         }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: rgba(255, 255, 255, 0.05);
-          border-radius: 10px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: rgba(249, 115, 22, 0.3);
-          border-radius: 10px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: rgba(249, 115, 22, 0.5);
+        .hide-scroll {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
         }
       `}</style>
     </>

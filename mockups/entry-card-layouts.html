@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Giveaway Entry Card — 10 Layout Explorations</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: { sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'] },
+        colors: { brand: { orange: '#f97316' } },
+      },
+    },
+  };
+</script>
+<style>
+  body { background-color: #0a0a0a; }
+  .card { transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease, background-color .25s ease; }
+  .card:hover { transform: translateY(-4px); border-color: rgba(249,115,22,0.35); box-shadow: 0 18px 50px -20px rgba(249,115,22,0.35); background-color: rgba(255,255,255,0.06); }
+  /* Ticket perforation notch cutouts */
+  .perf { position: relative; }
+  .perf::before, .perf::after {
+    content: ""; position: absolute; width: 22px; height: 22px; border-radius: 9999px;
+    background: #0a0a0a; border: 1px solid rgba(255,255,255,0.08); top: -11px; transform: translateY(0);
+  }
+  .perf::before { left: -12px; }
+  .perf::after { right: -12px; }
+  .num-grad { background: linear-gradient(180deg, #fff, #cbd5e1); -webkit-background-clip: text; background-clip: text; color: transparent; }
+</style>
+</head>
+<body class="font-sans text-white antialiased">
+
+<div class="max-w-[1400px] mx-auto px-5 py-12">
+
+  <!-- Page header -->
+  <header class="mb-12">
+    <div class="inline-flex items-center gap-2 rounded-full bg-white/[0.04] border border-white/[0.08] px-3 py-1 text-xs text-white/60 mb-4">
+      <span class="h-1.5 w-1.5 rounded-full bg-brand-orange"></span>
+      Design exploration
+    </div>
+    <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight">Giveaway Entry Card — 10 Layouts</h1>
+    <p class="text-white/50 mt-2 max-w-2xl">Ten structurally distinct compositions of the same entry card. Same content, same dark theme, single orange accent — variation comes purely from layout and hierarchy.</p>
+  </header>
+
+  <!-- GRID -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
+
+    <!-- ============================================================= -->
+    <!-- LAYOUT 1 — STACKED CLASSIC -->
+    <!-- ============================================================= -->
+    <section class="flex flex-col">
+      <div class="mb-3">
+        <div class="text-brand-orange font-bold text-sm tracking-wide">LAYOUT 1</div>
+        <div class="text-white/40 text-xs">Stacked classic — value, 3-box countdown, full button, list stats, host footer.</div>
+      </div>
+      <article class="card w-full max-w-[360px] rounded-2xl bg-white/[0.04] border border-white/[0.08] p-5">
+        <div class="flex items-center justify-between mb-4">
+          <span class="inline-flex items-center gap-1.5 text-xs text-white/50"><i data-lucide="gift" class="w-3.5 h-3.5 text-brand-orange"></i> Giveaway</span>
+          <span class="text-xs text-white/40">Ends Jun 24</span>
+        </div>
+        <div class="text-center mb-4">
+          <div class="text-xs uppercase tracking-widest text-white/40">Prize value</div>
+          <div class="text-4xl font-extrabold mt-1">$19.99</div>
+          <div class="text-sm text-white/60 mt-1">LS Legion Square Park</div>
+        </div>
+        <div class="grid grid-cols-3 gap-2 mb-4">
+          <div class="rounded-xl bg-white/[0.04] border border-white/[0.08] py-2.5 text-center"><div class="text-xl font-bold">04</div><div class="text-[10px] uppercase tracking-wider text-white/40">Days</div></div>
+          <div class="rounded-xl bg-white/[0.04] border border-white/[0.08] py-2.5 text-center"><div class="text-xl font-bold">23</div><div class="text-[10px] uppercase tracking-wider text-white/40">Hrs</div></div>
+          <div class="rounded-xl bg-white/[0.04] border border-white/[0.08] py-2.5 text-center"><div class="text-xl font-bold">33</div><div class="text-[10px] uppercase tracking-wider text-white/40">Min</div></div>
+        </div>
+        <button class="w-full rounded-xl bg-brand-orange hover:bg-orange-500 text-black font-bold py-3 flex items-center justify-center gap-2">Enter Giveaway <i data-lucide="arrow-right" class="w-4 h-4"></i></button>
+        <div class="flex items-center justify-center gap-1.5 text-[11px] text-white/40 mt-2.5"><i data-lucide="shield-check" class="w-3.5 h-3.5 text-brand-orange"></i> Winner drawn automatically &amp; fairly</div>
+        <div class="mt-4 space-y-2 text-sm">
+          <div class="flex items-center justify-between"><span class="text-white/40">Entries</span><span class="font-semibold">1,277</span></div>
+          <div class="flex items-center justify-between"><span class="text-white/40">Your entries</span><span class="font-semibold">0</span></div>
+          <div class="flex items-center justify-between"><span class="text-white/40">Ends</span><span class="font-semibold">Jun 24, 2026</span></div>
+        </div>
+        <div class="mt-4 pt-4 border-t border-white/[0.08] flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <div class="h-8 w-8 rounded-full bg-brand-orange/20 border border-brand-orange/40 flex items-center justify-center text-brand-orange font-bold text-sm">F</div>
+            <div class="leading-tight"><div class="text-sm font-medium">Forge Studios</div><div class="text-[11px] text-white/40">Giveaway host</div></div>
+          </div>
+          <button class="text-xs font-semibold text-brand-orange hover:underline">View</button>
+        </div>
+      </article>
+    </section>
+
+    <!-- ============================================================= -->
+    <!-- LAYOUT 2 — CIRCULAR TIMER -->
+    <!-- ============================================================= -->
+    <section class="flex flex-col">
+      <div class="mb-3">
+        <div class="text-brand-orange font-bold text-sm tracking-wide">LAYOUT 2</div>
+        <div class="text-white/40 text-xs">Circular timer — progress ring as focal point, value below, compact stats.</div>
+      </div>
+      <article class="card w-full max-w-[360px] rounded-2xl bg-white/[0.04] border border-white/[0.08] p-5">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-2.5">
+            <div class="h-8 w-8 rounded-full bg-brand-orange/20 border border-brand-orange/40 flex items-center justify-center text-brand-orange font-bold text-sm">F</div>
+            <div class="leading-tight"><div class="text-sm font-medium">Forge Studios</div><div class="text-[11px] text-white/40">Giveaway host</div></div>
+          </div>
+          <button class="text-xs font-semibold text-brand-orange hover:underline">View</button>
+        </div>
+        <div class="flex flex-col items-center my-4">
+          <div class="relative h-40 w-40">
+            <svg class="h-40 w-40 -rotate-90" viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="8" />
+              <circle cx="50" cy="50" r="42" fill="none" stroke="#f97316" stroke-width="8" stroke-linecap="round" stroke-dasharray="263.9" stroke-dashoffset="74" />
+            </svg>
+            <div class="absolute inset-0 flex flex-col items-center justify-center">
+              <div class="text-5xl font-extrabold leading-none num-grad">04</div>
+              <div class="text-[11px] uppercase tracking-widest text-white/40 mt-1">Days left</div>
+              <div class="text-xs text-white/50 mt-0.5">23h 33m</div>
+            </div>
+          </div>
+          <div class="text-center mt-4">
+            <div class="text-[10px] uppercase tracking-widest text-white/40">Prize value</div>
+            <div class="text-2xl font-extrabold">$19.99</div>
+            <div class="text-sm text-white/60">LS Legion Square Park</div>
+          </div>
+        </div>
+        <button class="w-full rounded-xl bg-brand-orange hover:bg-orange-500 text-black font-bold py-3 flex items-center justify-center gap-2">Enter Giveaway <i data-lucide="arrow-right" class="w-4 h-4"></i></button>
+        <div class="flex items-center justify-center gap-1.5 text-[11px] text-white/40 mt-2.5"><i data-lucide="shield-check" class="w-3.5 h-3.5 text-brand-orange"></i> Winner drawn automatically &amp; fairly</div>
+        <div class="flex items-center justify-center gap-3 text-xs text-white/50 mt-3">
+          <span><b class="text-white">1,277</b> entries</span><span class="text-white/20">·</span>
+          <span>You: <b class="text-white">0</b></span><span class="text-white/20">·</span>
+          <span>Ends Jun 24</span>
+        </div>
+      </article>
+    </section>
+
+    <!-- ============================================================= -->
+    <!-- LAYOUT 3 — IMAGE-HEADER OVERLAY -->
+    <!-- ============================================================= -->
+    <section class="flex flex-col">
+      <div class="mb-3">
+        <div class="text-brand-orange font-bold text-sm tracking-wide">LAYOUT 3</div>
+        <div class="text-white/40 text-xs">Image-header overlay — value &amp; name over the prize photo, rest stacked below.</div>
+      </div>
+      <article class="card w-full max-w-[360px] rounded-2xl bg-white/[0.04] border border-white/[0.08] overflow-hidden">
+        <div class="relative h-44">
+          <img src="https://img.forgemods.de/images/thumb/images/4f205008-65c0-4591-9561-33c232a2bc20_gta5map_ls_legion_square_park_bed357ad-959c-4e1e-9420-c793a2ad905f.webp" alt="LS Legion Square Park" class="absolute inset-0 w-full h-full object-cover" />
+          <div class="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/40 to-transparent"></div>
+          <div class="absolute top-3 left-3 inline-flex items-center gap-1.5 rounded-full bg-black/50 backdrop-blur px-2.5 py-1 text-[11px]"><i data-lucide="gift" class="w-3 h-3 text-brand-orange"></i> Giveaway</div>
+          <div class="absolute bottom-3 left-4 right-4">
+            <div class="inline-block rounded-lg bg-brand-orange text-black font-extrabold text-lg px-2.5 py-0.5">$19.99</div>
+            <div class="text-lg font-bold mt-1.5 drop-shadow">LS Legion Square Park</div>
+            <div class="text-[11px] text-white/60">Prize value</div>
+          </div>
+        </div>
+        <div class="p-5">
+          <div class="flex items-center justify-center gap-2 text-sm mb-4">
+            <i data-lucide="clock" class="w-4 h-4 text-brand-orange"></i>
+            <span class="font-semibold">04d</span><span class="text-white/30">:</span>
+            <span class="font-semibold">23h</span><span class="text-white/30">:</span>
+            <span class="font-semibold">33m</span>
+            <span class="text-white/40 text-xs">left</span>
+          </div>
+          <button class="w-full rounded-xl bg-brand-orange hover:bg-orange-500 text-black font-bold py-3 flex items-center justify-center gap-2">Enter Giveaway <i data-lucide="arrow-right" class="w-4 h-4"></i></button>
+          <div class="flex items-center justify-center gap-1.5 text-[11px] text-white/40 mt-2.5"><i data-lucide="shield-check" class="w-3.5 h-3.5 text-brand-orange"></i> Winner drawn automatically &amp; fairly</div>
+          <div class="grid grid-cols-3 gap-2 mt-4 text-center">
+            <div><div class="text-sm font-bold">1,277</div><div class="text-[10px] text-white/40">Entries</div></div>
+            <div><div class="text-sm font-bold">0</div><div class="text-[10px] text-white/40">Your entries</div></div>
+            <div><div class="text-sm font-bold">Jun 24</div><div class="text-[10px] text-white/40">Ends</div></div>
+          </div>
+          <div class="mt-4 pt-4 border-t border-white/[0.08] flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <div class="h-7 w-7 rounded-full bg-brand-orange/20 border border-brand-orange/40 flex items-center justify-center text-brand-orange font-bold text-xs">F</div>
+              <div class="text-xs"><span class="font-medium">Forge Studios</span> <span class="text-white/40">— host</span></div>
+            </div>
+            <button class="text-xs font-semibold text-brand-orange hover:underline">View</button>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <!-- ============================================================= -->
+    <!-- LAYOUT 4 — HORIZONTAL TWO-PANEL (WIDE) -->
+    <!-- ============================================================= -->
+    <section class="flex flex-col sm:col-span-2 lg:col-span-3">
+      <div class="mb-3">
+        <div class="text-brand-orange font-bold text-sm tracking-wide">LAYOUT 4</div>
+        <div class="text-white/40 text-xs">Horizontal two-panel (wide) — left: value + countdown · right: button, stats, host.</div>
+      </div>
+      <article class="card w-full rounded-2xl bg-white/[0.04] border border-white/[0.08] overflow-hidden grid grid-cols-1 md:grid-cols-2">
+        <!-- LEFT -->
+        <div class="p-6 md:border-r border-b md:border-b-0 border-white/[0.08] bg-white/[0.02]">
+          <div class="text-[10px] uppercase tracking-widest text-white/40">Prize value</div>
+          <div class="text-5xl font-extrabold mt-1">$19.99</div>
+          <div class="text-base text-white/60 mt-1 flex items-center gap-2"><i data-lucide="trophy" class="w-4 h-4 text-brand-orange"></i> LS Legion Square Park</div>
+          <div class="grid grid-cols-3 gap-3 mt-6 max-w-sm">
+            <div class="rounded-xl bg-white/[0.04] border border-white/[0.08] py-3 text-center"><div class="text-2xl font-bold">04</div><div class="text-[10px] uppercase tracking-wider text-white/40">Days</div></div>
+            <div class="rounded-xl bg-white/[0.04] border border-white/[0.08] py-3 text-center"><div class="text-2xl font-bold">23</div><div class="text-[10px] uppercase tracking-wider text-white/40">Hrs</div></div>
+            <div class="rounded-xl bg-white/[0.04] border border-white/[0.08] py-3 text-center"><div class="text-2xl font-bold">33</div><div class="text-[10px] uppercase tracking-wider text-white/40">Min</div></div>
+          </div>
+        </div>
+        <!-- RIGHT -->
+        <div class="p-6 flex flex-col justify-center">
+          <button class="w-full rounded-xl bg-brand-orange hover:bg-orange-500 text-black font-bold py-3.5 text-lg flex items-center justify-center gap-2">Enter Giveaway <i data-lucide="arrow-right" class="w-5 h-5"></i></button>
+          <div class="flex items-center justify-center gap-1.5 text-[11px] text-white/40 mt-2.5"><i data-lucide="shield-check" class="w-3.5 h-3.5 text-brand-orange"></i> Winner drawn automatically &amp; fairly</div>
+          <div class="flex items-center justify-between gap-3 mt-5 text-sm">
+            <div class="text-center flex-1"><div class="font-bold text-lg">1,277</div><div class="text-[11px] text-white/40">Entries</div></div>
+            <div class="h-8 w-px bg-white/[0.08]"></div>
+            <div class="text-center flex-1"><div class="font-bold text-lg">0</div><div class="text-[11px] text-white/40">Your entries</div></div>
+            <div class="h-8 w-px bg-white/[0.08]"></div>
+            <div class="text-center flex-1"><div class="font-bold text-lg">Jun 24</div><div class="text-[11px] text-white/40">Ends</div></div>
+          </div>
+          <div class="mt-5 pt-4 border-t border-white/[0.08] flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <div class="h-8 w-8 rounded-full bg-brand-orange/20 border border-brand-orange/40 flex items-center justify-center text-brand-orange font-bold text-sm">F</div>
+              <div class="leading-tight"><div class="text-sm font-medium">Forge Studios</div><div class="text-[11px] text-white/40">Giveaway host</div></div>
+            </div>
+            <button class="text-xs font-semibold text-brand-orange hover:underline">View</button>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <!-- ============================================================= -->
+    <!-- LAYOUT 5 — ENTRIES-PROGRESS FOCUS -->
+    <!-- ============================================================= -->
+    <section class="flex flex-col">
+      <div class="mb-3">
+        <div class="text-brand-orange font-bold text-sm tracking-wide">LAYOUT 5</div>
+        <div class="text-white/40 text-xs">Entries-progress focus — big progress bar to a 2,000 goal as the hero.</div>
+      </div>
+      <article class="card w-full max-w-[360px] rounded-2xl bg-white/[0.04] border border-white/[0.08] p-5">
+        <div class="flex items-center justify-between mb-5">
+          <div>
+            <div class="text-[10px] uppercase tracking-widest text-white/40">Prize value</div>
+            <div class="text-xl font-bold">$19.99 <span class="text-sm font-normal text-white/50">· LS Legion Square Park</span></div>
+          </div>
+          <span class="inline-flex items-center gap-1 text-xs text-white/50"><i data-lucide="clock" class="w-3.5 h-3.5 text-brand-orange"></i> 04d 23h 33m</span>
+        </div>
+        <!-- Hero progress -->
+        <div class="rounded-xl bg-white/[0.03] border border-white/[0.08] p-4 mb-4">
+          <div class="flex items-end justify-between mb-2">
+            <div><span class="text-3xl font-extrabold">1,277</span> <span class="text-white/40 text-sm">/ 2,000 entries</span></div>
+            <span class="text-brand-orange font-semibold text-sm">64%</span>
+          </div>
+          <div class="relative h-3 rounded-full bg-white/[0.06] overflow-hidden">
+            <div class="absolute inset-y-0 left-0 bg-gradient-to-r from-orange-600 to-brand-orange rounded-full" style="width:64%"></div>
+          </div>
+          <!-- milestone ticks -->
+          <div class="relative mt-2 h-3">
+            <span class="absolute -translate-x-1/2 left-[25%] text-[10px] text-white/30">500</span>
+            <span class="absolute -translate-x-1/2 left-[50%] text-[10px] text-white/30">1k</span>
+            <span class="absolute -translate-x-1/2 left-[75%] text-[10px] text-white/30">1.5k</span>
+            <span class="absolute -translate-x-1/2 left-[100%] text-[10px] text-brand-orange">2k</span>
+          </div>
+        </div>
+        <button class="w-full rounded-xl bg-brand-orange hover:bg-orange-500 text-black font-bold py-3 flex items-center justify-center gap-2">Enter Giveaway <i data-lucide="arrow-right" class="w-4 h-4"></i></button>
+        <div class="flex items-center justify-center gap-1.5 text-[11px] text-white/40 mt-2.5"><i data-lucide="shield-check" class="w-3.5 h-3.5 text-brand-orange"></i> Winner drawn automatically &amp; fairly</div>
+        <div class="mt-4 pt-4 border-t border-white/[0.08] flex items-center justify-between text-xs">
+          <div class="flex items-center gap-2.5">
+            <div class="h-7 w-7 rounded-full bg-brand-orange/20 border border-brand-orange/40 flex items-center justify-center text-brand-orange font-bold text-xs">F</div>
+            <span><span class="font-medium">Forge Studios</span> <span class="text-white/40">— host · Your entries: 0 · Ends Jun 24</span></span>
+          </div>
+          <button class="font-semibold text-brand-orange hover:underline shrink-0">View</button>
+        </div>
+      </article>
+    </section>
+
+    <!-- ============================================================= -->
+    <!-- LAYOUT 6 — TICKET STUB -->
+    <!-- ============================================================= -->
+    <section class="flex flex-col">
+      <div class="mb-3">
+        <div class="text-brand-orange font-bold text-sm tracking-wide">LAYOUT 6</div>
+        <div class="text-white/40 text-xs">Ticket stub — raffle ticket with dashed perforation &amp; notch cutouts.</div>
+      </div>
+      <article class="card w-full max-w-[360px] rounded-2xl bg-white/[0.04] border border-white/[0.08] overflow-hidden">
+        <!-- main body -->
+        <div class="p-5">
+          <div class="flex items-center justify-between mb-3">
+            <span class="inline-flex items-center gap-1.5 text-xs text-white/50"><i data-lucide="ticket" class="w-3.5 h-3.5 text-brand-orange"></i> Raffle Ticket</span>
+            <span class="text-[11px] text-white/40">No. 0001277</span>
+          </div>
+          <div class="text-xl font-bold">LS Legion Square Park</div>
+          <div class="text-sm text-white/50">Hosted by Forge Studios</div>
+          <div class="flex items-center gap-2 mt-4 text-sm">
+            <i data-lucide="clock" class="w-4 h-4 text-brand-orange"></i>
+            <span class="font-semibold">04 Days</span><span class="text-white/30">·</span>
+            <span class="font-semibold">23 Hrs</span><span class="text-white/30">·</span>
+            <span class="font-semibold">33 Min</span>
+          </div>
+          <div class="flex items-center justify-between mt-3 text-xs text-white/50">
+            <span><b class="text-white">1,277</b> entries</span>
+            <span>Your entries: <b class="text-white">0</b></span>
+            <span>Ends Jun 24</span>
+          </div>
+        </div>
+        <!-- perforation -->
+        <div class="perf border-t border-dashed border-white/20 mx-3"></div>
+        <!-- stub -->
+        <div class="p-5 bg-white/[0.02] flex items-center gap-4">
+          <div class="text-center shrink-0">
+            <div class="text-[10px] uppercase tracking-widest text-white/40">Value</div>
+            <div class="text-3xl font-extrabold text-brand-orange">$19.99</div>
+            <div class="text-[10px] text-white/40 mt-0.5 flex items-center justify-center gap-1"><i data-lucide="shield-check" class="w-3 h-3 text-brand-orange"></i> Fair draw</div>
+          </div>
+          <button class="flex-1 rounded-xl bg-brand-orange hover:bg-orange-500 text-black font-bold py-3 flex items-center justify-center gap-2">Enter <i data-lucide="arrow-right" class="w-4 h-4"></i></button>
+        </div>
+      </article>
+    </section>
+
+    <!-- ============================================================= -->
+    <!-- LAYOUT 7 — CTA-FIRST MINIMAL -->
+    <!-- ============================================================= -->
+    <section class="flex flex-col">
+      <div class="mb-3">
+        <div class="text-brand-orange font-bold text-sm tracking-wide">LAYOUT 7</div>
+        <div class="text-white/40 text-xs">CTA-first minimal — giant Enter button dominates; everything else tiny.</div>
+      </div>
+      <article class="card w-full max-w-[360px] rounded-2xl bg-white/[0.04] border border-white/[0.08] p-5 flex flex-col">
+        <div class="text-center mb-4">
+          <div class="text-sm text-white/50">LS Legion Square Park</div>
+          <div class="text-base font-semibold mt-0.5">Worth <span class="text-brand-orange">$19.99</span> · ends in <span class="text-white">04d 23h 33m</span></div>
+        </div>
+        <button class="w-full rounded-2xl bg-brand-orange hover:bg-orange-500 text-black font-extrabold py-10 text-2xl flex flex-col items-center justify-center gap-2 group">
+          <i data-lucide="ticket" class="w-8 h-8"></i>
+          Enter Giveaway
+          <span class="text-xs font-semibold opacity-70 flex items-center gap-1">Tap to join <i data-lucide="arrow-right" class="w-3.5 h-3.5 transition-transform group-hover:translate-x-1"></i></span>
+        </button>
+        <div class="flex items-center justify-center gap-1.5 text-[11px] text-white/40 mt-3"><i data-lucide="shield-check" class="w-3.5 h-3.5 text-brand-orange"></i> Winner drawn automatically &amp; fairly</div>
+        <div class="text-center text-[11px] text-white/40 mt-2">1,277 entries · You: 0 · by Forge Studios · <button class="text-brand-orange hover:underline font-semibold">View</button></div>
+      </article>
+    </section>
+
+    <!-- ============================================================= -->
+    <!-- LAYOUT 8 — STAT-TILES 2x2 -->
+    <!-- ============================================================= -->
+    <section class="flex flex-col">
+      <div class="mb-3">
+        <div class="text-brand-orange font-bold text-sm tracking-wide">LAYOUT 8</div>
+        <div class="text-white/40 text-xs">Stat-tiles 2×2 — four equal tiles form the body, host above, button below.</div>
+      </div>
+      <article class="card w-full max-w-[360px] rounded-2xl bg-white/[0.04] border border-white/[0.08] p-5">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-2.5">
+            <div class="h-8 w-8 rounded-full bg-brand-orange/20 border border-brand-orange/40 flex items-center justify-center text-brand-orange font-bold text-sm">F</div>
+            <div class="leading-tight"><div class="text-sm font-medium">Forge Studios</div><div class="text-[11px] text-white/40">Giveaway host</div></div>
+          </div>
+          <button class="text-xs font-semibold text-brand-orange hover:underline">View</button>
+        </div>
+        <div class="text-sm text-white/60 mb-3 flex items-center gap-1.5"><i data-lucide="trophy" class="w-4 h-4 text-brand-orange"></i> LS Legion Square Park</div>
+        <div class="grid grid-cols-2 gap-3 mb-4">
+          <div class="rounded-xl bg-white/[0.04] border border-white/[0.08] p-3.5">
+            <div class="text-[10px] uppercase tracking-wider text-white/40 flex items-center gap-1"><i data-lucide="gift" class="w-3 h-3 text-brand-orange"></i> Prize value</div>
+            <div class="text-2xl font-extrabold mt-1">$19.99</div>
+          </div>
+          <div class="rounded-xl bg-white/[0.04] border border-white/[0.08] p-3.5">
+            <div class="text-[10px] uppercase tracking-wider text-white/40 flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3 text-brand-orange"></i> Time left</div>
+            <div class="text-2xl font-extrabold mt-1">04d <span class="text-base font-bold text-white/70">23h</span></div>
+            <div class="text-[10px] text-white/40">33 min</div>
+          </div>
+          <div class="rounded-xl bg-white/[0.04] border border-white/[0.08] p-3.5">
+            <div class="text-[10px] uppercase tracking-wider text-white/40 flex items-center gap-1"><i data-lucide="users" class="w-3 h-3 text-brand-orange"></i> Entries</div>
+            <div class="text-2xl font-extrabold mt-1">1,277</div>
+          </div>
+          <div class="rounded-xl bg-white/[0.04] border border-white/[0.08] p-3.5">
+            <div class="text-[10px] uppercase tracking-wider text-white/40 flex items-center gap-1"><i data-lucide="ticket" class="w-3 h-3 text-brand-orange"></i> Your entries</div>
+            <div class="text-2xl font-extrabold mt-1">0</div>
+            <div class="text-[10px] text-white/40">Ends Jun 24</div>
+          </div>
+        </div>
+        <button class="w-full rounded-xl bg-brand-orange hover:bg-orange-500 text-black font-bold py-3 flex items-center justify-center gap-2">Enter Giveaway <i data-lucide="arrow-right" class="w-4 h-4"></i></button>
+        <div class="flex items-center justify-center gap-1.5 text-[11px] text-white/40 mt-2.5"><i data-lucide="shield-check" class="w-3.5 h-3.5 text-brand-orange"></i> Winner drawn automatically &amp; fairly</div>
+      </article>
+    </section>
+
+    <!-- ============================================================= -->
+    <!-- LAYOUT 9 — VERTICAL TIMELINE -->
+    <!-- ============================================================= -->
+    <section class="flex flex-col">
+      <div class="mb-3">
+        <div class="text-brand-orange font-bold text-sm tracking-wide">LAYOUT 9</div>
+        <div class="text-white/40 text-xs">Vertical timeline — host → prize → countdown block → Enter, as steps.</div>
+      </div>
+      <article class="card w-full max-w-[360px] rounded-2xl bg-white/[0.04] border border-white/[0.08] p-5">
+        <div class="relative pl-7">
+          <!-- vertical line -->
+          <div class="absolute left-[9px] top-2 bottom-2 w-px bg-white/[0.12]"></div>
+          <!-- step host -->
+          <div class="relative mb-5">
+            <span class="absolute -left-7 top-1 h-[18px] w-[18px] rounded-full border-2 border-brand-orange bg-[#0a0a0a] flex items-center justify-center"><span class="h-1.5 w-1.5 rounded-full bg-brand-orange"></span></span>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2.5">
+                <div class="h-7 w-7 rounded-full bg-brand-orange/20 border border-brand-orange/40 flex items-center justify-center text-brand-orange font-bold text-xs">F</div>
+                <div class="leading-tight"><div class="text-sm font-medium">Forge Studios</div><div class="text-[11px] text-white/40">Giveaway host</div></div>
+              </div>
+              <button class="text-xs font-semibold text-brand-orange hover:underline">View</button>
+            </div>
+          </div>
+          <!-- step prize -->
+          <div class="relative mb-5">
+            <span class="absolute -left-7 top-1 h-[18px] w-[18px] rounded-full border-2 border-brand-orange bg-[#0a0a0a] flex items-center justify-center"><i data-lucide="trophy" class="w-2.5 h-2.5 text-brand-orange"></i></span>
+            <div class="text-[10px] uppercase tracking-widest text-white/40">Prize value</div>
+            <div class="text-3xl font-extrabold">$19.99</div>
+            <div class="text-sm text-white/60">LS Legion Square Park</div>
+          </div>
+          <!-- step countdown (highlighted block) -->
+          <div class="relative mb-5">
+            <span class="absolute -left-7 top-1 h-[18px] w-[18px] rounded-full border-2 border-brand-orange bg-[#0a0a0a] flex items-center justify-center"><i data-lucide="clock" class="w-2.5 h-2.5 text-brand-orange"></i></span>
+            <div class="rounded-xl bg-brand-orange/10 border border-brand-orange/30 p-3">
+              <div class="text-[10px] uppercase tracking-widest text-brand-orange mb-1.5">Time remaining</div>
+              <div class="flex items-center gap-3">
+                <div><span class="text-2xl font-bold">04</span><span class="text-xs text-white/50 ml-0.5">d</span></div>
+                <div><span class="text-2xl font-bold">23</span><span class="text-xs text-white/50 ml-0.5">h</span></div>
+                <div><span class="text-2xl font-bold">33</span><span class="text-xs text-white/50 ml-0.5">m</span></div>
+              </div>
+              <div class="text-[11px] text-white/40 mt-2">1,277 entries · Your entries: 0 · Ends Jun 24</div>
+            </div>
+          </div>
+          <!-- step enter -->
+          <div class="relative">
+            <span class="absolute -left-7 top-1 h-[18px] w-[18px] rounded-full border-2 border-brand-orange bg-brand-orange flex items-center justify-center"><i data-lucide="arrow-right" class="w-2.5 h-2.5 text-black"></i></span>
+            <button class="w-full rounded-xl bg-brand-orange hover:bg-orange-500 text-black font-bold py-3 flex items-center justify-center gap-2">Enter Giveaway <i data-lucide="arrow-right" class="w-4 h-4"></i></button>
+            <div class="flex items-center justify-center gap-1.5 text-[11px] text-white/40 mt-2.5"><i data-lucide="shield-check" class="w-3.5 h-3.5 text-brand-orange"></i> Winner drawn automatically &amp; fairly</div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <!-- ============================================================= -->
+    <!-- LAYOUT 10 — STICKY ACTION BAR (WIDE) -->
+    <!-- ============================================================= -->
+    <section class="flex flex-col sm:col-span-2 lg:col-span-3">
+      <div class="mb-3">
+        <div class="text-brand-orange font-bold text-sm tracking-wide">LAYOUT 10</div>
+        <div class="text-white/40 text-xs">Sticky action bar (wide) — slim checkout-style row: info left, big Enter right.</div>
+      </div>
+      <article class="card w-full rounded-2xl bg-white/[0.04] border border-white/[0.08] px-5 py-4 flex flex-col md:flex-row md:items-center gap-4">
+        <!-- left info -->
+        <div class="flex items-center gap-5 flex-1 min-w-0">
+          <div class="h-9 w-9 rounded-full bg-brand-orange/20 border border-brand-orange/40 flex items-center justify-center text-brand-orange font-bold text-sm shrink-0">F</div>
+          <div class="min-w-0">
+            <div class="text-sm font-semibold truncate">LS Legion Square Park <span class="text-white/40 font-normal">· Forge Studios</span></div>
+            <div class="text-[11px] text-white/40 flex items-center gap-1"><i data-lucide="shield-check" class="w-3 h-3 text-brand-orange"></i> Winner drawn automatically &amp; fairly <button class="text-brand-orange hover:underline font-semibold ml-1">View</button></div>
+          </div>
+          <div class="hidden sm:block h-9 w-px bg-white/[0.08]"></div>
+          <div class="hidden sm:block shrink-0">
+            <div class="text-[10px] uppercase tracking-wider text-white/40">Prize value</div>
+            <div class="text-xl font-extrabold leading-tight">$19.99</div>
+          </div>
+          <div class="hidden md:block h-9 w-px bg-white/[0.08]"></div>
+          <div class="hidden md:flex items-center gap-1.5 text-sm shrink-0"><i data-lucide="clock" class="w-4 h-4 text-brand-orange"></i> <span class="font-semibold">ends in 4d 23h</span></div>
+          <div class="hidden lg:block h-9 w-px bg-white/[0.08]"></div>
+          <div class="hidden lg:flex items-center gap-1.5 text-sm text-white/60 shrink-0"><i data-lucide="users" class="w-4 h-4 text-brand-orange"></i> <b class="text-white">1,277</b> entries · you: 0 · Ends Jun 24</div>
+        </div>
+        <!-- right CTA -->
+        <button class="rounded-xl bg-brand-orange hover:bg-orange-500 text-black font-bold py-3 px-8 flex items-center justify-center gap-2 shrink-0">Enter Giveaway <i data-lucide="arrow-right" class="w-4 h-4"></i></button>
+      </article>
+    </section>
+
+  </div>
+</div>
+
+<script>
+  lucide.createIcons();
+</script>
+</body>
+</html>

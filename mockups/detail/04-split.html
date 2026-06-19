@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Advanced Banking System — FiveCrux</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<script>tailwind.config={theme:{extend:{fontFamily:{sans:["Inter","sans-serif"]},colors:{brand:{orange:"#f97316"}}}}}</script>
+<style>
+  body{font-family:Inter,sans-serif;background:#0a0a0a;color:#fff;-webkit-font-smoothing:antialiased}
+  .num{font-variant-numeric:tabular-nums}
+  .micro{font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase}
+  ::selection{background:rgba(249,115,22,0.3)}
+  .thumb.active{outline:2px solid #f97316;outline-offset:2px}
+  .scrollpane{scrollbar-width:thin;scrollbar-color:rgba(255,255,255,0.15) transparent}
+  .scrollpane::-webkit-scrollbar{width:8px}
+  .scrollpane::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.12);border-radius:99px}
+</style>
+</head>
+<body class="min-h-screen">
+
+<!-- ============ STICKY NAV ============ -->
+<header class="sticky top-0 z-50 border-b border-white/[0.06] bg-[#0a0a0a]/85 backdrop-blur-xl">
+  <div class="flex items-center gap-8 px-6 py-3.5">
+    <a href="#" class="flex items-center gap-2">
+      <span class="grid h-8 w-8 place-items-center rounded-lg bg-gradient-to-br from-orange-500 to-amber-400 text-sm font-black text-black">F</span>
+      <span class="text-[17px] font-extrabold tracking-tight">FiveCrux</span>
+    </a>
+    <nav class="hidden items-center gap-7 text-sm font-medium text-white/55 md:flex">
+      <a href="#" class="transition hover:text-white">Browse</a>
+      <a href="#" class="transition hover:text-white">Scripts</a>
+      <a href="#" class="transition hover:text-white">MLOs</a>
+      <a href="#" class="transition hover:text-white">Giveaways</a>
+    </nav>
+    <div class="ml-auto flex items-center gap-2">
+      <div class="relative hidden items-center lg:flex">
+        <i data-lucide="search" class="pointer-events-none absolute left-3 h-4 w-4 text-white/35"></i>
+        <input placeholder="Search marketplace" class="w-56 rounded-lg border border-white/10 bg-white/[0.03] py-2 pl-9 pr-3 text-sm text-white placeholder:text-white/35 focus:border-orange-500/50 focus:outline-none" />
+      </div>
+      <button class="relative grid h-9 w-9 place-items-center rounded-lg border border-white/10 text-white/70 transition hover:bg-white/5">
+        <i data-lucide="shopping-cart" class="h-[18px] w-[18px]"></i>
+        <span class="absolute -right-1 -top-1 grid h-4 w-4 place-items-center rounded-full bg-orange-500 text-[10px] font-bold text-black">2</span>
+      </button>
+      <button class="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-black transition hover:bg-white/90">Login</button>
+    </div>
+  </div>
+</header>
+
+<!-- ============ SPLIT 50/50 ============ -->
+<div class="lg:flex">
+
+  <!-- LEFT: sticky media pane -->
+  <div class="lg:sticky lg:top-[57px] lg:h-[calc(100vh-57px)] lg:w-1/2">
+    <div class="flex h-full flex-col gap-4 border-b border-white/[0.06] bg-[#080808] p-6 lg:border-b-0 lg:border-r lg:p-10">
+      <!-- concept chip -->
+      <div class="flex items-center gap-2">
+        <span class="rounded-full border border-orange-500/30 bg-orange-500/10 px-3 py-1 text-[11px] font-bold tracking-wide text-orange-400">SPLIT 50/50 · APPLE-STYLE</span>
+      </div>
+      <!-- main image -->
+      <div class="relative flex-1 overflow-hidden rounded-2xl border border-white/[0.07] bg-black">
+        <img id="mainImg" src="https://img.forgemods.de/images/thumb/images/gta5map_gaming_e83b6804-9d4f-4a0c-bb8f-ed72882d7d9b.webp" class="h-full w-full object-cover" />
+        <span class="absolute left-4 top-4 rounded-full bg-black/45 px-2.5 py-1 text-[11px] font-semibold tracking-wide text-white/85 backdrop-blur-md ring-1 ring-white/10">FiveM · Script</span>
+        <span class="num absolute bottom-4 right-4 rounded-full bg-black/45 px-2.5 py-1 text-[11px] font-medium text-white/70 backdrop-blur-md ring-1 ring-white/10"><span id="imgIdx">1</span> / 4</span>
+      </div>
+      <!-- thumbnail switcher -->
+      <div class="grid grid-cols-4 gap-3">
+        <button onclick="setImg(0,this)" class="thumb active h-16 overflow-hidden rounded-lg sm:h-20"><img src="https://img.forgemods.de/images/thumb/images/gta5map_gaming_e83b6804-9d4f-4a0c-bb8f-ed72882d7d9b.webp" class="h-full w-full object-cover" /></button>
+        <button onclick="setImg(1,this)" class="thumb h-16 overflow-hidden rounded-lg sm:h-20"><img src="https://img.forgemods.de/images/thumb/images/c56a6a29-9469-4875-8557-679884d124a6_gta5map_los_santos_medical_center_cd5cc62b-caf0-4021-bdf0-debb98f190fe.webp" class="h-full w-full object-cover" /></button>
+        <button onclick="setImg(2,this)" class="thumb h-16 overflow-hidden rounded-lg sm:h-20"><img src="https://img.forgemods.de/images/thumb/images/gta5map_vinewood_lake_villa_03_33f120b6-d81c-4c10-973d-c4522420e975.webp" class="h-full w-full object-cover" /></button>
+        <button onclick="setImg(3,this)" class="thumb h-16 overflow-hidden rounded-lg sm:h-20"><img src="https://img.forgemods.de/images/thumb/images/gta5map_vespucci_park_aa153844-cdda-438b-9de6-1126b10052f8.webp" class="h-full w-full object-cover" /></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: scrolling details pane -->
+  <div class="scrollpane lg:h-[calc(100vh-57px)] lg:w-1/2 lg:overflow-y-auto">
+    <div class="mx-auto max-w-[560px] px-6 py-10 lg:px-12 lg:py-12">
+
+      <!-- breadcrumb -->
+      <div class="flex items-center gap-1.5 text-xs text-white/35">
+        <a href="#" class="hover:text-white/60">Scripts</a><span>/</span><a href="#" class="hover:text-white/60">Economy</a>
+      </div>
+
+      <!-- title block -->
+      <div class="mt-4">
+        <div class="micro text-orange-400/90">Economy · Framework</div>
+        <h1 class="mt-2 text-[34px] font-black leading-[1.08] tracking-tight">Advanced Banking System</h1>
+        <!-- seller + rating row -->
+        <div class="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
+          <div class="flex items-center gap-2">
+            <span class="grid h-6 w-6 place-items-center rounded-full bg-gradient-to-br from-orange-500 to-amber-400 text-[10px] font-black text-black">C</span>
+            <span class="font-semibold">CruxDev</span>
+            <i data-lucide="badge-check" class="h-4 w-4 text-orange-400"></i>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <i data-lucide="star" class="h-4 w-4 fill-orange-400 text-orange-400"></i>
+            <span class="num font-semibold">4.9</span>
+            <span class="text-white/40">(320)</span>
+          </div>
+        </div>
+        <!-- framework tags -->
+        <div class="mt-4 flex flex-wrap gap-2">
+          <span class="rounded-md border border-white/12 bg-white/[0.03] px-2.5 py-1 text-xs font-semibold text-white/70">ESX</span>
+          <span class="rounded-md border border-white/12 bg-white/[0.03] px-2.5 py-1 text-xs font-semibold text-white/70">QBCore</span>
+          <span class="rounded-md border border-white/12 bg-white/[0.03] px-2.5 py-1 text-xs font-semibold text-white/70">Script</span>
+        </div>
+      </div>
+
+      <!-- PRICE + CTA (near top) -->
+      <div class="mt-7 rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5">
+        <div class="flex items-end gap-3">
+          <span class="num text-[40px] font-black leading-none tracking-tight">$19.99</span>
+          <span class="num mb-1 text-base text-white/35 line-through">$30.00</span>
+          <span class="mb-1.5 rounded-md bg-orange-500/15 px-2 py-1 text-xs font-bold text-orange-400">−33%</span>
+        </div>
+        <div class="mt-5 flex flex-col gap-3 sm:flex-row">
+          <button class="group flex flex-1 items-center justify-center gap-2 rounded-xl bg-orange-500 py-3.5 text-sm font-bold text-black transition hover:bg-orange-400">
+            <i data-lucide="plus" class="h-4 w-4"></i> Add to Cart
+          </button>
+          <button class="flex flex-1 items-center justify-center gap-2 rounded-xl border border-white/12 py-3.5 text-sm font-semibold text-white/85 transition hover:bg-white/5">
+            Buy via Tebex
+            <i data-lucide="arrow-up-right" class="h-4 w-4"></i>
+          </button>
+        </div>
+        <p class="mt-3 flex items-center justify-center gap-1.5 text-xs text-white/40">
+          <i data-lucide="shield-check" class="h-3.5 w-3.5"></i> Instant delivery · Lifetime updates
+        </p>
+      </div>
+
+      <!-- DESCRIPTION -->
+      <section class="mt-10">
+        <div class="micro text-white/40">Description</div>
+        <p class="mt-3 text-[15.5px] leading-[1.8] text-white/60">A complete in-server economy backbone. Players withdraw and deposit at physical <strong class="font-semibold text-white/85">ATMs</strong>, take out and repay <strong class="font-semibold text-white/85">loans</strong> with configurable interest, and manage shared <strong class="font-semibold text-white/85">society accounts</strong> for jobs, gangs, and businesses — all server-authoritative and synced in real time.</p>
+        <p class="mt-3 text-[15.5px] leading-[1.8] text-white/60">Written against modern FiveM patterns so balances stay consistent under load. No dupes, no desync.</p>
+      </section>
+
+      <!-- FEATURES -->
+      <section class="mt-10">
+        <div class="micro text-white/40">Features</div>
+        <div class="mt-4 space-y-3.5">
+          <div class="flex items-start gap-3">
+            <i data-lucide="code-2" class="mt-0.5 h-[18px] w-[18px] shrink-0 text-orange-400"></i>
+            <p class="text-[15px] text-white/65"><span class="font-semibold text-white/90">Clean, documented code</span> — structured for performance and easy to extend.</p>
+          </div>
+          <div class="flex items-start gap-3">
+            <i data-lucide="rocket" class="mt-0.5 h-[18px] w-[18px] shrink-0 text-orange-400"></i>
+            <p class="text-[15px] text-white/65"><span class="font-semibold text-white/90">Easy install</span> — drop in, set framework, SQL auto-imports.</p>
+          </div>
+          <div class="flex items-start gap-3">
+            <i data-lucide="sliders-horizontal" class="mt-0.5 h-[18px] w-[18px] shrink-0 text-orange-400"></i>
+            <p class="text-[15px] text-white/65"><span class="font-semibold text-white/90">Fully configurable</span> — rates, ATM locations, limits, UI theme.</p>
+          </div>
+          <div class="flex items-start gap-3">
+            <i data-lucide="refresh-cw" class="mt-0.5 h-[18px] w-[18px] shrink-0 text-orange-400"></i>
+            <p class="text-[15px] text-white/65"><span class="font-semibold text-white/90">Free lifetime updates</span> — every release lands in your library.</p>
+          </div>
+          <div class="flex items-start gap-3">
+            <i data-lucide="life-buoy" class="mt-0.5 h-[18px] w-[18px] shrink-0 text-orange-400"></i>
+            <p class="text-[15px] text-white/65"><span class="font-semibold text-white/90">Dedicated support</span> — same-day responses on Discord.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- REQUIREMENTS -->
+      <section class="mt-10">
+        <div class="micro text-white/40">Requirements</div>
+        <div class="mt-4 divide-y divide-white/[0.06] rounded-xl border border-white/[0.08]">
+          <div class="flex items-center gap-3 px-4 py-3">
+            <i data-lucide="server" class="h-[18px] w-[18px] text-white/45"></i>
+            <span class="text-sm font-medium">FiveM Server</span>
+            <span class="ml-auto text-sm text-white/40">Latest artifacts</span>
+          </div>
+          <div class="flex items-center gap-3 px-4 py-3">
+            <i data-lucide="boxes" class="h-[18px] w-[18px] text-white/45"></i>
+            <span class="text-sm font-medium">Framework</span>
+            <span class="ml-auto text-sm text-white/40">ESX or QBCore</span>
+          </div>
+          <div class="flex items-center gap-3 px-4 py-3">
+            <i data-lucide="database" class="h-[18px] w-[18px] text-white/45"></i>
+            <span class="text-sm font-medium">Database</span>
+            <span class="ml-auto text-sm text-white/40">oxmysql</span>
+          </div>
+        </div>
+        <!-- meta strip -->
+        <div class="num mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-white/40">
+          <span><span class="text-white/65">v2.4.1</span></span><span>·</span>
+          <span>Updated <span class="text-white/65">Jun 2026</span></span><span>·</span>
+          <span><span class="text-white/65">1,200+</span> downloads</span>
+        </div>
+      </section>
+
+      <!-- SELLER CARD -->
+      <section class="mt-10 rounded-2xl border border-white/[0.08] bg-gradient-to-br from-white/[0.04] to-transparent p-5">
+        <div class="flex items-start gap-3.5">
+          <span class="grid h-12 w-12 place-items-center rounded-xl bg-gradient-to-br from-orange-500 to-amber-400 text-lg font-black text-black">C</span>
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center gap-2">
+              <h3 class="font-bold">CruxDev</h3>
+              <i data-lucide="badge-check" class="h-4 w-4 text-orange-400"></i>
+            </div>
+            <p class="mt-0.5 text-xs text-white/45">Verified creator since 2021</p>
+            <div class="num mt-2.5 flex flex-wrap gap-x-4 gap-y-1 text-xs">
+              <span><span class="font-semibold">27</span> <span class="text-white/40">products</span></span>
+              <span class="flex items-center gap-1"><i data-lucide="star" class="h-3 w-3 fill-orange-400 text-orange-400"></i> <span class="font-semibold">4.9</span></span>
+              <span><span class="font-semibold">18k+</span> <span class="text-white/40">downloads</span></span>
+            </div>
+          </div>
+          <button class="shrink-0 rounded-lg border border-white/12 px-3 py-1.5 text-xs font-semibold text-white/80 transition hover:bg-white/5">Store</button>
+        </div>
+      </section>
+
+      <!-- RELATED -->
+      <section class="mt-10 border-t border-white/[0.07] pt-8">
+        <div class="flex items-baseline justify-between">
+          <h2 class="text-lg font-bold tracking-tight">More from CruxDev</h2>
+          <a href="#" class="text-xs font-semibold text-orange-400 hover:text-orange-300">View all →</a>
+        </div>
+        <div class="mt-4 space-y-3">
+          <a href="#" class="group flex items-center gap-4 rounded-xl border border-white/[0.07] bg-[#0e0e0e] p-3 transition hover:border-white/15">
+            <div class="h-14 w-20 shrink-0 overflow-hidden rounded-lg"><img src="https://img.forgemods.de/images/thumb/images/gta5map_vinewood_lake_villa_03_33f120b6-d81c-4c10-973d-c4522420e975.webp" class="h-full w-full object-cover" /></div>
+            <div class="min-w-0 flex-1">
+              <h4 class="truncate text-sm font-semibold group-hover:text-orange-400">Vinewood Villa Interior</h4>
+              <div class="num mt-1 flex items-center gap-2 text-xs text-white/45"><span class="rounded bg-white/[0.06] px-1.5 py-0.5 font-medium text-white/55">MLO</span><span class="flex items-center gap-1"><i data-lucide="star" class="h-3 w-3 fill-orange-400 text-orange-400"></i>4.8</span></div>
+            </div>
+            <span class="num text-sm font-bold">$24.99</span>
+          </a>
+          <a href="#" class="group flex items-center gap-4 rounded-xl border border-white/[0.07] bg-[#0e0e0e] p-3 transition hover:border-white/15">
+            <div class="h-14 w-20 shrink-0 overflow-hidden rounded-lg"><img src="https://img.forgemods.de/images/thumb/images/c56a6a29-9469-4875-8557-679884d124a6_gta5map_los_santos_medical_center_cd5cc62b-caf0-4021-bdf0-debb98f190fe.webp" class="h-full w-full object-cover" /></div>
+            <div class="min-w-0 flex-1">
+              <h4 class="truncate text-sm font-semibold group-hover:text-orange-400">EMS / Medical System</h4>
+              <div class="num mt-1 flex items-center gap-2 text-xs text-white/45"><span class="rounded bg-white/[0.06] px-1.5 py-0.5 font-medium text-white/55">SCRIPT</span><span class="flex items-center gap-1"><i data-lucide="star" class="h-3 w-3 fill-orange-400 text-orange-400"></i>4.9</span></div>
+            </div>
+            <span class="num text-sm font-bold">$29.99</span>
+          </a>
+          <a href="#" class="group flex items-center gap-4 rounded-xl border border-white/[0.07] bg-[#0e0e0e] p-3 transition hover:border-white/15">
+            <div class="h-14 w-20 shrink-0 overflow-hidden rounded-lg"><img src="https://img.forgemods.de/images/thumb/images/gta5map_vespucci_park_aa153844-cdda-438b-9de6-1126b10052f8.webp" class="h-full w-full object-cover" /></div>
+            <div class="min-w-0 flex-1">
+              <h4 class="truncate text-sm font-semibold group-hover:text-orange-400">Vespucci Park Job</h4>
+              <div class="num mt-1 flex items-center gap-2 text-xs text-white/45"><span class="rounded bg-white/[0.06] px-1.5 py-0.5 font-medium text-white/55">SCRIPT</span><span class="flex items-center gap-1"><i data-lucide="star" class="h-3 w-3 fill-orange-400 text-orange-400"></i>4.7</span></div>
+            </div>
+            <span class="num text-sm font-bold">$14.99</span>
+          </a>
+        </div>
+      </section>
+
+      <!-- FOOTER -->
+      <footer class="mt-12 border-t border-white/[0.06] pt-8">
+        <div class="flex items-center gap-2">
+          <span class="grid h-7 w-7 place-items-center rounded-lg bg-gradient-to-br from-orange-500 to-amber-400 text-xs font-black text-black">F</span>
+          <span class="text-sm font-extrabold tracking-tight">FiveCrux</span>
+        </div>
+        <div class="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-xs text-white/50">
+          <a href="#" class="hover:text-white">Scripts</a>
+          <a href="#" class="hover:text-white">MLOs</a>
+          <a href="#" class="hover:text-white">Creators</a>
+          <a href="#" class="hover:text-white">Help Center</a>
+          <a href="#" class="hover:text-white">Discord</a>
+          <a href="#" class="hover:text-white">Terms</a>
+        </div>
+        <p class="mt-5 text-xs text-white/30">© 2026 FiveCrux. Not affiliated with Rockstar Games or Cfx.re.</p>
+      </footer>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  lucide.createIcons();
+  const imgs = [
+    "https://img.forgemods.de/images/thumb/images/gta5map_gaming_e83b6804-9d4f-4a0c-bb8f-ed72882d7d9b.webp",
+    "https://img.forgemods.de/images/thumb/images/c56a6a29-9469-4875-8557-679884d124a6_gta5map_los_santos_medical_center_cd5cc62b-caf0-4021-bdf0-debb98f190fe.webp",
+    "https://img.forgemods.de/images/thumb/images/gta5map_vinewood_lake_villa_03_33f120b6-d81c-4c10-973d-c4522420e975.webp",
+    "https://img.forgemods.de/images/thumb/images/gta5map_vespucci_park_aa153844-cdda-438b-9de6-1126b10052f8.webp"
+  ];
+  function setImg(i, el){
+    document.getElementById('mainImg').src = imgs[i];
+    document.getElementById('imgIdx').textContent = i + 1;
+    document.querySelectorAll('.thumb').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+  }
+</script>
+</body>
+</html>

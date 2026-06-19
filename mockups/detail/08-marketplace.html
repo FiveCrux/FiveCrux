@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FiveCrux — Advanced Banking System</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<script>tailwind.config={theme:{extend:{fontFamily:{sans:["Inter","sans-serif"]},colors:{brand:{orange:"#f97316"}}}}}</script>
+<style>
+  body{font-family:Inter,sans-serif;background:#0a0a0a;color:#fff}
+  .num{font-variant-numeric:tabular-nums}
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-thumb{background:#1c1c1c;border-radius:8px}
+  .micro{font-size:11px;font-weight:600;letter-spacing:0.16em;text-transform:uppercase}
+  .tab-active{color:#fff;border-color:#f97316}
+</style>
+</head>
+<body class="min-h-screen antialiased">
+
+<!-- ============ NAV ============ -->
+<header class="sticky top-0 z-50 border-b border-white/[0.06] bg-[#0a0a0a]/85 backdrop-blur-xl">
+  <div class="mx-auto flex h-16 max-w-6xl items-center gap-8 px-6">
+    <a href="#" class="flex items-center gap-2">
+      <span class="grid h-8 w-8 place-items-center rounded-lg bg-gradient-to-br from-orange-500 to-amber-400 text-sm font-black text-black">F</span>
+      <span class="text-[17px] font-extrabold tracking-tight">Five<span class="text-brand-orange">Crux</span></span>
+    </a>
+    <nav class="hidden items-center gap-7 text-sm font-medium text-white/55 md:flex">
+      <a href="#" class="transition hover:text-white">Browse</a>
+      <a href="#" class="transition hover:text-white">Scripts</a>
+      <a href="#" class="transition hover:text-white">MLOs</a>
+      <a href="#" class="transition hover:text-white">Giveaways</a>
+    </nav>
+    <div class="ml-auto flex items-center gap-3">
+      <button class="relative grid h-10 w-10 place-items-center rounded-xl border border-white/[0.08] bg-white/[0.02] transition hover:bg-white/[0.05]">
+        <i data-lucide="shopping-cart" class="h-[18px] w-[18px] text-white/70"></i>
+        <span class="num absolute -right-1 -top-1 grid h-5 w-5 place-items-center rounded-full bg-brand-orange text-[10px] font-bold text-black">2</span>
+      </button>
+      <button class="rounded-xl bg-white px-4 py-2 text-sm font-bold text-black transition hover:bg-white/90">Login</button>
+    </div>
+  </div>
+</header>
+
+<div class="mx-auto max-w-6xl px-6 py-8">
+
+  <!-- breadcrumb -->
+  <div class="mb-6 flex items-center gap-2 text-[13px] text-white/40">
+    <a href="#" class="transition hover:text-white/70">Browse</a><i data-lucide="chevron-right" class="h-3.5 w-3.5"></i>
+    <a href="#" class="transition hover:text-white/70">Scripts</a><i data-lucide="chevron-right" class="h-3.5 w-3.5"></i>
+    <span class="text-white/70">Advanced Banking System</span>
+  </div>
+
+  <!-- ===== HERO: screenshot+title left, boxed buy card right ===== -->
+  <div class="grid gap-8 lg:grid-cols-[1fr_340px]">
+
+    <!-- left: title + gallery -->
+    <div>
+      <span class="inline-flex items-center gap-1.5 rounded-full bg-brand-orange/12 px-2.5 py-1 text-[11px] font-bold tracking-wide text-orange-300 ring-1 ring-brand-orange/25">
+        <i data-lucide="landmark" class="h-3 w-3"></i> Banking · Script
+      </span>
+      <h1 class="mt-3 text-3xl font-extrabold leading-tight tracking-tight sm:text-[34px]">Advanced Banking System</h1>
+      <div class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+        <div class="flex items-center gap-2 text-white/55">by <span class="font-semibold text-white/90">CruxDev</span><i data-lucide="badge-check" class="h-4 w-4 text-brand-orange"></i></div>
+        <span class="h-3.5 w-px bg-white/15"></span>
+        <div class="flex items-center gap-1.5"><i data-lucide="star" class="h-4 w-4 fill-brand-orange text-brand-orange"></i><span class="num font-semibold">4.9</span><span class="num text-white/40">(320 reviews)</span></div>
+        <span class="h-3.5 w-px bg-white/15"></span>
+        <span class="rounded-md bg-white/[0.05] px-2 py-0.5 text-[12px] font-semibold text-white/60 ring-1 ring-white/10">ESX + QBCore</span>
+      </div>
+
+      <!-- main screenshot -->
+      <div class="mt-5 overflow-hidden rounded-2xl border border-white/[0.07] bg-[#0e0e0e]">
+        <img id="hero" src="https://img.forgemods.de/images/thumb/images/gta5map_gaming_e83b6804-9d4f-4a0c-bb8f-ed72882d7d9b.webp" class="aspect-[16/9] w-full object-cover" />
+      </div>
+      <div class="mt-3 grid grid-cols-4 gap-3">
+        <button onclick="document.getElementById('hero').src=this.querySelector('img').src" class="overflow-hidden rounded-xl border border-brand-orange/60 ring-2 ring-brand-orange/30"><img src="https://img.forgemods.de/images/thumb/images/gta5map_gaming_e83b6804-9d4f-4a0c-bb8f-ed72882d7d9b.webp" class="aspect-[16/10] w-full object-cover" /></button>
+        <button onclick="document.getElementById('hero').src=this.querySelector('img').src" class="overflow-hidden rounded-xl border border-white/[0.08] transition hover:border-white/30"><img src="https://img.forgemods.de/images/thumb/images/c56a6a29-9469-4875-8557-679884d124a6_gta5map_los_santos_medical_center_cd5cc62b-caf0-4021-bdf0-debb98f190fe.webp" class="aspect-[16/10] w-full object-cover" /></button>
+        <button onclick="document.getElementById('hero').src=this.querySelector('img').src" class="overflow-hidden rounded-xl border border-white/[0.08] transition hover:border-white/30"><img src="https://img.forgemods.de/images/thumb/images/gta5map_vinewood_lake_villa_03_33f120b6-d81c-4c10-973d-c4522420e975.webp" class="aspect-[16/10] w-full object-cover" /></button>
+        <button onclick="document.getElementById('hero').src=this.querySelector('img').src" class="overflow-hidden rounded-xl border border-white/[0.08] transition hover:border-white/30"><img src="https://img.forgemods.de/images/thumb/images/gta5map_vespucci_park_aa153844-cdda-438b-9de6-1126b10052f8.webp" class="aspect-[16/10] w-full object-cover" /></button>
+      </div>
+    </div>
+
+    <!-- right: boxed price/buy card (Gumroad vibe) -->
+    <div>
+      <div class="lg:sticky lg:top-24 space-y-4">
+        <div class="rounded-2xl border border-white/[0.08] bg-[#0e0e0e] p-6 shadow-[0_24px_60px_-30px_rgba(0,0,0,0.9)]">
+          <div class="flex items-end gap-2.5">
+            <span class="num text-4xl font-extrabold tracking-tight">$19.99</span>
+            <span class="num mb-1.5 text-base text-white/35 line-through">$30</span>
+          </div>
+          <div class="num mt-2 inline-flex items-center gap-1 rounded-md bg-emerald-500/12 px-2 py-1 text-[12px] font-bold text-emerald-400 ring-1 ring-emerald-500/25">
+            <i data-lucide="tag" class="h-3 w-3"></i> Save 33% — limited time
+          </div>
+
+          <button class="group mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-brand-orange py-3.5 font-bold text-black transition hover:bg-orange-400">
+            <i data-lucide="shopping-cart" class="h-4 w-4"></i> Add to Cart
+          </button>
+          <button class="mt-2.5 flex w-full items-center justify-center gap-2 rounded-xl border border-white/[0.1] bg-white/[0.03] py-3.5 text-sm font-bold text-white/90 transition hover:bg-white/[0.06]">
+            Buy via Tebex <i data-lucide="external-link" class="h-3.5 w-3.5"></i>
+          </button>
+
+          <div class="mt-5 space-y-2.5 border-t border-white/[0.06] pt-5 text-[13px]">
+            <div class="flex items-center gap-2.5 text-white/60"><i data-lucide="zap" class="h-4 w-4 text-brand-orange"></i> Instant delivery to your account</div>
+            <div class="flex items-center gap-2.5 text-white/60"><i data-lucide="refresh-cw" class="h-4 w-4 text-brand-orange"></i> Free lifetime updates</div>
+            <div class="flex items-center gap-2.5 text-white/60"><i data-lucide="shield-check" class="h-4 w-4 text-brand-orange"></i> Tebex escrow protected</div>
+          </div>
+        </div>
+
+        <!-- seller card -->
+        <div class="rounded-2xl border border-white/[0.07] bg-white/[0.015] p-5">
+          <div class="flex items-center gap-3">
+            <span class="grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-orange-500 to-amber-400 text-base font-black text-black">C</span>
+            <div class="min-w-0">
+              <div class="flex items-center gap-1.5 text-sm font-bold">CruxDev <i data-lucide="badge-check" class="h-4 w-4 text-brand-orange"></i></div>
+              <div class="num text-[12px] text-white/45">42 resources · 12.4k sales</div>
+            </div>
+          </div>
+          <button class="mt-4 w-full rounded-xl border border-white/[0.1] bg-white/[0.03] py-2.5 text-sm font-semibold transition hover:bg-white/[0.06]">View store</button>
+        </div>
+
+        <!-- meta strip -->
+        <div class="rounded-2xl border border-white/[0.07] bg-white/[0.015] p-5 text-[13px]">
+          <div class="flex items-center justify-between border-b border-white/[0.05] py-2"><span class="text-white/45">Version</span><span class="num font-semibold">v2.4.1</span></div>
+          <div class="flex items-center justify-between border-b border-white/[0.05] py-2"><span class="text-white/45">Updated</span><span class="font-semibold">Jun 2026</span></div>
+          <div class="flex items-center justify-between py-2"><span class="text-white/45">Downloads</span><span class="num font-semibold">1,200+</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TABS ===== -->
+  <div class="mt-12 max-w-3xl">
+    <div class="flex gap-7 border-b border-white/[0.08] text-sm font-semibold">
+      <button data-tab="desc" class="tab tab-active border-b-2 pb-3 text-white">Description</button>
+      <button data-tab="incl" class="tab border-b-2 border-transparent pb-3 text-white/45 transition hover:text-white/80">What's included</button>
+      <button data-tab="reqs" class="tab border-b-2 border-transparent pb-3 text-white/45 transition hover:text-white/80">Requirements</button>
+      <button data-tab="revs" class="tab border-b-2 border-transparent pb-3 text-white/45 transition hover:text-white/80">Reviews</button>
+    </div>
+
+    <!-- DESCRIPTION -->
+    <div data-panel="desc" class="panel mt-7">
+      <div class="space-y-4 text-[15px] leading-relaxed text-white/65">
+        <p>Advanced Banking System gives your server a complete, performance-first economy layer. Players interact with map-wide <span class="font-semibold text-white/85">ATMs</span>, take and repay <span class="font-semibold text-white/85">loans</span> with configurable interest, and operate shared <span class="font-semibold text-white/85">society accounts</span> for jobs and gangs — every transaction synced and logged server-side.</p>
+        <p>Built natively for both ESX and QBCore with a clean, modern NUI. Everything from interest rates to permissions lives in one readable config, and it stays under 0.02ms idle.</p>
+      </div>
+    </div>
+
+    <!-- INCLUDED -->
+    <div data-panel="incl" class="panel mt-7 hidden">
+      <ul class="grid gap-x-8 gap-y-3.5 sm:grid-cols-2">
+        <li class="flex gap-3 text-[15px] text-white/70"><i data-lucide="check" class="mt-0.5 h-4 w-4 shrink-0 text-emerald-400"></i> Personal & savings accounts</li>
+        <li class="flex gap-3 text-[15px] text-white/70"><i data-lucide="check" class="mt-0.5 h-4 w-4 shrink-0 text-emerald-400"></i> Loans with interest & schedules</li>
+        <li class="flex gap-3 text-[15px] text-white/70"><i data-lucide="check" class="mt-0.5 h-4 w-4 shrink-0 text-emerald-400"></i> Society / job accounts</li>
+        <li class="flex gap-3 text-[15px] text-white/70"><i data-lucide="check" class="mt-0.5 h-4 w-4 shrink-0 text-emerald-400"></i> Physical & dirty money support</li>
+        <li class="flex gap-3 text-[15px] text-white/70"><i data-lucide="check" class="mt-0.5 h-4 w-4 shrink-0 text-emerald-400"></i> Full transaction history & logs</li>
+        <li class="flex gap-3 text-[15px] text-white/70"><i data-lucide="check" class="mt-0.5 h-4 w-4 shrink-0 text-emerald-400"></i> Discord webhook integration</li>
+        <li class="flex gap-3 text-[15px] text-white/70"><i data-lucide="check" class="mt-0.5 h-4 w-4 shrink-0 text-emerald-400"></i> Responsive NUI · 12 languages</li>
+        <li class="flex gap-3 text-[15px] text-white/70"><i data-lucide="check" class="mt-0.5 h-4 w-4 shrink-0 text-emerald-400"></i> Source-available config layer</li>
+      </ul>
+    </div>
+
+    <!-- REQUIREMENTS -->
+    <div data-panel="reqs" class="panel mt-7 hidden">
+      <div class="overflow-hidden rounded-2xl border border-white/[0.07]">
+        <div class="flex items-center justify-between border-b border-white/[0.05] bg-white/[0.015] px-5 py-3.5 text-sm"><span class="text-white/55">Framework</span><span class="font-semibold">ESX Legacy or QBCore</span></div>
+        <div class="flex items-center justify-between border-b border-white/[0.05] px-5 py-3.5 text-sm"><span class="text-white/55">Dependencies</span><span class="font-semibold">oxmysql, ox_lib</span></div>
+        <div class="flex items-center justify-between border-b border-white/[0.05] bg-white/[0.015] px-5 py-3.5 text-sm"><span class="text-white/55">Database</span><span class="font-semibold">MySQL / MariaDB</span></div>
+        <div class="flex items-center justify-between px-5 py-3.5 text-sm"><span class="text-white/55">Server build</span><span class="num font-semibold">5848+ recommended</span></div>
+      </div>
+    </div>
+
+    <!-- REVIEWS -->
+    <div data-panel="revs" class="panel mt-7 hidden">
+      <div class="mb-6 flex items-end gap-3">
+        <span class="num text-5xl font-extrabold tracking-tight">4.9</span>
+        <div class="mb-1.5">
+          <div class="flex gap-0.5 text-brand-orange"><i data-lucide="star" class="h-4 w-4 fill-current"></i><i data-lucide="star" class="h-4 w-4 fill-current"></i><i data-lucide="star" class="h-4 w-4 fill-current"></i><i data-lucide="star" class="h-4 w-4 fill-current"></i><i data-lucide="star" class="h-4 w-4 fill-current"></i></div>
+          <div class="num mt-1 text-[13px] text-white/45">320 reviews</div>
+        </div>
+      </div>
+      <div class="space-y-4">
+        <div class="rounded-2xl border border-white/[0.07] bg-white/[0.015] p-5">
+          <div class="flex items-center gap-3">
+            <span class="grid h-9 w-9 place-items-center rounded-full bg-sky-500/80 text-sm font-black text-black">M</span>
+            <div><div class="text-sm font-semibold">Marcus R.</div><div class="text-[12px] text-white/40">Verified buyer · 2 weeks ago</div></div>
+            <div class="ml-auto flex gap-0.5 text-brand-orange"><i data-lucide="star" class="h-3.5 w-3.5 fill-current"></i><i data-lucide="star" class="h-3.5 w-3.5 fill-current"></i><i data-lucide="star" class="h-3.5 w-3.5 fill-current"></i><i data-lucide="star" class="h-3.5 w-3.5 fill-current"></i><i data-lucide="star" class="h-3.5 w-3.5 fill-current"></i></div>
+          </div>
+          <p class="mt-3 text-[14px] leading-relaxed text-white/65">Dropped this into our QBCore server and it just worked. The society accounts feature alone saved us a custom job script. Config is genuinely readable.</p>
+        </div>
+        <div class="rounded-2xl border border-white/[0.07] bg-white/[0.015] p-5">
+          <div class="flex items-center gap-3">
+            <span class="grid h-9 w-9 place-items-center rounded-full bg-violet-500/80 text-sm font-black text-black">L</span>
+            <div><div class="text-sm font-semibold">Lena K.</div><div class="text-[12px] text-white/40">Verified buyer · 1 month ago</div></div>
+            <div class="ml-auto flex gap-0.5 text-brand-orange"><i data-lucide="star" class="h-3.5 w-3.5 fill-current"></i><i data-lucide="star" class="h-3.5 w-3.5 fill-current"></i><i data-lucide="star" class="h-3.5 w-3.5 fill-current"></i><i data-lucide="star" class="h-3.5 w-3.5 fill-current"></i><i data-lucide="star" class="h-3.5 w-3.5 fill-current"></i></div>
+          </div>
+          <p class="mt-3 text-[14px] leading-relaxed text-white/65">Support replied within an hour when I had an ESX migration question. Performance is excellent — barely registers on the resmon. Worth every cent.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== RELATED ===== -->
+  <section class="mt-14">
+    <div class="micro text-white/35">More from CruxDev</div>
+    <div class="mt-4 grid gap-4 sm:grid-cols-3">
+      <a href="#" class="group overflow-hidden rounded-2xl border border-white/[0.07] bg-[#0e0e0e] transition hover:border-white/20">
+        <div class="overflow-hidden"><img src="https://img.forgemods.de/images/thumb/images/c56a6a29-9469-4875-8557-679884d124a6_gta5map_los_santos_medical_center_cd5cc62b-caf0-4021-bdf0-debb98f190fe.webp" class="aspect-[16/10] w-full object-cover transition duration-500 group-hover:scale-105" /></div>
+        <div class="p-4"><div class="text-sm font-bold">Medical Center MLO</div><div class="mt-1 flex items-center gap-1 text-[12px] text-white/40"><i data-lucide="star" class="h-3 w-3 fill-brand-orange text-brand-orange"></i> <span class="num">4.8</span></div><div class="num mt-2 font-bold text-brand-orange">$24.99</div></div>
+      </a>
+      <a href="#" class="group overflow-hidden rounded-2xl border border-white/[0.07] bg-[#0e0e0e] transition hover:border-white/20">
+        <div class="overflow-hidden"><img src="https://img.forgemods.de/images/thumb/images/gta5map_vinewood_lake_villa_03_33f120b6-d81c-4c10-973d-c4522420e975.webp" class="aspect-[16/10] w-full object-cover transition duration-500 group-hover:scale-105" /></div>
+        <div class="p-4"><div class="text-sm font-bold">Vinewood Villa</div><div class="mt-1 flex items-center gap-1 text-[12px] text-white/40"><i data-lucide="star" class="h-3 w-3 fill-brand-orange text-brand-orange"></i> <span class="num">5.0</span></div><div class="num mt-2 font-bold text-brand-orange">$34.99</div></div>
+      </a>
+      <a href="#" class="group overflow-hidden rounded-2xl border border-white/[0.07] bg-[#0e0e0e] transition hover:border-white/20">
+        <div class="overflow-hidden"><img src="https://img.forgemods.de/images/thumb/images/gta5map_vespucci_park_aa153844-cdda-438b-9de6-1126b10052f8.webp" class="aspect-[16/10] w-full object-cover transition duration-500 group-hover:scale-105" /></div>
+        <div class="p-4"><div class="text-sm font-bold">Vespucci Park Pack</div><div class="mt-1 flex items-center gap-1 text-[12px] text-white/40"><i data-lucide="star" class="h-3 w-3 fill-brand-orange text-brand-orange"></i> <span class="num">4.7</span></div><div class="num mt-2 font-bold text-brand-orange">$14.99</div></div>
+      </a>
+    </div>
+  </section>
+</div>
+
+<!-- ============ FOOTER ============ -->
+<footer class="mt-16 border-t border-white/[0.06]">
+  <div class="mx-auto grid max-w-6xl gap-8 px-6 py-12 md:grid-cols-4">
+    <div>
+      <div class="flex items-center gap-2"><span class="grid h-7 w-7 place-items-center rounded-lg bg-gradient-to-br from-orange-500 to-amber-400 text-xs font-black text-black">F</span><span class="font-extrabold tracking-tight">Five<span class="text-brand-orange">Crux</span></span></div>
+      <p class="mt-3 text-[13px] leading-relaxed text-white/40">The marketplace for premium FiveM scripts, MLOs and vehicles.</p>
+    </div>
+    <div><div class="micro text-white/35">Marketplace</div><ul class="mt-3 space-y-2 text-sm text-white/50"><li><a href="#" class="hover:text-white">Scripts</a></li><li><a href="#" class="hover:text-white">MLOs</a></li><li><a href="#" class="hover:text-white">Vehicles</a></li></ul></div>
+    <div><div class="micro text-white/35">Company</div><ul class="mt-3 space-y-2 text-sm text-white/50"><li><a href="#" class="hover:text-white">About</a></li><li><a href="#" class="hover:text-white">Become a seller</a></li><li><a href="#" class="hover:text-white">Support</a></li></ul></div>
+    <div><div class="micro text-white/35">Legal</div><ul class="mt-3 space-y-2 text-sm text-white/50"><li><a href="#" class="hover:text-white">Terms</a></li><li><a href="#" class="hover:text-white">Privacy</a></li><li><a href="#" class="hover:text-white">Refunds</a></li></ul></div>
+  </div>
+  <div class="border-t border-white/[0.06]"><div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-5 text-[12px] text-white/30"><span>© 2026 FiveCrux. All rights reserved.</span><span>Not affiliated with Rockstar Games.</span></div></div>
+</footer>
+
+<script>
+  lucide.createIcons();
+  const tabs=document.querySelectorAll('.tab'),panels=document.querySelectorAll('.panel');
+  tabs.forEach(t=>t.addEventListener('click',()=>{
+    tabs.forEach(x=>{x.classList.remove('tab-active','text-white');x.classList.add('border-transparent','text-white/45')});
+    t.classList.add('tab-active','text-white');t.classList.remove('border-transparent','text-white/45');
+    panels.forEach(p=>p.classList.toggle('hidden',p.dataset.panel!==t.dataset.tab));
+  }));
+</script>
+</body>
+</html>
