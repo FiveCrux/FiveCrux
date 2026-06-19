@@ -805,82 +805,232 @@ export default function GiveawayDetailPage() {
       </div>
 
       <main className="min-h-screen bg-[#0a0a0a] text-white">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-24 pt-8">
-          {/* Back link */}
+        {/* Breadcrumb + back link (above the hero) */}
+        <div className="mx-auto max-w-[1240px] px-4 pt-6 sm:px-6 lg:px-8">
+          <nav className="flex flex-wrap items-center gap-2 text-sm text-white/55">
+            <Link href="/" className="transition-colors hover:text-white">
+              Home
+            </Link>
+            <ChevronRight className="h-3.5 w-3.5 text-white/30" />
+            <Link href="/giveaways" className="transition-colors hover:text-white">
+              Giveaways
+            </Link>
+            <ChevronRight className="h-3.5 w-3.5 text-white/30" />
+            <span className="truncate text-white/85">{transformedGiveaway.title}</span>
+          </nav>
           <Link
             href="/giveaways"
-            className="mb-6 inline-flex items-center gap-2 text-sm text-white/50 transition-colors hover:text-white"
+            className="mt-3 inline-flex items-center gap-2 text-sm text-white/50 transition-colors hover:text-white"
           >
             <ArrowLeft className="h-4 w-4" /> Back to giveaways
           </Link>
+        </div>
 
-          <div className="grid gap-8 lg:grid-cols-[1fr_380px]">
-            {/* LEFT main */}
+        {/* CINEMATIC HERO */}
+        <motion.section
+          ref={heroRef}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6 }}
+          className="relative mt-4 min-h-[60vh] w-full"
+        >
+          <Image
+            src={transformedGiveaway.cover_image || "/placeholder.jpg"}
+            alt={transformedGiveaway.title}
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover"
+          />
+          {/* Legibility gradients (bottom + left) */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/55 to-[#0a0a0a]/30" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0a]/85 via-[#0a0a0a]/20 to-transparent" />
+
+          <div className="relative mx-auto flex min-h-[60vh] max-w-[1240px] flex-col justify-end px-4 pb-10 pt-28 sm:px-6 lg:px-8">
+            {/* Status tags */}
+            <div className="flex flex-wrap items-center gap-2">
+              {transformedGiveaway.featured && (
+                <span className="rounded-md bg-orange-500 px-2.5 py-1 text-[11px] font-bold tracking-wide text-black">
+                  FEATURED GIVEAWAY
+                </span>
+              )}
+              {isGiveawayEnded && (
+                <span className="rounded-md bg-black/50 px-2.5 py-1 text-[11px] font-bold tracking-wide text-red-400 ring-1 ring-white/15 backdrop-blur">
+                  ENDED
+                </span>
+              )}
+              {isGiveawayUpcoming && !isGiveawayEnded && (
+                <span className="rounded-md bg-black/50 px-2.5 py-1 text-[11px] font-bold tracking-wide text-blue-300 ring-1 ring-white/15 backdrop-blur">
+                  UPCOMING
+                </span>
+              )}
+            </div>
+
+            {/* Title */}
+            <h1 className="mt-4 max-w-3xl text-4xl font-extrabold leading-[1.05] tracking-tight drop-shadow-lg sm:text-6xl">
+              {transformedGiveaway.title}
+            </h1>
+
+            {/* Meta row: prize value · entries · ends in */}
+            <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
+              <span className="inline-flex items-center gap-1.5">
+                <Gift className="h-4 w-4 text-orange-500" />
+                <span className="tabular-nums font-semibold">{prizeValueDisplay}</span>
+                <span className="text-white/55">value</span>
+              </span>
+              <span className="text-white/25">|</span>
+              <span className="inline-flex items-center gap-1.5 text-white/70">
+                <Users className="h-4 w-4" />
+                <span className="tabular-nums font-semibold text-white">
+                  {transformedGiveaway.entries.toLocaleString()}
+                </span>
+                entries
+              </span>
+              <span className="text-white/25">|</span>
+              <span className="inline-flex items-center gap-1.5 text-white/70">
+                <Clock className="h-4 w-4" />
+                {isGiveawayEnded
+                  ? "Ended"
+                  : isGiveawayUpcoming
+                  ? "Starting soon"
+                  : `Ends in ${transformedGiveaway.timeLeft}`}
+              </span>
+            </div>
+
+            {/* Host row */}
+            <div className="mt-3 flex items-center gap-2 text-sm text-white/70">
+              <span className="relative grid h-6 w-6 place-items-center overflow-hidden rounded-full bg-white/10 text-[11px] font-bold ring-1 ring-white/15">
+                {transformedGiveaway.creator.avatar &&
+                transformedGiveaway.creator.avatar !== "/placeholder-user.jpg" ? (
+                  <Image
+                    src={transformedGiveaway.creator.avatar}
+                    alt={transformedGiveaway.creator.name}
+                    fill
+                    className="object-cover"
+                    sizes="24px"
+                  />
+                ) : (
+                  creatorInitial
+                )}
+              </span>
+              Hosted by <span className="font-semibold text-white">{transformedGiveaway.creator.name}</span>
+              {transformedGiveaway.creator.verified && (
+                <span className="inline-flex items-center" title="Verified Creator">
+                  <VerifiedIcon size="sm" />
+                </span>
+              )}
+            </div>
+
+            {/* Primary CTA + compact countdown overlaid */}
+            <div className="mt-7 flex flex-wrap items-center gap-4">
+              <motion.div
+                whileHover={{ scale: isGiveawayEnded || isGiveawayUpcoming ? 1 : 1.02 }}
+                whileTap={{ scale: isGiveawayEnded || isGiveawayUpcoming ? 1 : 0.98 }}
+              >
+                <button
+                  onClick={handleEnterGiveaway}
+                  disabled={isEntered || isEnteringGiveaway || isGiveawayEnded || isGiveawayUpcoming}
+                  className={`flex items-center justify-center gap-2 rounded-2xl px-6 py-3.5 font-bold shadow-lg transition-colors ${
+                    isGiveawayEnded || isGiveawayUpcoming
+                      ? "cursor-not-allowed bg-white/10 text-white/40"
+                      : isEntered
+                      ? "bg-green-500/15 text-green-400"
+                      : "bg-orange-500 text-black shadow-orange-500/20 hover:bg-orange-400"
+                  }`}
+                >
+                  {isGiveawayUpcoming ? (
+                    <>
+                      <Clock className="h-4 w-4" />
+                      Starting Soon
+                    </>
+                  ) : isGiveawayEnded ? (
+                    <>
+                      <Clock className="h-4 w-4" />
+                      Giveaway Ended
+                    </>
+                  ) : isEnteringGiveaway ? (
+                    <>
+                      <motion.span
+                        className="h-4 w-4 rounded-full border-2 border-current border-t-transparent"
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
+                      />
+                      Entering...
+                    </>
+                  ) : isEntered ? (
+                    <>
+                      <Trophy className="h-4 w-4" />
+                      You&apos;re In!
+                    </>
+                  ) : (
+                    <>
+                      <Gift className="h-4 w-4" />
+                      Enter Giveaway
+                    </>
+                  )}
+                </button>
+              </motion.div>
+
+              {/* Compact countdown */}
+              {!isGiveawayEnded && (
+                <div className="flex items-center gap-2">
+                  {[
+                    { v: timeParts.days, l: "DAYS" },
+                    { v: timeParts.hours, l: "HRS" },
+                    { v: timeParts.minutes, l: "MIN" },
+                  ].map((b) => (
+                    <div
+                      key={b.l}
+                      className="rounded-xl border border-white/15 bg-black/40 px-3.5 py-2 text-center backdrop-blur"
+                    >
+                      <div className="tabular-nums text-xl font-extrabold leading-none">{pad2(b.v)}</div>
+                      <div className="mt-1 text-[10px] tracking-[0.16em] text-white/45">{b.l}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <p className="mt-4 inline-flex items-center gap-1.5 text-xs text-white/45">
+              <ShieldCheck className="h-3.5 w-3.5" /> Winner drawn automatically &amp; fairly
+            </p>
+          </div>
+        </motion.section>
+
+        {/* STATS STRIP */}
+        <div className="border-y border-white/[0.06] bg-[#0d0d0d]">
+          <div className="mx-auto grid max-w-[1240px] grid-cols-2 divide-x divide-white/[0.06] px-4 sm:grid-cols-4 sm:px-6 lg:px-8">
+            <div className="py-5 pr-4">
+              <div className="text-[11px] uppercase tracking-[0.16em] text-white/35">Prize value</div>
+              <div className="mt-1 tabular-nums text-lg font-bold">{prizeValueDisplay}</div>
+            </div>
+            <div className="py-5 pl-4 pr-4">
+              <div className="text-[11px] uppercase tracking-[0.16em] text-white/35">Entries</div>
+              <div className="mt-1 tabular-nums text-lg font-bold">
+                {transformedGiveaway.entries.toLocaleString()}
+              </div>
+            </div>
+            <div className="py-5 pl-4 pr-4">
+              <div className="text-[11px] uppercase tracking-[0.16em] text-white/35">Your entries</div>
+              <div className="mt-1 tabular-nums text-lg font-bold text-orange-500">{yourEntries}</div>
+            </div>
+            <div className="py-5 pl-4">
+              <div className="text-[11px] uppercase tracking-[0.16em] text-white/35">Ends</div>
+              <div className="mt-1 text-lg font-bold">{endsDateLabel}</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="mx-auto max-w-[1240px] px-4 pb-24 pt-14 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 gap-12 lg:grid-cols-[minmax(0,1fr)_340px]">
+            {/* MAIN column */}
             <motion.div
-              ref={heroRef}
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
             >
-              {/* Prize image */}
-              <div className="relative overflow-hidden rounded-2xl border border-white/[0.08]">
-                <Image
-                  src={transformedGiveaway.cover_image || "/placeholder.jpg"}
-                  alt={transformedGiveaway.title}
-                  width={1200}
-                  height={680}
-                  className="h-[260px] w-full object-cover sm:h-[340px]"
-                  priority
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-                {transformedGiveaway.featured && (
-                  <span className="absolute left-4 top-4 rounded-md bg-orange-500 px-2.5 py-1 text-xs font-bold text-black">
-                    FEATURED GIVEAWAY
-                  </span>
-                )}
-                {isGiveawayEnded && (
-                  <span className="absolute right-4 top-4 rounded-md bg-black/70 px-2.5 py-1 text-xs font-bold text-red-400 backdrop-blur-sm">
-                    ENDED
-                  </span>
-                )}
-                {isGiveawayUpcoming && !isGiveawayEnded && (
-                  <span className="absolute right-4 top-4 rounded-md bg-black/70 px-2.5 py-1 text-xs font-bold text-blue-300 backdrop-blur-sm">
-                    UPCOMING
-                  </span>
-                )}
-              </div>
-
-              {/* Title */}
-              <h1 className="mt-6 text-3xl font-extrabold tracking-tight sm:text-4xl">
-                {transformedGiveaway.title}
-              </h1>
-
-              {/* Host row */}
-              <div className="mt-2 flex items-center gap-2 text-sm text-white/55">
-                <span className="relative grid h-6 w-6 place-items-center overflow-hidden rounded-full bg-white/10 text-[11px] font-bold">
-                  {transformedGiveaway.creator.avatar &&
-                  transformedGiveaway.creator.avatar !== "/placeholder-user.jpg" ? (
-                    <Image
-                      src={transformedGiveaway.creator.avatar}
-                      alt={transformedGiveaway.creator.name}
-                      fill
-                      className="object-cover"
-                      sizes="24px"
-                    />
-                  ) : (
-                    creatorInitial
-                  )}
-                </span>
-                Hosted by {transformedGiveaway.creator.name}
-                {transformedGiveaway.creator.verified && (
-                  <span className="inline-flex items-center" title="Verified Creator">
-                    <VerifiedIcon size="sm" />
-                  </span>
-                )}
-              </div>
-
               {/* About */}
-              <div className="mt-6 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-6">
+              <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-6">
                 <h2 className="mb-2 text-lg font-bold">About this giveaway</h2>
                 <p className="leading-relaxed text-white/60">{transformedGiveaway.description}</p>
               </div>
@@ -1021,7 +1171,7 @@ export default function GiveawayDetailPage() {
               </div>
             </motion.div>
 
-            {/* RIGHT sticky entry panel */}
+            {/* RIGHT slim aside: your-entry recap + host */}
             <aside className="lg:sticky lg:top-24 lg:self-start">
               <motion.div
                 ref={detailsRef}
@@ -1030,26 +1180,31 @@ export default function GiveawayDetailPage() {
                 transition={{ duration: 0.6, delay: 0.1 }}
                 className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-6"
               >
-                <div className="text-sm text-white/45">Prize value</div>
-                <div className="text-3xl font-extrabold">{prizeValueDisplay}</div>
-
-                {/* Countdown */}
-                <div className="mt-5 grid grid-cols-3 gap-2 text-center">
-                  <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] py-3">
-                    <div className="text-2xl font-extrabold">{pad2(timeParts.days)}</div>
-                    <div className="text-[11px] text-white/40">DAYS</div>
+                <div className="text-[11px] uppercase tracking-[0.16em] text-white/35">Your entry</div>
+                <div className="mt-3 space-y-3 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="text-white/50">Status</span>
+                    <span className={`font-semibold ${isEntered ? "text-green-400" : "text-white/70"}`}>
+                      {isEntered ? "Entered" : "Not entered"}
+                    </span>
                   </div>
-                  <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] py-3">
-                    <div className="text-2xl font-extrabold">{pad2(timeParts.hours)}</div>
-                    <div className="text-[11px] text-white/40">HRS</div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-white/50">Your entries</span>
+                    <span className="tabular-nums font-semibold text-orange-500">{yourEntries}</span>
                   </div>
-                  <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] py-3">
-                    <div className="text-2xl font-extrabold">{pad2(timeParts.minutes)}</div>
-                    <div className="text-[11px] text-white/40">MIN</div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-white/50">Total entries</span>
+                    <span className="tabular-nums font-semibold">
+                      {transformedGiveaway.entries.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-white/50">Ends</span>
+                    <span className="font-semibold">{endsDateLabel}</span>
                   </div>
                 </div>
 
-                {/* Enter button */}
+                {/* Enter button (mirrors hero CTA, useful when scrolled past the hero) */}
                 <motion.div
                   whileHover={{ scale: isGiveawayEnded || isGiveawayUpcoming ? 1 : 1.02 }}
                   whileTap={{ scale: isGiveawayEnded || isGiveawayUpcoming ? 1 : 0.98 }}
@@ -1101,22 +1256,6 @@ export default function GiveawayDetailPage() {
                 <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-white/40">
                   <ShieldCheck className="h-3.5 w-3.5" /> Winner drawn automatically &amp; fairly
                 </p>
-
-                {/* Stats */}
-                <div className="mt-5 space-y-3 border-t border-white/[0.06] pt-5 text-sm">
-                  <div className="flex items-center justify-between">
-                    <span className="text-white/50">Entries</span>
-                    <span className="font-semibold">{transformedGiveaway.entries.toLocaleString()}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-white/50">Your entries</span>
-                    <span className="font-semibold text-orange-500">{yourEntries}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-white/50">Ends</span>
-                    <span className="font-semibold">{endsDateLabel}</span>
-                  </div>
-                </div>
               </motion.div>
 
               {/* Host card */}
