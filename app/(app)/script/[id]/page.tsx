@@ -95,7 +95,13 @@ function scriptFromSeed(id: number): Script | null {
       "Regular updates & support",
     ],
     requirements: ["FiveM server", ...(seed.framework || [])],
-    images: seed.coverImage ? [seed.coverImage] : [],
+    // TODO: remove before production — extra demo screenshots so the bento gallery fills out.
+    images: [
+      seed.coverImage,
+      "https://img.forgemods.de/images/thumb/images/gta5map_gaming_e83b6804-9d4f-4a0c-bb8f-ed72882d7d9b.webp",
+      "https://img.forgemods.de/images/thumb/images/c56a6a29-9469-4875-8557-679884d124a6_gta5map_los_santos_medical_center_cd5cc62b-caf0-4021-bdf0-debb98f190fe.webp",
+      "https://img.forgemods.de/images/thumb/images/gta5map_vinewood_lake_villa_03_33f120b6-d81c-4c10-973d-c4522420e975.webp",
+    ].filter((u, i, a) => u && a.indexOf(u) === i) as string[],
     videos: [],
     screenshots: [],
     cover_image: seed.coverImage,
