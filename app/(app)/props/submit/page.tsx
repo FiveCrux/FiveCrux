@@ -5,11 +5,24 @@ import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { motion } from "framer-motion"
-import { Package, DollarSign, Image as ImageIcon, Sparkles, FileArchive, ShieldCheck, X, Upload, Store } from "lucide-react"
+import {
+  Package,
+  DollarSign,
+  Image as ImageIcon,
+  Sparkles,
+  FileArchive,
+  ShieldCheck,
+  X,
+  Upload,
+  Store,
+  Eye,
+  Users,
+  BadgeCheck,
+  ArrowRight,
+} from "lucide-react"
 import { Button } from "@/componentss/ui/button"
 import { Input } from "@/componentss/ui/input"
 import { Textarea } from "@/componentss/ui/textarea"
-import { Card, CardContent, CardHeader, CardTitle } from "@/componentss/ui/card"
 import { Label } from "@/componentss/ui/label"
 import Navbar from "@/componentss/shared/navbar"
 import Footer from "@/componentss/shared/footer"
@@ -205,266 +218,370 @@ export default function SubmitPropPage() {
     }
   }
 
-  const cardClass = "bg-white/[0.03] border border-white/10 backdrop-blur-xl rounded-2xl shadow-xl shadow-black/30"
-  const inputClass = "mt-2 bg-black/40 border-white/10 text-white placeholder:text-gray-500 rounded-xl focus-visible:ring-orange-500/60 focus-visible:ring-offset-0 focus-visible:border-orange-500/50"
+  // ---- styles ----
+  const micro = "text-[11px] font-semibold tracking-[0.16em] uppercase"
+  const fieldClass =
+    "mt-2 bg-[#0e0e0e] border-white/[0.08] text-white placeholder:text-white/30 rounded-[14px] focus-visible:ring-[3px] focus-visible:ring-orange-500/[0.18] focus-visible:ring-offset-0 focus-visible:border-orange-500 transition"
+
+  // ---- live-preview derived values ----
+  const priceNum = parseFloat(formData.price)
+  const hasPrice = formData.price !== "" && !Number.isNaN(priceNum)
+  const discountNum = parseFloat(formData.discountPercentage || "0") || 0
+  const isFree = hasPrice && priceNum === 0
+  const hasDiscount = hasPrice && discountNum > 0 && !isFree
+  const discountedPrice = hasDiscount ? priceNum * (1 - discountNum / 100) : priceNum
+  const coverImage = media.images[0]
+  const sellerName = session?.user?.name || "You"
+  const sellerImage = session?.user?.image || ""
+  const sellerInitial = sellerName.charAt(0).toUpperCase()
+
+  // ---- reusable section header ----
+  const SectionHeader = ({ icon, title }: { icon: React.ReactNode; title: string }) => (
+    <div className="flex items-center gap-2.5">
+      <span className="text-orange-500">{icon}</span>
+      <h2 className={`${micro} text-white/55`}>{title}</h2>
+      <div className="h-px flex-1 bg-white/[0.07]" />
+    </div>
+  )
 
   return (
     <>
       <Navbar />
-      <div className="min-h-screen text-white pt-24 pb-16 bg-[#0a0a0a] relative overflow-hidden">
+      <div className="min-h-screen text-white pt-24 pb-20 bg-[#0a0a0a] relative overflow-hidden">
         {/* ambient glow */}
         <div className="pointer-events-none absolute -top-32 left-1/2 -translate-x-1/2 h-72 w-[40rem] rounded-full bg-orange-500/10 blur-[120px]" />
         <div className="pointer-events-none absolute top-1/3 -right-24 h-72 w-72 rounded-full bg-yellow-400/5 blur-[120px]" />
 
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
             {/* Header */}
-            <div className="text-center mb-10">
-              <div className="inline-flex items-center gap-2 rounded-full border border-orange-500/20 bg-orange-500/10 px-4 py-1.5 text-xs font-medium text-orange-400 mb-4">
-                <Sparkles className="h-3.5 w-3.5" />
-                {isEditMode ? "Editing your prop" : "Add to the marketplace"}
+            <div className="flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <span className={`inline-flex items-center gap-2 rounded-full border border-orange-500/20 bg-orange-500/10 px-4 py-1.5 ${micro} text-orange-400`}>
+                  <Sparkles className="h-3.5 w-3.5" />
+                  {isEditMode ? "Editing your prop" : "Add to the marketplace"}
+                </span>
+                <h1 className="mt-4 text-[34px] sm:text-4xl font-extrabold leading-none tracking-tight">
+                  {isEditMode ? "Edit prop listing" : "New prop listing"}
+                </h1>
+                <p className="mt-3 text-gray-400 max-w-xl text-sm">
+                  Share your FiveM prop with the community. Fill in the details and watch the preview update live.
+                </p>
               </div>
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight bg-gradient-to-r from-orange-500 to-yellow-400 bg-clip-text text-transparent">
-                {isEditMode ? "Edit Prop" : "Submit New Prop"}
-              </h1>
-              <p className="mt-3 text-gray-400 max-w-xl mx-auto text-sm sm:text-base">
-                Share your FiveM prop with the community. Fill in the details below and upload your files.
-              </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
-              {/* Basics */}
-              <Card className={cardClass}>
-                <CardHeader>
-                  <CardTitle className="text-white flex items-center gap-3 text-lg">
-                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-500/15 text-orange-400">
-                      <Package className="h-5 w-5" />
-                    </span>
-                    Basics
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-5">
-                  <div>
-                    <Label className="text-gray-200">Name *</Label>
-                    <Input
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      placeholder="Prop name"
-                      className={inputClass}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-gray-200">Description *</Label>
-                    <Textarea
-                      value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      placeholder="Describe your prop, what it includes, and how to use it"
-                      className={`${inputClass} resize-y`}
-                      rows={5}
-                      required
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Media / Images */}
-              <Card className={cardClass}>
-                <CardHeader>
-                  <CardTitle className="text-white flex items-center gap-3 text-lg">
-                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-500/15 text-orange-400">
-                      <ImageIcon className="h-5 w-5" />
-                    </span>
-                    Images
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <p className="text-sm text-gray-400">Add up to 10 preview images. The first image is used as the thumbnail.</p>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
-                    {media.images.map((img, i) => (
-                      <div key={i} className="relative aspect-video rounded-xl overflow-hidden bg-black/40 border border-white/10 group">
-                        <img src={img} alt={`Image ${i}`} className="w-full h-full object-cover" />
-                        <button
-                          type="button"
-                          onClick={() => removeImage(i)}
-                          aria-label="Remove image"
-                          className="absolute top-1.5 right-1.5 bg-red-500/90 hover:bg-red-500 text-white rounded-full w-7 h-7 flex items-center justify-center shadow-lg transition-colors"
-                        >
-                          <X className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    ))}
-                    {media.images.length < 10 && (
-                      <label className="aspect-video rounded-xl border-2 border-dashed border-white/15 hover:border-orange-500 flex flex-col items-center justify-center gap-1.5 cursor-pointer bg-black/30 hover:bg-orange-500/5 transition-colors text-center">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          multiple
-                          className="hidden"
-                          onChange={handleImagesUpload}
-                          disabled={uploadingImages}
+            <form onSubmit={handleSubmit}>
+              <div className="mt-9 grid gap-10 lg:grid-cols-[1fr_400px]">
+                {/* ============ LEFT · FORM ============ */}
+                <div className="space-y-10">
+                  {/* Basics */}
+                  <section>
+                    <SectionHeader icon={<Package className="h-4 w-4" />} title="Basics" />
+                    <div className="mt-5 space-y-5">
+                      <div>
+                        <Label className={`${micro} text-white/50`}>Name *</Label>
+                        <Input
+                          value={formData.name}
+                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                          placeholder="Prop name"
+                          className={`${fieldClass} px-4 py-3 text-[15px] font-medium`}
+                          required
                         />
-                        {uploadingImages ? (
-                          <div className="animate-spin w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full" />
-                        ) : (
-                          <>
-                            <ImageIcon className="w-5 h-5 text-gray-400" />
-                            <span className="text-xs sm:text-sm text-gray-400">Add Images</span>
-                          </>
-                        )}
-                      </label>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+                      </div>
+                      <div>
+                        <Label className={`${micro} text-white/50`}>Description *</Label>
+                        <Textarea
+                          value={formData.description}
+                          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                          placeholder="Describe your prop, what it includes, and how to use it"
+                          className={`${fieldClass} px-4 py-3 text-sm leading-relaxed text-white/85 resize-y`}
+                          rows={5}
+                          required
+                        />
+                      </div>
+                    </div>
+                  </section>
 
-              {/* Files / Upload */}
-              <Card className={cardClass}>
-                <CardHeader>
-                  <CardTitle className="text-white flex items-center gap-3 text-lg">
-                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-500/15 text-orange-400">
-                      <FileArchive className="h-5 w-5" />
-                    </span>
-                    Files
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <Label className="text-gray-200">Prop ZIP File *</Label>
-                  <div className="flex flex-col sm:flex-row items-stretch gap-4">
-                    <label className="flex-1 max-w-full sm:max-w-xs border-2 border-dashed border-white/15 hover:border-orange-500 rounded-xl p-4 cursor-pointer bg-black/30 hover:bg-orange-500/5 transition-colors flex flex-col items-center justify-center text-center h-32">
-                      <input
-                        type="file"
-                        accept=".zip,application/zip,application/x-zip-compressed"
-                        className="hidden"
-                        onChange={handleZipUpload}
-                        disabled={uploadingZip}
-                      />
-                      {uploadingZip ? (
-                        <div className="flex flex-col items-center gap-2">
-                          <div className="animate-spin w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full" />
-                          <span className="text-sm text-gray-400">Uploading...</span>
-                        </div>
-                      ) : (
-                        <div className="flex flex-col items-center gap-2">
-                          <Upload className="w-6 h-6 text-gray-400" />
-                          <span className="text-sm text-gray-400">
-                            {formData.zipFile ? "Change ZIP File" : "Upload ZIP File"}
-                          </span>
-                        </div>
-                      )}
-                    </label>
-                    {formData.zipFile && (
-                      <div className="flex-1 min-w-0 flex flex-col justify-center sm:h-32 text-sm text-green-400 bg-green-500/10 p-4 rounded-xl border border-green-500/20">
-                        <span className="font-semibold mb-1">File ready:</span>
-                        <a href={formData.zipFile} target="_blank" rel="noopener noreferrer" className="text-white font-medium hover:underline truncate block" title={formData.zipFile.split('/').pop()}>
-                          {formData.zipFile.split('/').pop()}
-                        </a>
-                        <div className="mt-2">
+                  {/* Images */}
+                  <section>
+                    <SectionHeader icon={<ImageIcon className="h-4 w-4" />} title="Images" />
+                    <div className="mt-5 space-y-4">
+                      <p className="text-sm text-white/45">
+                        Add up to 10 preview images. The first image is used as the cover thumbnail.
+                      </p>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
+                        {media.images.map((img, i) => (
+                          <div
+                            key={i}
+                            className="relative aspect-video rounded-xl overflow-hidden bg-black/40 ring-1 ring-white/10 group"
+                          >
+                            <img src={img} alt={`Image ${i}`} className="w-full h-full object-cover" />
+                            {i === 0 && (
+                              <span className="absolute left-1.5 top-1.5 rounded-md bg-black/55 px-2 py-0.5 text-[10px] font-semibold text-white/85 ring-1 ring-white/10 backdrop-blur-md">
+                                Cover
+                              </span>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => removeImage(i)}
+                              aria-label="Remove image"
+                              className="absolute top-1.5 right-1.5 bg-red-500/90 hover:bg-red-500 text-white rounded-full w-7 h-7 flex items-center justify-center shadow-lg transition-colors"
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        ))}
+                        {media.images.length < 10 && (
+                          <label className="aspect-video rounded-xl border border-dashed border-white/15 hover:border-orange-500/50 flex flex-col items-center justify-center gap-1.5 cursor-pointer bg-white/[0.02] hover:bg-orange-500/5 transition-colors text-center text-white/40 hover:text-white/70">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              multiple
+                              className="hidden"
+                              onChange={handleImagesUpload}
+                              disabled={uploadingImages}
+                            />
+                            {uploadingImages ? (
+                              <div className="animate-spin w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full" />
+                            ) : (
+                              <>
+                                <ImageIcon className="w-5 h-5" />
+                                <span className="text-xs sm:text-sm">Add Images</span>
+                              </>
+                            )}
+                          </label>
+                        )}
+                      </div>
+                    </div>
+                  </section>
+
+                  {/* Files */}
+                  <section>
+                    <SectionHeader icon={<FileArchive className="h-4 w-4" />} title="Files" />
+                    <div className="mt-5 space-y-4">
+                      <Label className={`${micro} text-white/50`}>Prop ZIP File *</Label>
+                      <div className="flex flex-col sm:flex-row items-stretch gap-4">
+                        <label className="flex-1 max-w-full sm:max-w-xs border border-dashed border-white/15 hover:border-orange-500/50 rounded-[14px] p-4 cursor-pointer bg-white/[0.02] hover:bg-orange-500/5 transition-colors flex flex-col items-center justify-center text-center h-32">
+                          <input
+                            type="file"
+                            accept=".zip,application/zip,application/x-zip-compressed"
+                            className="hidden"
+                            onChange={handleZipUpload}
+                            disabled={uploadingZip}
+                          />
+                          {uploadingZip ? (
+                            <div className="flex flex-col items-center gap-2">
+                              <div className="animate-spin w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full" />
+                              <span className="text-sm text-white/45">Uploading...</span>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col items-center gap-2">
+                              <span className="grid h-11 w-11 place-items-center rounded-2xl bg-white/[0.04] ring-1 ring-white/10">
+                                <Upload className="w-5 h-5 text-white/55" />
+                              </span>
+                              <span className="text-sm text-white/55">
+                                {formData.zipFile ? "Change ZIP File" : "Upload ZIP File"}
+                              </span>
+                            </div>
+                          )}
+                        </label>
+                        {formData.zipFile && (
+                          <div className="flex-1 min-w-0 flex flex-col justify-center sm:h-32 text-sm text-green-400 bg-green-500/10 p-4 rounded-[14px] border border-green-500/20">
+                            <span className="font-semibold mb-1">File ready:</span>
+                            <a
+                              href={formData.zipFile}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-white font-medium hover:underline truncate block"
+                              title={formData.zipFile.split('/').pop()}
+                            >
+                              {formData.zipFile.split('/').pop()}
+                            </a>
+                            <div className="mt-2">
+                              <Input
+                                value={formData.zipFile}
+                                readOnly
+                                className="h-8 text-xs bg-black/40 border-white/10 text-gray-300 rounded-lg"
+                                onClick={(e) => e.currentTarget.select()}
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </section>
+
+                  {/* Pricing */}
+                  <section>
+                    <SectionHeader icon={<DollarSign className="h-4 w-4" />} title="Pricing" />
+                    <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+                      <div>
+                        <Label className={`${micro} text-white/50`}>Price (€) *</Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={formData.price}
+                          onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                          placeholder="0.00"
+                          className={`${fieldClass} px-4 py-3 text-[15px] font-semibold tabular-nums`}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label className={`${micro} text-white/50`}>Discount Percentage (%)</Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          max="100"
+                          value={formData.discountPercentage}
+                          onChange={(e) => setFormData({ ...formData, discountPercentage: e.target.value })}
+                          className={`${fieldClass} px-4 py-3 text-[15px] font-medium tabular-nums`}
+                        />
+                      </div>
+                    </div>
+                  </section>
+
+                  {/* Tebex (optional) */}
+                  <section>
+                    <SectionHeader icon={<Store className="h-4 w-4" />} title="Tebex · Optional" />
+                    <div className="mt-5 space-y-5">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+                        <div>
+                          <Label className={`${micro} text-white/50`}>Tebex Store Token</Label>
                           <Input
-                            value={formData.zipFile}
-                            readOnly
-                            className="h-8 text-xs bg-black/40 border-white/10 text-gray-300 rounded-lg"
-                            onClick={(e) => e.currentTarget.select()}
+                            value={formData.tebexStoreToken}
+                            onChange={(e) => setFormData({ ...formData, tebexStoreToken: e.target.value })}
+                            placeholder="Your Tebex webstore token"
+                            className={`${fieldClass} px-4 py-3 text-sm`}
+                          />
+                        </div>
+                        <div>
+                          <Label className={`${micro} text-white/50`}>Tebex Package ID</Label>
+                          <Input
+                            value={formData.tebexPackageId}
+                            onChange={(e) => setFormData({ ...formData, tebexPackageId: e.target.value })}
+                            placeholder="Tebex package ID"
+                            className={`${fieldClass} px-4 py-3 text-sm tabular-nums`}
                           />
                         </div>
                       </div>
-                    )}
+                      <p className="text-sm text-white/45">
+                        Add these to sell this prop directly via your Tebex store.
+                      </p>
+                    </div>
+                  </section>
+                </div>
+
+                {/* ============ RIGHT · LIVE PREVIEW ============ */}
+                <aside className="lg:sticky lg:top-24 lg:self-start">
+                  <div className={`mb-3 flex items-center gap-2 ${micro} text-white/45`}>
+                    <Eye className="h-3.5 w-3.5" /> Live preview
                   </div>
-                </CardContent>
-              </Card>
 
-              {/* Pricing */}
-              <Card className={cardClass}>
-                <CardHeader>
-                  <CardTitle className="text-white flex items-center gap-3 text-lg">
-                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-500/15 text-orange-400">
-                      <DollarSign className="h-5 w-5" />
-                    </span>
-                    Pricing
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
-                    <div>
-                      <Label className="text-gray-200">Price (€) *</Label>
-                      <Input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={formData.price}
-                        onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                        placeholder="0.00"
-                        className={inputClass}
-                        required
-                      />
+                  {/* product card */}
+                  <div className="overflow-hidden rounded-[22px] border border-white/[0.08] bg-[#0e0e0e] shadow-[0_24px_60px_-20px_rgba(0,0,0,0.8)]">
+                    <div className="relative h-40 bg-white/[0.03]">
+                      {coverImage ? (
+                        <img src={coverImage} alt="Cover preview" className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-white/25">
+                          <ImageIcon className="h-7 w-7" />
+                          <span className="text-[11px]">Cover image preview</span>
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#0e0e0e] via-transparent to-transparent" />
+                      <span className="absolute left-3 top-3 rounded-full bg-black/45 px-2.5 py-1 text-[11px] font-semibold tracking-wide text-white/85 ring-1 ring-white/10 backdrop-blur-md">
+                        Prop
+                      </span>
+                      {(isFree || hasDiscount) && (
+                        <span className="absolute right-3 top-3 rounded-full bg-orange-500 px-2.5 py-1 text-[11px] font-bold text-black">
+                          {isFree ? "FREE" : `-${discountNum}%`}
+                        </span>
+                      )}
                     </div>
-                    <div>
-                      <Label className="text-gray-200">Discount Percentage (%)</Label>
-                      <Input
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={formData.discountPercentage}
-                        onChange={(e) => setFormData({ ...formData, discountPercentage: e.target.value })}
-                        className={inputClass}
-                      />
+                    <div className="px-5 pb-5 pt-4">
+                      <h3 className="text-lg font-extrabold leading-tight tracking-tight">
+                        {formData.name || "Untitled prop"}
+                      </h3>
+                      <p className="mt-1.5 line-clamp-2 text-[13px] leading-relaxed text-white/45">
+                        {formData.description || "No description yet."}
+                      </p>
+
+                      <div className="mt-4 flex items-end justify-between border-t border-white/[0.06] pt-4">
+                        <div className="flex items-baseline gap-2">
+                          {isFree ? (
+                            <span className="text-[26px] font-extrabold leading-none tracking-tight tabular-nums">
+                              Free
+                            </span>
+                          ) : (
+                            <>
+                              <span className="text-[26px] font-extrabold leading-none tracking-tight tabular-nums">
+                                €{hasPrice ? discountedPrice.toFixed(2) : "0.00"}
+                              </span>
+                              {hasDiscount && (
+                                <span className="text-sm text-white/35 line-through tabular-nums">
+                                  €{priceNum.toFixed(2)}
+                                </span>
+                              )}
+                            </>
+                          )}
+                        </div>
+                        <span className="rounded-xl bg-orange-500 px-4 py-2 text-sm font-bold text-black">
+                          Buy
+                        </span>
+                      </div>
+
+                      <div className="mt-4 flex items-center gap-2.5 border-t border-white/[0.06] pt-4">
+                        {sellerImage ? (
+                          <img
+                            src={sellerImage}
+                            alt={sellerName}
+                            className="h-7 w-7 rounded-full object-cover"
+                          />
+                        ) : (
+                          <span className="grid h-7 w-7 place-items-center rounded-full bg-gradient-to-br from-orange-500 to-amber-400 text-[11px] font-black text-black">
+                            {sellerInitial}
+                          </span>
+                        )}
+                        <div className="leading-tight">
+                          <div className="flex items-center gap-1 text-[13px] font-semibold">
+                            {sellerName}
+                            <BadgeCheck className="h-3.5 w-3.5 text-orange-500" />
+                          </div>
+                          <div className="text-[11px] text-white/40">Seller</div>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
 
-              {/* Tebex (optional) */}
-              <Card className={cardClass}>
-                <CardHeader>
-                  <CardTitle className="text-white flex items-center gap-3 text-lg">
-                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-500/15 text-orange-400">
-                      <Store className="h-5 w-5" />
-                    </span>
-                    Tebex (optional)
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-5">
-                  <p className="text-sm text-gray-400">Add these to sell this prop directly via your Tebex store</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
-                    <div>
-                      <Label className="text-gray-200">Tebex Store Token</Label>
-                      <Input
-                        value={formData.tebexStoreToken}
-                        onChange={(e) => setFormData({ ...formData, tebexStoreToken: e.target.value })}
-                        placeholder="Your Tebex webstore token"
-                        className={inputClass}
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-gray-200">Tebex Package ID</Label>
-                      <Input
-                        value={formData.tebexPackageId}
-                        onChange={(e) => setFormData({ ...formData, tebexPackageId: e.target.value })}
-                        placeholder="Tebex package ID"
-                        className={inputClass}
-                      />
-                    </div>
+                  <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-[12px] text-white/35">
+                    <Users className="h-3.5 w-3.5" /> This is exactly how buyers will see your listing.
+                  </p>
+
+                  <div className="mt-4 rounded-2xl border border-orange-500/20 bg-orange-500/[0.06] px-4 py-3.5">
+                    <p className="flex items-start gap-2 text-xs leading-relaxed text-white/70">
+                      <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-orange-500" />
+                      All submissions are{" "}
+                      <span className="font-semibold text-white">reviewed by our team before going live</span> on the
+                      marketplace. You will be notified once your prop is approved.
+                    </p>
                   </div>
-                </CardContent>
-              </Card>
 
-              {/* Review note */}
-              <div className="flex items-start gap-3 rounded-2xl border border-orange-500/20 bg-orange-500/[0.06] p-4">
-                <ShieldCheck className="h-5 w-5 text-orange-400 shrink-0 mt-0.5" />
-                <p className="text-sm text-gray-300">
-                  All submissions are <span className="font-semibold text-white">reviewed by our team before going live</span> on the marketplace. You will be notified once your prop is approved.
-                </p>
-              </div>
-
-              {/* Submit */}
-              <div className="flex flex-col sm:flex-row sm:justify-end gap-3 pt-2">
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="bg-gradient-to-r from-orange-500 to-yellow-400 hover:from-orange-600 hover:to-yellow-500 text-black font-bold px-8 py-3 h-auto text-base sm:text-lg rounded-xl w-full sm:w-auto shadow-lg shadow-orange-500/20 disabled:opacity-60"
-                >
-                  {isSubmitting ? "Submitting..." : isEditMode ? "Update Prop" : "Submit Prop"}
-                </Button>
+                  {/* Submit */}
+                  <div className="mt-5">
+                    <Button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="group inline-flex w-full items-center justify-center gap-2 bg-orange-500 hover:bg-orange-400 text-black font-bold px-6 py-3 h-auto text-base rounded-full shadow-lg shadow-orange-500/20 disabled:opacity-60"
+                    >
+                      {isSubmitting ? "Submitting..." : isEditMode ? "Update Prop" : "Submit for review"}
+                      {!isSubmitting && (
+                        <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                      )}
+                    </Button>
+                  </div>
+                </aside>
               </div>
             </form>
           </motion.div>
