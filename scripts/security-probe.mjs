@@ -77,6 +77,11 @@ async function main() {
   const up = await jf(null, "/api/upload", { method: "POST", body: fd })
   rec("MEDIUM", "Upload endpoint requires no authentication", up.status !== 401 && up.status !== 403, `status=${up.status} (passes auth gate; only fails later at storage)`)
 
+  // ── G. Admin moderation bypass: approve an ad as a buyer (/api/admin/ads) ─
+  console.log("G) /api/admin/ads approve as buyer (moderation bypass)")
+  const modAd = await jf(buyer, "/api/admin/ads", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "approve", adId: 6003 }) })
+  rec("HIGH", "Any logged-in user can approve/reject ANY ad", modAd.status === 200, `status=${modAd.status}`)
+
   // ── F. The dev-login backdoor (intentionally ON in local dev) ────────────
   console.log("F) /api/auth/callback/dev-credentials (dev backdoor)")
   const back = makeJar(); const bsess = await login(back, "admin")
