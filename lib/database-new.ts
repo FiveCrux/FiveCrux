@@ -2363,29 +2363,17 @@ export async function getAds(filters?: {
 }
 
 // Helper function to get ads for specific page types
-export async function getAdsForPage(pageType: 'scripts' | 'giveaways', limit?: number) {
+export async function getAdsForPage(pageType: 'scripts' | 'giveaways' | 'props', limit?: number) {
   try {
     const allAds = await getAds({ status: "active", limit: 100 });
-    
-    let filteredAds;
-    if (pageType === 'scripts') {
-      // Show ads with category "both", "general", or "scripts"
-      filteredAds = allAds.filter((ad: any) => 
-        ad.category?.toLowerCase() === "both" || 
-        ad.category?.toLowerCase() === "general" ||
-        ad.category?.toLowerCase() === "scripts"
-      );
-    } else if (pageType === 'giveaways') {
-      // Show ads with category "both", "general", or "giveaways"
-      filteredAds = allAds.filter((ad: any) => 
-        ad.category?.toLowerCase() === "both" || 
-        ad.category?.toLowerCase() === "general" ||
-        ad.category?.toLowerCase() === "giveaways"
-      );
-    } else {
-      filteredAds = [];
-    }
-    
+
+    // Each page shows ads tagged "both"/"general" plus that page's own category.
+    const pageCategory = pageType.toLowerCase();
+    const filteredAds = allAds.filter((ad: any) => {
+      const c = ad.category?.toLowerCase();
+      return c === "both" || c === "general" || c === pageCategory;
+    });
+
     // Apply limit
     const limitVal = limit || 10;
     return filteredAds.slice(0, limitVal);
