@@ -89,6 +89,11 @@ async function main() {
   const slotsReplay = await activeSlots(buyer)
   ok("replay does not double-provision", slotsReplay === slotsAfter, `after=${slotsAfter} replay=${slotsReplay}`)
 
+  // 7. Refund — fire payment.refunded; the provisioned slot must be REVOKED (C1).
+  await fireWebhook({ type: "payment.refunded", subject: { basket_ident: basketIdent, transaction_id: "tbx-txn-test-1", price: { amount: 100, currency: "EUR" } } })
+  const slotsRefunded = await activeSlots(buyer)
+  ok("refund revokes the slot", slotsRefunded === slotsBefore, `before=${slotsBefore} afterRefund=${slotsRefunded}`)
+
   console.log(`\n──────── TEBEX e2e: ${pass} passed, ${fail} failed ────────\n`)
   process.exit(fail === 0 ? 0 : 1)
 }

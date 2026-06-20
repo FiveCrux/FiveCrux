@@ -1,5 +1,11 @@
 import { randomUUID } from 'crypto';
 import { db } from './db/client';
+
+// App-generated integer primary key (the prod DB uses manual integer PKs, not
+// DB identity). Seconds-resolution timestamp + random; fits PostgreSQL int4.
+function genId(): number {
+  return Math.floor(Date.now() / 1000) + Math.floor(Math.random() * 10000);
+}
 import { eq, and, or, like, gte, lte, sql, desc, asc, getTableColumns, ne, lt, inArray } from 'drizzle-orm';
 import { 
   users, pendingScripts, approvedScripts, rejectedScripts, 
@@ -287,10 +293,10 @@ export async function createAdSlots(
   const orderReference = orderRefIds[0] || null;
 
   // Create a single row with sequential slot numbers and unique IDs.
-  // id is DB-assigned (identity column) — no manual id generation.
   const result = await db
     .insert(userAdSlots)
     .values({
+      id: genId(), // app-generated integer PK (prod has manual PKs)
       userId: userId,
       slotNumber: slotNumbers, // Array of sequential slot numbers [1, 2, 3, 4, 5]
       slotUniqueIds: slotUniqueIds, // Array of unique IDs, one per slot
@@ -298,7 +304,7 @@ export async function createAdSlots(
       endDate: endDate,
       packageId: packageId,
       durationMonths: durationMonths,
-      orderReference: orderReference,
+      paypalOrderId: orderReference,
       status: 'active' as const,
     } as any)
     .returning({ 
@@ -611,7 +617,7 @@ export async function createScript(scriptData: NewScript & { framework?: string 
 
   const scriptWithDefaults = {
     ...scriptData,
-    id: undefined, // DB-assigned identity (drizzle omits undefined)
+    id: genId(), // app-generated integer PK (prod has manual PKs)
     seller_name: scriptData.seller_name || 'Unknown Seller',
     seller_email: scriptData.seller_email || 'unknown@example.com',
     featured: scriptData.featured ?? false,
@@ -1453,7 +1459,7 @@ export async function createGiveaway(giveawayData: NewGiveaway) {
   // Provide default values for required fields
   const giveawayWithDefaults = {
     ...giveawayData,
-    id: undefined, // DB-assigned identity
+    id: genId(), // app-generated integer PK (prod has manual PKs)
     // Map snake_case input to camelCase schema fields
     totalValue: giveawayData.totalValue || (giveawayData as any).total_value || '0',
     endDate: giveawayData.endDate || (giveawayData as any).end_date || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
@@ -1491,7 +1497,7 @@ export async function createGiveawayRequirement(requirementData: NewGiveawayRequ
   // Map snake_case input to camelCase schema fields
   const mappedData = {
     ...requirementData,
-    id: undefined, // DB-assigned identity
+    id: genId(), // app-generated integer PK (prod has manual PKs)
     giveawayId: requirementData.giveawayId || (requirementData as any).giveaway_id
   };
   
@@ -1507,7 +1513,7 @@ export async function createGiveawayPrize(prizeData: NewGiveawayPrize) {
   // Map snake_case input to camelCase schema fields
   const mappedData = {
     ...prizeData,
-    id: undefined, // DB-assigned identity
+    id: genId(), // app-generated integer PK (prod has manual PKs)
     giveawayId: prizeData.giveawayId || (prizeData as any).giveaway_id,
     numberOfWinners: prizeData.numberOfWinners || (prizeData as any).number_of_winners || 1,
     position: prizeData.position || (prizeData as any).position || 1,
@@ -2137,7 +2143,7 @@ export async function createGiveawayEntry(entryData: NewGiveawayEntry) {
     // Map snake_case input to camelCase schema fields
     const mappedData = {
       ...entryData,
-      id: undefined, // DB-assigned identity
+      id: genId(), // app-generated integer PK (prod has manual PKs)
       giveawayId: entryData.giveawayId || (entryData as any).giveaway_id,
       userId: entryData.userId || (entryData as any).user_id,
       userName: (entryData as any).userName ?? (entryData as any).user_name ?? null,
@@ -2242,8 +2248,8 @@ export async function createAd(adData: NewAd & { status?: string }) {
   }
 
   // Map snake_case input to camelCase schema fields and provide defaults
-  // id is DB-assigned (identity).
   const mapped = {
+    id: genId(), // app-generated integer PK (prod has manual PKs)
     title: (adData as any).title,
     description: (adData as any).description,
     imageUrl: (adData as any).imageUrl ?? (adData as any).image_url ?? null,
@@ -2299,8 +2305,8 @@ export async function createPendingAd(adData: NewAd) {
   }
 
   // Map snake_case input to camelCase schema fields and provide defaults
-  // id is DB-assigned (identity).
   const mapped = {
+    id: genId(), // app-generated integer PK (prod has manual PKs)
     title: (adData as any).title,
     description: (adData as any).description,
     imageUrl: (adData as any).imageUrl ?? (adData as any).image_url ?? null,
@@ -3023,10 +3029,10 @@ export async function createFeaturedScriptSlots(
   // Store weeks if provided, otherwise store months (for backward compatibility)
   const storedDurationWeeks = durationWeeks !== undefined ? durationWeeks : null;
 
-  // id is DB-assigned (identity).
   const result = await db
     .insert(userFeaturedScriptSlots)
     .values({
+      id: genId(), // app-generated integer PK (prod has manual PKs)
       featuredUserId: userId,
       featuredSlotNumber: slotNumbers,
       featuredSlotUniqueIds: slotUniqueIds,
@@ -3034,7 +3040,7 @@ export async function createFeaturedScriptSlots(
       featuredSlotEndDate: endDate,
       featuredPackageId: packageId,
       featuredDurationWeeks: storedDurationWeeks,
-      featuredOrderReference: orderReference,
+      featuredPaypalOrderId: orderReference,
       featuredSlotStatus: 'active' as const,
     } as any)
     .returning({ 
@@ -3092,6 +3098,7 @@ export async function createFeaturedScript(featuredScriptData: NewFeaturedScript
   const scriptId = (featuredScriptData as any).scriptId ?? (featuredScriptData as any).script_id;
 
   const mapped = {
+    id: genId(), // app-generated integer PK (prod has manual PKs)
     scriptId: scriptId,
     featuredSlotUniqueId: slotUniqueId,
     featuredStartDate: (featuredScriptData as any).startDate ?? (featuredScriptData as any).start_date ?? new Date(),

@@ -18,19 +18,40 @@
 // object of the same shape) — convenient for staging/test stores without code
 // changes. Env entries override the hard-coded ones below.
 
+// HOW TO FILL: create one package per line in FiveCrux's own Tebex store at the
+// price shown in the comment (must match lib/ad-pricing.ts), then replace the 0
+// with that Tebex package id and uncomment the line. A value of 0 (or commented)
+// = "not configured" → /api/cart/tebex-checkout returns a clear 501 for it.
+// You can instead provide these via the TEBEX_PACKAGE_MAP_JSON env var (env wins)
+// — a ready template lives in docs/tebex-package-map.template.json.
 const STATIC_TEBEX_PACKAGE_MAP: Record<string, number> = {
-  // --- Ad slots (key: ads:<tier>:<months>) ---
-  // "ads:starter:1": 0000000,
-  // "ads:starter:3": 0000000,
-  // "ads:starter:6": 0000000,
-  // "ads:starter:12": 0000000,
-  // "ads:premium:1": 0000000,
-  // ... premium 3/6/12, executive 1/3/6/12
+  // --- Ad slots (key: ads:<tier>:<months>) · price = USD ---
+  // "ads:starter:1": 0,    // $40    · 1 slot
+  // "ads:starter:3": 0,    // $110   · 1 slot
+  // "ads:starter:6": 0,    // $200   · 1 slot
+  // "ads:starter:12": 0,   // $360   · 1 slot
+  // "ads:premium:1": 0,    // $100   · 3 slots
+  // "ads:premium:3": 0,    // $275   · 3 slots
+  // "ads:premium:6": 0,    // $500   · 3 slots
+  // "ads:premium:12": 0,   // $900   · 3 slots
+  // "ads:executive:1": 0,  // $150   · 5 slots
+  // "ads:executive:3": 0,  // $420   · 5 slots
+  // "ads:executive:6": 0,  // $750   · 5 slots
+  // "ads:executive:12": 0, // $1350  · 5 slots
 
-  // --- Featured-script slots (key: featured-scripts:<tier>:<weeks>) ---
-  // "featured-scripts:starter:1": 0000000,
-  // "featured-scripts:starter:2": 0000000,
-  // ... etc (weeks 1/2/4/8 × starter/premium/executive)
+  // --- Featured-script slots (key: featured-scripts:<tier>:<weeks>) · price = USD ---
+  // "featured-scripts:starter:1": 0,    // $20   · 1 slot
+  // "featured-scripts:starter:2": 0,    // $35   · 1 slot
+  // "featured-scripts:starter:4": 0,    // $60   · 1 slot
+  // "featured-scripts:starter:8": 0,    // $100  · 1 slot
+  // "featured-scripts:premium:1": 0,    // $50   · 3 slots
+  // "featured-scripts:premium:2": 0,    // $80   · 3 slots
+  // "featured-scripts:premium:4": 0,    // $150  · 3 slots
+  // "featured-scripts:premium:8": 0,    // $260  · 3 slots
+  // "featured-scripts:executive:1": 0,  // $80   · 5 slots
+  // "featured-scripts:executive:2": 0,  // $120  · 5 slots
+  // "featured-scripts:executive:4": 0,  // $220  · 5 slots
+  // "featured-scripts:executive:8": 0,  // $400  · 5 slots
 }
 
 // Merge static map with an optional env-provided JSON map (env wins).

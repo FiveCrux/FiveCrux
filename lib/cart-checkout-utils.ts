@@ -42,7 +42,8 @@ export function getMatchingItemsTotal(items: any[], scope: string) {
 export function calculateDiscount(total: number, coupon: Coupon) {
   const value = Number(coupon.discountValue);
 
-  if (coupon.discountType === "Percentage") {
+  // Case-insensitive: the enum allows both "percentage" and "Percentage" (I3).
+  if (String(coupon.discountType).toLowerCase() === "percentage") {
     return Math.min(total, (total * value) / 100);
   }
 

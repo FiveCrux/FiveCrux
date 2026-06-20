@@ -39,8 +39,14 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { name, description, price, discountPercentage = 0, images, zipFile, tebexStoreToken, tebexPackageId } = body;
 
-    if (!name || !description || price === undefined || !zipFile) {
+    // New model: props are delivered by Tebex (zip is uploaded on the Tebex
+    // package, not here). A prop MUST carry its FiveCrux-store tebex_package_id;
+    // the in-app zip upload is no longer required.
+    if (!name || !description || price === undefined) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    }
+    if (!tebexPackageId) {
+      return NextResponse.json({ error: "Missing tebexPackageId (the FiveCrux Tebex package backing this prop)" }, { status: 400 });
     }
 
     const priceNum = parseFloat(price);
@@ -62,11 +68,12 @@ export async function POST(request: NextRequest) {
       discountPercentage: discountNum.toString(),
       discountedPrice: discountedPrice ? discountedPrice.toString() : null,
       images: images || [],
-      zipFile,
+      zipFile: zipFile || '', // delivery is via Tebex now; kept for schema compatibility
       createdBy: (session.user as any).id,
-      // Tebex Headless integration: lister's own store token + package id (nullable)
+      // Backed by a package in FiveCrux's OWN Tebex store (store token defaults to
+      // TEBEX_PUBLIC_TOKEN at checkout; per-prop store token no longer needed).
       tebexStoreToken: tebexStoreToken || null,
-      tebexPackageId: tebexPackageId || null,
+      tebexPackageId: String(tebexPackageId),
     });
 
     return NextResponse.json({

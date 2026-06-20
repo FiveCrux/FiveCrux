@@ -22,6 +22,14 @@ const WEBHOOK_SECRET = process.env.TEBEX_WEBHOOK_SECRET || "local-tebex-webhook-
 
 const baskets = new Map() // ident -> { custom, packages, complete_url, total_price }
 
+// Mock store catalog (for GET /accounts/:token/packages → drives live pricing).
+// Override with MOCK_TEBEX_PACKAGES='{"990001":100,"990002":110}' (id -> price).
+const PACKAGE_PRICES = (() => {
+  try { return JSON.parse(process.env.MOCK_TEBEX_PACKAGES || '{"990001":100}') }
+  catch { return { "990001": 100 } }
+})()
+const MOCK_CURRENCY = process.env.MOCK_TEBEX_CURRENCY || "EUR"
+
 function send(res, code, json) {
   const body = JSON.stringify(json)
   res.writeHead(code, { "content-type": "application/json" })
@@ -77,6 +85,27 @@ const server = createServer(async (req, res) => {
   // POST /api/accounts/:token/baskets/:ident/coupons
   if (req.method === "POST" && parts[1] === "accounts" && parts[3] === "baskets" && parts[5] === "coupons") {
     return send(res, 200, { data: basketView(parts[4]) })
+  }
+  // GET /api/accounts/:token/packages  → live store catalog (drives pricing)
+  if (req.method === "GET" && parts[1] === "accounts" && parts[3] === "packages" && parts.length === 4) {
+    const data = Object.entries(PACKAGE_PRICES).map(([id, price]) => ({
+      id: Number(id),
+      name: `Mock Package ${id}`,
+      description: "",
+      image: null,
+      type: "single",
+      base_price: Number(price),
+      sales_tax: 0,
+      total_price: Number(price),
+      currency: MOCK_CURRENCY,
+      discount: 0,
+      disable_quantity: false,
+      disable_gifting: false,
+      expiration_date: null,
+      created_at: "",
+      updated_at: "",
+    }))
+    return send(res, 200, { data })
   }
   // GET /api/accounts/:token/baskets/:ident
   if (req.method === "GET" && parts[1] === "accounts" && parts[3] === "baskets" && parts.length === 5) {

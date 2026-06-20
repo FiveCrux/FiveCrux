@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/auth"
-import { updateUserRole } from "@/lib/database-new"
+import { updateUserRole, getUserById } from "@/lib/database-new"
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,8 +22,11 @@ export async function POST(request: NextRequest) {
     }
 
     console.log(`Setting user ${userId} as founder...`)
-    
-    const result = await updateUserRole(userId, ['founder'])
+
+    // ADD the founder role — don't overwrite the user's existing roles (M6).
+    const existing = await getUserById(userId)
+    const mergedRoles = Array.from(new Set([...((existing?.roles as string[]) || []), "founder"]))
+    const result = await updateUserRole(userId, mergedRoles)
     
     if (result) {
       console.log('✅ User set as founder successfully!')
