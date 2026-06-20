@@ -687,23 +687,14 @@ export function ScriptDetailClient({
                   ) : (
                     <>
                       <ShoppingCart className="h-[18px] w-[18px]" />
-                      {isFree ? "Get it Free" : "Add to Cart"}
+                      {isFree ? "Get it Free" : "Buy Now"}
                     </>
                   )}
-                </Button>
-                <Button
-                  onClick={handleBuy}
-                  disabled={!canBuy || buying}
-                  className="flex h-auto w-full items-center justify-center gap-2 rounded-2xl border border-white/[0.1] bg-white/[0.04] py-3.5 font-bold text-white transition hover:bg-white/[0.08] disabled:opacity-50"
-                >
-                  <Zap className="h-[18px] w-[18px] text-orange-500" />
-                  Buy via Tebex
                 </Button>
               </div>
               {canBuy ? (
                 <p className="mt-3 flex items-center justify-center gap-1.5 text-[12px] text-white/55">
-                  <ShieldCheck className="h-3.5 w-3.5" /> Instant delivery · escrow
-                  protected
+                  <ShieldCheck className="h-3.5 w-3.5" /> Redirects to the seller store
                 </p>
               ) : (
                 <p className="mt-3 flex items-center justify-center gap-1.5 text-[12px] text-white/55">

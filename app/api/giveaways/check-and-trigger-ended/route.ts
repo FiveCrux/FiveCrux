@@ -66,9 +66,14 @@ export async function GET() {
 
         const response = await fetch(
           `${baseUrl}/api/giveaways/${giveaway.id}/trigger-winner-selection`,
-          { 
+          {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
+            headers: {
+              'Content-Type': 'application/json',
+              // Forward the cron secret so the trigger route authorizes this
+              // server-to-server call (I11) when CRON_SECRET is configured.
+              ...(process.env.CRON_SECRET ? { 'x-cron-secret': process.env.CRON_SECRET } : {}),
+            },
           }
         )
 

@@ -146,18 +146,24 @@ export function ScriptsClient({ initialScripts = [] }: { initialScripts: any[] }
   type GridItem = UIScript | (any & { isAd: boolean });
 
   // Seed from server-fetched scripts so the catalog renders on first paint (SSR).
+  // IMPORTANT: do NOT shuffle here — the useState initializer runs during SSR and
+  // again on the client; Math.random() would differ → hydration mismatch. We seed
+  // in stable order and shuffle once AFTER mount (client-only) in the effect below.
   const [allScripts, setAllScripts] = useState<UIScript[]>(() => {
-    const seeded = Array.isArray(initialScripts)
-      ? initialScripts.map(mapApiScript)
+    return Array.isArray(initialScripts)
+      ? (initialScripts.map(mapApiScript) as UIScript[])
       : [];
-    if (seeded.length) {
-      // Shuffle once to match the previous client-side initial-load behaviour.
-      const shuffled = [...seeded].sort(() => Math.random() - 0.5);
-      scriptsShuffled.current = true;
-      return shuffled as UIScript[];
-    }
-    return [];
   });
+
+  // Client-only one-time shuffle of the SSR-seeded catalog (avoids hydration drift).
+  useEffect(() => {
+    if (scriptsShuffled.current) return;
+    setAllScripts((prev) => {
+      if (!prev.length) return prev;
+      scriptsShuffled.current = true;
+      return [...prev].sort(() => Math.random() - 0.5);
+    });
+  }, []);
   const [ads, setAds] = useState<any[]>([]);
   const [loading, setLoading] = useState(
     !(Array.isArray(initialScripts) && initialScripts.length > 0)

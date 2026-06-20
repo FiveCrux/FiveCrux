@@ -11,6 +11,7 @@ import {
 import { db } from "@/lib/db/client"
 import { giveawayRequirements } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
+import { isDiscordRequirement, resolveGuildId, isMemberOfGuild } from "@/lib/discord-verify"
 
 export async function POST(
   request: NextRequest,
@@ -64,26 +65,44 @@ export async function POST(
     
     console.log('Entry creation - completedRequirements:', completedRequirements)
     
-    // Calculate points for completed requirements
+    // Calculate points — server-verified (C5). The client's claim is NOT trusted
+    // for Discord-join requirements: those are checked against Discord (when a bot
+    // token is configured). `required` tasks that aren't satisfied block entry.
     let initialPoints = 0
-    let initialCompletedRequirements: string[] = []
-    
-    if (Array.isArray(completedRequirements) && completedRequirements.length > 0) {
-      // Get requirements to calculate points
-      const requirements = await db.select().from(giveawayRequirements)
-        .where(eq(giveawayRequirements.giveawayId, giveawayId))
-      
-      console.log('Requirements for giveaway:', requirements)
-      
-      // Calculate total points for completed requirements
-      initialPoints = requirements
-        .filter(req => completedRequirements.includes(req.id))
-        .reduce((sum, req) => sum + req.points, 0)
-      
-      initialCompletedRequirements = completedRequirements.map(id => id.toString())
-      
-      console.log('Calculated initial points:', initialPoints)
-      console.log('Completed requirements:', initialCompletedRequirements)
+    const initialCompletedRequirements: string[] = []
+
+    const requirements = await db.select().from(giveawayRequirements)
+      .where(eq(giveawayRequirements.giveawayId, giveawayId))
+    const claimed = new Set(
+      (Array.isArray(completedRequirements) ? completedRequirements : []).map((x: any) => String(x))
+    )
+    // The user's Discord OAuth token (guilds scope) — set on the session at login.
+    const discordAccessToken = (session as any).accessToken as string | undefined
+
+    for (const req of requirements) {
+      let satisfied = claimed.has(String(req.id))
+
+      // Discord-join: verify membership server-side via the user's own token.
+      // member===null means we couldn't verify (no/expired token, unresolved
+      // guild, API issue) → fall back to the honor-system claim.
+      if (isDiscordRequirement(req.type)) {
+        const guildId = await resolveGuildId(req.link)
+        if (discordAccessToken && guildId) {
+          const member = await isMemberOfGuild(discordAccessToken, guildId)
+          if (member === true) satisfied = true
+          else if (member === false) satisfied = false
+        }
+      }
+
+      if (satisfied) {
+        initialPoints += req.points
+        initialCompletedRequirements.push(String(req.id))
+      } else if (req.required) {
+        return NextResponse.json(
+          { error: `Requirement not completed: ${req.description}` },
+          { status: 400 }
+        )
+      }
     }
 
     // Create entry
@@ -137,11 +156,16 @@ export async function GET(
       const userEntry = await getUserGiveawayEntry(giveawayId, (session.user as any).id)
       return NextResponse.json({ entry: userEntry })
     } else {
-      // Get all entries for this giveaway (admin only)
+      // Get all entries for this giveaway — STAFF ONLY (entrant names/emails are PII).
       if (!session?.user) {
         return NextResponse.json({ error: "Authentication required" }, { status: 401 })
       }
-      
+      const roles = (session.user as any).roles || []
+      const isStaff = ["admin", "founder", "moderator"].some((r) => roles.includes(r))
+      if (!isStaff) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+      }
+
       const entries = await getGiveawayEntries(giveawayId)
       return NextResponse.json({ entries })
     }

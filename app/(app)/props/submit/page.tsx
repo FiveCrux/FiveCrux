@@ -182,6 +182,12 @@ export default function SubmitPropPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (!formData.tebexPackageId.trim()) {
+      toast.error("Tebex Package ID is required (create the package + upload the ZIP on Tebex first)")
+      return
+    }
+
     setIsSubmitting(true)
 
     try {
@@ -191,9 +197,9 @@ export default function SubmitPropPage() {
         price: parseFloat(formData.price),
         discountPercentage: parseFloat(formData.discountPercentage || "0"),
         images: media.images,
-        zipFile: formData.zipFile || "https://example.com/placeholder.zip", // Fallback for testing
-        tebexStoreToken: formData.tebexStoreToken.trim() || null,
-        tebexPackageId: formData.tebexPackageId.trim() || null,
+        zipFile: "", // delivery is via Tebex now; no in-app file
+        tebexStoreToken: null,
+        tebexPackageId: formData.tebexPackageId.trim(),
       }
 
       const url = isEditMode && propId ? `/api/props/${propId}` : "/api/props"
@@ -355,59 +361,14 @@ export default function SubmitPropPage() {
                     </div>
                   </section>
 
-                  {/* Files */}
+                  {/* Delivery note — the prop file lives on Tebex, not here */}
                   <section>
-                    <SectionHeader icon={<FileArchive className="h-4 w-4" />} title="Files" />
-                    <div className="mt-5 space-y-4">
-                      <Label className={`${micro} text-white/50`}>Prop ZIP File *</Label>
-                      <div className="flex flex-col sm:flex-row items-stretch gap-4">
-                        <label className="flex-1 max-w-full sm:max-w-xs border border-dashed border-white/15 hover:border-orange-500/50 rounded-[14px] p-4 cursor-pointer bg-white/[0.02] hover:bg-orange-500/5 transition-colors flex flex-col items-center justify-center text-center h-32">
-                          <input
-                            type="file"
-                            accept=".zip,application/zip,application/x-zip-compressed"
-                            className="hidden"
-                            onChange={handleZipUpload}
-                            disabled={uploadingZip}
-                          />
-                          {uploadingZip ? (
-                            <div className="flex flex-col items-center gap-2">
-                              <div className="animate-spin w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full" />
-                              <span className="text-sm text-white/55">Uploading...</span>
-                            </div>
-                          ) : (
-                            <div className="flex flex-col items-center gap-2">
-                              <span className="grid h-11 w-11 place-items-center rounded-2xl bg-white/[0.04] ring-1 ring-white/10">
-                                <Upload className="w-5 h-5 text-white/55" />
-                              </span>
-                              <span className="text-sm text-white/55">
-                                {formData.zipFile ? "Change ZIP File" : "Upload ZIP File"}
-                              </span>
-                            </div>
-                          )}
-                        </label>
-                        {formData.zipFile && (
-                          <div className="flex-1 min-w-0 flex flex-col justify-center sm:h-32 text-sm text-green-400 bg-green-500/10 p-4 rounded-[14px] border border-green-500/20">
-                            <span className="font-semibold mb-1">File ready:</span>
-                            <a
-                              href={formData.zipFile}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-white font-medium hover:underline truncate block"
-                              title={formData.zipFile.split('/').pop()}
-                            >
-                              {formData.zipFile.split('/').pop()}
-                            </a>
-                            <div className="mt-2">
-                              <Input
-                                value={formData.zipFile}
-                                readOnly
-                                className="h-8 text-xs bg-black/40 border-white/10 text-gray-300 rounded-lg"
-                                onClick={(e) => e.currentTarget.select()}
-                              />
-                            </div>
-                          </div>
-                        )}
-                      </div>
+                    <SectionHeader icon={<FileArchive className="h-4 w-4" />} title="File delivery" />
+                    <div className="mt-5 rounded-[14px] border border-white/10 bg-white/[0.02] p-4 text-sm text-white/60">
+                      The prop <span className="text-white/80">ZIP is uploaded on Tebex</span> when you create its
+                      package (use the Tebex <span className="text-white/80">“File Download”</span> option). On payment,
+                      Tebex emails the buyer the download automatically. Just paste the
+                      <span className="text-white/80"> Tebex Package ID</span> below.
                     </div>
                   </section>
 
@@ -442,32 +403,24 @@ export default function SubmitPropPage() {
                     </div>
                   </section>
 
-                  {/* Tebex (optional) */}
+                  {/* Tebex package — required (drives delivery + price) */}
                   <section>
-                    <SectionHeader icon={<Store className="h-4 w-4" />} title="Tebex · Optional" />
+                    <SectionHeader icon={<Store className="h-4 w-4" />} title="Tebex Package" />
                     <div className="mt-5 space-y-5">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
-                        <div>
-                          <Label className={`${micro} text-white/50`}>Tebex Store Token</Label>
-                          <Input
-                            value={formData.tebexStoreToken}
-                            onChange={(e) => setFormData({ ...formData, tebexStoreToken: e.target.value })}
-                            placeholder="Your Tebex webstore token"
-                            className={`${fieldClass} px-4 py-3 text-sm`}
-                          />
-                        </div>
-                        <div>
-                          <Label className={`${micro} text-white/50`}>Tebex Package ID</Label>
-                          <Input
-                            value={formData.tebexPackageId}
-                            onChange={(e) => setFormData({ ...formData, tebexPackageId: e.target.value })}
-                            placeholder="Tebex package ID"
-                            className={`${fieldClass} px-4 py-3 text-sm tabular-nums`}
-                          />
-                        </div>
+                      <div>
+                        <Label className={`${micro} text-white/50`}>Tebex Package ID *</Label>
+                        <Input
+                          value={formData.tebexPackageId}
+                          onChange={(e) => setFormData({ ...formData, tebexPackageId: e.target.value })}
+                          placeholder="e.g. 654321"
+                          className={`${fieldClass} px-4 py-3 text-sm tabular-nums`}
+                          required
+                        />
                       </div>
                       <p className="text-sm text-white/55">
-                        Add these to sell this prop directly via your Tebex store.
+                        The ID of the package backing this prop in the FiveCrux Tebex store (where you uploaded the ZIP).
+                        The buyer <span className="text-white/80">price is pulled live from Tebex</span> and the file
+                        is delivered by Tebex on payment.
                       </p>
                     </div>
                   </section>

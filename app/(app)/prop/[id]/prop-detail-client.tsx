@@ -41,8 +41,6 @@ export function PropDetailClient({
   // With server-seeded data there's no blank spinner; only spin when we start empty.
   const [loading, setLoading] = useState(!initialData)
   const [addingToCart, setAddingToCart] = useState(false)
-  const [downloading, setDownloading] = useState(false)
-  const [buyingTebex, setBuyingTebex] = useState(false)
   const [activeImage, setActiveImage] = useState(0)
 
   useEffect(() => {
@@ -121,8 +119,6 @@ export function PropDetailClient({
   const isFree = parseFloat(prop.price) === 0
   const finalPrice = prop.discountedPrice ? parseFloat(prop.discountedPrice) : parseFloat(prop.price)
   const hasDiscount = parseFloat(prop.discountPercentage) > 0
-  // Tebex Model B is available only when the prop carries seller webstore fields.
-  const hasTebex = Boolean(prop.tebexPackageId && prop.tebexStoreToken)
 
   const images: string[] = Array.isArray(prop.images) ? prop.images : []
   const hasImages = images.length > 0
@@ -169,100 +165,15 @@ export function PropDetailClient({
     }
   }
 
-  // Tebex Model B: create a basket against the seller's webstore and redirect to checkout.
-  const handleTebexBuy = async () => {
-    if (!session) {
-      toast.error("Please log in to purchase props")
-      router.push('/auth/signin')
-      return
-    }
-
-    try {
-      setBuyingTebex(true)
-      const res = await fetch('/api/tebex/basket', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          storeToken: prop.tebexStoreToken,
-          packageId: prop.tebexPackageId,
-        })
-      })
-
-      const data = await res.json().catch(() => ({}))
-      if (res.ok && data.checkoutUrl) {
-        window.location.href = data.checkoutUrl
-      } else {
-        toast.error(data.error || "Failed to start checkout")
-        setBuyingTebex(false)
-      }
-    } catch (error) {
-      toast.error("An unexpected error occurred")
-      setBuyingTebex(false)
-    }
-  }
-
-  const handleDownload = async () => {
-    try {
-      setDownloading(true)
-      const res = await fetch(`/api/props/${prop.id}/download`)
-      if (!res.ok) {
-        const error = await res.json()
-        toast.error(error.error || "Failed to download prop")
-        return
-      }
-      const data = await res.json()
-      if (data.downloadUrl) {
-        const link = document.createElement('a')
-        link.href = data.downloadUrl
-        link.setAttribute('download', `${prop.name}.zip`)
-        document.body.appendChild(link)
-        link.click()
-        link.remove()
-        toast.success("Download started!")
-      } else {
-        toast.error("Download URL not found")
-      }
-    } catch (err) {
-      toast.error("Failed to start download")
-    } finally {
-      setDownloading(false)
-    }
-  }
-
-  // Primary CTA — preserves button priority: purchased→Download, else hasTebex→Buy Now, else Add to Cart.
+  // Primary CTA — props are sold through FiveCrux's cart (Tebex checkout) and the
+  // file is delivered by Tebex via email. Purchased → email-delivery confirmation
+  // (no in-app download); else → Add to Cart.
   const renderPrimaryCta = () => {
     if (prop.hasPurchased) {
       return (
-        <button
-          onClick={handleDownload}
-          disabled={downloading}
-          className="group flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-green-500 to-emerald-500 py-3.5 font-bold text-black transition hover:from-green-600 hover:to-emerald-600 disabled:opacity-70"
-        >
-          {downloading ? (
-            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-black"></div>
-          ) : (
-            <>
-              <Download className="h-[18px] w-[18px] group-hover:animate-bounce" /> Download Prop File
-            </>
-          )}
-        </button>
-      )
-    }
-    if (hasTebex) {
-      return (
-        <button
-          onClick={handleTebexBuy}
-          disabled={buyingTebex}
-          className="group flex w-full items-center justify-center gap-2 rounded-2xl bg-orange-500 py-3.5 font-bold text-black transition hover:bg-orange-400 disabled:opacity-70"
-        >
-          {buyingTebex ? (
-            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-black"></div>
-          ) : (
-            <>
-              <Zap className="h-[18px] w-[18px]" /> Buy via Tebex
-            </>
-          )}
-        </button>
+        <div className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-green-500 to-emerald-500 py-3.5 font-bold text-black">
+          <BadgeCheck className="h-[18px] w-[18px]" /> Purchased — sent to your email
+        </div>
       )
     }
     return (
@@ -275,7 +186,7 @@ export function PropDetailClient({
           <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-black"></div>
         ) : (
           <>
-            <ShoppingCart className="h-[18px] w-[18px]" /> {isFree ? "Add to Library" : "Add to Cart"}
+            <ShoppingCart className="h-[18px] w-[18px]" /> Add to Cart
           </>
         )}
       </button>

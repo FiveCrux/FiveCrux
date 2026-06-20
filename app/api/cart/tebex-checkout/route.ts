@@ -77,39 +77,58 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 3. Build provisioning items from the cart's subscription (platform) items.
-    // Metadata is server-authoritative (set in /api/cart/add via lib/ad-pricing).
+    // 3. Build the basket items from the cart. Metadata is server-authoritative
+    // (set in /api/cart/add). Two kinds, both billed through FiveCrux's OWN store:
+    //   • 'slot'  — ad / featured-script subscription plans (provision entitlements)
+    //   • 'prop'  — digital props (delivery is Tebex's auto-email; we just record it)
     type ProvItem = {
-      packageType: string;
-      packageId: string;
-      slotsToAdd: number;
+      kind: "slot" | "prop";
+      itemType: string;
+      itemId: string;
+      title: string;
+      price: string | number;
+      quantity: number;
+      tebexPackageId: number | null;
+      // slot-only:
+      packageType?: string;
+      packageId?: string;
+      slotsToAdd?: number;
       durationMonths?: number;
       durationWeeks?: number;
-      tebexPackageId: number | null;
-      quantity: number;
     };
     const provItems: ProvItem[] = [];
     for (const item of cart.items) {
-      if (item.itemType !== "subscription") continue;
       const meta = typeof item.metadata === "string"
         ? (() => { try { return JSON.parse(item.metadata) } catch { return null } })()
         : (item.metadata as any);
-      if (!meta?.packageType || !meta?.packageId) continue;
-      const duration = meta.packageType === "ads" ? meta.durationMonths : meta.durationWeeks;
-      provItems.push({
-        packageType: meta.packageType,
-        packageId: meta.packageId,
-        slotsToAdd: Number(meta.slotsToAdd ?? meta.slotsPerMonth ?? 1) || 1,
-        durationMonths: meta.durationMonths != null ? Number(meta.durationMonths) : undefined,
-        durationWeeks: meta.durationWeeks != null ? Number(meta.durationWeeks) : undefined,
-        tebexPackageId: getTebexPackageId(meta.packageType, meta.packageId, duration),
-        quantity: item.quantity,
-      });
+      const base = { itemType: item.itemType, itemId: item.itemId, title: item.title, price: item.price, quantity: item.quantity };
+
+      if (item.itemType === "subscription") {
+        if (!meta?.packageType || !meta?.packageId) continue;
+        const duration = meta.packageType === "ads" ? meta.durationMonths : meta.durationWeeks;
+        provItems.push({
+          ...base,
+          kind: "slot",
+          packageType: meta.packageType,
+          packageId: meta.packageId,
+          slotsToAdd: Number(meta.slotsToAdd ?? meta.slotsPerMonth ?? 1) || 1,
+          durationMonths: meta.durationMonths != null ? Number(meta.durationMonths) : undefined,
+          durationWeeks: meta.durationWeeks != null ? Number(meta.durationWeeks) : undefined,
+          tebexPackageId: getTebexPackageId(meta.packageType, meta.packageId, duration),
+        });
+      } else if (item.itemType === "prop") {
+        const pkgId = meta?.tebexPackageId;
+        provItems.push({
+          ...base,
+          kind: "prop",
+          tebexPackageId: pkgId != null && pkgId !== "" ? Number(pkgId) : null,
+        });
+      }
     }
 
     if (provItems.length === 0) {
       return NextResponse.json(
-        { error: "No platform-fee items in cart (Tebex checkout handles ad/featured slots)" },
+        { error: "Cart has no purchasable items" },
         { status: 400 }
       );
     }
@@ -119,45 +138,26 @@ export async function POST(request: NextRequest) {
     if (unmapped.length > 0) {
       return NextResponse.json(
         {
-          error: "Tebex packages not configured for some cart items. Fill lib/tebex-packages.ts.",
-          unmapped: unmapped.map((i) => `${i.packageType}:${i.packageId}`),
+          error: "Tebex packages not configured for some cart items.",
+          unmapped: unmapped.map((i) => i.kind === "slot" ? `${i.packageType}:${i.packageId}` : `prop:${i.itemId}`),
         },
         { status: 501 }
       );
     }
 
-    // 4. Create the FiveCrux order (pending) + coupon bookkeeping.
-    const [order] = await db.insert(orders).values({
-      id: generateNumericId(),
-      userId: user.id,
-      cartId: cart.id,
-      couponId: appliedCoupon?.id ?? null,
-      totalAmount: total.toString(),
-      discountAmount: discountAmount.toFixed(2),
-      payableAmount: payableAmount.toFixed(2),
-      status: "pending",
-    }).returning();
+    // 4. Pre-generate the FiveCrux order id so the webhook `custom` can reference
+    // it — we only PERSIST anything once the Tebex basket succeeds (I5: no orphan
+    // pending orders / burned coupons if Tebex errors).
+    const orderId = generateNumericId();
+    const storeToken = FIVECRUX_TEBEX_PUBLIC_TOKEN;
 
-    if (appliedCoupon) {
-      await db.insert(couponRedemptions).values({
-        id: generateNumericId(),
-        couponId: appliedCoupon.id,
-        userId: user.id,
-        orderId: order.id,
-      });
-      await db.update(coupons)
-        .set({ usedCount: sql`${coupons.usedCount} + 1`, updatedAt: new Date() })
-        .where(eq(coupons.id, appliedCoupon.id));
-    }
-
-    // 5. The `custom` payload echoed back on the webhook — everything the webhook
-    // needs to provision the whole cart and complete the order.
     const custom = {
       kind: "platform_cart",
       userId: user.id,
-      fivecruxOrderId: order.id,
+      fivecruxOrderId: orderId,
       cartId: cart.id,
       items: provItems.map((i) => ({
+        kind: i.kind,
         packageType: i.packageType,
         packageId: i.packageId,
         slotsToAdd: i.slotsToAdd,
@@ -170,30 +170,62 @@ export async function POST(request: NextRequest) {
     const completeUrl = `${siteUrl}/cart?payment=success&provider=tebex`;
     const returnUrl = `${siteUrl}/cart?payment=cancelled`;
 
-    // 6. Create the Tebex basket on FiveCrux's own store, add packages, get link.
-    const storeToken = FIVECRUX_TEBEX_PUBLIC_TOKEN;
-    const created = await createBasket(storeToken, { completeUrl, returnUrl, custom });
-    for (const i of provItems) {
-      await addPackageToBasket(storeToken, created.ident, i.tebexPackageId as number, i.quantity);
+    // 5. Create the Tebex basket FIRST. If any Tebex call fails, nothing is
+    // committed to our DB (no orphan order, no burned coupon).
+    let basket;
+    try {
+      const created = await createBasket(storeToken, { completeUrl, returnUrl, custom });
+      for (const i of provItems) {
+        await addPackageToBasket(storeToken, created.ident, i.tebexPackageId as number, i.quantity);
+      }
+      if (appliedCoupon) {
+        // Best-effort: only works if a matching Tebex coupon exists in the store.
+        try { await applyCoupon(storeToken, created.ident, appliedCoupon.code); } catch { /* non-fatal */ }
+      }
+      basket = await getBasket(storeToken, created.ident);
+    } catch (e) {
+      console.error("Tebex basket creation failed:", e);
+      return NextResponse.json({ error: "Failed to start Tebex checkout" }, { status: 502 });
     }
-    if (appliedCoupon) {
-      // Best-effort: only works if a matching Tebex coupon exists in the store.
-      try { await applyCoupon(storeToken, created.ident, appliedCoupon.code); } catch { /* non-fatal */ }
-    }
-    const basket = await getBasket(storeToken, created.ident);
     const checkoutUrl = getCheckoutUrl(basket);
 
-    // 7. Record the Tebex order for webhook reconciliation/provisioning.
-    await db.insert(tebexOrders).values({
-      id: randomUUID(),
-      basketIdent: basket.ident,
-      userId: user.id,
-      kind: "platform_fee", // webhook provisions platform fees; custom carries the cart items[]
-      storeToken,
-      packageIds: provItems.map((i) => i.tebexPackageId).filter((x) => x != null),
-      status: "pending",
-      amount: payableAmount.toFixed(2),
-      custom,
+    // 6. Persist order + coupon bookkeeping + tebex_orders ATOMICALLY (I5).
+    const order = await db.transaction(async (tx) => {
+      const [o] = await tx.insert(orders).values({
+        id: orderId,
+        userId: user.id,
+        cartId: cart.id,
+        couponId: appliedCoupon?.id ?? null,
+        totalAmount: total.toString(),
+        discountAmount: discountAmount.toFixed(2),
+        payableAmount: payableAmount.toFixed(2),
+        status: "pending",
+      }).returning();
+
+      if (appliedCoupon) {
+        await tx.insert(couponRedemptions).values({
+          id: generateNumericId(),
+          couponId: appliedCoupon.id,
+          userId: user.id,
+          orderId: orderId,
+        });
+        await tx.update(coupons)
+          .set({ usedCount: sql`${coupons.usedCount} + 1`, updatedAt: new Date() })
+          .where(eq(coupons.id, appliedCoupon.id));
+      }
+
+      await tx.insert(tebexOrders).values({
+        id: randomUUID(),
+        basketIdent: basket.ident,
+        userId: user.id,
+        kind: "platform_fee", // webhook provisions platform fees; custom carries the cart items[]
+        storeToken,
+        packageIds: provItems.map((i) => i.tebexPackageId).filter((x) => x != null),
+        status: "pending",
+        amount: payableAmount.toFixed(2),
+        custom,
+      });
+      return o;
     });
 
     return NextResponse.json({ success: true, order, basketIdent: basket.ident, checkoutUrl });

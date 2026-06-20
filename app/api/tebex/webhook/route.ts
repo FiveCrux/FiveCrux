@@ -1,8 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { verifyTebexWebhook, type TebexWebhookPayload } from "@/lib/tebex";
 import { db } from "@/lib/db/client";
-import { tebexOrders, orders, orderItems, carts, cartItems } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { tebexOrders, orders, orderItems, carts, cartItems, userAdSlots, userFeaturedScriptSlots, coupons, couponRedemptions } from "@/lib/db/schema";
+import { and, eq, sql } from "drizzle-orm";
 import { createAdSlots, createFeaturedScriptSlots } from "@/lib/database-new";
 
 function generateNumericId() {
@@ -48,8 +48,18 @@ async function provisionCart(
   const items: any[] = Array.isArray(meta.items) ? meta.items : [];
   if (items.length === 0) return { provisioned: false, reason: "no_items" };
 
-  // Idempotency: if the FiveCrux order is already paid AND has order_items, this
-  // event was already processed (Tebex retry) — do nothing.
+  // Idempotency (cart-level): if this cart was already completed, the entitlements
+  // were already provisioned (Tebex retry, or a second basket for the same cart) —
+  // do nothing. Prevents double-provisioning.
+  if (cartId != null) {
+    const existingCart = await db.query.carts.findFirst({ where: eq(carts.id, Number(cartId)) });
+    if (existingCart && existingCart.status === "completed") {
+      return { provisioned: true };
+    }
+  }
+
+  // Idempotency (order-level): if the FiveCrux order is already paid AND has
+  // order_items, this event was already processed — do nothing.
   if (fivecruxOrderId != null) {
     const dbOrder = await db.query.orders.findFirst({ where: eq(orders.id, Number(fivecruxOrderId)) });
     const existing = await db.query.orderItems.findMany({ where: eq(orderItems.orderId, Number(fivecruxOrderId)), limit: 1 });
@@ -171,6 +181,49 @@ async function updateOrderStatus(
   return null;
 }
 
+/** Read-only: find the tebex_orders row for these identifiers (no mutation). */
+async function findOrderByIdents(ids: { basketIdent?: string; transactionId?: string }) {
+  if (ids.basketIdent) {
+    const r = await db.query.tebexOrders.findFirst({ where: eq(tebexOrders.basketIdent, ids.basketIdent) });
+    if (r) return r;
+  }
+  if (ids.transactionId) {
+    const r = await db.query.tebexOrders.findFirst({ where: eq(tebexOrders.tebexTransactionId, ids.transactionId) });
+    if (r) return r;
+  }
+  return null;
+}
+
+/**
+ * Revoke a refunded/charged-back platform order: deactivate the ad/featured slots
+ * it provisioned, flip the FiveCrux order to 'refunded', and restore any coupon
+ * usage. Keyed on the Tebex order id (= the order-reference stored on each slot).
+ */
+async function revokeForOrder(order: { id: string; custom: unknown }): Promise<void> {
+  try {
+    // 1. Deactivate slots provisioned under this order reference.
+    await db.update(userAdSlots).set({ status: "inactive" }).where(eq(userAdSlots.paypalOrderId, order.id));
+    await db.update(userFeaturedScriptSlots).set({ featuredSlotStatus: "inactive" }).where(eq(userFeaturedScriptSlots.featuredPaypalOrderId, order.id));
+
+    // 2. Cart orders carry a fivecruxOrderId in custom → flip it + restore coupon.
+    const meta = typeof order.custom === "string"
+      ? (() => { try { return JSON.parse(order.custom as string) } catch { return null } })()
+      : (order.custom as any);
+    const fivecruxOrderId = meta?.fivecruxOrderId;
+    if (fivecruxOrderId != null) {
+      const fcOrder = await db.query.orders.findFirst({ where: eq(orders.id, Number(fivecruxOrderId)) });
+      // orders.status enum has no 'refunded' → 'failed' marks it no-longer-valid.
+      await db.update(orders).set({ status: "failed", updatedAt: new Date() }).where(eq(orders.id, Number(fivecruxOrderId)));
+      if (fcOrder?.couponId != null) {
+        await db.update(coupons).set({ usedCount: sql`GREATEST(${coupons.usedCount} - 1, 0)`, updatedAt: new Date() }).where(eq(coupons.id, fcOrder.couponId));
+        await db.delete(couponRedemptions).where(eq(couponRedemptions.orderId, Number(fivecruxOrderId)));
+      }
+    }
+  } catch (e) {
+    console.error("Tebex webhook: revoke failed for order", order.id, e);
+  }
+}
+
 /**
  * Provision a completed platform-fee purchase, MIRRORING the entitlement logic
  * in app/api/cart/capture/route.ts (createAdSlots / createFeaturedScriptSlots).
@@ -269,15 +322,13 @@ async function provisionPlatformFee(
 export async function POST(request: NextRequest) {
   // 1. Read the RAW body (required for signature verification).
   const rawBody = await request.text();
-  const signature = request.headers.get("x-signature");
 
-  // 2. Verify the signature against the raw body + webhook secret.
-  const valid = verifyTebexWebhook(rawBody, signature, process.env.TEBEX_WEBHOOK_SECRET);
-  if (!valid) {
-    return NextResponse.json({ error: "Invalid signature" }, { status: 403 });
-  }
-
-  // 3. Parse the (now-verified) payload.
+  // 2. Parse first so we can answer the validation handshake. Tebex sends a
+  // `validation.webhook` event when an endpoint is created/edited and expects
+  // the `id` echoed back to confirm reachability. We handle it BEFORE signature
+  // verification: it performs no action and reveals nothing, so it's safe — and
+  // this makes endpoint validation succeed reliably (even before the secret is
+  // configured on the server).
   let payload: TebexWebhookPayload;
   try {
     payload = JSON.parse(rawBody) as TebexWebhookPayload;
@@ -285,36 +336,48 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
+  if (payload.type === "validation.webhook") {
+    return NextResponse.json({ id: payload.id });
+  }
+
+  // 3. Every real event MUST have a valid signature.
+  const signature = request.headers.get("x-signature");
+  const valid = verifyTebexWebhook(rawBody, signature, process.env.TEBEX_WEBHOOK_SECRET);
+  if (!valid) {
+    return NextResponse.json({ error: "Invalid signature" }, { status: 403 });
+  }
+
   try {
     switch (payload.type) {
-      // Tebex sends this when an endpoint is created/edited. We must echo the
-      // received `id` back so Tebex can confirm the endpoint is reachable.
-      case "validation.webhook":
-        return NextResponse.json({ id: payload.id });
-
       case "payment.completed": {
         const ids = extractIdentifiers(payload.subject);
-        const updated = await updateOrderStatus("completed", ids);
+        const existing = await findOrderByIdents(ids);
 
-        // When the matched order is a platform fee (ads / featured-script slots
-        // bought through FiveCrux's own Tebex store), provision the entitlement
-        // here, mirroring app/api/cart/capture/route.ts. For kind ===
-        // 'seller_product' the buyer is fulfilled by the seller's own Tebex
-        // store, so we only need the status update above.
-        const order = updated?.[0];
-        if (order && order.kind === "platform_fee") {
-          // Tebex echoes the basket `custom` back on the payment subject; use it
-          // as a fallback if the order row's custom is unavailable.
-          const payloadCustom = (payload.subject as any)?.custom;
-          const result = await provisionPlatformFee(order, payloadCustom, order.id);
-          if (!result.provisioned) {
-            console.warn(
-              "Tebex webhook: platform_fee order marked completed but NOT provisioned:",
-              { orderId: order.id, reason: result.reason }
-            );
-          }
+        // C3: webhook may arrive before our tebex_orders row is committed (the
+        // basket round-trip is slow). Returning 200 here would make Tebex stop
+        // retrying and we'd lose provisioning forever — so 500 to force a retry.
+        if (!existing) {
+          console.warn("Tebex webhook: payment.completed with no matching order yet (will retry)", ids);
+          return NextResponse.json({ error: "order_not_found_yet" }, { status: 500 });
         }
 
+        // C2 idempotency: a replayed/duplicate completed event for an order we've
+        // already completed must NOT provision again.
+        if (existing.status === "completed") {
+          return NextResponse.json({ ok: true, idempotent: true });
+        }
+
+        // Provision BEFORE marking completed, so a duplicate that arrives after
+        // is short-circuited by the check above (not re-provisioned).
+        if (existing.kind === "platform_fee") {
+          const payloadCustom = (payload.subject as any)?.custom;
+          const result = await provisionPlatformFee(existing, payloadCustom, existing.id);
+          if (!result.provisioned) {
+            console.warn("Tebex webhook: platform_fee completed but NOT provisioned:", { orderId: existing.id, reason: result.reason });
+          }
+        }
+        // For kind === 'seller_product' the seller's store fulfills; we only track status.
+        await updateOrderStatus("completed", ids);
         return NextResponse.json({ ok: true });
       }
 
@@ -325,7 +388,14 @@ export async function POST(request: NextRequest) {
 
       case "payment.refunded":
       case "payment.chargeback": {
-        await updateOrderStatus("refunded", extractIdentifiers(payload.subject));
+        const ids = extractIdentifiers(payload.subject);
+        const existing = await findOrderByIdents(ids);
+        // C1: revoke entitlements + restore coupon, then mark refunded. Idempotent
+        // (skip if already refunded).
+        if (existing && existing.status !== "refunded") {
+          await revokeForOrder(existing);
+          await updateOrderStatus("refunded", ids);
+        }
         return NextResponse.json({ ok: true });
       }
 

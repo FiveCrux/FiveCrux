@@ -29,7 +29,9 @@ interface PricingDuration {
   label: string
   months: number
   weeks?: number // For featured script slots
-  price: number
+  // NOTE: the real price is NOT stored here — it comes live from Tebex
+  // (fetched from /api/advertise/pricing). `originalPrice` is the marketing
+  // strike-through reference only (no Tebex equivalent).
   originalPrice: number
 }
 
@@ -53,10 +55,10 @@ const pricingPackages: PricingPackage[] = [
     gradient: "from-gray-600 to-gray-700",
     icon: TargetIcon,
     durations: [
-      { label: "1 Month", months: 1, price: 40, originalPrice: 70 },
-      { label: "3 Months", months: 3, price: 110, originalPrice: 210 },
-      { label: "6 Months", months: 6, price: 200, originalPrice: 420 },
-      { label: "Yearly", months: 12, price: 360, originalPrice: 840 }
+      { label: "1 Month", months: 1, originalPrice: 70 },
+      { label: "3 Months", months: 3, originalPrice: 210 },
+      { label: "6 Months", months: 6, originalPrice: 420 },
+      { label: "Yearly", months: 12, originalPrice: 840 }
     ]
   },
   {
@@ -68,10 +70,10 @@ const pricingPackages: PricingPackage[] = [
     icon: TrendingUp,
     popular: true,
     durations: [
-      { label: "1 Month", months: 1, price: 100, originalPrice: 210 },
-      { label: "3 Months", months: 3, price: 275, originalPrice: 630 },
-      { label: "6 Months", months: 6, price: 500, originalPrice: 1260 },
-      { label: "Yearly", months: 12, price: 900, originalPrice: 2520 }
+      { label: "1 Month", months: 1, originalPrice: 210 },
+      { label: "3 Months", months: 3, originalPrice: 630 },
+      { label: "6 Months", months: 6, originalPrice: 1260 },
+      { label: "Yearly", months: 12, originalPrice: 2520 }
     ]
   },
   {
@@ -82,10 +84,10 @@ const pricingPackages: PricingPackage[] = [
     gradient: "from-yellow-400 via-orange-500 to-red-500",
     icon: Crown,
     durations: [
-      { label: "1 Month", months: 1, price: 150, originalPrice: 350 },
-      { label: "3 Months", months: 3, price: 420, originalPrice: 1050 },
-      { label: "6 Months", months: 6, price: 750, originalPrice: 2100 },
-      { label: "Yearly", months: 12, price: 1350, originalPrice: 4200 }
+      { label: "1 Month", months: 1, originalPrice: 350 },
+      { label: "3 Months", months: 3, originalPrice: 1050 },
+      { label: "6 Months", months: 6, originalPrice: 2100 },
+      { label: "Yearly", months: 12, originalPrice: 4200 }
     ]
   }
 ]
@@ -100,10 +102,10 @@ const featuredScriptPackages: PricingPackage[] = [
     gradient: "from-purple-600 to-pink-600",
     icon: Star,
     durations: [
-      { label: "1 Week", months: 0.25, weeks: 1, price: 20, originalPrice: 40 },
-      { label: "2 Weeks", months: 0.5, weeks: 2, price: 35, originalPrice: 80 },
-      { label: "4 Weeks", months: 1, weeks: 4, price: 60, originalPrice: 160 },
-      { label: "8 Weeks", months: 2, weeks: 8, price: 100, originalPrice: 320 }
+      { label: "1 Week", months: 0.25, weeks: 1, originalPrice: 40 },
+      { label: "2 Weeks", months: 0.5, weeks: 2, originalPrice: 80 },
+      { label: "4 Weeks", months: 1, weeks: 4, originalPrice: 160 },
+      { label: "8 Weeks", months: 2, weeks: 8, originalPrice: 320 }
     ]
   },
   {
@@ -115,10 +117,10 @@ const featuredScriptPackages: PricingPackage[] = [
     icon: Sparkles,
     popular: true,
     durations: [
-      { label: "1 Week", months: 0.25, weeks: 1, price: 50, originalPrice: 120 },
-      { label: "2 Weeks", months: 0.5, weeks: 2, price: 80, originalPrice: 240 },
-      { label: "4 Weeks", months: 1, weeks: 4, price: 150, originalPrice: 480 },
-      { label: "8 Weeks", months: 2, weeks: 8, price: 260, originalPrice: 960 }
+      { label: "1 Week", months: 0.25, weeks: 1, originalPrice: 120 },
+      { label: "2 Weeks", months: 0.5, weeks: 2, originalPrice: 240 },
+      { label: "4 Weeks", months: 1, weeks: 4, originalPrice: 480 },
+      { label: "8 Weeks", months: 2, weeks: 8, originalPrice: 960 }
     ]
   },
   {
@@ -129,10 +131,10 @@ const featuredScriptPackages: PricingPackage[] = [
     gradient: "from-pink-500 via-purple-500 to-indigo-500",
     icon: Crown,
     durations: [
-      { label: "1 Week", months: 0.25, weeks: 1, price: 80, originalPrice: 200 },
-      { label: "2 Weeks", months: 0.5, weeks: 2, price: 120, originalPrice: 400 },
-      { label: "4 Weeks", months: 1, weeks: 4, price: 220, originalPrice: 800 },
-      { label: "8 Weeks", months: 2, weeks: 8, price: 400, originalPrice: 1200 }
+      { label: "1 Week", months: 0.25, weeks: 1, originalPrice: 200 },
+      { label: "2 Weeks", months: 0.5, weeks: 2, originalPrice: 400 },
+      { label: "4 Weeks", months: 1, weeks: 4, originalPrice: 800 },
+      { label: "8 Weeks", months: 2, weeks: 8, originalPrice: 1200 }
     ]
   }
 ]
@@ -232,6 +234,37 @@ export default function AdvertisePage() {
 
   const [addingCartItemId, setAddingCartItemId] = useState<string | null>(null)
 
+  // Live prices from Tebex (single source of truth). null = still loading.
+  const [livePrices, setLivePrices] = useState<Record<string, number> | null>(null)
+  const [pricingConfigured, setPricingConfigured] = useState(true)
+
+  useEffect(() => {
+    let cancelled = false
+    fetch("/api/advertise/pricing")
+      .then((r) => r.json())
+      .then((d) => {
+        if (cancelled) return
+        setLivePrices(d?.prices || {})
+        setPricingConfigured(d?.configured !== false)
+      })
+      .catch(() => {
+        if (cancelled) return
+        setLivePrices({})
+        setPricingConfigured(false)
+      })
+    return () => { cancelled = true }
+  }, [])
+
+  // Live Tebex price for a package+duration, or null if not configured/priced yet.
+  const livePriceFor = (
+    packageType: "ads" | "featured-scripts",
+    packageId: string,
+    durationAmount: number
+  ): number | null => {
+    const v = livePrices?.[`${packageType}:${packageId}:${durationAmount}`]
+    return typeof v === "number" ? v : null
+  }
+
   const handleAddToCart = async (pkg: PricingPackage, durationIndex: number) => {
     const duration = pkg.durations[durationIndex]
     const packageType = activeTab === "ads" ? "ads" : "featured-scripts"
@@ -240,6 +273,12 @@ export default function AdvertisePage() {
       ? duration.months
       : duration.weeks || Math.round(duration.months * 4)
     const itemId = `${packageType}:${pkg.packageId}:${durationAmount}`
+
+    const livePrice = livePriceFor(packageType, pkg.packageId, durationAmount)
+    if (livePrice == null) {
+      toast.error("Pricing for this package isn't available yet.")
+      return
+    }
 
     setAddingCartItemId(itemId)
 
@@ -256,7 +295,7 @@ export default function AdvertisePage() {
           itemType: "subscription",
           itemId,
           title: `${couponScope} - ${pkg.name} (${duration.label})`,
-          price: duration.price,
+          price: livePrice, // display only; the server re-resolves the authoritative Tebex price
           metadata: {
             packageType,
             couponScope,
@@ -548,15 +587,16 @@ export default function AdvertisePage() {
             <div className="mt-12 grid grid-cols-1 gap-5 md:grid-cols-3">
               {currentPackages.map((pkg, index) => {
                 const selectedDuration = pkg.durations[selectedDurationIndex]
-                const discount = Math.round(
-                  ((selectedDuration.originalPrice - selectedDuration.price) /
-                    selectedDuration.originalPrice) *
-                    100
-                )
                 const durationAmount =
                   activeTab === "ads"
                     ? selectedDuration.months
                     : selectedDuration.weeks || Math.round(selectedDuration.months * 4)
+                const livePrice = livePriceFor(activeTab, pkg.packageId, durationAmount)
+                const priceLoading = livePrices === null
+                const discount =
+                  livePrice != null && selectedDuration.originalPrice > 0
+                    ? Math.round(((selectedDuration.originalPrice - livePrice) / selectedDuration.originalPrice) * 100)
+                    : 0
                 const cartItemId = `${activeTab === "ads" ? "ads" : "featured-scripts"}:${pkg.packageId}:${durationAmount}`
                 const isAddingToCart = addingCartItemId === cartItemId
 
@@ -634,23 +674,39 @@ export default function AdvertisePage() {
                         </span>
                       </div>
 
-                      {/* Price block */}
+                      {/* Price block — live from Tebex */}
                       <div className="mt-6">
-                        <div className="text-[12px] tabular-nums text-white/55 line-through">
-                          €{selectedDuration.originalPrice}
-                        </div>
-                        <div className="mt-0.5 flex items-baseline gap-1.5">
-                          <span className="text-4xl font-extrabold tracking-tight tabular-nums text-white">
-                            €{selectedDuration.price}
-                          </span>
-                          <span className="text-xs font-medium text-white/55">/ {perLabel}</span>
-                        </div>
-                        <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-400 ring-1 ring-emerald-500/25">
-                          <Check className="h-3.5 w-3.5" />
-                          <span className="tabular-nums">
-                            Save €{selectedDuration.originalPrice - selectedDuration.price} ({discount}%)
-                          </span>
-                        </div>
+                        {priceLoading ? (
+                          <div className="h-[68px] animate-pulse rounded-md bg-white/[0.06]" aria-label="Loading price" />
+                        ) : livePrice == null ? (
+                          <div className="flex items-baseline gap-1.5">
+                            <span className="text-2xl font-extrabold tracking-tight text-white/70">
+                              Coming soon
+                            </span>
+                          </div>
+                        ) : (
+                          <>
+                            {selectedDuration.originalPrice > livePrice && (
+                              <div className="text-[12px] tabular-nums text-white/55 line-through">
+                                €{selectedDuration.originalPrice}
+                              </div>
+                            )}
+                            <div className="mt-0.5 flex items-baseline gap-1.5">
+                              <span className="text-4xl font-extrabold tracking-tight tabular-nums text-white">
+                                €{livePrice}
+                              </span>
+                              <span className="text-xs font-medium text-white/55">/ {perLabel}</span>
+                            </div>
+                            {discount > 0 && (
+                              <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-400 ring-1 ring-emerald-500/25">
+                                <Check className="h-3.5 w-3.5" />
+                                <span className="tabular-nums">
+                                  Save €{selectedDuration.originalPrice - livePrice} ({discount}%)
+                                </span>
+                              </div>
+                            )}
+                          </>
+                        )}
                       </div>
 
                       {/* Divider */}
@@ -676,7 +732,7 @@ export default function AdvertisePage() {
                     <Button
                       type="button"
                       onClick={() => handleAddToCart(pkg, selectedDurationIndex)}
-                      disabled={isAddingToCart}
+                      disabled={isAddingToCart || priceLoading || livePrice == null}
                       className={cn(
                         "mt-8 h-11 w-full rounded-xl text-[13px] font-semibold transition-all duration-200",
                         isPopular
@@ -689,7 +745,13 @@ export default function AdvertisePage() {
                       ) : (
                         <ShoppingCart className="mr-2 h-4 w-4" />
                       )}
-                      {isAddingToCart ? "Adding..." : "Add to Cart"}
+                      {isAddingToCart
+                        ? "Adding..."
+                        : priceLoading
+                          ? "Loading…"
+                          : livePrice == null
+                            ? "Unavailable"
+                            : "Add to Cart"}
                     </Button>
                   </motion.div>
                 )
