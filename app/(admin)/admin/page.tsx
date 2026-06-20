@@ -933,7 +933,8 @@ export default function AdminPage() {
 
   return (
     <>
-      <Navbar />
+      {/* No global <Navbar/> here — the admin shell provides its own top bar below
+          (removing it fixes the double-navbar). */}
       <div className="relative min-h-screen bg-[#0a0a0a] text-white">
         {/* Admin top bar (logo + Admin Panel tag, avatar + Logout) */}
         <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-white/[0.06] bg-[#0a0a0a]/85 px-4 backdrop-blur-xl sm:px-6">
