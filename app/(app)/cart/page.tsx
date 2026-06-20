@@ -101,8 +101,9 @@ export default function CartPage() {
   }, [router])
 
   useEffect(() => {
-    // Skip the cart fetch while showing the payment-success flow.
-    if (payment === "success" && token) {
+    // Skip the cart fetch while showing the payment-success flow (Tebex returns
+    // to ?payment=success&provider=tebex — no client token needed).
+    if (payment === "success") {
       setLoading(false)
       return
     }
@@ -121,8 +122,8 @@ export default function CartPage() {
       <Navbar />
 
       <main className="mx-auto max-w-6xl px-5 py-8 md:py-12">
-        {payment === "success" && token ? (
-          <CartPaymentSuccess token={token} />
+        {payment === "success" ? (
+          <CartPaymentSuccess />
         ) : loading ? (
           /* Loading state */
           <div className="flex min-h-[40vh] flex-col items-center justify-center rounded-3xl border border-white/[0.07] bg-[#0e0e0e] p-12 text-center">

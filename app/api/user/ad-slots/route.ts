@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST - Create new slots after PayPal one-time payment
+// POST - Create new slots after a completed one-time payment
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
@@ -72,25 +72,25 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { slotsToAdd, paypalOrderIds, packageId, durationMonths } = body
+    const { slotsToAdd, orderRefIds, packageId, durationMonths } = body
 
     // Validation
     if (typeof slotsToAdd !== 'number' || slotsToAdd <= 0 || !Number.isInteger(slotsToAdd)) {
-      return NextResponse.json({ 
-        error: "Invalid slots count. Must be a positive integer" 
+      return NextResponse.json({
+        error: "Invalid slots count. Must be a positive integer"
       }, { status: 400 })
     }
 
-    if (!Array.isArray(paypalOrderIds) || paypalOrderIds.length !== slotsToAdd) {
-      return NextResponse.json({ 
-        error: "PayPal order IDs array must match slots count" 
+    if (!Array.isArray(orderRefIds) || orderRefIds.length !== slotsToAdd) {
+      return NextResponse.json({
+        error: "Order reference IDs array must match slots count"
       }, { status: 400 })
     }
 
-    // Validate all order IDs are strings
-    if (!paypalOrderIds.every(id => typeof id === 'string' && id.length > 0)) {
-      return NextResponse.json({ 
-        error: "All PayPal order IDs must be non-empty strings" 
+    // Validate all order reference IDs are strings
+    if (!orderRefIds.every((id: unknown) => typeof id === 'string' && id.length > 0)) {
+      return NextResponse.json({
+        error: "All order reference IDs must be non-empty strings"
       }, { status: 400 })
     }
 
@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
     const createdSlot = await createAdSlots(
       userId,
       slotsToAdd,
-      paypalOrderIds,
+      orderRefIds,
       packageId,
       durationMonths
     );

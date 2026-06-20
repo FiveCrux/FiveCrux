@@ -24,10 +24,10 @@ function generateNumericId() {
 /**
  * POST /api/cart/tebex-checkout
  *
- * Tebex counterpart of /api/cart/checkout (PayPal). Sells the platform's own
- * paid slots (ad slots + featured-script slots) through FiveCrux's OWN Tebex
- * store. Mirrors the PayPal route's order/coupon bookkeeping, then creates one
- * Tebex basket for the whole cart and returns the hosted checkout URL.
+ * Cart checkout for the platform's own paid slots (ad slots + featured-script
+ * slots) through FiveCrux's OWN Tebex store. Creates the FiveCrux order + coupon
+ * bookkeeping, then one Tebex basket for the whole cart, and returns the hosted
+ * checkout URL.
  *
  * Provisioning + order completion happen later in the Tebex webhook
  * (payment.completed) — NOT here — exactly like Tebex's async payment model.
@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Cart empty" }, { status: 400 });
     }
 
-    // 2. Total (mirror PayPal route exactly).
+    // 2. Cart total.
     let total = 0;
     for (const item of cart.items) total += Number(item.price) * item.quantity;
 
@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 4. Create the FiveCrux order (pending) + coupon bookkeeping — same as PayPal.
+    // 4. Create the FiveCrux order (pending) + coupon bookkeeping.
     const [order] = await db.insert(orders).values({
       id: generateNumericId(),
       userId: user.id,

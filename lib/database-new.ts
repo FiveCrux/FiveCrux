@@ -154,7 +154,7 @@ export async function getUserPurchasedAdSlots(userId: string): Promise<number> {
   return user[0]?.purchasedAdSlots ?? 0;
 }
 
-// Add slots to user's purchased count (for PayPal purchases)
+// Add slots to user's purchased count (after a completed purchase)
 export async function addPurchasedAdSlots(userId: string, slotsToAdd: number): Promise<number> {
   // First get current value
   const currentUser = await db.select({ purchasedAdSlots: users.purchasedAdSlots })
@@ -2220,7 +2220,7 @@ export async function updateGiveawayEntryPoints(giveawayId: number, userId: stri
 export async function createAd(adData: NewAd & { status?: string }) {
   const slotUniqueId = (adData as any).slotUniqueId ?? (adData as any).slot_unique_id ?? null;
   
-  // If slotUniqueId is provided, get the slot's endDate from PayPal
+  // If slotUniqueId is provided, inherit the slot's endDate.
   let adEndDate = (adData as any).endDate ?? (adData as any).end_date ?? null;
   if (slotUniqueId) {
     console.log('createAd: Looking up slot with uniqueId:', slotUniqueId);

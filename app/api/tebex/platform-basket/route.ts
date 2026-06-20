@@ -23,7 +23,7 @@ import { tebexOrders } from "@/lib/db/schema";
  * The `custom` object is echoed back on the basket + every webhook payload, so
  * it MUST carry everything the webhook needs to provision the entitlement once
  * payment completes (see app/api/tebex/webhook/route.ts). For platform fees we
- * mirror the metadata that app/api/cart/capture/route.ts reads from PayPal:
+ * carry the provisioning metadata the webhook needs:
  *   {
  *     userId: string,                            // who to provision for
  *     packageType: 'ads' | 'featured-scripts',   // which entitlement
