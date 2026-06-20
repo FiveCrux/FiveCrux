@@ -95,6 +95,8 @@ export async function PATCH(
         status: "pending",
         featured: body.featured,
         free: body.free || false,
+        tebexStoreToken: body.tebexStoreToken,
+        tebexPackageId: body.tebexPackageId,
       })
     } else if (currentScript.status === "rejected") {
       // Rejected -> move to pending with updates
@@ -122,6 +124,8 @@ export async function PATCH(
         status: "pending",
         featured: body.featured,
         free: body.free || false,
+        tebexStoreToken: body.tebexStoreToken,
+        tebexPackageId: body.tebexPackageId,
       })
     } else {
       // Pending -> in-place update (refresh submittedAt for ordering)
@@ -148,6 +152,8 @@ export async function PATCH(
         last_updated: body.last_updated,
         featured: body.featured,
         free: body.free || false,
+        tebexStoreToken: body.tebexStoreToken,
+        tebexPackageId: body.tebexPackageId,
       })
     }
 

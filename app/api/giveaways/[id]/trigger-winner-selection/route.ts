@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { timingSafeEqual } from 'crypto'
+import { authOptions } from '@/auth'
 import { db } from '@/lib/db/client'
 import { approvedGiveaways, giveawayPrizes, giveawayEntries, giveawayPrizeWinners } from '@/lib/db/schema'
 import { eq, and, asc } from 'drizzle-orm'
@@ -11,11 +14,31 @@ function shuffleInPlace<T>(array: T[]): void {
   }
 }
 
+// SECURITY: winner selection is an irreversible privileged mutation. Authorize
+// via a cron secret (automated job) OR a staff session. Previously this route
+// was UNAUTHENTICATED — any visitor could trigger it.
+function timingSafeMatch(a: string, b: string): boolean {
+  if (!a || !b || a.length !== b.length) return false
+  try { return timingSafeEqual(Buffer.from(a), Buffer.from(b)) } catch { return false }
+}
+async function isAuthorized(request: NextRequest): Promise<boolean> {
+  const secret = process.env.CRON_SECRET
+  const provided = request.headers.get('x-cron-secret')
+  if (secret && provided && timingSafeMatch(provided, secret)) return true
+  const session = await getServerSession(authOptions)
+  const roles = (session?.user as any)?.roles || []
+  return roles.includes('admin') || roles.includes('founder') || roles.includes('moderator')
+}
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    if (!(await isAuthorized(request))) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
     const { id } = await params
     const giveawayId = Number(id)
 

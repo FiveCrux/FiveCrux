@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FiveCrux — Creator Dashboard</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<script>tailwind.config={theme:{extend:{fontFamily:{sans:["Inter","sans-serif"]},colors:{brand:{orange:"#f97316"}}}}}</script>
+<style>
+  body{font-family:Inter,sans-serif;background:#0a0a0a;color:#fff}
+  .num{font-variant-numeric:tabular-nums}
+  .micro{letter-spacing:0.18em}
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-thumb{background:#222;border-radius:8px;border:3px solid #0a0a0a}
+</style>
+</head>
+<body class="min-h-screen antialiased">
+
+<!-- concept chip -->
+<div class="fixed bottom-4 right-4 z-50 rounded-full border border-white/10 bg-black/70 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/50 backdrop-blur">
+  Concept · Dashboard Sidebar
+</div>
+
+<!-- ============ STICKY NAV ============ -->
+<header class="sticky top-0 z-40 border-b border-white/[0.06] bg-[#0a0a0a]/85 backdrop-blur-xl">
+  <div class="mx-auto flex h-16 max-w-[1320px] items-center gap-8 px-5">
+    <a href="#" class="flex items-center gap-2">
+      <span class="grid h-8 w-8 place-items-center rounded-lg bg-gradient-to-br from-orange-500 to-amber-400 text-sm font-black text-black">F</span>
+      <span class="text-[17px] font-extrabold tracking-tight">Five<span class="text-orange-500">Crux</span></span>
+    </a>
+    <nav class="hidden items-center gap-7 text-sm font-medium text-white/55 md:flex">
+      <a href="#" class="transition hover:text-white">Marketplace</a>
+      <a href="#" class="transition hover:text-white">Scripts</a>
+      <a href="#" class="transition hover:text-white">MLOs</a>
+      <a href="#" class="transition hover:text-white">Giveaways</a>
+    </nav>
+    <div class="ml-auto flex items-center gap-2.5">
+      <div class="relative hidden lg:block">
+        <i data-lucide="search" class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30"></i>
+        <input placeholder="Search resources…" class="w-56 rounded-xl border border-white/[0.07] bg-white/[0.03] py-2 pl-9 pr-3 text-sm text-white/80 placeholder:text-white/30 focus:border-orange-500/40 focus:outline-none" />
+      </div>
+      <button class="relative grid h-10 w-10 place-items-center rounded-xl border border-white/[0.07] bg-white/[0.02] text-white/70 transition hover:text-white">
+        <i data-lucide="shopping-cart" class="h-[18px] w-[18px]"></i>
+        <span class="absolute -right-1 -top-1 grid h-4 w-4 place-items-center rounded-full bg-orange-500 text-[10px] font-bold text-black">2</span>
+      </button>
+      <button class="rounded-xl bg-white px-4 py-2 text-sm font-bold text-black transition hover:bg-white/90">Login</button>
+    </div>
+  </div>
+</header>
+
+<div class="mx-auto max-w-[1320px] px-5 py-6 lg:py-8">
+  <div class="lg:grid lg:grid-cols-[260px_1fr] lg:gap-8">
+
+    <!-- ============ SIDEBAR ============ -->
+    <aside class="lg:sticky lg:top-[88px] lg:h-fit">
+      <div class="rounded-3xl border border-white/[0.07] bg-[#0e0e0e] p-5 shadow-[0_24px_60px_-30px_rgba(0,0,0,0.9)]">
+        <!-- identity -->
+        <div class="flex items-center gap-4 lg:flex-col lg:items-start lg:gap-0">
+          <div class="relative shrink-0 lg:mb-4">
+            <div class="grid h-16 w-16 place-items-center rounded-2xl bg-gradient-to-br from-orange-500 to-amber-400 text-2xl font-black text-black">C</div>
+            <span class="absolute -bottom-1 -right-1 grid h-6 w-6 place-items-center rounded-full bg-[#0e0e0e] ring-1 ring-white/10">
+              <i data-lucide="badge-check" class="h-4 w-4 text-orange-400"></i>
+            </span>
+          </div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-1.5">
+              <h1 class="truncate text-xl font-extrabold tracking-tight">CruxDev</h1>
+            </div>
+            <div class="mt-2 flex flex-wrap gap-1.5">
+              <span class="rounded-md bg-orange-500/12 px-2 py-0.5 text-[11px] font-semibold text-orange-400 ring-1 ring-orange-500/20">Founder</span>
+              <span class="rounded-md bg-white/[0.06] px-2 py-0.5 text-[11px] font-semibold text-white/70 ring-1 ring-white/10">Verified Creator</span>
+            </div>
+          </div>
+        </div>
+
+        <p class="mt-4 text-[13px] leading-relaxed text-white/45 lg:block">Premium FiveM scripts &amp; MLOs — trusted by <span class="font-semibold text-white/70">2,400+</span> servers.</p>
+        <div class="mt-3 flex items-center gap-1.5 text-[11px] text-white/35">
+          <i data-lucide="calendar" class="h-3.5 w-3.5"></i> Member since Jan 2024
+        </div>
+
+        <!-- mini stat list -->
+        <div class="mt-5 divide-y divide-white/[0.05] border-y border-white/[0.05]">
+          <div class="flex items-center justify-between py-2.5">
+            <span class="text-[11px] font-medium uppercase micro text-white/40">Products</span>
+            <span class="num text-sm font-bold">12</span>
+          </div>
+          <div class="flex items-center justify-between py-2.5">
+            <span class="text-[11px] font-medium uppercase micro text-white/40">Sales</span>
+            <span class="num text-sm font-bold">2,480</span>
+          </div>
+          <div class="flex items-center justify-between py-2.5">
+            <span class="text-[11px] font-medium uppercase micro text-white/40">Avg rating</span>
+            <span class="num flex items-center gap-1 text-sm font-bold"><i data-lucide="star" class="h-3.5 w-3.5 fill-orange-400 text-orange-400"></i>4.9</span>
+          </div>
+          <div class="flex items-center justify-between py-2.5">
+            <span class="text-[11px] font-medium uppercase micro text-white/40">Giveaways</span>
+            <span class="num text-sm font-bold">4</span>
+          </div>
+        </div>
+
+        <!-- vertical nav -->
+        <nav class="mt-5 space-y-1">
+          <a href="#" class="flex items-center gap-3 rounded-xl bg-orange-500/12 px-3 py-2.5 text-sm font-semibold text-orange-400 ring-1 ring-orange-500/20">
+            <i data-lucide="layout-dashboard" class="h-[18px] w-[18px]"></i> Overview
+          </a>
+          <a href="#" class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-white/55 transition hover:bg-white/[0.04] hover:text-white">
+            <i data-lucide="package" class="h-[18px] w-[18px]"></i> My Products
+          </a>
+          <a href="#" class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-white/55 transition hover:bg-white/[0.04] hover:text-white">
+            <i data-lucide="gift" class="h-[18px] w-[18px]"></i> Giveaways
+          </a>
+          <a href="#" class="flex items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium text-white/55 transition hover:bg-white/[0.04] hover:text-white">
+            <span class="flex items-center gap-3"><i data-lucide="trending-up" class="h-[18px] w-[18px]"></i> Sales</span>
+            <span class="num rounded-md bg-emerald-500/12 px-1.5 py-0.5 text-[10px] font-bold text-emerald-400">+12</span>
+          </a>
+          <a href="#" class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-white/55 transition hover:bg-white/[0.04] hover:text-white">
+            <i data-lucide="settings" class="h-[18px] w-[18px]"></i> Settings
+          </a>
+        </nav>
+
+        <button class="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-orange-500 py-2.5 text-sm font-bold text-black transition hover:bg-orange-400">
+          <i data-lucide="plus" class="h-4 w-4"></i> New product
+        </button>
+      </div>
+    </aside>
+
+    <!-- ============ MAIN ============ -->
+    <main class="mt-6 lg:mt-0">
+
+      <!-- welcome header -->
+      <div class="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <div class="text-[11px] font-medium uppercase micro text-orange-400/90">Creator dashboard</div>
+          <h2 class="mt-1 text-2xl font-extrabold tracking-tight lg:text-[28px]">Welcome back, CruxDev</h2>
+          <p class="mt-1 text-sm text-white/45">Here's how your store is performing this month.</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button class="rounded-xl border border-white/[0.07] bg-white/[0.02] px-3.5 py-2 text-sm font-medium text-white/70 transition hover:text-white">Last 30 days</button>
+          <button class="grid h-10 w-10 place-items-center rounded-xl border border-white/[0.07] bg-white/[0.02] text-white/70 transition hover:text-white"><i data-lucide="download" class="h-[18px] w-[18px]"></i></button>
+        </div>
+      </div>
+
+      <!-- stat cards -->
+      <div class="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
+        <!-- Products -->
+        <div class="rounded-2xl border border-white/[0.06] bg-[#0e0e0e] p-4">
+          <div class="flex items-center justify-between">
+            <span class="grid h-9 w-9 place-items-center rounded-xl bg-white/[0.04] text-white/60"><i data-lucide="package" class="h-[18px] w-[18px]"></i></span>
+            <span class="text-[11px] font-medium text-white/30">Active</span>
+          </div>
+          <div class="num mt-4 text-3xl font-extrabold tracking-tight">12</div>
+          <div class="mt-1 flex items-center justify-between">
+            <span class="text-[11px] font-medium uppercase micro text-white/40">Products</span>
+            <span class="num text-[11px] font-semibold text-emerald-400">+2</span>
+          </div>
+        </div>
+        <!-- Sales -->
+        <div class="rounded-2xl border border-white/[0.06] bg-[#0e0e0e] p-4">
+          <div class="flex items-center justify-between">
+            <span class="grid h-9 w-9 place-items-center rounded-xl bg-orange-500/12 text-orange-400"><i data-lucide="trending-up" class="h-[18px] w-[18px]"></i></span>
+            <span class="text-[11px] font-medium text-white/30">All time</span>
+          </div>
+          <div class="num mt-4 text-3xl font-extrabold tracking-tight">2,480</div>
+          <div class="mt-1 flex items-center justify-between">
+            <span class="text-[11px] font-medium uppercase micro text-white/40">Sales</span>
+            <span class="num flex items-center gap-0.5 text-[11px] font-semibold text-emerald-400"><i data-lucide="arrow-up-right" class="h-3 w-3"></i>12%</span>
+          </div>
+        </div>
+        <!-- Rating -->
+        <div class="rounded-2xl border border-white/[0.06] bg-[#0e0e0e] p-4">
+          <div class="flex items-center justify-between">
+            <span class="grid h-9 w-9 place-items-center rounded-xl bg-white/[0.04] text-white/60"><i data-lucide="star" class="h-[18px] w-[18px]"></i></span>
+            <span class="num text-[11px] font-medium text-white/30">418 reviews</span>
+          </div>
+          <div class="num mt-4 flex items-end gap-1.5 text-3xl font-extrabold tracking-tight">4.9<i data-lucide="star" class="mb-1 h-5 w-5 fill-orange-400 text-orange-400"></i></div>
+          <div class="mt-1 flex items-center justify-between">
+            <span class="text-[11px] font-medium uppercase micro text-white/40">Avg rating</span>
+            <span class="num text-[11px] font-semibold text-white/40">+0.1</span>
+          </div>
+        </div>
+        <!-- Giveaways -->
+        <div class="rounded-2xl border border-white/[0.06] bg-[#0e0e0e] p-4">
+          <div class="flex items-center justify-between">
+            <span class="grid h-9 w-9 place-items-center rounded-xl bg-white/[0.04] text-white/60"><i data-lucide="gift" class="h-[18px] w-[18px]"></i></span>
+            <span class="text-[11px] font-medium text-emerald-400">1 live</span>
+          </div>
+          <div class="num mt-4 text-3xl font-extrabold tracking-tight">4</div>
+          <div class="mt-1 flex items-center justify-between">
+            <span class="text-[11px] font-medium uppercase micro text-white/40">Giveaways</span>
+            <span class="num text-[11px] font-semibold text-white/40">3.1k entries</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- your products -->
+      <div class="mt-8 flex items-center justify-between">
+        <h3 class="text-lg font-bold tracking-tight">Your products</h3>
+        <a href="#" class="flex items-center gap-1 text-sm font-semibold text-white/50 transition hover:text-white">View all <i data-lucide="arrow-right" class="h-4 w-4"></i></a>
+      </div>
+
+      <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3" id="productGrid"></div>
+
+      <!-- recent activity -->
+      <div class="mt-8 rounded-3xl border border-white/[0.06] bg-[#0e0e0e] p-5 lg:p-6">
+        <div class="flex items-center justify-between">
+          <h3 class="text-lg font-bold tracking-tight">Recent activity</h3>
+          <span class="text-[11px] font-medium uppercase micro text-white/35">Last 7 days</span>
+        </div>
+        <div class="mt-4 divide-y divide-white/[0.05]" id="activityList"></div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- ============ FOOTER ============ -->
+<footer class="mt-12 border-t border-white/[0.06] bg-[#0a0a0a]">
+  <div class="mx-auto max-w-[1320px] px-5 py-10">
+    <div class="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
+      <div class="flex items-center gap-2">
+        <span class="grid h-7 w-7 place-items-center rounded-lg bg-gradient-to-br from-orange-500 to-amber-400 text-xs font-black text-black">F</span>
+        <span class="text-sm font-extrabold tracking-tight">Five<span class="text-orange-500">Crux</span></span>
+      </div>
+      <nav class="flex flex-wrap gap-x-7 gap-y-2 text-sm text-white/45">
+        <a href="#" class="transition hover:text-white">Marketplace</a>
+        <a href="#" class="transition hover:text-white">Creators</a>
+        <a href="#" class="transition hover:text-white">Giveaways</a>
+        <a href="#" class="transition hover:text-white">Support</a>
+        <a href="#" class="transition hover:text-white">Terms</a>
+      </nav>
+    </div>
+    <p class="mt-8 text-xs text-white/25">© 2026 FiveCrux. Not affiliated with Rockstar Games or Cfx.re. All product names are property of their respective owners.</p>
+  </div>
+</footer>
+
+<script>
+  const imgs = [
+    "https://img.forgemods.de/images/thumb/images/4f205008-65c0-4591-9561-33c232a2bc20_gta5map_ls_legion_square_park_bed357ad-959c-4e1e-9420-c793a2ad905f.webp",
+    "https://img.forgemods.de/images/thumb/images/gta5map_gaming_e83b6804-9d4f-4a0c-bb8f-ed72882d7d9b.webp",
+    "https://img.forgemods.de/images/thumb/images/c56a6a29-9469-4875-8557-679884d124a6_gta5map_los_santos_medical_center_cd5cc62b-caf0-4021-bdf0-debb98f190fe.webp",
+    "https://img.forgemods.de/images/thumb/images/gta5map_vinewood_lake_villa_03_33f120b6-d81c-4c10-973d-c4522420e975.webp"
+  ];
+  const products = [
+    { name:"Advanced Banking System", cat:"FiveM · Script", price:"$19.99", rating:"4.9", sales:"612", free:false },
+    { name:"Police MDT", cat:"FiveM · Script", price:"$24.99", rating:"5.0", sales:"488", free:false },
+    { name:"Inventory HUD", cat:"FiveM · UI", price:"Free", rating:"4.7", sales:"1,204", free:true },
+    { name:"Luxury Apartments MLO", cat:"FiveM · MLO", price:"$34.99", rating:"4.8", sales:"341", free:false },
+    { name:"Phone System v2", cat:"FiveM · Script", price:"$22.50", rating:"4.9", sales:"276", free:false },
+    { name:"Drift Car Pack", cat:"FiveM · Vehicles", price:"$14.99", rating:"4.8", sales:"159", free:false }
+  ];
+
+  document.getElementById("productGrid").innerHTML = products.map((p,i)=>`
+    <article class="group overflow-hidden rounded-2xl border border-white/[0.06] bg-[#0e0e0e] transition hover:border-white/[0.12]">
+      <div class="relative h-36 overflow-hidden">
+        <img src="${imgs[i % imgs.length]}" class="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+        <div class="absolute inset-0 bg-gradient-to-t from-[#0e0e0e] via-transparent to-transparent"></div>
+        <span class="absolute left-3 top-3 rounded-full bg-black/45 px-2.5 py-1 text-[10px] font-semibold tracking-wide text-white/85 backdrop-blur-md ring-1 ring-white/10">${p.cat}</span>
+        ${p.free ? `<span class="absolute right-3 top-3 rounded-full bg-emerald-500/90 px-2 py-0.5 text-[10px] font-bold text-black">FREE</span>` : ``}
+      </div>
+      <div class="p-4">
+        <h4 class="truncate text-[15px] font-bold tracking-tight">${p.name}</h4>
+        <div class="mt-1 flex items-center gap-3 text-[12px] text-white/40">
+          <span class="num flex items-center gap-1"><i data-lucide="star" class="h-3.5 w-3.5 fill-orange-400 text-orange-400"></i>${p.rating}</span>
+          <span class="num flex items-center gap-1"><i data-lucide="download" class="h-3.5 w-3.5"></i>${p.sales}</span>
+        </div>
+        <div class="mt-3 flex items-center justify-between border-t border-white/[0.05] pt-3">
+          <span class="num text-lg font-extrabold tracking-tight ${p.free ? 'text-emerald-400' : ''}">${p.price}</span>
+          <button class="flex items-center gap-1 rounded-lg bg-white/[0.05] px-2.5 py-1.5 text-[12px] font-semibold text-white/70 transition hover:bg-white/10 hover:text-white">
+            <i data-lucide="pencil" class="h-3.5 w-3.5"></i> Edit
+          </button>
+        </div>
+      </div>
+    </article>`).join("");
+
+  const activity = [
+    { icon:"shopping-cart", tint:"text-emerald-400 bg-emerald-500/12", title:"New sale — <b class='text-white'>Police MDT</b>", meta:"$24.99", time:"12m ago" },
+    { icon:"star", tint:"text-orange-400 bg-orange-500/12", title:"New 5-star review on <b class='text-white'>Advanced Banking System</b>", meta:"★ 5.0", time:"1h ago" },
+    { icon:"gift", tint:"text-violet-400 bg-violet-500/12", title:"<b class='text-white'>847</b> new entries on your Luxury Apartments giveaway", meta:"Live", time:"3h ago" },
+    { icon:"download", tint:"text-sky-400 bg-sky-500/12", title:"<b class='text-white'>Inventory HUD</b> passed 1,200 downloads", meta:"Free", time:"Yesterday" },
+    { icon:"message-square", tint:"text-white/60 bg-white/[0.06]", title:"New support thread on <b class='text-white'>Phone System v2</b>", meta:"Open", time:"2d ago" }
+  ];
+  document.getElementById("activityList").innerHTML = activity.map(a=>`
+    <div class="flex items-center gap-4 py-3.5">
+      <span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl ${a.tint}"><i data-lucide="${a.icon}" class="h-[18px] w-[18px]"></i></span>
+      <p class="min-w-0 flex-1 truncate text-sm text-white/55">${a.title}</p>
+      <span class="num shrink-0 text-[12px] font-semibold text-white/70">${a.meta}</span>
+      <span class="num hidden shrink-0 text-[11px] text-white/30 sm:block">${a.time}</span>
+    </div>`).join("");
+
+  lucide.createIcons();
+</script>
+</body>
+</html>

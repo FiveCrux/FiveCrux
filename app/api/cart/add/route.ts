@@ -18,6 +18,10 @@ import {
     sql,
 } from "drizzle-orm";
 
+import { resolvePackage, resolvePackageMeta, parsePackageItemId } from "@/lib/ad-pricing";
+import { getLivePriceByPackageId } from "@/lib/tebex-pricing";
+
+// App-generated integer PK (prod uses manual integer PKs, not DB identity).
 function generateNumericId() {
     return Math.floor(Date.now() / 1000) + Math.floor(Math.random() * 10000);
 }
@@ -30,10 +34,13 @@ function normalizeMetadata(metadata: unknown) {
     return metadata as Record<string, unknown>;
 }
 
-function getCustomPackageItem(
+// Build a platform-slot cart item. SECURITY: the price and slot count come from
+// the server-side price table (lib/ad-pricing), derived from the itemId — NEVER
+// from the client. A tampered price / slotsToAdd is simply ignored.
+async function getCustomPackageItem(
     itemType: string,
+    itemId: unknown,
     title: unknown,
-    price: unknown,
     metadata: unknown
 ) {
     const normalizedMetadata = normalizeMetadata(metadata);
@@ -42,8 +49,6 @@ function getCustomPackageItem(
 
     if (
         itemType !== "subscription" ||
-        typeof title !== "string" ||
-        price === undefined ||
         !normalizedMetadata ||
         !["ads", "featured-scripts"].includes(String(packageType)) ||
         !["Ad Slots", "Featured Script Slots"].includes(String(couponScope))
@@ -51,16 +56,36 @@ function getCustomPackageItem(
         return null;
     }
 
-    const parsedPrice = Number(price);
-
-    if (Number.isNaN(parsedPrice) || parsedPrice < 0) {
-        return { error: "Invalid price" } as const;
+    const parsed = parsePackageItemId(itemId);
+    if (!parsed) return { error: "Invalid package" } as const;
+    // Validate the package STRUCTURE first (sync), so we can tell "invalid" apart
+    // from "valid but not priced yet".
+    const meta = resolvePackageMeta(parsed.packageType, parsed.packageId, parsed.duration);
+    if (!meta || meta.packageType !== String(packageType)) {
+        return { error: "Unknown or invalid package" } as const;
+    }
+    // Price is the live Tebex price (server-authoritative, never the client's).
+    const pkg = await resolvePackage(parsed.packageType, parsed.packageId, parsed.duration);
+    if (!pkg) {
+        return { error: "Pricing not available for this package yet (Tebex not configured)" } as const;
     }
 
+    // Server-authoritative metadata: overwrite anything the client tried to set
+    // that affects price or provisioning.
+    const safeMetadata = {
+        ...normalizedMetadata,
+        packageType: pkg.packageType,
+        packageId: pkg.packageId,
+        slotsToAdd: pkg.slots,
+        slotsPerMonth: pkg.slots,
+        durationMonths: pkg.durationMonths,
+        ...(pkg.durationWeeks != null ? { durationWeeks: pkg.durationWeeks } : {}),
+    };
+
     return {
-        title,
-        price: parsedPrice,
-        metadata: normalizedMetadata,
+        title: typeof title === "string" && title.trim() ? title : `${couponScope} - ${pkg.packageId}`,
+        price: pkg.price,
+        metadata: safeMetadata,
     };
 }
 
@@ -116,7 +141,7 @@ export async function POST(request: NextRequest) {
 
             const [newCart] = await db.insert(carts)
                 .values({
-                    id: generateNumericId(),
+                    id: generateNumericId(), // app-generated integer PK (prod has manual PKs)
                     userId: user.id,
                     status: "active",
                 })
@@ -128,7 +153,7 @@ export async function POST(request: NextRequest) {
         // 3. Fetch actual item or use provided package data
         let item;
 
-        const customPackageItem = getCustomPackageItem(itemType, title, price, metadata);
+        const customPackageItem = await getCustomPackageItem(itemType, itemId, title, metadata);
 
         if (customPackageItem && "error" in customPackageItem) {
             return NextResponse.json(
@@ -143,25 +168,29 @@ export async function POST(request: NextRequest) {
             item = await db.query.subscriptions.findFirst({
                 where: eq(subscriptions.id, itemId),
             });
-        } else if (itemType === "prop" && typeof title === "string" && price !== undefined) {
-            const parsedPrice = Number(price);
-
-            if (Number.isNaN(parsedPrice)) {
-                return NextResponse.json(
-                    { error: "Invalid price" },
-                    { status: 400 }
-                );
-            }
-
-            item = {
-                title,
-                price: parsedPrice,
-                metadata: metadata ?? null,
-            } as any;
         } else {
-            item = await db.query.approvedProps.findFirst({
+            // Props: priced LIVE from the prop's Tebex package (never the client).
+            // FiveCrux is the only lister; each prop carries its FiveCrux-store
+            // tebex_package_id. A prop with no live Tebex price isn't purchasable.
+            const prop = await db.query.approvedProps.findFirst({
                 where: eq(approvedProps.id, itemId),
             });
+            if (prop) {
+                const live = await getLivePriceByPackageId(prop.tebexPackageId);
+                if (!live) {
+                    return NextResponse.json(
+                        { error: "This prop isn't available for purchase yet (Tebex package not configured)" },
+                        { status: 400 }
+                    );
+                }
+                item = {
+                    title: prop.name,
+                    price: live.amount,
+                    // Carry the prop's Tebex package id so checkout can add it to
+                    // FiveCrux's basket.
+                    metadata: { ...(normalizeMetadata(metadata) ?? {}), tebexPackageId: prop.tebexPackageId },
+                } as any;
+            }
         }
 
         if (!item) {
@@ -195,7 +224,7 @@ export async function POST(request: NextRequest) {
 
             await db.insert(cartItems)
                 .values({
-                    id: generateNumericId(),
+                    id: generateNumericId(), // app-generated integer PK (prod has manual PKs)
                     cartId: cart.id,
 
                     itemType,

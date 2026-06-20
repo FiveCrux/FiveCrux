@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FiveCrux — Compact Premium</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<script>tailwind.config={theme:{extend:{fontFamily:{sans:["Inter","sans-serif"]},colors:{brand:{orange:"#f97316"}}}}}</script>
+<style>
+  body{font-family:Inter,sans-serif;background:#070707;color:#fff}
+  .num{font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body class="grid min-h-screen place-items-center px-6 py-12">
+
+<div class="w-full max-w-[360px]">
+  <!-- COMPACT PREMIUM: dense, tight, refined -->
+  <div class="overflow-hidden rounded-[22px] border border-white/[0.07] bg-[#0e0e0e] shadow-[0_24px_60px_-22px_rgba(0,0,0,0.85)]">
+
+    <!-- Hero: shorter, prize name + category inline -->
+    <div class="relative h-32">
+      <img src="https://img.forgemods.de/images/thumb/images/4f205008-65c0-4591-9561-33c232a2bc20_gta5map_ls_legion_square_park_bed357ad-959c-4e1e-9420-c793a2ad905f.webp" class="h-full w-full object-cover" />
+      <div class="absolute inset-0 bg-gradient-to-t from-[#0e0e0e] via-[#0e0e0e]/40 to-transparent"></div>
+      <span class="absolute left-3.5 top-3.5 rounded-full bg-black/45 px-2.5 py-1 text-[10px] font-semibold tracking-wide text-white/85 backdrop-blur-md ring-1 ring-white/10">FiveM · MLO</span>
+    </div>
+
+    <div class="px-5 pb-5 pt-4">
+      <!-- Title block, tight -->
+      <div class="text-[10px] font-medium uppercase tracking-[0.18em] text-orange-400/90">You could win</div>
+      <h3 class="mt-1 text-[19px] font-extrabold leading-tight tracking-tight">LS Legion Square Park</h3>
+
+      <!-- worth + free cue on ONE row -->
+      <div class="mt-3.5 flex items-center justify-between">
+        <div class="flex items-baseline gap-2">
+          <span class="num text-[26px] font-extrabold leading-none tracking-tight">$19.99</span>
+          <span class="text-[11px] font-medium uppercase tracking-[0.14em] text-white/35">worth</span>
+        </div>
+        <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/12 px-2.5 py-1 text-[11px] font-bold text-emerald-400 ring-1 ring-emerald-500/25">
+          <i data-lucide="ticket" class="h-3.5 w-3.5"></i> Free entry
+        </span>
+      </div>
+
+      <!-- slim countdown line -->
+      <div class="mt-4 flex items-baseline justify-between">
+        <span class="text-[12px] text-white/40">Ends in</span>
+        <span class="num text-[13px] font-semibold"><span class="text-white">4d</span> <span class="text-white">23h</span> <span class="text-white/45">33m</span></span>
+      </div>
+      <div class="mt-2 h-1 w-full overflow-hidden rounded-full bg-white/[0.07]">
+        <div class="h-full rounded-full bg-gradient-to-r from-orange-500 to-orange-400" style="width:62%"></div>
+      </div>
+      <div class="mt-1.5 flex justify-between text-[10px] text-white/30">
+        <span>Jun 19</span><span>Jun 24, 2026</span>
+      </div>
+
+      <!-- CTA -->
+      <button class="group mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-orange-500 py-3 text-[15px] font-bold text-black transition hover:bg-orange-400">
+        Enter Giveaway
+        <i data-lucide="arrow-right" class="h-4 w-4 transition-transform group-hover:translate-x-0.5"></i>
+      </button>
+      <p class="mt-2 flex items-center justify-center gap-1.5 text-[11px] text-white/35">
+        <i data-lucide="shield-check" class="h-3.5 w-3.5"></i> Winner drawn automatically &amp; fairly
+      </p>
+
+      <!-- social proof condensed: avatars + count -->
+      <div class="mt-4 flex items-center gap-2.5">
+        <div class="flex -space-x-2">
+          <span class="grid h-6 w-6 place-items-center rounded-full bg-orange-500/80 text-[9px] font-bold text-black ring-2 ring-[#0e0e0e]">A</span>
+          <span class="grid h-6 w-6 place-items-center rounded-full bg-sky-500/80 text-[9px] font-bold text-black ring-2 ring-[#0e0e0e]">R</span>
+          <span class="grid h-6 w-6 place-items-center rounded-full bg-violet-500/80 text-[9px] font-bold text-black ring-2 ring-[#0e0e0e]">K</span>
+        </div>
+        <p class="text-[12px] text-white/55"><span class="num font-semibold text-white">1,277</span> entered · <span class="text-white/40">you haven't yet</span></p>
+      </div>
+    </div>
+
+    <!-- minimal host footer -->
+    <div class="flex items-center gap-2.5 border-t border-white/[0.06] bg-white/[0.015] px-5 py-3">
+      <span class="grid h-7 w-7 place-items-center rounded-full bg-gradient-to-br from-orange-500 to-amber-400 text-[12px] font-black text-black">F</span>
+      <div class="flex items-center gap-1 text-[13px] font-semibold leading-none">Forge Studios <i data-lucide="badge-check" class="h-3.5 w-3.5 text-orange-400"></i></div>
+      <button class="ml-auto text-[11px] font-semibold text-white/55 transition hover:text-white">View →</button>
+    </div>
+  </div>
+</div>
+
+<script>lucide.createIcons()</script>
+</body>
+</html>

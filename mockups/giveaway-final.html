@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FiveCrux — Giveaways</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<script>
+  tailwind.config = { theme: { extend: { fontFamily: { sans: ["Inter","sans-serif"] }, colors: { brand: { orange: "#f97316" } } } } }
+</script>
+<style>
+  body{font-family:Inter,sans-serif;background:#0a0a0a;color:#fff}
+  .card{transition:transform .2s ease, border-color .2s ease}
+  .card:hover{transform:translateY(-4px);border-color:rgba(249,115,22,.4)}
+  .btn{transition:background .15s ease}
+  ::-webkit-scrollbar{width:9px}::-webkit-scrollbar-track{background:#0a0a0a}::-webkit-scrollbar-thumb{background:#262626;border-radius:8px}
+</style>
+</head>
+<body class="antialiased">
+
+<!-- NAV -->
+<header class="sticky top-0 z-50 border-b border-white/[0.06] bg-[#0a0a0a]/80 backdrop-blur-md">
+  <nav class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+    <a href="#" class="text-xl font-extrabold tracking-tight"><span class="text-brand-orange">Five</span><span>Crux</span></a>
+    <div class="hidden items-center gap-7 text-sm font-medium text-white/60 md:flex">
+      <a class="hover:text-white" href="#">Home</a><a class="hover:text-white" href="#">Scripts</a>
+      <a class="hover:text-white" href="#">Props</a><a class="text-white" href="#">Giveaways</a>
+      <a class="hover:text-white" href="#">Advertise</a>
+    </div>
+    <button class="rounded-lg border border-white/15 px-4 py-2 text-sm font-semibold hover:bg-white/5">Login</button>
+  </nav>
+</header>
+
+<main class="mx-auto max-w-7xl px-6 pb-24 pt-12">
+
+  <!-- HEADER -->
+  <div class="mb-8 flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <div class="mb-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs font-medium text-white/60">
+        <span class="h-1.5 w-1.5 rounded-full bg-brand-orange"></span> 6 live giveaways
+      </div>
+      <h1 class="text-4xl font-extrabold tracking-tight sm:text-5xl">Giveaways</h1>
+      <p class="mt-2 text-white/55">Enter to win premium scripts, MLOs, and full server packs — free.</p>
+    </div>
+    <div class="flex items-center gap-1 rounded-xl border border-white/10 bg-white/[0.03] p-1 text-sm">
+      <button class="rounded-lg bg-white/10 px-4 py-1.5 font-semibold">Active</button>
+      <button class="rounded-lg px-4 py-1.5 text-white/50 hover:text-white">Ended</button>
+    </div>
+  </div>
+
+  <!-- FEATURED (modest) -->
+  <div class="card mb-12 grid overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.03] md:grid-cols-2">
+    <div class="relative min-h-[260px]">
+      <img src="https://img.forgemods.de/images/thumb/images/gta5map_midnight_heist_garage_interior_c92db0de-9ec3-478c-88f1-f775ffb7225c.webp" alt="" class="absolute inset-0 h-full w-full object-cover" />
+      <div class="absolute inset-0 bg-gradient-to-r from-transparent to-[#0a0a0a]/30 md:to-[#0a0a0a]"></div>
+      <span class="absolute left-4 top-4 rounded-md bg-brand-orange px-2.5 py-1 text-xs font-bold text-black">FEATURED</span>
+    </div>
+    <div class="flex flex-col justify-center gap-5 p-8 sm:p-10">
+      <div>
+        <h2 class="text-2xl font-extrabold sm:text-3xl">Full Server Starter Pack</h2>
+        <p class="mt-2 text-white/55">10 premium scripts + 3 MLOs to launch your server. One lucky winner takes it all.</p>
+      </div>
+      <div class="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm">
+        <div><span class="text-2xl font-extrabold text-white">$600</span> <span class="text-white/45">prize value</span></div>
+        <span class="h-4 w-px bg-white/10"></span>
+        <span class="flex items-center gap-1.5 text-white/60"><i data-lucide="users" class="h-4 w-4"></i> 3,400 entries</span>
+        <span class="flex items-center gap-1.5 text-white/60"><i data-lucide="clock" class="h-4 w-4 text-brand-orange"></i> Ends in 18h</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <button class="btn flex items-center gap-2 rounded-xl bg-brand-orange px-6 py-3 font-semibold text-black hover:bg-orange-400">Enter Giveaway <i data-lucide="arrow-right" class="h-4 w-4"></i></button>
+        <span class="text-sm text-white/45">Hosted by FiveCrux</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- GRID -->
+  <div class="mb-5 flex items-center justify-between">
+    <h3 class="text-lg font-bold">All giveaways</h3>
+    <span class="text-sm text-white/40">Showing 6</span>
+  </div>
+
+  <div id="grid" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"></div>
+</main>
+
+<script>
+  const items = [
+    { title:"Casino Heist Script Bundle", value:"$450", entries:"1,240", left:"2d 14h", host:"HighRoller", img:"https://img.forgemods.de/images/thumb/images/gta5map_gaming_e83b6804-9d4f-4a0c-bb8f-ed72882d7d9b.webp" },
+    { title:"Premium Scripts Mega Bundle", value:"$1,200", entries:"5,100", left:"1d 3h", host:"CruxDev", img:"https://img.forgemods.de/images/thumb/images/4f205008-65c0-4591-9561-33c232a2bc20_gta5map_ls_legion_square_park_bed357ad-959c-4e1e-9420-c793a2ad905f.webp" },
+    { title:"Luxury Apartments MLO", value:"$35", entries:"880", left:"4d 6h", host:"MapMasters", img:"https://img.forgemods.de/images/thumb/images/gta5map_vinewood_lake_villa_03_33f120b6-d81c-4c10-973d-c4522420e975.webp" },
+    { title:"Police MDT + Dispatch", value:"$25", entries:"760", left:"3d 9h", host:"NightShift", img:"https://img.forgemods.de/images/thumb/images/c56a6a29-9469-4875-8557-679884d124a6_gta5map_los_santos_medical_center_cd5cc62b-caf0-4021-bdf0-debb98f190fe.webp" },
+    { title:"Drift Car Pack (15)", value:"$15", entries:"540", left:"6d", host:"RevHead", img:"https://img.forgemods.de/images/thumb/images/gta5map_vespucci_park_aa153844-cdda-438b-9de6-1126b10052f8.webp" },
+    { title:"Downtown Pawnshop MLO", value:"$40", entries:"610", left:"5d 2h", host:"Fiv3Devs", img:"https://img.forgemods.de/images/thumb/images/gta5map_fiv3devs_pawnshop_e5ba64ad-7ce1-4164-ae4a-06d4db642c39.webp" },
+  ];
+  document.getElementById("grid").innerHTML = items.map(it => `
+    <div class="card overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.03]">
+      <div class="relative h-44">
+        <img src="${it.img}" alt="" class="h-full w-full object-cover" />
+        <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent"></div>
+        <span class="absolute left-3 top-3 rounded-md bg-black/60 px-2 py-1 text-xs font-bold backdrop-blur-sm">${it.value} <span class="font-medium text-white/55">value</span></span>
+        <span class="absolute right-3 top-3 flex items-center gap-1 rounded-md bg-black/50 px-2 py-1 text-[11px] font-medium text-white/80 backdrop-blur-sm"><span class="h-1.5 w-1.5 rounded-full bg-brand-orange"></span> Live</span>
+      </div>
+      <div class="p-5">
+        <h4 class="text-base font-bold leading-snug">${it.title}</h4>
+        <div class="mt-2 flex items-center gap-2 text-sm text-white/50">
+          <span class="grid h-5 w-5 place-items-center rounded-full bg-white/10 text-[10px] font-bold">${it.host.charAt(0)}</span>
+          ${it.host}
+        </div>
+        <div class="mt-4 flex items-center gap-4 border-t border-white/[0.06] pt-4 text-sm text-white/55">
+          <span class="flex items-center gap-1.5"><i data-lucide="users" class="h-4 w-4"></i> ${it.entries}</span>
+          <span class="flex items-center gap-1.5"><i data-lucide="clock" class="h-4 w-4"></i> ${it.left} left</span>
+        </div>
+        <button class="btn mt-4 w-full rounded-xl bg-brand-orange py-2.5 text-sm font-semibold text-black hover:bg-orange-400">Enter Giveaway</button>
+      </div>
+    </div>`).join("");
+  lucide.createIcons();
+</script>
+</body>
+</html>

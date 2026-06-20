@@ -10,6 +10,7 @@ import { Toaster as Sonner } from "@/componentss/ui/sonner"
 import { AutoCheckWrapper } from "@/components/auto-check-wrapper"
 import { Analytics } from "@vercel/analytics/next"
 import FirebaseAnalytics from "@/componentss/FirebaseAnalytics"
+import ImpersonationWidget from "@/componentss/dev/impersonation-widget"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
@@ -36,6 +37,7 @@ export default function RootLayout({
               <Toaster />
               <Sonner />
               <Analytics />
+              <ImpersonationWidget />
             </ThemeProvider>
           </QueryProvider>
         </SessionProvider>

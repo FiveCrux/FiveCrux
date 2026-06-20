@@ -1,8 +1,19 @@
 import { NextRequest, NextResponse } from "next/server"
-import { updateUserRole } from "@/lib/database-new"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/auth"
+import { updateUserRole, getUserById } from "@/lib/database-new"
 
 export async function POST(request: NextRequest) {
   try {
+    // SECURITY: this endpoint grants the FOUNDER role — it must require an
+    // existing founder/admin session. (Previously unauthenticated: anyone could
+    // POST {userId} and promote any account to founder.)
+    const session = await getServerSession(authOptions)
+    const roles = (session?.user as any)?.roles || []
+    if (!session?.user || !(roles.includes("founder") || roles.includes("admin"))) {
+      return NextResponse.json({ error: "Founder or admin access required" }, { status: 403 })
+    }
+
     const body = await request.json()
     const { userId } = body
 
@@ -11,8 +22,11 @@ export async function POST(request: NextRequest) {
     }
 
     console.log(`Setting user ${userId} as founder...`)
-    
-    const result = await updateUserRole(userId, ['founder'])
+
+    // ADD the founder role — don't overwrite the user's existing roles (M6).
+    const existing = await getUserById(userId)
+    const mergedRoles = Array.from(new Set([...((existing?.roles as string[]) || []), "founder"]))
+    const result = await updateUserRole(userId, mergedRoles)
     
     if (result) {
       console.log('✅ User set as founder successfully!')

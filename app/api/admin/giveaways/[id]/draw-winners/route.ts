@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/auth'
 import { db } from '@/lib/db/client'
-import { approvedGiveaways, giveawayEntries, giveawayPrizes } from '@/lib/db/schema'
+import { approvedGiveaways, giveawayEntries, giveawayPrizes, giveawayPrizeWinners } from '@/lib/db/schema'
 import { eq, and, asc } from 'drizzle-orm'
 import { announceGiveawayWinners } from '@/lib/discord'
 
@@ -139,8 +139,11 @@ export async function POST(
       return NextResponse.json({ error: 'No eligible winners could be assigned' }, { status: 400 })
     }
 
-    // Persist winners to prizes
-    for (const w of winnersForPrizes) {
+    // Persist winners to prizes (deprecated scalar fields) AND to the canonical
+    // giveaway_prize_winners table (I10) — getGiveawayById reads winners from
+    // there, so without this the drawn winners would never display.
+    for (let wi = 0; wi < winnersForPrizes.length; wi++) {
+      const w = winnersForPrizes[wi]
       await db
         .update(giveawayPrizes)
         .set({
@@ -149,6 +152,19 @@ export async function POST(
           claimed: false,
         })
         .where(eq(giveawayPrizes.id, w.prizeId))
+
+      // Overwrite mode: clear any prior winner rows for this prize first.
+      if (overwriteExisting) {
+        await db.delete(giveawayPrizeWinners).where(eq(giveawayPrizeWinners.prizeId, w.prizeId))
+      }
+      await db.insert(giveawayPrizeWinners).values({
+        id: Math.floor(Date.now() / 1000) + Math.floor(Math.random() * 100000) + wi,
+        prizeId: w.prizeId,
+        userId: w.userId,
+        userName: w.userName ?? null,
+        userEmail: w.userEmail ?? null,
+        claimed: false,
+      })
     }
 
     // Announce to Discord if configured

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FiveCrux — Giveaways · Jackpot</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: { sans: ['Inter', 'sans-serif'] },
+      colors: { brand: { orange: '#f97316', yellow: '#facc15' } }
+    }
+  }
+}
+</script>
+<style>
+  body{font-family:'Inter',sans-serif;background:#0a0a0a;color:#fff}
+  .glass{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);backdrop-filter:blur(12px)}
+  .glass-strong{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.10);backdrop-filter:blur(16px)}
+  .ph{background:linear-gradient(135deg,#1c1c22 0%,#27272a 100%);position:relative;overflow:hidden}
+  .ph::after{content:attr(data-name);position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:1rem;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,0.07);font-size:clamp(.9rem,2.5vw,1.6rem);line-height:1.1}
+  .neon{text-shadow:0 0 18px rgba(249,115,22,.65),0 0 42px rgba(249,115,22,.35)}
+  .neon-y{text-shadow:0 0 18px rgba(250,204,21,.6),0 0 46px rgba(250,204,21,.3)}
+  .jackpot-banner{background:
+    radial-gradient(80% 140% at 20% 0%,rgba(249,115,22,.35),transparent 60%),
+    radial-gradient(80% 140% at 80% 100%,rgba(250,204,21,.22),transparent 60%),
+    linear-gradient(135deg,#16110a,#0c0c0e);
+    border:1px solid rgba(249,115,22,.4)}
+  .ring-glow{box-shadow:0 0 0 1px rgba(249,115,22,.5),0 0 40px rgba(249,115,22,.35)}
+  .card-energy{transition:all .22s ease;position:relative}
+  .card-energy:hover{transform:translateY(-6px) scale(1.01);border-color:rgba(249,115,22,.55);box-shadow:0 20px 50px rgba(249,115,22,.18)}
+  .count-flip{font-variant-numeric:tabular-nums}
+  .pulse-num{animation:flick 2.4s ease-in-out infinite}
+  @keyframes flick{0%,100%{opacity:1}50%{opacity:.78}}
+  .live-dot{width:8px;height:8px;border-radius:99px;background:#facc15;animation:pulse 1.5s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(250,204,21,.6)}70%{box-shadow:0 0 0 8px rgba(250,204,21,0)}100%{box-shadow:0 0 0 0 rgba(250,204,21,0)}}
+  .ticket{-webkit-mask:radial-gradient(circle 9px at 0 50%,transparent 98%,#000) left/100% 100%,radial-gradient(circle 9px at 100% 50%,transparent 98%,#000) right/100% 100%;mask-composite:intersect}
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-track{background:#0a0a0a}
+  ::-webkit-scrollbar-thumb{background:#27272a;border-radius:8px;border:2px solid #0a0a0a}
+  ::-webkit-scrollbar-thumb:hover{background:#f97316}
+</style>
+</head>
+<body class="text-white">
+
+<!-- ===== NAVBAR ===== -->
+<header class="sticky top-0 z-50 glass-strong">
+  <div class="max-w-[1400px] mx-auto px-5 h-[64px] flex items-center gap-6">
+    <a href="#" class="text-2xl font-black tracking-tight shrink-0">
+      <span class="text-brand-orange">Five</span><span class="text-brand-yellow">Crux</span>
+    </a>
+    <nav class="hidden md:flex items-center gap-7 text-sm font-medium text-white/70 ml-2">
+      <a href="#" class="hover:text-white transition">Home</a>
+      <a href="#" class="hover:text-white transition">Scripts</a>
+      <a href="#" class="hover:text-white transition">Props</a>
+      <a href="#" class="text-white font-semibold">Giveaways</a>
+      <a href="#" class="hover:text-white transition">Advertise</a>
+    </nav>
+    <button class="glass rounded-xl text-sm font-semibold px-5 h-10 hover:border-white/20 transition ml-auto">Login</button>
+  </div>
+</header>
+
+<main class="max-w-[1400px] mx-auto px-5 pb-24">
+
+  <!-- concept chip -->
+  <div class="pt-7 pb-5">
+    <span class="inline-flex items-center gap-2 glass rounded-full px-3 py-1.5 text-[11px] font-semibold tracking-wide text-white/60">
+      <i data-lucide="sparkles" class="w-3.5 h-3.5 text-brand-yellow"></i> CONCEPT · JACKPOT / HYPE
+    </span>
+  </div>
+
+  <!-- ===== JACKPOT BANNER ===== -->
+  <section class="jackpot-banner rounded-2xl p-7 sm:p-10 mb-7 text-center relative overflow-hidden">
+    <div class="absolute -top-10 -left-10 opacity-10"><i data-lucide="coins" class="w-40 h-40"></i></div>
+    <div class="absolute -bottom-12 -right-8 opacity-10"><i data-lucide="ticket" class="w-44 h-44"></i></div>
+    <span class="inline-flex items-center gap-2 bg-brand-orange/15 border border-brand-orange/40 text-brand-orange text-xs font-extrabold px-3 py-1.5 rounded-full uppercase tracking-widest">
+      <i data-lucide="trophy" class="w-3.5 h-3.5"></i> The FiveCrux Jackpot
+    </span>
+    <p class="mt-5 text-sm uppercase tracking-[0.25em] text-white/45 font-semibold">Total prizes given away</p>
+    <h1 class="mt-2 text-6xl sm:text-8xl font-black text-brand-orange neon count-flip">$84,250</h1>
+    <p class="mt-4 text-white/55 max-w-xl mx-auto text-sm sm:text-base">6 jackpots live right now. Drop a ticket, spin the odds, win premium FiveM gear — totally free.</p>
+    <div class="mt-7 flex flex-wrap items-center justify-center gap-3">
+      <div class="glass-strong rounded-xl px-5 py-3 flex items-center gap-2.5"><i data-lucide="gift" class="w-5 h-5 text-brand-yellow"></i><span class="font-bold">6</span><span class="text-white/50 text-sm">live drops</span></div>
+      <div class="glass-strong rounded-xl px-5 py-3 flex items-center gap-2.5"><i data-lucide="users" class="w-5 h-5 text-brand-orange"></i><span class="font-bold">11,920</span><span class="text-white/50 text-sm">entries today</span></div>
+      <div class="glass-strong rounded-xl px-5 py-3 flex items-center gap-2.5"><span class="live-dot"></span><span class="text-white/50 text-sm">winners drawn live</span></div>
+    </div>
+  </section>
+
+  <!-- ===== GRID HEADER ===== -->
+  <div class="flex items-end justify-between mb-6 mt-12">
+    <h3 class="text-2xl sm:text-3xl font-black tracking-tight flex items-center gap-2.5">
+      <i data-lucide="ticket" class="w-7 h-7 text-brand-orange"></i> Live Jackpots
+    </h3>
+    <a href="#" class="hidden sm:inline-flex items-center gap-1.5 text-sm text-white/60 hover:text-white transition">All draws <i data-lucide="arrow-right" class="w-4 h-4"></i></a>
+  </div>
+
+  <!-- ===== GRID ===== -->
+  <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5" id="grid"></div>
+
+</main>
+
+<script>
+const items = [
+  {name:"Premium Scripts Mega Bundle", value:"$1,200", entries:"5,100", ends:"1d 3h", host:"CruxDev", hot:true},
+  {name:"Full Server Starter Pack", value:"$600", entries:"3,400", ends:"18h", host:"FiveCrux", hot:true},
+  {name:"Casino Heist Script Bundle", value:"$450", entries:"1,240", ends:"2d 14h", host:"HighRoller", hot:false},
+  {name:"Police MDT + Dispatch", value:"$25", entries:"760", ends:"3d 9h", host:"NightShift", hot:false},
+  {name:"Luxury Apartments MLO", value:"$35", entries:"880", ends:"4d 6h", host:"MapMasters", hot:false},
+  {name:"Drift Car Pack (15)", value:"$15", entries:"540", ends:"6d", host:"RevHead", hot:false}
+];
+document.getElementById('grid').innerHTML = items.map(i=>`
+  <div class="glass-strong rounded-2xl overflow-hidden card-energy flex flex-col ${i.hot?'ring-glow':''}">
+    <div class="ph h-40 relative" data-name="${i.name}">
+      ${i.hot?`<span class="absolute top-3 left-3 inline-flex items-center gap-1.5 bg-brand-orange text-black text-[11px] font-extrabold px-2.5 py-1 rounded-full uppercase tracking-wide"><i data-lucide="flame" class="w-3 h-3"></i> Hot</span>`:''}
+      <span class="absolute top-3 right-3 inline-flex items-center gap-1.5 glass-strong text-[11px] font-semibold px-2.5 py-1 rounded-full"><span class="live-dot"></span> LIVE</span>
+      <div class="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/70 to-transparent flex items-end justify-between">
+        <span class="text-[11px] text-white/60 flex items-center gap-1.5"><i data-lucide="gift" class="w-3.5 h-3.5"></i> ${i.host}</span>
+      </div>
+    </div>
+    <div class="p-5 flex flex-col flex-1">
+      <h4 class="font-bold text-lg leading-snug min-h-[3rem]">${i.name}</h4>
+
+      <!-- prize ticket -->
+      <div class="ticket mt-3 bg-gradient-to-r from-brand-orange/15 to-brand-yellow/10 border border-brand-yellow/25 rounded-lg px-4 py-2.5 flex items-center justify-between">
+        <span class="text-[10px] uppercase tracking-widest text-white/45 font-semibold flex items-center gap-1.5"><i data-lucide="trophy" class="w-3.5 h-3.5 text-brand-yellow"></i> Jackpot</span>
+        <span class="text-2xl font-black text-brand-yellow neon-y pulse-num count-flip">${i.value}</span>
+      </div>
+
+      <div class="flex items-center justify-between text-sm text-white/55 mt-4">
+        <span class="flex items-center gap-1.5"><i data-lucide="users" class="w-4 h-4"></i> ${i.entries}</span>
+        <span class="flex items-center gap-1.5 text-brand-orange font-bold"><i data-lucide="clock" class="w-4 h-4"></i> ${i.ends}</span>
+      </div>
+
+      <button class="mt-5 w-full bg-gradient-to-r from-brand-orange to-brand-yellow text-black font-extrabold text-sm h-12 rounded-xl flex items-center justify-center gap-2 hover:brightness-110 transition">
+        <i data-lucide="ticket" class="w-4 h-4"></i> Enter Giveaway
+      </button>
+    </div>
+  </div>
+`).join('');
+lucide.createIcons();
+</script>
+</body>
+</html>

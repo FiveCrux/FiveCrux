@@ -55,38 +55,24 @@ export interface ProductCardProps {
 
 // ─── Badge config ─────────────────────────────────────────────────────────────
 
-const BADGE_STYLES: Record<BadgeVariant, { label: string; style: React.CSSProperties }> = {
+const BADGE_STYLES: Record<BadgeVariant, { label: string; className: string }> = {
   new: {
     label: "New",
-    style: {
-      background: "rgba(29,158,117,0.18)",
-      color: "#1d9e75",
-      border: "1px solid rgba(29,158,117,0.28)",
-    },
+    className:
+      "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30",
   },
   sale: {
     label: "Sale",
-    style: {
-      background: "rgba(232,64,64,0.18)",
-      color: "#e84040",
-      border: "1px solid rgba(232,64,64,0.28)",
-    },
+    className: "bg-rose-500/15 text-rose-400 border border-rose-500/30",
   },
   standalone: {
     label: "Standalone",
-    style: {
-      background: "rgba(255,255,255,0.07)",
-      color: "rgba(255,255,255,0.45)",
-      border: "1px solid rgba(255,255,255,0.1)",
-    },
+    className: "bg-white/[0.06] text-white/55 border border-white/10",
   },
   featured: {
     label: "Featured",
-    style: {
-      background: "rgba(234,179,8,0.18)",
-      color: "#ca8a04",
-      border: "1px solid rgba(234,179,8,0.28)",
-    },
+    className:
+      "bg-orange-500/15 text-orange-300 border border-orange-500/30",
   },
 };
 
@@ -102,8 +88,8 @@ function StarRating({
   label?: string;
 }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-      <div style={{ display: "flex", gap: "2px" }}>
+    <div className="flex items-center gap-1.5">
+      <div className="flex gap-0.5">
         {[1, 2, 3, 4, 5].map((star) => {
           const filled = rating >= star;
           const half = !filled && rating >= star - 0.5;
@@ -113,15 +99,15 @@ function StarRating({
               width="12"
               height="12"
               viewBox="0 0 24 24"
-              fill={filled ? "#f97316" : half ? "url(#halfGrad)" : "none"}
-              stroke={filled || half ? "#f97316" : "rgba(255,255,255,0.2)"}
+              fill={filled ? "#facc15" : half ? "url(#halfGrad)" : "none"}
+              stroke={filled || half ? "#facc15" : "rgba(255,255,255,0.2)"}
               strokeWidth="1.8"
-              style={{ flexShrink: 0 }}
+              className="flex-shrink-0"
             >
               {half && (
                 <defs>
                   <linearGradient id="halfGrad">
-                    <stop offset="50%" stopColor="#f97316" />
+                    <stop offset="50%" stopColor="#facc15" />
                     <stop offset="50%" stopColor="transparent" />
                   </linearGradient>
                 </defs>
@@ -131,14 +117,7 @@ function StarRating({
           );
         })}
       </div>
-      <span
-        style={{
-          fontSize: "10px",
-          color: "rgba(255,255,255,0.3)",
-          fontWeight: 500,
-          letterSpacing: "0.01em",
-        }}
-      >
+      <span className="text-[10px] font-medium tracking-[0.01em] text-white/55">
         ({count.toLocaleString()}{label ? ` ${label}` : ""})
       </span>
     </div>
@@ -154,7 +133,7 @@ function HeartIcon({ filled }: { filled: boolean }) {
       height="14"
       viewBox="0 0 24 24"
       fill={filled ? "#f97316" : "none"}
-      stroke={filled ? "#f97316" : "rgba(255,255,255,0.4)"}
+      stroke={filled ? "#f97316" : "rgba(255,255,255,0.5)"}
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -174,7 +153,7 @@ function VerifiedBadge() {
       viewBox="0 0 24 24"
       fill="none"
       aria-label="Verified"
-      style={{ flexShrink: 0 }}
+      className="flex-shrink-0"
     >
       <circle cx="12" cy="12" r="10" fill="#1d9e75" />
       <polyline
@@ -235,60 +214,23 @@ export function ProductCard({
 
   return (
     <article
-      className={className}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      style={{
-        background: "#16161a",
-        borderRadius: "14px",
-        border: hovered
-          ? "1px solid rgba(249,115,22,0.25)"
-          : "1px solid rgba(255,255,255,0.07)",
-        transform: hovered ? "translateY(-4px)" : "translateY(0)",
-        transition:
-          "transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease",
-        boxShadow: hovered
-          ? "0 16px 48px rgba(0,0,0,0.55)"
-          : "0 4px 24px rgba(0,0,0,0.35)",
-        width: "100%",
-        overflow: "hidden",
-        cursor: "default",
-        position: "relative",
-        fontFamily: "'Inter', 'Segoe UI', sans-serif",
-      }}
+      className={`group relative w-full overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.04] backdrop-blur-md transition-all duration-200 hover:-translate-y-1.5 hover:border-orange-500/40 hover:shadow-[0_16px_48px_rgba(0,0,0,0.55)] ${className ?? ""}`}
     >
       {/* ── Image Section ──────────────────────────────────────── */}
-      <div
-        style={{
-          position: "relative",
-          aspectRatio: "16 / 10",
-          background: "#111113",
-          overflow: "hidden",
-        }}
-      >
+      <div className="relative aspect-[16/10] overflow-hidden bg-[#111113]">
         {/* Product image */}
         <Image
           src={image}
           alt={imageAlt}
           fill
           sizes="(max-width: 768px) 100vw, 400px"
-          style={{
-            objectFit: "cover",
-            transform: hovered ? "scale(1.04)" : "scale(1)",
-            transition: "transform 0.35s ease",
-          }}
+          className="object-cover transition-transform duration-300 group-hover:scale-105"
         />
 
         {/* Vignette */}
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            background:
-              "linear-gradient(to bottom, rgba(10,10,12,0.18) 0%, transparent 40%, rgba(10,10,12,0.45) 100%)",
-            pointerEvents: "none",
-          }}
-        />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/20" />
 
         {/* Custom image overlay (e.g. "Ended" stamp) */}
         {imageOverlay}
@@ -296,20 +238,7 @@ export function ProductCard({
         {/* Top-left: badge pill */}
         {badgeConfig && resolvedBadgeLabel && (
           <span
-            style={{
-              position: "absolute",
-              top: "10px",
-              left: "10px",
-              fontSize: "10px",
-              fontWeight: 600,
-              textTransform: "uppercase",
-              letterSpacing: "0.04em",
-              padding: "3px 8px",
-              borderRadius: "99px",
-              lineHeight: 1,
-              zIndex: 10,
-              ...badgeConfig.style,
-            }}
+            className={`absolute left-2.5 top-2.5 z-10 rounded-full px-2 py-[3px] text-[10px] font-semibold uppercase leading-none tracking-[0.04em] ${badgeConfig.className}`}
           >
             {resolvedBadgeLabel}
           </span>
@@ -319,26 +248,9 @@ export function ProductCard({
         <button
           aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
           onClick={handleWishlist}
-          style={{
-            position: "absolute",
-            top: "10px",
-            right: "10px",
-            width: "30px",
-            height: "30px",
-            borderRadius: "50%",
-            background: "rgba(13,13,15,0.8)",
-            border: wishlisted
-              ? "1px solid rgba(249,115,22,0.35)"
-              : "1px solid rgba(255,255,255,0.1)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            cursor: "pointer",
-            transition: "border-color 0.2s ease, opacity 0.2s ease",
-            backdropFilter: "blur(6px)",
-            opacity: hovered ? 1 : 0.65,
-            zIndex: 10,
-          }}
+          className={`absolute right-2.5 top-2.5 z-10 flex h-[30px] w-[30px] items-center justify-center rounded-full bg-[#0d0d0f]/80 backdrop-blur-md transition-all duration-200 ${
+            wishlisted ? "border border-orange-500/40" : "border border-white/10"
+          } ${hovered ? "opacity-100" : "opacity-65"}`}
         >
           <HeartIcon filled={wishlisted} />
         </button>
@@ -349,68 +261,25 @@ export function ProductCard({
           tabIndex={0}
           onClick={onViewDetails}
           onKeyDown={(e) => e.key === "Enter" && onViewDetails?.()}
-          style={{
-            position: "absolute",
-            bottom: 0,
-            left: 0,
-            right: 0,
-            background: "rgba(10,10,12,0.88)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "6px",
-            padding: "10px 0",
-            opacity: hovered ? 1 : 0,
-            transform: hovered ? "translateY(0)" : "translateY(4px)",
-            transition: "opacity 0.22s ease, transform 0.22s ease",
-            cursor: "pointer",
-            backdropFilter: "blur(4px)",
-            zIndex: 11,
-          }}
+          className={`absolute inset-x-0 bottom-0 z-[11] flex cursor-pointer items-center justify-center gap-1.5 bg-[#0a0a0c]/90 py-2.5 backdrop-blur-sm transition-all duration-200 ${
+            hovered ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0"
+          }`}
         >
-          <span
-            style={{
-              fontSize: "11px",
-              fontWeight: 600,
-              color: "rgba(255,255,255,0.85)",
-              letterSpacing: "0.04em",
-              textTransform: "uppercase",
-              userSelect: "none",
-            }}
-          >
+          <span className="select-none text-[11px] font-semibold uppercase tracking-[0.04em] text-white/85">
             View details 👁
           </span>
         </div>
       </div>
 
       {/* ── Card Body ─────────────────────────────────────────── */}
-      <div style={{ padding: "14px 15px 15px" }}>
-
+      <div className="p-3.5">
         {/* Framework / category tags */}
         {tags.length > 0 && (
-          <div
-            style={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: "5px",
-              marginBottom: "8px",
-            }}
-          >
+          <div className="mb-2 flex flex-wrap gap-1.5">
             {tags.map((tag) => (
               <span
                 key={tag}
-                style={{
-                  fontSize: "10px",
-                  fontWeight: 600,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.04em",
-                  color: "rgba(255,255,255,0.35)",
-                  background: "rgba(255,255,255,0.06)",
-                  border: "1px solid rgba(255,255,255,0.06)",
-                  padding: "3px 7px",
-                  borderRadius: "5px",
-                  lineHeight: 1.4,
-                }}
+                className="rounded-md border border-white/10 bg-white/[0.06] px-[7px] py-[3px] text-[10px] font-semibold uppercase leading-snug tracking-[0.04em] text-white/55"
               >
                 {tag}
               </span>
@@ -419,88 +288,33 @@ export function ProductCard({
         )}
 
         {/* Title */}
-        <h3
-          style={{
-            fontSize: "13px",
-            fontWeight: 600,
-            color: "#f0f0f2",
-            margin: "0 0 10px",
-            lineHeight: 1.4,
-            letterSpacing: "-0.01em",
-            display: "-webkit-box",
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: "vertical",
-            overflow: "hidden",
-          }}
-        >
+        <h3 className="mb-2.5 line-clamp-2 text-[13px] font-semibold leading-snug tracking-[-0.01em] text-white">
           {title}
         </h3>
 
         {/* Author row */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "7px",
-            marginBottom: "9px",
-          }}
-        >
+        <div className="mb-2.5 flex items-center gap-1.5">
           {/* Avatar */}
           {authorImage ? (
-            <div
-              style={{
-                width: "18px",
-                height: "18px",
-                borderRadius: "50%",
-                overflow: "hidden",
-                flexShrink: 0,
-                position: "relative",
-              }}
-            >
+            <div className="relative h-[18px] w-[18px] flex-shrink-0 overflow-hidden rounded-full">
               <img
                 src={authorImage}
                 alt={author}
-
                 sizes="18px"
-                style={{ objectFit: "cover" }}
+                className="h-full w-full object-cover"
               />
             </div>
           ) : (
             <div
               aria-hidden="true"
-              style={{
-                width: "18px",
-                height: "18px",
-                borderRadius: "50%",
-                background: "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "7px",
-                fontWeight: 700,
-                color: "#fff",
-                flexShrink: 0,
-                letterSpacing: "0.02em",
-                textTransform: "uppercase",
-              }}
+              className="flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-yellow-400 text-[7px] font-bold uppercase tracking-[0.02em] text-black"
             >
               {authorInitials.slice(0, 2)}
             </div>
           )}
 
           {/* Username */}
-          <span
-            style={{
-              fontSize: "11px",
-              color: "rgba(255,255,255,0.3)",
-              fontWeight: 500,
-              flex: 1,
-              minWidth: 0,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
+          <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-white/55">
             {author}
           </span>
 
@@ -509,39 +323,17 @@ export function ProductCard({
         </div>
 
         {/* Star rating */}
-        <div style={{ marginBottom: "11px" }}>
+        <div className="mb-3">
           <StarRating rating={rating} count={reviewCount} label={reviewLabel} />
         </div>
 
         {/* Divider */}
-        <div
-          style={{
-            height: "1px",
-            background: "rgba(255,255,255,0.05)",
-            margin: "0 0 12px",
-          }}
-        />
+        <div className="mb-3 h-px bg-white/10" />
 
         {/* Bottom row: price + action */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: "8px",
-          }}
-        >
+        <div className="flex items-center justify-between gap-2">
           {/* Price */}
-          <span
-            style={{
-              fontSize: "17px",
-              fontWeight: 700,
-              color: "#f97316",
-              letterSpacing: "-0.02em",
-              lineHeight: 1,
-              flexShrink: 0,
-            }}
-          >
+          <span className="flex-shrink-0 text-[17px] font-extrabold leading-none tracking-[-0.02em] text-orange-400">
             {price}
           </span>
 
@@ -549,23 +341,11 @@ export function ProductCard({
           {customAction ?? (
             <button
               onClick={handleAddToCart}
-              style={{
-                fontSize: "11px",
-                fontWeight: 600,
-                color: "#f97316",
-                background: cartPressed
-                  ? "rgba(249,115,22,0.18)"
-                  : "rgba(249,115,22,0.1)",
-                border: "1px solid rgba(249,115,22,0.25)",
-                borderRadius: "7px",
-                padding: "6px 12px",
-                cursor: "pointer",
-                letterSpacing: "0.02em",
-                transition: "background 0.15s ease, transform 0.15s ease",
-                transform: cartPressed ? "scale(0.97)" : "scale(1)",
-                whiteSpace: "nowrap",
-                lineHeight: 1.2,
-              }}
+              className={`whitespace-nowrap rounded-lg border border-orange-500/30 px-3 py-1.5 text-[11px] font-semibold leading-[1.2] tracking-[0.02em] text-orange-400 transition-all duration-150 ${
+                cartPressed
+                  ? "scale-[0.97] bg-orange-500/20"
+                  : "scale-100 bg-orange-500/10 hover:bg-orange-500/20"
+              }`}
             >
               Add to cart
             </button>

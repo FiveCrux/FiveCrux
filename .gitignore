@@ -55,3 +55,17 @@ Thumbs.db
 AWS_S3_SETUP.md
 S3_SETUP_CHECKLIST.md
 GIVEAWAY_WINNER_SETUP.md
+# QA audit artifacts (screenshots + scratch scripts)
+mockups/_audit/
+
+# Local screenshots / scratch images
+/image.png
+/image copy.png
+image*.png
+
+# local dev DB (PGlite test harness)
+.pglite/
+.pglite-studio/
+
+# allow the prod env template (no secrets)
+!.env.production.example

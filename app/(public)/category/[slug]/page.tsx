@@ -1,19 +1,17 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
-import { Search, Filter, Star, Eye, Grid, List, ChevronDown } from "lucide-react"
+import { Search, Filter, Grid, List, ChevronDown, Package } from "lucide-react"
 import { Button } from "@/componentss/ui/button"
 import { Input } from "@/componentss/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/componentss/ui/card"
-import { Badge } from "@/componentss/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/componentss/ui/select"
 import { Checkbox } from "@/componentss/ui/checkbox"
 import { Slider } from "@/componentss/ui/slider"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/componentss/ui/collapsible"
-import Link from "next/link"
 import { useParams } from "next/navigation"
 import Navbar from "@/componentss/shared/navbar"
 import Footer from "@/componentss/shared/footer"
+import { ProductCard, type MarketProduct } from "@/componentss/marketplace/product-card"
 
 interface Script {
   id: number
@@ -47,6 +45,23 @@ interface Script {
   reviewCount: number
   createdAt: string
   updatedAt: string
+}
+
+// Normalize a Script (live API shape) into the shared ProductCard MarketProduct shape.
+function scriptToProduct(script: Script): MarketProduct {
+  return {
+    id: script.id,
+    title: script.title,
+    framework: script.framework,
+    price: Number(script.price) || 0,
+    originalPrice: script.originalPrice,
+    free: Number(script.price) === 0,
+    rating: typeof script.rating === "number" ? script.rating : Number(script.rating) || undefined,
+    seller: script.seller_name,
+    coverImage: script.coverImage,
+    tag: script.featured ? "FEATURED" : Number(script.price) === 0 ? "FREE" : null,
+    href: `/script/${script.id}`,
+  }
 }
 
 export default function CategoryPage() {
@@ -98,27 +113,36 @@ export default function CategoryPage() {
     },
   }
 
-  const currentCategory = categoryInfo[categorySlug as keyof typeof categoryInfo] || categoryInfo.economy
+  const currentCategory =
+    categoryInfo[categorySlug as keyof typeof categoryInfo] ||
+    {
+      name: `${categorySlug ? categorySlug.charAt(0).toUpperCase() + categorySlug.slice(1) : "All"} Products`,
+      description: "Browse premium FiveM resources hand-picked for your server.",
+    }
 
   useEffect(() => {
     const fetchScripts = async () => {
+      // 8s timeout guard — DB may be absent in dev, so never infinite-spin.
+      const c = new AbortController()
+      const t = setTimeout(() => c.abort(), 15000)
       try {
         setLoading(true)
-        const response = await fetch(`/api/scripts?status=all`)
-        
+        const response = await fetch(`/api/scripts?status=all`, { signal: c.signal })
+
         if (!response.ok) {
           console.error("Failed to fetch scripts")
           return
         }
 
         const data = await response.json()
-        const categoryScripts = (data.scripts || []).filter((script: Script) => 
+        const categoryScripts = (data.scripts || []).filter((script: Script) =>
           script.category.toLowerCase() === categorySlug.toLowerCase()
         )
         setScripts(categoryScripts)
       } catch (error) {
-        console.error("Error fetching scripts:", error)
+        if ((error as any)?.name !== "AbortError") console.error("Error fetching scripts:", error)
       } finally {
+        clearTimeout(t)
         setLoading(false)
       }
     }
@@ -152,36 +176,42 @@ export default function CategoryPage() {
     }
   }
 
-  // Filter and sort scripts
+  const sourceProducts: MarketProduct[] = useMemo(
+    () => scripts.map(scriptToProduct),
+    [scripts]
+  )
+
+  // Filter and sort products (works against the normalized MarketProduct shape).
   const filteredAndSortedScripts = useMemo(() => {
-    let filtered = scripts.filter((script) => {
+    let filtered = sourceProducts.filter((product) => {
       // Search filter
       if (searchQuery) {
         const query = searchQuery.toLowerCase()
-        const matchesSearch = 
-          script.title.toLowerCase().includes(query) ||
-          script.description.toLowerCase().includes(query) ||
-          script.tags.some(tag => tag.toLowerCase().includes(query))
-        
+        const matchesSearch =
+          product.title.toLowerCase().includes(query) ||
+          (product.seller?.toLowerCase().includes(query) ?? false)
+
         if (!matchesSearch) return false
       }
 
       // Framework filter
       if (selectedFrameworks.length > 0 && !selectedFrameworks.includes("All Frameworks")) {
-        if (!script.framework || script.framework.length === 0) return false
-        const hasMatch = script.framework.some((fw) => selectedFrameworks.includes(fw))
+        if (!product.framework || product.framework.length === 0) return false
+        const hasMatch = product.framework.some((fw) =>
+          selectedFrameworks.some((sel) => sel.toLowerCase() === fw.toLowerCase())
+        )
         if (!hasMatch) return false
       }
 
       // Price range filter
-      if (script.price < priceRange[0] || script.price > priceRange[1]) {
+      if (product.price < priceRange[0] || product.price > priceRange[1]) {
         return false
       }
 
       // Price category filter
       if (selectedPriceCategories.length > 0) {
-        const priceCategory = script.price <= 15 ? "Budget ($0-$15)" : 
-                            script.price <= 30 ? "Standard ($15-$30)" : "Premium ($30+)"
+        const priceCategory = product.price <= 15 ? "Budget ($0-$15)" :
+                            product.price <= 30 ? "Standard ($15-$30)" : "Premium ($30+)"
         if (!selectedPriceCategories.includes(priceCategory)) {
           return false
         }
@@ -190,10 +220,10 @@ export default function CategoryPage() {
       return true
     })
 
-    // Sort scripts
+    // Sort
     switch (sortBy) {
       case "popular":
-        filtered.sort((a, b) => b.downloads - a.downloads)
+        filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0))
         break
       case "rating":
         filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0))
@@ -205,264 +235,212 @@ export default function CategoryPage() {
         filtered.sort((a, b) => b.price - a.price)
         break
       case "newest":
-        filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        filtered.sort((a, b) => Number(b.id) - Number(a.id))
         break
       default:
         break
     }
 
     return filtered
-  }, [scripts, searchQuery, selectedFrameworks, selectedPriceCategories, priceRange, sortBy])
+  }, [sourceProducts, searchQuery, selectedFrameworks, selectedPriceCategories, priceRange, sortBy])
 
   if (loading) {
     return (
-      <>
+      <div className="min-h-screen bg-[#0a0a0a] text-white">
         <Navbar />
-        <div className="min-h-screen text-white flex items-center justify-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-orange-500"></div>
+        <div className="flex min-h-[60vh] items-center justify-center">
+          <div className="h-16 w-16 animate-spin rounded-full border-b-2 border-orange-500" />
         </div>
-      </>
+      </div>
     )
   }
 
   return (
-    <>
+    <div className="min-h-screen overflow-x-clip bg-[#0a0a0a] text-white">
       <Navbar />
-      <div className="min-h-screen text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold text-white mb-4">{currentCategory.name}</h1>
-            <p className="text-gray-400 text-lg mb-6">{currentCategory.description}</p>
-            <div className="flex items-center gap-4 text-sm text-gray-500">
-              <span>{filteredAndSortedScripts.length} scripts found</span>
-              <span>•</span>
-              <span>Category: {categorySlug.charAt(0).toUpperCase() + categorySlug.slice(1)}</span>
+
+      {/* Header */}
+      <section className="px-3 pt-8 sm:px-6">
+        <div className="mx-auto max-w-7xl">
+          <span className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-4 py-1.5 text-sm font-semibold text-white/70">
+            <span className="h-1.5 w-1.5 rounded-full bg-orange-400" /> Category
+          </span>
+          <h1 className="text-3xl font-extrabold tracking-tight sm:text-5xl">{currentCategory.name}</h1>
+          <p className="mt-3 max-w-2xl text-base text-white/55 sm:text-lg">{currentCategory.description}</p>
+          <div className="mt-5 flex flex-wrap items-center gap-3 text-sm text-white/55">
+            <span className="font-semibold text-white/70">{filteredAndSortedScripts.length}</span>
+            <span>products found</span>
+            <span className="text-white/20">•</span>
+            <span>
+              Category: {categorySlug ? categorySlug.charAt(0).toUpperCase() + categorySlug.slice(1) : "All"}
+            </span>
+          </div>
+        </div>
+      </section>
+
+      {/* Filters and Search */}
+      <section className="mt-8 px-3 sm:px-6">
+        <div className="mx-auto max-w-7xl space-y-4">
+          {/* Search */}
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/55" />
+            <Input
+              placeholder="Search products..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="h-12 rounded-xl border-white/[0.08] bg-white/[0.04] pl-11 text-white backdrop-blur-md placeholder:text-white/55 focus-visible:border-orange-500/50 focus-visible:ring-orange-500/20"
+            />
+          </div>
+
+          {/* Filter Controls */}
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Sort */}
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="h-11 w-full rounded-xl border-white/[0.08] bg-white/[0.04] text-white backdrop-blur-md sm:w-48">
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent className="border-white/[0.08] bg-[#0d0d0f] text-white">
+                <SelectItem value="popular">Most Popular</SelectItem>
+                <SelectItem value="rating">Highest Rated</SelectItem>
+                <SelectItem value="price-low">Price: Low to High</SelectItem>
+                <SelectItem value="price-high">Price: High to Low</SelectItem>
+                <SelectItem value="newest">Newest First</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* View Mode */}
+            <div className="flex overflow-hidden rounded-xl border border-white/[0.08] bg-white/[0.04] backdrop-blur-md">
+              <button
+                type="button"
+                onClick={() => setViewMode("grid")}
+                aria-label="Grid view"
+                className={`flex h-11 w-11 items-center justify-center transition ${
+                  viewMode === "grid" ? "bg-orange-500 text-black" : "text-white/60 hover:bg-white/10"
+                }`}
+              >
+                <Grid className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("list")}
+                aria-label="List view"
+                className={`flex h-11 w-11 items-center justify-center transition ${
+                  viewMode === "list" ? "bg-orange-500 text-black" : "text-white/60 hover:bg-white/10"
+                }`}
+              >
+                <List className="h-4 w-4" />
+              </button>
             </div>
           </div>
 
-          {/* Filters and Search */}
-          <div className="mb-8 space-y-4">
-            {/* Search */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                placeholder="Search scripts..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 bg-gray-800/30 border-gray-700 text-white placeholder-gray-400"
-              />
-            </div>
-
-            {/* Filter Controls */}
-            <div className="flex flex-wrap gap-4">
-              {/* Sort */}
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-48 bg-gray-800/30 border-gray-700 text-white">
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent className="bg-gray-800 border-gray-700">
-                  <SelectItem value="popular">Most Popular</SelectItem>
-                  <SelectItem value="rating">Highest Rated</SelectItem>
-                  <SelectItem value="price-low">Price: Low to High</SelectItem>
-                  <SelectItem value="price-high">Price: High to Low</SelectItem>
-                  <SelectItem value="newest">Newest First</SelectItem>
-                </SelectContent>
-              </Select>
-
-              {/* View Mode */}
-              <div className="flex border border-gray-700 rounded-lg">
-                <Button
-                  variant={viewMode === "grid" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setViewMode("grid")}
-                  className="bg-gray-800/30 border-gray-700 text-white hover:bg-gray-700"
-                >
-                  <Grid className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={viewMode === "list" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setViewMode("list")}
-                  className="bg-gray-800/30 border-gray-700 text-white hover:bg-gray-700"
-                >
-                  <List className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-
-            {/* Advanced Filters */}
-            <Collapsible>
-              <CollapsibleTrigger asChild>
-                <Button variant="outline" className="border-gray-700 text-gray-300 hover:text-white">
-                  <Filter className="mr-2 h-4 w-4" />
-                  Advanced Filters
-                  <ChevronDown className="ml-2 h-4 w-4" />
-                </Button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="mt-4 space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {/* Framework Filter */}
-                  <div>
-                    <h3 className="text-white font-semibold mb-3">Framework</h3>
-                    <div className="space-y-2">
-                      {frameworks.map((framework) => (
-                        <div key={framework.value} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={framework.value}
-                            checked={selectedFrameworks.includes(framework.value)}
-                            onCheckedChange={(checked) => handleFrameworkChange(framework.value, checked as boolean)}
-                            className="border-gray-600"
-                          />
-                          <label htmlFor={framework.value} className="text-sm text-gray-300">
-                            {framework.label}
-                          </label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Price Category Filter */}
-                  <div>
-                    <h3 className="text-white font-semibold mb-3">Price Category</h3>
-                    <div className="space-y-2">
-                      {priceCategories.map((category) => (
-                        <div key={category} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={category}
-                            checked={selectedPriceCategories.includes(category)}
-                            onCheckedChange={(checked) => handlePriceCategoryChange(category, checked as boolean)}
-                            className="border-gray-600"
-                          />
-                          <label htmlFor={category} className="text-sm text-gray-300">
-                            {category}
-                          </label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Price Range Filter */}
-                  <div>
-                    <h3 className="text-white font-semibold mb-3">Price Range</h3>
-                    <div className="space-y-4">
-                      <Slider
-                        value={priceRange}
-                        onValueChange={setPriceRange}
-                        max={100}
-                        step={1}
-                        className="w-full"
-                      />
-                      <div className="flex justify-between text-sm text-gray-400">
-                        <span>${priceRange[0]}</span>
-                        <span>${priceRange[1]}</span>
+          {/* Advanced Filters */}
+          <Collapsible>
+            <CollapsibleTrigger asChild>
+              <Button
+                variant="outline"
+                className="rounded-xl border-white/[0.08] bg-white/[0.04] text-white/80 backdrop-blur-md hover:bg-white/10 hover:text-white"
+              >
+                <Filter className="mr-2 h-4 w-4" />
+                Advanced Filters
+                <ChevronDown className="ml-2 h-4 w-4" />
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-4">
+              <div className="grid grid-cols-1 gap-6 rounded-2xl border border-white/[0.07] bg-white/[0.03] p-6 backdrop-blur-md md:grid-cols-3">
+                {/* Framework Filter */}
+                <div>
+                  <h3 className="mb-3 font-semibold text-white">Framework</h3>
+                  <div className="space-y-2.5">
+                    {frameworks.map((framework) => (
+                      <div key={framework.value} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={framework.value}
+                          checked={selectedFrameworks.includes(framework.value)}
+                          onCheckedChange={(checked) => handleFrameworkChange(framework.value, checked as boolean)}
+                          className="border-white/20 data-[state=checked]:border-orange-500 data-[state=checked]:bg-orange-500"
+                        />
+                        <label htmlFor={framework.value} className="text-sm text-white/70">
+                          {framework.label}
+                        </label>
                       </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Price Category Filter */}
+                <div>
+                  <h3 className="mb-3 font-semibold text-white">Price Category</h3>
+                  <div className="space-y-2.5">
+                    {priceCategories.map((category) => (
+                      <div key={category} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={category}
+                          checked={selectedPriceCategories.includes(category)}
+                          onCheckedChange={(checked) => handlePriceCategoryChange(category, checked as boolean)}
+                          className="border-white/20 data-[state=checked]:border-orange-500 data-[state=checked]:bg-orange-500"
+                        />
+                        <label htmlFor={category} className="text-sm text-white/70">
+                          {category}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Price Range Filter */}
+                <div>
+                  <h3 className="mb-3 font-semibold text-white">Price Range</h3>
+                  <div className="space-y-4">
+                    <Slider
+                      value={priceRange}
+                      onValueChange={setPriceRange}
+                      max={100}
+                      step={1}
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-sm text-white/50">
+                      <span>${priceRange[0]}</span>
+                      <span>${priceRange[1]}</span>
                     </div>
                   </div>
                 </div>
-              </CollapsibleContent>
-            </Collapsible>
-          </div>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
 
-          {/* Scripts Grid/List */}
-          {filteredAndSortedScripts.length === 0 ? (
-            <div className="text-center py-12">
-              <h3 className="text-xl font-semibold text-white mb-2">No scripts found</h3>
-              <p className="text-gray-400">Try adjusting your filters or search terms.</p>
-            </div>
-          ) : (
-            <div className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "space-y-4"}>
-              {filteredAndSortedScripts.map((script) => {
-                const discount = script.originalPrice ? Math.round(((script.originalPrice - script.price) / script.originalPrice) * 100) : 0
-                const coverImage = script.coverImage || "/placeholder.jpg"
-
-                return (
-                  <Card key={script.id} className="bg-gray-800/30 border-gray-700/50 hover:border-orange-500/50 transition-all duration-300">
-                    <CardHeader className="p-0">
-                      <div className="relative overflow-hidden rounded-t-lg">
-                        <img
-                          src={coverImage}
-                          alt={script.title}
-                          className="w-full h-48 object-cover transition-transform duration-300 hover:scale-110"
-                          loading="lazy"
-                        />
-                        {discount > 0 && (
-                          <Badge className="absolute top-2 right-2 bg-red-500 text-white">
-                            -{discount}%
-                          </Badge>
-                        )}
-                        {script.featured && (
-                          <Badge className="absolute top-2 left-2 bg-yellow-500 text-black">
-                            Featured
-                          </Badge>
-                        )}
-                      </div>
-                    </CardHeader>
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between mb-2">
-                        <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30">
-                          {script.category}
-                        </Badge>
-                         {script.framework && script.framework.length > 0 && (
-                           <div className="flex flex-wrap gap-1">
-                             {script.framework.map((fw, idx) => (
-                               <Badge key={idx} variant="secondary" className="bg-gray-700/50 text-gray-300 text-xs">
-                                 {fw}
-                               </Badge>
-                             ))}
-                           </div>
-                         )}
-                      </div>
-                      
-                      <Link href={`/script/${script.id}`}>
-                        <CardTitle className="text-white hover:text-orange-500 transition-colors cursor-pointer mb-2">
-                          {script.title}
-                        </CardTitle>
-                      </Link>
-                      
-                      <CardDescription className="text-gray-400 mb-3 line-clamp-2">
-                        {script.description}
-                      </CardDescription>
-                      
-                      <div className="flex items-center gap-2 mb-3">
-                        <div className="flex items-center">
-                          {[...Array(5)].map((_, i) => (
-                            <Star
-                              key={i}
-                                                             className={`h-4 w-4 ${
-                                 i < Math.floor(Number(script.rating) || 0) ? "text-yellow-400 fill-current" : "text-gray-600"
-                               }`}
-                            />
-                          ))}
-                        </div>
-                        <span className="text-sm text-gray-400">({script.reviewCount || 0})</span>
-                        <span className="text-sm text-gray-400">•</span>
-                        <span className="text-sm text-gray-400">{script.downloads || 0} downloads</span>
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xl font-bold text-orange-500">{script.currency_symbol || "$"}</span> <span className="text-xl font-bold text-white">{script.price}</span>
-                          {script.originalPrice && (
-                            <span className="text-sm text-gray-500 line-through">{script.currency_symbol || "$"} {script.originalPrice}</span>
-                          )}
-                        </div>
-                        <Link href={`/script/${script.id}`}>
-                          <Button size="sm" className="bg-orange-500 hover:bg-orange-600">
-                            <Eye className="h-4 w-4 mr-1" />
-                            View Details
-                          </Button>
-                        </Link>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )
-              })}
-            </div>
-          )}
         </div>
-      </div>
+      </section>
+
+      {/* Products Grid / List */}
+      <main className="mx-auto mt-10 max-w-7xl px-3 pb-20 sm:px-6">
+        {filteredAndSortedScripts.length === 0 ? (
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-white/[0.07] bg-white/[0.03] py-20 text-center backdrop-blur-md">
+            <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-xl border border-orange-500/20 bg-orange-500/10">
+              <Package className="h-7 w-7 text-orange-400" />
+            </div>
+            <h3 className="mb-2 text-xl font-bold text-white">No products found</h3>
+            <p className="text-sm text-white/55">Try adjusting your filters or search terms.</p>
+          </div>
+        ) : (
+          <div
+            className={
+              viewMode === "grid"
+                ? "grid grid-cols-1 justify-items-center gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                : "flex flex-col items-center gap-6 sm:items-stretch"
+            }
+          >
+            {filteredAndSortedScripts.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                className={viewMode === "grid" ? "w-full max-w-[280px]" : "w-full max-w-[280px] sm:max-w-none"}
+              />
+            ))}
+          </div>
+        )}
+      </main>
+
       <Footer />
-    </>
+    </div>
   )
 }

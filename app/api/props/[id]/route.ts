@@ -99,13 +99,16 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const { name, description, price, discountPercentage, images, zipFile } = body;
+    const { name, description, price, discountPercentage, images, zipFile, tebexStoreToken, tebexPackageId } = body;
 
     const updates: any = {};
     if (name) updates.name = name;
     if (description) updates.description = description;
     if (images) updates.images = images;
     if (zipFile) updates.zipFile = zipFile;
+    // Tebex Headless integration fields (nullable, accept null to clear)
+    if (tebexStoreToken !== undefined) updates.tebexStoreToken = tebexStoreToken || null;
+    if (tebexPackageId !== undefined) updates.tebexPackageId = tebexPackageId || null;
 
     if (price !== undefined || discountPercentage !== undefined) {
       const priceNum = price !== undefined ? parseFloat(price) : parseFloat(existingProp.price);

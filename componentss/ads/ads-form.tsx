@@ -126,7 +126,7 @@ export default function AdsForm({ isOpen, onClose, onSuccess, editData, slotUniq
     // Validate category
     if (!formData.category) {
       newErrors.category = "Category is required"
-    } else if (!['scripts', 'giveaways'].includes(formData.category)) {
+    } else if (!['scripts', 'giveaways', 'props'].includes(formData.category)) {
       newErrors.category = "Please select a valid category"
     }
 
@@ -366,6 +366,7 @@ export default function AdsForm({ isOpen, onClose, onSuccess, editData, slotUniq
                 </SelectTrigger>
                 <SelectContent className="bg-gray-700 border-gray-600">
                   <SelectItem value="scripts" className="text-white hover:bg-gray-600">Scripts</SelectItem>
+                  <SelectItem value="props" className="text-white hover:bg-gray-600">Props</SelectItem>
                   <SelectItem value="giveaways" className="text-white hover:bg-gray-600">Giveaways</SelectItem>
                   {/* <SelectItem value="both" className="text-white hover:bg-gray-600">Both</SelectItem> */}
                 </SelectContent>

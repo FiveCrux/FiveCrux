@@ -102,21 +102,26 @@ export default function FeaturedScriptCard({ item, index, className = "", style 
       style={style}
     >
       <Link href={`/script/${item.id}`} onClick={handleClick}>
-        <Card className="bg-neutral-900 border-2 border-neutral-700/50 hover:border-orange-500 cursor-pointer h-full backdrop-blur-sm relative overflow-hidden shadow-2xl rounded-xl w-full">
+        <Card className="bg-white/[0.04] border border-white/[0.08] hover:border-orange-500/40 cursor-pointer h-full backdrop-blur-md relative overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.35)] hover:shadow-[0_16px_48px_rgba(0,0,0,0.55)] hover:-translate-y-1.5 transition-all duration-200 rounded-2xl w-full">
           {/* Image Section */}
-          <CardHeader className="p-0 overflow-hidden rounded-t-xl">
+          <CardHeader className="p-0 overflow-hidden rounded-t-2xl relative">
             <Image
               src={item.cover_image || "/placeholder.jpg"}
               alt={item.title}
               width={400}
               height={256}
-              className="object-cover w-full h-52"
+              className="object-cover w-full h-52 transition-transform duration-300 group-hover:scale-105"
             />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/20" />
+            {/* Featured badge */}
+            <span className="absolute left-2.5 top-2.5 z-10 flex items-center gap-1 rounded-full bg-orange-500/15 border border-orange-500/30 px-2 py-[3px] text-[10px] font-semibold uppercase tracking-[0.04em] text-orange-300">
+              Featured
+            </span>
           </CardHeader>
 
           {/* Content Section */}
           <div className="flex flex-col flex-1">
-            <CardContent className="p-3 flex-1 space-y-2">
+            <CardContent className="p-3.5 flex-1 space-y-2.5">
               {/* Title */}
               <CardTitle className="text-base font-bold text-white leading-tight line-clamp-2">
                 {item.title}
@@ -125,29 +130,26 @@ export default function FeaturedScriptCard({ item, index, className = "", style 
                {item.framework &&
                 item.framework.length > 0 && (
                   <motion.div
-                    className="flex flex-wrap gap-1"
+                    className="flex flex-wrap gap-1.5"
                   >
                     {item.framework.map((fw: string, idx: number) => (
                       <motion.div
                         key={idx}
                       >
-                        <Badge className="bg-neutral-800/95 text-white backdrop-blur-sm text-[10px] font-bold border border-neutral-600/50 rounded px-1.5 py-0.5 uppercase tracking-wide shadow-lg hover:bg-neutral-800/95 hover:text-white">
-                          <span className="mr-1 text-xs">
-                            •
-                          </span>
+                        <Badge className="bg-white/[0.06] text-white/70 backdrop-blur-sm text-[10px] font-semibold border border-white/10 rounded-md px-2 py-0.5 uppercase tracking-[0.04em] hover:bg-white/[0.06] hover:text-white/70">
                           {fw}
                         </Badge>
                       </motion.div>
                     ))}
                   </motion.div>
                 )}
-              <CardDescription className="text-neutral-400 text-xs leading-snug flex items-center gap-1.5 flex-row">
+              <CardDescription className="text-white/55 text-xs leading-snug flex items-center gap-1.5 flex-row">
                 <Avatar className="h-4 w-4 flex-shrink-0">
                   <AvatarImage
                     src={item.seller_image || "/placeholder-user.jpg"}
                     alt={item.seller}
                   />
-                  <AvatarFallback className="bg-orange-500 text-white text-[8px] font-bold">
+                  <AvatarFallback className="bg-gradient-to-br from-orange-500 to-yellow-400 text-black text-[8px] font-bold">
                     {item.seller ? item.seller[0].toUpperCase() : "?"}
                   </AvatarFallback>
                 </Avatar>
@@ -157,17 +159,17 @@ export default function FeaturedScriptCard({ item, index, className = "", style 
                 )}
               </CardDescription>
 
-             
-
               {/* Price */}
-              <CardDescription className="text-orange-500 text-xl font-bold pt-1">
-                {item.free ? "Free" : `${item.currency_symbol || "$"}${item.price}`}
-              </CardDescription>
+              <div className="border-t border-white/10 pt-2.5">
+                <CardDescription className="text-orange-400 text-xl font-extrabold tracking-[-0.02em]">
+                  {item.free ? "Free" : `${item.currency_symbol || "$"}${item.price}`}
+                </CardDescription>
+              </div>
             </CardContent>
-            <div className="flex justify-center px-3 pb-3">
+            <div className="flex justify-center px-3.5 pb-3.5">
               <Button
                 variant="outline"
-                className="w-full bg-white text-black hover:bg-orange-600 hover:text-white transition-colors duration-200 font-semibold text-xs py-1.5 h-auto"
+                className="w-full bg-orange-500/10 text-orange-400 border border-orange-500/30 hover:bg-orange-500/20 hover:text-orange-300 transition-colors duration-200 font-semibold text-xs py-1.5 h-auto"
               >
                 View Details
               </Button>
