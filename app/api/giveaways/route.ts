@@ -21,8 +21,10 @@ export async function POST(request: NextRequest) {
     const isFounderOrAdmin = hasAnyRole(user.roles, ['founder', 'admin'])
     const approvalStatus = isFounderOrAdmin ? 'active' : 'pending'
 
-    // Validate required fields
-    if (!giveaway.title || !giveaway.description || !giveaway.total_value || !giveaway.end_date) {
+    // Validate required fields (guard a missing/!object `giveaway` so a bad
+    // payload returns 400, not a 500 from reading .title on undefined).
+    if (!giveaway || typeof giveaway !== "object" ||
+        !giveaway.title || !giveaway.description || !giveaway.total_value || !giveaway.end_date) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
     }
 
