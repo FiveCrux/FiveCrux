@@ -22,7 +22,6 @@ import Navbar from "@/componentss/shared/navbar";
 import Footer from "@/componentss/shared/footer";
 import AdCard, { useRandomAds } from "@/componentss/ads/ad-card";
 import { ProductCard, type MarketProduct } from "@/componentss/marketplace/product-card";
-import { MARKETPLACE_SEED } from "@/lib/marketplace-seed";
 
 export default function ScriptsPage() {
   const searchParams = useSearchParams();
@@ -109,7 +108,7 @@ export default function ScriptsPage() {
         // (e.g. ads when the DB is unreachable) never blocks the whole catalog.
         const fetchT = (url: string) => {
           const c = new AbortController();
-          const t = setTimeout(() => c.abort(), 3000);
+          const t = setTimeout(() => c.abort(), 15000);
           return fetch(url, { cache: "no-store", signal: c.signal }).finally(() => clearTimeout(t));
         };
         const [scriptsR, adsR] = await Promise.allSettled([
@@ -216,7 +215,7 @@ export default function ScriptsPage() {
       try {
         setScriptsLoading(true);
         const c = new AbortController();
-        const t = setTimeout(() => c.abort(), 3000);
+        const t = setTimeout(() => c.abort(), 15000);
         const response = await fetch("/api/featured-scripts?status=active", { cache: "no-store", signal: c.signal });
         clearTimeout(t);
 
@@ -254,44 +253,6 @@ export default function ScriptsPage() {
 
     fetchFeaturedScripts();
   }, []);
-
-  // Demo fallback: when the API returns no scripts (empty DB / local dev), show the
-  // scraped marketplace seed so the page can be audited populated. Real data always wins.
-  // TODO: remove before production.
-  const seedScripts: UIScript[] = useMemo(
-    () =>
-      MARKETPLACE_SEED.map((p) => ({
-        id: Number(p.id),
-        title: p.title,
-        description: "",
-        price: p.price,
-        originalPrice: p.originalPrice,
-        currency_symbol: "$",
-        rating: p.rating ?? 0,
-        reviews: 0,
-        image: p.coverImage || "/placeholder.jpg",
-        category:
-          p.category === "mlo" ? "maps" : p.category === "vehicle" ? "vehicles" : p.category === "weapon" ? "scripts" : p.category === "prop" ? "props" : p.category,
-        categoryName: p.category,
-        seller: p.seller || "Unknown",
-        seller_image: p.sellerImage || null,
-        seller_roles: null,
-        discount: p.originalPrice && p.originalPrice > p.price ? Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100) : 0,
-        framework: p.framework || [],
-        priceCategory: p.price <= 15 ? "Budget" : p.price <= 30 ? "Standard" : "Premium",
-        tags: [],
-        lastUpdated: "",
-        featured: p.tag === "FEATURED",
-        free: !!p.free || p.price === 0,
-      })),
-    []
-  );
-
-  useEffect(() => {
-    if (!loading && allScripts.length === 0) {
-      setAllScripts(seedScripts);
-    }
-  }, [loading, allScripts.length, seedScripts]);
 
   const categories = [
     { id: "scripts", name: "Scripts" },
@@ -604,47 +565,29 @@ export default function ScriptsPage() {
 
   // Featured items come from /api/featured-scripts with a slightly different shape.
   const featuredProducts: MarketProduct[] = useMemo(() => {
-    if (featuredScripts.length > 0) {
-      return featuredScripts.map((item: any) => {
-        const isFree = !!item.free || Number(item.price) === 0;
-        return {
-          id: item.id,
-          title: item.title,
-          framework: Array.isArray(item.framework) ? item.framework : [],
-          price: Number(item.price) || 0,
-          originalPrice:
-            item.original_price && Number(item.original_price) > Number(item.price)
-              ? Number(item.original_price)
-              : undefined,
-          free: isFree,
-          rating: undefined,
-          seller: item.seller_name || item.seller,
-          sellerImage: item.seller_image ?? undefined,
-          coverImage:
-            item.cover_image && item.cover_image !== "/placeholder.jpg"
-              ? item.cover_image
-              : undefined,
-          tag: "FEATURED",
-          href: `/script/${item.id}`,
-        } as MarketProduct;
-      });
-    }
-    // TODO: remove before production — seed fallback so the Featured Scripts row
-    // shows when the API/DB returns nothing (mirrors the main grid's seed fallback).
-    return MARKETPLACE_SEED.filter((p) => p.tag === "FEATURED").map((p) => ({
-      id: Number(p.id),
-      title: p.title,
-      framework: p.framework || [],
-      price: p.price,
-      originalPrice: p.originalPrice,
-      free: !!p.free || p.price === 0,
-      rating: p.rating,
-      seller: p.seller,
-      sellerImage: p.sellerImage,
-      coverImage: p.coverImage,
-      tag: "FEATURED",
-      href: `/script/${p.id}`,
-    })) as MarketProduct[];
+    return featuredScripts.map((item: any) => {
+      const isFree = !!item.free || Number(item.price) === 0;
+      return {
+        id: item.id,
+        title: item.title,
+        framework: Array.isArray(item.framework) ? item.framework : [],
+        price: Number(item.price) || 0,
+        originalPrice:
+          item.original_price && Number(item.original_price) > Number(item.price)
+            ? Number(item.original_price)
+            : undefined,
+        free: isFree,
+        rating: undefined,
+        seller: item.seller_name || item.seller,
+        sellerImage: item.seller_image ?? undefined,
+        coverImage:
+          item.cover_image && item.cover_image !== "/placeholder.jpg"
+            ? item.cover_image
+            : undefined,
+        tag: "FEATURED",
+        href: `/script/${item.id}`,
+      } as MarketProduct;
+    });
   }, [featuredScripts]);
 
   const hasActiveFilters = activeFiltersCount > 0 || searchQuery.length > 0 || activeTab !== "all";

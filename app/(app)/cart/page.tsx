@@ -13,9 +13,6 @@ import {
   Zap,
   ShieldCheck,
   RefreshCw,
-  Car,
-  Building2,
-  Plus,
 } from "lucide-react"
 
 import Navbar from "@/componentss/shared/navbar"
@@ -32,15 +29,6 @@ type CartItem = {
   quantity: number
   metadata?: unknown
 }
-
-// TODO: remove before production — demo items so the populated cart UI is reviewable
-// under local mock auth (when there's no DB / real cart). Real cart data always wins.
-const MOCK_CART = process.env.NEXT_PUBLIC_MOCK_AUTH === "true"
-const DEMO_CART: CartItem[] = [
-  { id: 1, itemType: "prop", title: "Advanced Banking System", price: 19.99, quantity: 1, metadata: { framework: ["ESX", "QBCore"] } },
-  { id: 2, itemType: "prop", title: "Luxury Apartments MLO", price: 34.99, quantity: 1, metadata: { framework: ["Standalone"] } },
-  { id: 3, itemType: "subscription", title: "Featured Script Slot — 2 weeks", price: 15.0, quantity: 1, metadata: { packageType: "featured-scripts" } },
-]
 
 export default function CartPage() {
   const router = useRouter()
@@ -68,7 +56,7 @@ export default function CartPage() {
     // Wrap the cart-loading fetch with an 8s AbortController timeout so the
     // page never infinite-spins when the DB is unavailable (e.g. in dev).
     const c = new AbortController()
-    const t = setTimeout(() => c.abort(), 3000)
+    const t = setTimeout(() => c.abort(), 15000)
 
     try {
       const response = await fetch("/api/cart", { signal: c.signal })
@@ -77,7 +65,7 @@ export default function CartPage() {
       // so the cart UI can be reviewed without a real server session).
       if (response.status === 401) {
         if (process.env.NEXT_PUBLIC_MOCK_AUTH === "true") {
-          setItems(MOCK_CART ? DEMO_CART : [])
+          setItems([])
           return
         }
         router.push("/api/auth/signin?callbackUrl=/cart")
@@ -85,7 +73,7 @@ export default function CartPage() {
       }
 
       if (!response.ok) {
-        setItems(MOCK_CART ? DEMO_CART : [])
+        setItems([])
         return
       }
 
@@ -93,7 +81,7 @@ export default function CartPage() {
       setItems(Array.isArray(data?.items) ? data.items : [])
     } catch {
       // Abort / network error -> fall through to the empty-cart state.
-      setItems(MOCK_CART ? DEMO_CART : [])
+      setItems([])
     } finally {
       clearTimeout(t)
       setLoading(false)
@@ -231,46 +219,6 @@ export default function CartPage() {
                 </div>
               </div>
 
-              {/* You might also like */}
-              <div className="mt-6">
-                <h2 className="text-[11px] uppercase tracking-[0.16em] text-white/40">
-                  You might also like
-                </h2>
-                <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <div className="flex items-center gap-3 rounded-2xl border border-white/[0.06] bg-[#0e0e0e] p-3 transition hover:border-white/[0.12]">
-                    <div className="grid h-11 w-11 flex-none place-items-center rounded-lg bg-white/[0.05]">
-                      <Car className="h-5 w-5 text-white/60" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate text-sm font-semibold">Vehicle Garage v3</div>
-                      <div className="text-xs tabular-nums text-white/40">€12.99</div>
-                    </div>
-                    <Link
-                      href="/marketplace"
-                      aria-label="Browse marketplace"
-                      className="grid h-8 w-8 flex-none place-items-center rounded-lg bg-orange-500/15 text-orange-500 transition hover:bg-orange-500/25"
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Link>
-                  </div>
-                  <div className="flex items-center gap-3 rounded-2xl border border-white/[0.06] bg-[#0e0e0e] p-3 transition hover:border-white/[0.12]">
-                    <div className="grid h-11 w-11 flex-none place-items-center rounded-lg bg-white/[0.05]">
-                      <Building2 className="h-5 w-5 text-white/60" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate text-sm font-semibold">Police MLO Pack</div>
-                      <div className="text-xs tabular-nums text-white/40">€24.99</div>
-                    </div>
-                    <Link
-                      href="/marketplace"
-                      aria-label="Browse marketplace"
-                      className="grid h-8 w-8 flex-none place-items-center rounded-lg bg-orange-500/15 text-orange-500 transition hover:bg-orange-500/25"
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Link>
-                  </div>
-                </div>
-              </div>
             </motion.section>
 
             {/* RIGHT: receipt rail (sticky on desktop, stacks below on mobile) */}

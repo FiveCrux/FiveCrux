@@ -131,7 +131,7 @@ export default function EditGiveawayPage() {
   useEffect(() => {
     const fetchGiveaway = async () => {
       const c = new AbortController()
-      const t = setTimeout(() => c.abort(), 3000)
+      const t = setTimeout(() => c.abort(), 15000)
       try {
         setLoading(true)
         const response = await fetch(`/api/giveaways/${giveawayId}`, { signal: c.signal })

@@ -151,7 +151,7 @@ export default function ProfileCouponsPage() {
     setErrorMessage(null);
 
     const c = new AbortController();
-    const t = setTimeout(() => c.abort(), 3000);
+    const t = setTimeout(() => c.abort(), 15000);
 
     try {
       const res = await fetch("/api/coupons", {

@@ -8,7 +8,6 @@ import { Button } from "@/componentss/ui/button"
 import Navbar from "@/componentss/shared/navbar"
 import Footer from "@/componentss/shared/footer"
 import { ProductCard, type MarketProduct } from "@/componentss/marketplace/product-card"
-import { MARKETPLACE_SEED } from "@/lib/marketplace-seed"
 
 // Raw script shape returned by /api/scripts
 interface ApiScript {
@@ -58,7 +57,6 @@ const FRAMEWORKS = ["Standalone", "ESX", "QBCore", "Qbox", "OX"]
 export default function MarketplacePage() {
   // ── data + filter state ──────────────────────────────────────────────
   const [products, setProducts] = useState<MarketProduct[]>([])
-  const [usingSeed, setUsingSeed] = useState(false)
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [activeCategory, setActiveCategory] = useState("all")
@@ -71,40 +69,31 @@ export default function MarketplacePage() {
   useEffect(() => {
     let cancelled = false
 
-    const loadSeed = () => {
-      if (cancelled) return
-      // TODO: remove before production — seed fallback so the grid looks populated when the DB is absent.
-      setProducts(MARKETPLACE_SEED)
-      setProductCategories(
-        Object.fromEntries(MARKETPLACE_SEED.map((p) => [String(p.id), p.category])),
-      )
-      setUsingSeed(true)
-    }
-
     const fetchProducts = async () => {
       const controller = new AbortController()
-      const timeout = setTimeout(() => controller.abort(), 3000)
+      const timeout = setTimeout(() => controller.abort(), 15000)
       try {
         setLoading(true)
         const res = await fetch("/api/scripts?status=all", { signal: controller.signal })
         if (!res.ok) {
-          loadSeed()
+          if (!cancelled) {
+            setProducts([])
+            setProductCategories({})
+          }
           return
         }
         const data = await res.json()
         const scripts: ApiScript[] = data?.scripts || []
-        if (scripts.length === 0) {
-          loadSeed()
-          return
-        }
         if (cancelled) return
         setProducts(scripts.map(toMarketProduct))
         setProductCategories(
           Object.fromEntries(scripts.map((s) => [String(s.id), (s.category || "script").toLowerCase()])),
         )
-        setUsingSeed(false)
       } catch {
-        loadSeed()
+        if (!cancelled) {
+          setProducts([])
+          setProductCategories({})
+        }
       } finally {
         clearTimeout(timeout)
         if (!cancelled) setLoading(false)
@@ -271,12 +260,6 @@ export default function MarketplacePage() {
               >
                 <X className="h-3.5 w-3.5" /> Clear filters
               </button>
-            )}
-            {usingSeed && (
-              // TODO: remove before production
-              <span className="rounded-full border border-yellow-400/30 bg-yellow-400/10 px-2 py-0.5 text-xs text-yellow-400">
-                demo data
-              </span>
             )}
           </div>
 

@@ -26,7 +26,6 @@ import { Input } from "@/componentss/ui/input"
 import { Card, CardContent } from "@/componentss/ui/card"
 import Navbar from "@/componentss/shared/navbar"
 import Footer from "@/componentss/shared/footer"
-import { MARKETPLACE_SEED } from "@/lib/marketplace-seed"
 
 // This will be replaced with real user authentication/session logic
 // For now, we'll get it from the session or use a placeholder
@@ -75,7 +74,7 @@ export default function EditProductsPage() {
       // Guard the blocking fetch with a 3s timeout so the loading state
       // never spins forever if the DB/API is unavailable (e.g. in dev).
       const c = new AbortController()
-      const t = setTimeout(() => c.abort(), 3000)
+      const t = setTimeout(() => c.abort(), 15000)
       try {
         const [scriptsRes, giveawaysRes] = await Promise.all([
           fetch('/api/scripts', { signal: c.signal }),
@@ -153,13 +152,7 @@ export default function EditProductsPage() {
     setLoading(false)
   }
 
-  const totalItems = scripts.length + giveaways.length
-
-  // Build presentation rows from real data. When there is no real data
-  // (empty DB / dev), fall back to MARKETPLACE_SEED so the table is populated.
-  // Real data always wins. TODO: remove seed fallback before production.
-  const usingSeed = !pageLoading && totalItems === 0
-
+  // Build presentation rows from real data only.
   const rows: ListingRow[] = useMemo(() => {
     const scriptRows: ListingRow[] = scripts.map((s) => ({
       key: `script-${s.id}`,
@@ -193,25 +186,7 @@ export default function EditProductsPage() {
       raw: g,
     }))
 
-    if (scriptRows.length + giveawayRows.length > 0) {
-      return [...scriptRows, ...giveawayRows]
-    }
-
-    // ----- SEED FALLBACK (TODO: remove before production) -----
-    return MARKETPLACE_SEED.map((p, i) => ({
-      key: `seed-${p.id}`,
-      type: "script" as const,
-      id: typeof p.id === "number" ? p.id : i,
-      title: p.title,
-      coverImage: p.coverImage,
-      price: p.free || p.price === 0 ? "Free" : `$${p.price}`,
-      status: "published" as const,
-      countLabel: fmtNum(120 + ((Number(p.id) * 37) % 3200)),
-      rating: p.rating,
-      viewHref: p.href,
-      isSeed: true,
-      raw: p,
-    }))
+    return [...scriptRows, ...giveawayRows]
   }, [scripts, giveaways])
 
   // Filter + search the rows for presentation.
@@ -294,13 +269,6 @@ export default function EditProductsPage() {
               <AlertCircle className="h-4 w-4 shrink-0" />
             )}
             {message}
-          </div>
-        )}
-
-        {/* Seed-data dev notice */}
-        {usingSeed && (
-          <div className="mt-6 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-xs text-white/40">
-            Showing demo seed data — no listings found for your account yet.
           </div>
         )}
 

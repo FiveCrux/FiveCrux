@@ -140,7 +140,7 @@ export default function EditScriptPage() {
 
   const fetchScript = useCallback(async () => {
     const c = new AbortController()
-    const t = setTimeout(() => c.abort(), 3000)
+    const t = setTimeout(() => c.abort(), 15000)
     try {
       setLoading(true)
       const response = await fetch(`/api/scripts/${scriptId}`, { signal: c.signal })

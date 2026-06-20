@@ -14,42 +14,6 @@ import Footer from "@/componentss/shared/footer";
 import Link from "next/link";
 import AdCard, { useRandomAds } from "@/componentss/ads/ad-card";
 import { toast } from "sonner";
-import { MARKETPLACE_SEED } from "@/lib/marketplace-seed";
-
-// TODO: remove before production
-// Synthesize ~6 demo giveaways from MARKETPLACE_SEED so the page looks
-// populated when the giveaways API returns empty or errors (e.g. no DB in dev).
-const buildSeedGiveaways = (): any[] => {
-  const prizeValues = [29.99, 49.99, 19.99, 75, 120, 39.99];
-  const daysOut = [2, 4, 6, 3, 8, 5];
-  return MARKETPLACE_SEED.slice(0, 6).map((item, i) => {
-    const end = new Date();
-    end.setDate(end.getDate() + daysOut[i]);
-    return {
-      id: 900000 + Number(item.id),
-      title: item.title,
-      description: `Win "${item.title}" from ${item.seller} — a premium FiveM prize.`,
-      totalValue: prizeValues[i].toString(),
-      currency_symbol: "$",
-      entries: 120 + i * 87,
-      maxEntries: 1000,
-      timeLeft: "",
-      endDate: end.toISOString(),
-      start_date: null,
-      is_upcoming: false,
-      image: item.coverImage,
-      requirements: [],
-      difficulty: "Easy",
-      category: item.category,
-      featured: i < 2,
-      trending: i === 2,
-      creator: item.seller,
-      creatorImage: item.sellerImage,
-      creator_roles: null,
-      tags: item.framework || [],
-    };
-  });
-};
 
 export default function GiveawaysPage() {
   const giveawaysRef = useRef(null);
@@ -99,7 +63,7 @@ export default function GiveawaysPage() {
       // timeout so the page never infinite-spins if the API is slow/down
       // (the DB may be absent in dev).
       const c = new AbortController();
-      const t = setTimeout(() => c.abort(), 3000);
+      const t = setTimeout(() => c.abort(), 15000);
       let gotGiveaways = false;
       try {
         setLoading(true);
@@ -181,10 +145,10 @@ export default function GiveawaysPage() {
           console.error("Error loading giveaways:", error);
       } finally {
         clearTimeout(t);
-        // SEED FALLBACK: on empty/error/timeout, show demo giveaways.
-        // TODO: remove before production
+        // On empty/error/timeout, leave the list empty so the page shows its
+        // clean empty state instead of fabricated giveaways.
         if (!gotGiveaways) {
-          setActiveGiveaways(buildSeedGiveaways());
+          setActiveGiveaways([]);
         }
         setLoading(false);
       }
