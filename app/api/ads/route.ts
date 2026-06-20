@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate category
-    const validCategories = ["both", "scripts", "giveaways"]
+    const validCategories = ["both", "scripts", "giveaways", "props"]
     if (!validCategories.includes(body.category.toLowerCase())) {
       return NextResponse.json({ 
         error: `Invalid category. Must be one of: ${validCategories.join(", ")}` 
