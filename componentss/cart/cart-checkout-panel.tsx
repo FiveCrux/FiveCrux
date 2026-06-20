@@ -13,12 +13,6 @@ type CartCheckoutPanelProps = {
   total: number
 }
 
-// Default payment provider for the primary Checkout button. Flip to "tebex" via
-// NEXT_PUBLIC_PAYMENT_PROVIDER once the FiveCrux Tebex store + package map are
-// configured. The secondary button always uses Tebex.
-const DEFAULT_PROVIDER: "paypal" | "tebex" =
-  process.env.NEXT_PUBLIC_PAYMENT_PROVIDER === "tebex" ? "tebex" : "paypal"
-
 export default function CartCheckoutPanel({ total }: CartCheckoutPanelProps) {
   const [couponCode, setCouponCode] = useState("")
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null)
@@ -61,14 +55,13 @@ export default function CartCheckoutPanel({ total }: CartCheckoutPanelProps) {
     }
   }
 
-  const checkout = async (provider: "paypal" | "tebex" = DEFAULT_PROVIDER) => {
+  const checkout = async () => {
     setIsCheckingOut(true)
     setError(null)
     setMessage(null)
 
     try {
-      const endpoint = provider === "tebex" ? "/api/cart/tebex-checkout" : "/api/cart/checkout"
-      const response = await fetch(endpoint, {
+      const response = await fetch("/api/cart/tebex-checkout", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -82,13 +75,11 @@ export default function CartCheckoutPanel({ total }: CartCheckoutPanelProps) {
         throw new Error(data.error || "Checkout failed")
       }
 
-      // PayPal returns `approvalUrl`; Tebex returns `checkoutUrl`.
-      const redirectUrl = data.checkoutUrl || data.approvalUrl
-      if (!redirectUrl) {
-        throw new Error("Payment gateway did not return a redirect URL")
+      if (!data.checkoutUrl) {
+        throw new Error("Payment gateway did not return a checkout URL")
       }
 
-      window.location.href = redirectUrl
+      window.location.href = data.checkoutUrl
     } catch (err) {
       setError(err instanceof Error ? err.message : "Checkout failed")
       setIsCheckingOut(false)
@@ -189,17 +180,12 @@ export default function CartCheckoutPanel({ total }: CartCheckoutPanelProps) {
           className="group mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-orange-500 py-4 text-[15px] font-bold text-black transition hover:bg-orange-400 disabled:cursor-not-allowed disabled:opacity-60"
         >
           <Lock className="h-4 w-4" />
-          {isCheckingOut ? "Redirecting..." : `Checkout — €${payableAmount.toFixed(2)}`}
+          {isCheckingOut ? "Redirecting…" : `Checkout — €${payableAmount.toFixed(2)}`}
         </button>
-        <button
-          type="button"
-          onClick={() => checkout("tebex")}
-          disabled={isCheckingOut}
-          className="mt-2.5 flex w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] py-3.5 text-sm font-semibold text-white/85 transition hover:bg-white/[0.07] disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          <CreditCard className="h-4 w-4" />
-          Buy via Tebex
-        </button>
+        <p className="mt-2.5 flex items-center justify-center gap-1.5 text-[12px] text-white/35">
+          <CreditCard className="h-3.5 w-3.5" />
+          Secure payment via Tebex
+        </p>
 
         <p className="mt-4 flex items-center justify-center gap-1.5 text-[12px] text-white/35">
           <ShieldCheck className="h-3.5 w-3.5 text-emerald-400/80" />

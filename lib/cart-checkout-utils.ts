@@ -1,7 +1,6 @@
 // Shared cart checkout helpers — coupon validation, discount calculation, and
 // scope matching. Extracted verbatim from app/api/cart/checkout/route.ts so the
-// PayPal and Tebex checkout routes apply IDENTICAL coupon/discount rules (no
-// drift). Behaviour is unchanged from the original inline implementation.
+// Shared so the cart checkout route applies consistent coupon/discount rules.
 import { db } from "@/lib/db/client";
 import { coupons, couponRedemptions } from "@/lib/db/schema";
 import { and, eq } from "drizzle-orm";

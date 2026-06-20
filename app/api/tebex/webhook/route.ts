@@ -240,8 +240,7 @@ async function provisionPlatformFee(
     }
 
     // Mirror cart/capture: createAdSlots / createFeaturedScriptSlots expect one
-    // order-reference id per slot. PayPal used the PayPal order id; here we use
-    // the Tebex order id (basket-backed) as the per-slot reference.
+    // order-reference id per slot — here the Tebex order id (basket-backed).
     const orderRefIds = Array(slotsToAdd).fill(fallbackOrderId);
 
     if (packageType === "ads") {
