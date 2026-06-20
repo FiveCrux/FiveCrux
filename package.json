@@ -8,12 +8,13 @@
     "lint": "next lint",
     "start": "next start",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
-    "db:studio": "drizzle-kit studio --config=drizzle.config.ts",
+    "db:migrate": "node scripts/db-guard.mjs && drizzle-kit migrate",
+    "db:studio": "node scripts/db-guard.mjs && drizzle-kit studio --config=drizzle.config.ts",
     "typecheck": "tsc --noEmit",
     "db:setup-local": "tsx scripts/setup-pglite.ts",
     "dev:local": "cross-env USE_PGLITE=true ALLOW_DEV_LOGIN=true next dev",
-    "db:view": "rimraf .pglite-studio 2>/dev/null & xcopy .pglite .pglite-studio /E /I /Q /Y >/dev/null & drizzle-kit studio --config=drizzle.studio.config.ts"
+    "db:view": "rimraf .pglite-studio 2>/dev/null & xcopy .pglite .pglite-studio /E /I /Q /Y >/dev/null & drizzle-kit studio --config=drizzle.studio.config.ts",
+    "db:push": "node scripts/db-guard.mjs && drizzle-kit push"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.914.0",
