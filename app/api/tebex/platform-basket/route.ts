@@ -9,6 +9,7 @@ import {
 } from "@/lib/tebex";
 import { db } from "@/lib/db/client";
 import { tebexOrders } from "@/lib/db/schema";
+import { requireUser } from "@/lib/api-auth";
 
 /**
  * POST /api/tebex/platform-basket
@@ -35,6 +36,11 @@ import { tebexOrders } from "@/lib/db/schema";
  */
 export async function POST(request: NextRequest) {
   try {
+    // SECURITY: require a logged-in user; provision for the SESSION user, never a
+    // client-supplied custom.userId.
+    const auth = await requireUser();
+    if (!auth.ok) return auth.response;
+
     const body = await request.json().catch(() => ({}));
     const {
       packageId,
@@ -71,24 +77,23 @@ export async function POST(request: NextRequest) {
     const checkoutUrl = getCheckoutUrl(basket);
 
     // 4. Record the platform-fee order for later webhook reconciliation.
-    // Pull the userId out of `custom` (when provided) so the webhook can
-    // provision the entitlement for the right user. The full provisioning
-    // details live in `custom` and are echoed back on the webhook payload.
-    const provisioningUserId =
-      custom && typeof custom === "object" && typeof (custom as any).userId === "string"
-        ? (custom as any).userId
-        : null;
+    // Provision for the authenticated session user — the webhook reads this
+    // userId, NOT any client-supplied custom.userId (which is stripped below).
+    const safeCustom =
+      custom && typeof custom === "object" && !Array.isArray(custom)
+        ? { ...(custom as Record<string, unknown>), userId: auth.userId }
+        : { userId: auth.userId };
 
     await db.insert(tebexOrders).values({
       id: randomUUID(),
       basketIdent: basket.ident,
-      userId: provisioningUserId,
+      userId: auth.userId,
       kind: "platform_fee",
       storeToken,
       packageIds: [String(packageId)],
       status: "pending",
       amount: basket.total_price != null ? String(basket.total_price) : null,
-      custom: custom ?? null,
+      custom: safeCustom,
     });
 
     return NextResponse.json({ basketIdent: basket.ident, checkoutUrl });
