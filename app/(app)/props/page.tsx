@@ -12,7 +12,6 @@ import { useSearchParams, useRouter } from "next/navigation";
 import Navbar from "@/componentss/shared/navbar";
 import Footer from "@/componentss/shared/footer";
 import AdCard, { useRandomAds } from "@/componentss/ads/ad-card";
-import { MARKETPLACE_SEED } from "@/lib/marketplace-seed";
 import {
   ProductCard,
   type MarketProduct,
@@ -93,7 +92,7 @@ export default function PropsPage() {
         // (e.g. ads when the DB is unreachable) never blocks the whole catalog.
         const fetchT = (url: string) => {
           const c = new AbortController();
-          const t = setTimeout(() => c.abort(), 3000);
+          const t = setTimeout(() => c.abort(), 15000);
           return fetch(url, { cache: "no-store", signal: c.signal }).finally(() => clearTimeout(t));
         };
         const [propsR, adsR] = await Promise.allSettled([
@@ -165,55 +164,6 @@ export default function PropsPage() {
     };
     load();
   }, []);
-
-  // Demo fallback: when the API returns no props (empty DB / local dev), show the
-  // scraped marketplace seed so the page can be audited populated. Real data always wins.
-  // Prefer category 'prop', then fill with 'mlo'/'clothing'. All are surfaced under the
-  // page's single "props" category so the existing filters keep working.
-  // TODO: remove before production.
-  const seedProps: UIProp[] = useMemo(() => {
-    const PROP_CATEGORIES = ["prop", "mlo", "clothing"];
-    const ordered = [...MARKETPLACE_SEED]
-      .filter((p) => PROP_CATEGORIES.includes(p.category))
-      .sort(
-        (a, b) =>
-          PROP_CATEGORIES.indexOf(a.category) -
-          PROP_CATEGORIES.indexOf(b.category)
-      );
-    return ordered.map((p) => ({
-      id: Number(p.id),
-      title: p.title,
-      description: "",
-      price: p.price,
-      originalPrice: p.originalPrice,
-      currency_symbol: "$",
-      rating: p.rating ?? 0,
-      reviews: 0,
-      image: p.coverImage || "/placeholder.jpg",
-      category: "props",
-      categoryName: "Props",
-      seller: p.seller || "Unknown",
-      seller_image: p.sellerImage || null,
-      seller_roles: null,
-      discount:
-        p.originalPrice && p.originalPrice > p.price
-          ? Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100)
-          : 0,
-      framework: p.framework || [],
-      priceCategory:
-        p.price <= 15 ? "Budget" : p.price <= 30 ? "Standard" : "Premium",
-      tags: [],
-      lastUpdated: "",
-      featured: p.tag === "FEATURED",
-      free: !!p.free || p.price === 0,
-    }));
-  }, []);
-
-  useEffect(() => {
-    if (!loading && allProps.length === 0) {
-      setAllProps(seedProps);
-    }
-  }, [loading, allProps.length, seedProps]);
 
   const categories = [
     { id: "props", name: "Props" },

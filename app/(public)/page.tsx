@@ -32,7 +32,6 @@ import {
 import Navbar from "@/componentss/shared/navbar"
 import Footer from "@/componentss/shared/footer"
 import { ProductCard, type MarketProduct } from "@/componentss/marketplace/product-card"
-import { MARKETPLACE_SEED, type SeedProduct } from "@/lib/marketplace-seed"
 
 const CATEGORIES = [
   { name: "Scripts", icon: Code2, href: "/scripts" },
@@ -237,20 +236,19 @@ export default function HomePage() {
   }, [])
 
   const rows = useMemo(() => {
-    const SEED: SeedProduct[] = MARKETPLACE_SEED
-    const byCat = (c: SeedProduct["category"]) => SEED.filter((p) => p.category === c)
-    const featuredSeed = SEED.filter((p) => p.tag === "FEATURED")
-    const heroItems = (liveFeatured.length ? liveFeatured : featuredSeed).slice(0, 5)
+    // Only the featured scripts row is backed by live data. Other discovery rows
+    // render from the API as it grows; with no live source they stay empty and the
+    // <Row> component renders nothing (it returns null when there are no items).
     return {
-      heroItems,
-      featured: (liveFeatured.length ? liveFeatured : featuredSeed).slice(0, 10),
-      trending: [...SEED].sort((a, b) => (b.rating || 0) - (a.rating || 0)).slice(0, 10),
-      newReleases: [...SEED].reverse().slice(0, 10),
-      free: SEED.filter((p) => p.free || p.price === 0).slice(0, 10),
-      mlo: byCat("mlo"),
-      vehicles: byCat("vehicle"),
-      weapons: byCat("weapon"),
-      clothing: byCat("clothing"),
+      heroItems: liveFeatured.slice(0, 5),
+      featured: liveFeatured.slice(0, 10),
+      trending: [] as MarketProduct[],
+      newReleases: [] as MarketProduct[],
+      free: [] as MarketProduct[],
+      mlo: [] as MarketProduct[],
+      vehicles: [] as MarketProduct[],
+      weapons: [] as MarketProduct[],
+      clothing: [] as MarketProduct[],
     }
   }, [liveFeatured])
 

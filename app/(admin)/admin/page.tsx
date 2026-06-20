@@ -47,9 +47,6 @@ import {
   LogOut,
   CalendarDays,
 } from "lucide-react";
-// DEMO FALLBACK (TODO: remove before production): seed data so the dashboard
-// looks populated for design review when the real React Query lists are empty.
-import { MARKETPLACE_SEED } from "@/lib/marketplace-seed";
 import { Button } from "@/componentss/ui/button";
 import {
   Card,
@@ -457,7 +454,7 @@ export default function AdminPage() {
 
         // Abort the upload after 8s so the dialog never hangs indefinitely.
         const c = new AbortController();
-        const t = setTimeout(() => c.abort(), 3000);
+        const t = setTimeout(() => c.abort(), 15000);
         let uploadResponse: Response;
         try {
           uploadResponse = await fetch("/api/upload", {
@@ -518,39 +515,13 @@ export default function AdminPage() {
     activeAds: ads.filter((a) => a.status === "active").length,
   };
 
-  // ---------------------------------------------------------------------------
-  // DEMO FALLBACK (TODO: remove before production)
-  // There is no DB in dev so the React Query lists are empty. To let the design
-  // be reviewed against the "Sidebar Console" mockup we present fallback numbers
-  // and a few demo pending rows pulled from MARKETPLACE_SEED. These are used
-  // ONLY when the corresponding real list is empty — real data + real handlers
-  // always take precedence. Demo rows' Approve/Reject are disabled (no-ops).
-  // ---------------------------------------------------------------------------
-  const hasRealData =
-    users.length > 0 ||
-    scripts.length > 0 ||
-    giveaways.length > 0 ||
-    props.length > 0 ||
-    ads.length > 0;
-
-  const DEMO_STATS = {
-    totalUsers: 1240,
-    totalScripts: 820,
-    totalGiveaways: 12,
-    totalProps: 240,
-    totalAds: 34,
-    pendingReview: 7,
-  };
-
-  // Display stats: prefer real counts, fall back to demo numbers when empty.
+  // Display stats — real counts only (shown even when 0).
   const displayStats = {
-    totalUsers: stats.totalUsers || (hasRealData ? 0 : DEMO_STATS.totalUsers),
-    totalScripts:
-      stats.totalScripts || (hasRealData ? 0 : DEMO_STATS.totalScripts),
-    totalGiveaways:
-      stats.totalGiveaways || (hasRealData ? 0 : DEMO_STATS.totalGiveaways),
-    totalProps: stats.totalProps || (hasRealData ? 0 : DEMO_STATS.totalProps),
-    totalAds: stats.totalAds || (hasRealData ? 0 : DEMO_STATS.totalAds),
+    totalUsers: stats.totalUsers,
+    totalScripts: stats.totalScripts,
+    totalGiveaways: stats.totalGiveaways,
+    totalProps: stats.totalProps,
+    totalAds: stats.totalAds,
   };
 
   // Real pending submissions across all content types, mapped into a single
@@ -565,7 +536,6 @@ export default function AdminPage() {
     onApprove?: () => void;
     onReject?: () => void;
     onView?: () => void;
-    demo?: boolean;
   };
 
   const timeAgo = (iso?: string) => {
@@ -636,49 +606,9 @@ export default function AdminPage() {
       })),
   ];
 
-  // Demo rows shown only when there are no real pending submissions.
-  const demoPendingRows: PendingRow[] = [
-    {
-      key: "demo-1",
-      title: MARKETPLACE_SEED[1]?.title ?? "Los Santos Medical Center",
-      image: MARKETPLACE_SEED[1]?.coverImage ?? "",
-      type: "Script",
-      submitter: MARKETPLACE_SEED[1]?.seller ?? "Kivo Studios",
-      when: "2h ago",
-      demo: true,
-    },
-    {
-      key: "demo-2",
-      title: MARKETPLACE_SEED[3]?.title ?? "Midnight Heist Garage",
-      image: MARKETPLACE_SEED[3]?.coverImage ?? "",
-      type: "Prop",
-      submitter: MARKETPLACE_SEED[3]?.seller ?? "DoItDigital",
-      when: "5h ago",
-      demo: true,
-    },
-    {
-      key: "demo-3",
-      title: MARKETPLACE_SEED[0]?.title ?? "LS Legion Square Park",
-      image: MARKETPLACE_SEED[0]?.coverImage ?? "",
-      type: "Giveaway",
-      submitter: MARKETPLACE_SEED[0]?.seller ?? "Forge Studios",
-      when: "1d ago",
-      demo: true,
-    },
-    {
-      key: "demo-4",
-      title: MARKETPLACE_SEED[5]?.title ?? "GAMING",
-      image: MARKETPLACE_SEED[5]?.coverImage ?? "",
-      type: "Ad",
-      submitter: MARKETPLACE_SEED[5]?.seller ?? "Atenea Store",
-      when: "3h ago",
-      demo: true,
-    },
-  ];
-
-  const pendingRows =
-    realPendingRows.length > 0 ? realPendingRows : demoPendingRows;
-  const pendingCount = realPendingRows.length || DEMO_STATS.pendingReview;
+  // Real pending submissions only — no demo fallback.
+  const pendingRows = realPendingRows;
+  const pendingCount = realPendingRows.length;
 
   // Type badge colors for the pending table (semantic-ish per content type).
   const typeBadgeClass: Record<PendingRow["type"], string> = {
@@ -895,11 +825,6 @@ export default function AdminPage() {
           <span className="rounded-full bg-orange-500/12 px-2 py-0.5 text-[11px] font-bold text-orange-400 ring-1 ring-orange-500/25 [font-variant-numeric:tabular-nums]">
             {pendingCount} waiting
           </span>
-          {realPendingRows.length === 0 && (
-            <span className="rounded-full bg-white/[0.06] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white/40 ring-1 ring-white/10">
-              Demo
-            </span>
-          )}
         </div>
       </div>
       <div className="overflow-x-auto">
@@ -935,7 +860,7 @@ export default function AdminPage() {
                         {row.title}
                       </div>
                       <div className="text-[11px] text-white/35">
-                        {row.demo ? "Demo submission" : row.key}
+                        {row.key}
                       </div>
                     </div>
                   </div>
@@ -965,8 +890,8 @@ export default function AdminPage() {
                     <button
                       type="button"
                       onClick={row.onApprove}
-                      disabled={row.demo || !row.onApprove}
-                      title={row.demo ? "Demo — disabled" : "Approve"}
+                      disabled={!row.onApprove}
+                      title="Approve"
                       className="grid h-8 w-8 place-items-center rounded-lg bg-emerald-500/12 text-emerald-400 ring-1 ring-emerald-500/25 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       <Check className="h-4 w-4" />
@@ -974,8 +899,8 @@ export default function AdminPage() {
                     <button
                       type="button"
                       onClick={row.onReject}
-                      disabled={row.demo || !row.onReject}
-                      title={row.demo ? "Demo — disabled" : "Reject"}
+                      disabled={!row.onReject}
+                      title="Reject"
                       className="grid h-8 w-8 place-items-center rounded-lg bg-red-500/12 text-red-400 ring-1 ring-red-500/25 hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       <X className="h-4 w-4" />
@@ -983,8 +908,8 @@ export default function AdminPage() {
                     <button
                       type="button"
                       onClick={row.onView}
-                      disabled={row.demo || !row.onView}
-                      title={row.demo ? "Demo — disabled" : "View"}
+                      disabled={!row.onView}
+                      title="View"
                       className="grid h-8 w-8 place-items-center rounded-lg text-white/45 ring-1 ring-white/10 hover:bg-white/5 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       <Eye className="h-4 w-4" />
@@ -1318,25 +1243,15 @@ export default function AdminPage() {
                           ))}
                         </div>
                       ) : (
-                        /* DEMO FALLBACK (TODO: remove before production) */
-                        <ol className="space-y-4">
-                          {[
-                            { icon: Check, color: "bg-emerald-500/15 text-emerald-400", text: "Approved 'Phone System v2'", meta: "by Sam · 14m ago" },
-                            { icon: X, color: "bg-red-500/15 text-red-400", text: "Rejected 'Cracked HUD Pack'", meta: "by Sam · 2h ago" },
-                            { icon: UserCheck, color: "bg-sky-500/15 text-sky-400", text: "Promoted MapMasters to Creator", meta: "by Sam · 5h ago" },
-                            { icon: Check, color: "bg-emerald-500/15 text-emerald-400", text: "Approved 'Vinewood Mansion'", meta: "by NightShift · 8h ago" },
-                          ].map((ev, i) => (
-                            <li key={i} className="flex items-start gap-3">
-                              <span className={`mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full ${ev.color}`}>
-                                <ev.icon className="h-3.5 w-3.5" />
-                              </span>
-                              <div>
-                                <p className="text-[13px] leading-snug">{ev.text}</p>
-                                <p className="mt-0.5 text-[11px] text-white/35">{ev.meta}</p>
-                              </div>
-                            </li>
-                          ))}
-                        </ol>
+                        <div className="flex flex-col items-center justify-center py-10 text-center">
+                          <span className="mb-3 grid h-10 w-10 place-items-center rounded-full bg-white/[0.04] ring-1 ring-white/10">
+                            <Activity className="h-4 w-4 text-white/25" />
+                          </span>
+                          <p className="text-[13px] font-medium text-white/45">No recent activity</p>
+                          <p className="mt-0.5 text-[11px] text-white/30">
+                            Moderation actions will appear here.
+                          </p>
+                        </div>
                       )}
                     </div>
                   </div>

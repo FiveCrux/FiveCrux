@@ -4,7 +4,6 @@ import { useState, useEffect, useMemo } from "react"
 import { Search, Filter, Grid, List, ChevronDown, Package } from "lucide-react"
 import { Button } from "@/componentss/ui/button"
 import { Input } from "@/componentss/ui/input"
-import { Badge } from "@/componentss/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/componentss/ui/select"
 import { Checkbox } from "@/componentss/ui/checkbox"
 import { Slider } from "@/componentss/ui/slider"
@@ -13,7 +12,6 @@ import { useParams } from "next/navigation"
 import Navbar from "@/componentss/shared/navbar"
 import Footer from "@/componentss/shared/footer"
 import { ProductCard, type MarketProduct } from "@/componentss/marketplace/product-card"
-import { MARKETPLACE_SEED, type SeedProduct } from "@/lib/marketplace-seed"
 
 interface Script {
   id: number
@@ -47,22 +45,6 @@ interface Script {
   reviewCount: number
   createdAt: string
   updatedAt: string
-}
-
-// TODO: remove before production — maps a category slug to the SeedProduct.category used for the demo fallback.
-const SLUG_TO_SEED_CATEGORY: Record<string, SeedProduct["category"]> = {
-  maps: "mlo",
-  mlo: "mlo",
-  mlos: "mlo",
-  vehicles: "vehicle",
-  vehicle: "vehicle",
-  weapons: "weapon",
-  weapon: "weapon",
-  clothing: "clothing",
-  props: "prop",
-  prop: "prop",
-  scripts: "script",
-  script: "script",
 }
 
 // Normalize a Script (live API shape) into the shared ProductCard MarketProduct shape.
@@ -142,7 +124,7 @@ export default function CategoryPage() {
     const fetchScripts = async () => {
       // 8s timeout guard — DB may be absent in dev, so never infinite-spin.
       const c = new AbortController()
-      const t = setTimeout(() => c.abort(), 3000)
+      const t = setTimeout(() => c.abort(), 15000)
       try {
         setLoading(true)
         const response = await fetch(`/api/scripts?status=all`, { signal: c.signal })
@@ -194,17 +176,10 @@ export default function CategoryPage() {
     }
   }
 
-  // SEED FALLBACK: when the API returns nothing (empty/errors — e.g. no DB in dev),
-  // render demo seed items filtered by the slug. TODO: remove before production.
-  const usingSeed = scripts.length === 0
-  const sourceProducts: MarketProduct[] = useMemo(() => {
-    if (!usingSeed) return scripts.map(scriptToProduct)
-    const seedCategory = SLUG_TO_SEED_CATEGORY[categorySlug?.toLowerCase()]
-    const seedItems = seedCategory
-      ? MARKETPLACE_SEED.filter((p) => p.category === seedCategory)
-      : MARKETPLACE_SEED
-    return seedItems
-  }, [usingSeed, scripts, categorySlug])
+  const sourceProducts: MarketProduct[] = useMemo(
+    () => scripts.map(scriptToProduct),
+    [scripts]
+  )
 
   // Filter and sort products (works against the normalized MarketProduct shape).
   const filteredAndSortedScripts = useMemo(() => {
@@ -433,12 +408,6 @@ export default function CategoryPage() {
             </CollapsibleContent>
           </Collapsible>
 
-          {/* Demo data notice — TODO: remove before production */}
-          {usingSeed && (
-            <Badge className="border-orange-500/30 bg-orange-500/15 text-orange-300">
-              Showing demo catalog
-            </Badge>
-          )}
         </div>
       </section>
 

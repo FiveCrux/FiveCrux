@@ -27,7 +27,6 @@ import { Button } from "@/componentss/ui/button";
 import Navbar from "@/componentss/shared/navbar";
 import Footer from "@/componentss/shared/footer";
 import { isVerifiedCreator } from "@/lib/utils";
-import { MARKETPLACE_SEED } from "@/lib/marketplace-seed";
 import Link from "next/link";
 
 interface Script {
@@ -67,57 +66,6 @@ interface Script {
   // Tebex Model B (per-seller checkout). Nullable until the seller links their store.
   tebexStoreToken?: string | null;
   tebexPackageId?: string | null;
-}
-
-// TODO: remove before production — build a Script shape from a MARKETPLACE_SEED
-// item so the detail page renders against the demo seed when the DB is empty.
-function scriptFromSeed(id: number): Script | null {
-  const seed = MARKETPLACE_SEED.find((s) => Number(s.id) === id);
-  if (!seed) return null;
-  return {
-    id: Number(seed.id),
-    title: seed.title,
-    description:
-      "A premium FiveM resource handpicked for the FiveCrux marketplace. Fully optimized, regularly updated and ready to drop into your server.",
-    price: seed.price,
-    original_price: seed.originalPrice,
-    currency_symbol: "$",
-    category: seed.category,
-    framework: seed.framework || [],
-    seller_name: seed.seller || "Unknown",
-    seller_email: "",
-    seller_image: seed.sellerImage,
-    seller_roles: null,
-    features: [
-      "Clean, optimized source code",
-      "Easy drag-and-drop installation",
-      "Fully configurable",
-      "Regular updates & support",
-    ],
-    requirements: ["FiveM server", ...(seed.framework || [])],
-    // TODO: remove before production — extra demo screenshots so the bento gallery fills out.
-    images: [
-      seed.coverImage,
-      "https://img.forgemods.de/images/thumb/images/gta5map_gaming_e83b6804-9d4f-4a0c-bb8f-ed72882d7d9b.webp",
-      "https://img.forgemods.de/images/thumb/images/c56a6a29-9469-4875-8557-679884d124a6_gta5map_los_santos_medical_center_cd5cc62b-caf0-4021-bdf0-debb98f190fe.webp",
-      "https://img.forgemods.de/images/thumb/images/gta5map_vinewood_lake_villa_03_33f120b6-d81c-4c10-973d-c4522420e975.webp",
-    ].filter((u, i, a) => u && a.indexOf(u) === i) as string[],
-    videos: [],
-    screenshots: [],
-    cover_image: seed.coverImage,
-    version: "1.0.0",
-    last_updated: new Date().toISOString(),
-    status: "approved",
-    featured: seed.tag === "FEATURED",
-    free: seed.free || seed.price === 0,
-    downloads: 0,
-    rating: seed.rating ?? 0,
-    review_count: 0,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    tebexStoreToken: null,
-    tebexPackageId: null,
-  };
 }
 
 type MediaItem = {
@@ -396,19 +344,11 @@ export default function ScriptDetailPage() {
         // Abort a hanging/slow request (e.g. DB unreachable) after 8s so the page
         // falls back to the seed/error state instead of spinning forever.
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3000);
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
         const response = await fetch(`/api/scripts/${scriptId}`, { signal: controller.signal });
         clearTimeout(timeoutId);
 
         if (!response.ok) {
-          // TODO: remove before production — fall back to demo seed when the DB
-          // has no matching script (e.g. empty dev database / 404).
-          const seeded = scriptFromSeed(Number(scriptId));
-          if (seeded) {
-            setScript(seeded);
-            setError(null);
-            return;
-          }
           if (response.status === 404) {
             setError("Script not found");
           } else {
@@ -418,28 +358,17 @@ export default function ScriptDetailPage() {
         }
 
         const data = await response.json();
-        // TODO: remove before production — guard against an empty/null payload.
-        if (!data || (data && data.error)) {
-          const seeded = scriptFromSeed(Number(scriptId));
-          if (seeded) {
-            setScript(seeded);
-            return;
-          }
+        if (!data || data.error) {
+          setError("Script not found");
+          return;
         }
         setScript(data);
       } catch (err) {
-        // An aborted request (our own timeout) is expected — fall back quietly.
+        // An aborted request (our own timeout) is expected — surface a load error.
         if ((err as any)?.name !== "AbortError") {
           console.error("Error fetching script:", err);
         }
-        // TODO: remove before production — seed fallback on network/parse error.
-        const seeded = scriptFromSeed(Number(scriptId));
-        if (seeded) {
-          setScript(seeded);
-          setError(null);
-        } else {
-          setError("Failed to load script");
-        }
+        setError("Failed to load script");
       } finally {
         setLoading(false);
       }
@@ -496,25 +425,8 @@ export default function ScriptDetailPage() {
         setOtherScripts(filteredScripts);
       } catch (err) {
         if ((err as any)?.name !== "AbortError") console.error("Error fetching other scripts:", err);
-        // TODO: remove before production — seed fallback for related section.
-        const seeded = MARKETPLACE_SEED.filter(
-          (s) => Number(s.id) !== Number(scriptId)
-        )
-          .slice(0, 8)
-          .map((s) => ({
-            id: s.id,
-            title: s.title,
-            price: s.price,
-            originalPrice: s.originalPrice,
-            free: s.free || s.price === 0,
-            rating: s.rating,
-            seller: s.seller,
-            sellerImage: s.sellerImage,
-            coverImage: s.coverImage,
-            framework: s.framework || [],
-            href: `/script/${s.id}`,
-          }));
-        setOtherScripts(seeded);
+        // No fallback — leave related empty so the section shows its own empty state.
+        setOtherScripts([]);
       } finally {
         setLoadingOtherScripts(false);
       }

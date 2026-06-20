@@ -23,40 +23,6 @@ import {
 import Navbar from "@/componentss/shared/navbar"
 import Footer from "@/componentss/shared/footer"
 import { toast } from "sonner"
-import { MARKETPLACE_SEED } from "@/lib/marketplace-seed"
-
-// TODO: remove before production — seed fallback so the page is auditable with an empty dev DB.
-function buildSeedProp(id: string | string[] | undefined) {
-  const seed =
-    MARKETPLACE_SEED.find((p) => p.category === "prop") ||
-    MARKETPLACE_SEED.find((p) => p.category === "mlo") ||
-    MARKETPLACE_SEED[0]
-  return {
-    id: typeof id === "string" ? id : seed.id,
-    name: seed.title,
-    description:
-      "This is demo seed content rendered because the prop database returned no record. " +
-      "A high-quality, fully optimized FiveM prop ready to drop into your server resources.",
-    price: String(seed.price),
-    discountedPrice:
-      seed.originalPrice && seed.originalPrice > seed.price ? String(seed.price) : null,
-    discountPercentage:
-      seed.originalPrice && seed.originalPrice > seed.price
-        ? String(Math.round((1 - seed.price / seed.originalPrice) * 100))
-        : "0",
-    // TODO: remove before production — extra demo screenshots so the bento gallery fills out.
-    images: [
-      seed.coverImage,
-      "https://img.forgemods.de/images/thumb/images/gta5map_gaming_e83b6804-9d4f-4a0c-bb8f-ed72882d7d9b.webp",
-      "https://img.forgemods.de/images/thumb/images/c56a6a29-9469-4875-8557-679884d124a6_gta5map_los_santos_medical_center_cd5cc62b-caf0-4021-bdf0-debb98f190fe.webp",
-      "https://img.forgemods.de/images/thumb/images/gta5map_vinewood_lake_villa_03_33f120b6-d81c-4c10-973d-c4522420e975.webp",
-    ].filter((u, i, a) => u && a.indexOf(u) === i) as string[],
-    createdAt: new Date().toISOString(),
-    hasPurchased: false,
-    user: { name: seed.seller, profilePicture: seed.sellerImage },
-    __seed: true,
-  }
-}
 
 export default function PropDetailPage() {
   const { id } = useParams()
@@ -76,20 +42,19 @@ export default function PropDetailPage() {
         // Abort a hanging/slow request (e.g. DB unreachable) after 8s so the page
         // falls back to seed instead of spinning forever.
         const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 3000)
+        const timeoutId = setTimeout(() => controller.abort(), 15000)
         const response = await fetch(`/api/props/${id}`, { signal: controller.signal })
         clearTimeout(timeoutId)
         if (response.ok) {
           const data = await response.json()
-          setProp(data)
+          setProp(data && !data.error ? data : null)
         } else {
-          // SEED FALLBACK: empty/missing DB record in dev — render seed so the page is auditable.
-          // TODO: remove before production
-          setProp(buildSeedProp(id))
+          // No matching record (404 / empty DB) — show the not-found state.
+          setProp(null)
         }
       } catch (error) {
-        // TODO: remove before production
-        setProp(buildSeedProp(id))
+        // Network error / abort / timeout — show the not-found state.
+        setProp(null)
       } finally {
         setLoading(false)
       }
@@ -109,7 +74,29 @@ export default function PropDetailPage() {
   }
 
   if (!prop) {
-    return <div className="min-h-screen bg-black text-white flex items-center justify-center">Prop not found</div>
+    return (
+      <>
+        <Navbar />
+        <main className="flex min-h-screen items-center justify-center bg-[#0a0a0a] px-5 text-white">
+          <div className="w-full max-w-md rounded-3xl border border-white/[0.08] bg-white/[0.04] p-10 text-center backdrop-blur-md">
+            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-orange-500/20 bg-orange-500/10">
+              <Package className="h-8 w-8 text-orange-400" />
+            </div>
+            <h1 className="mb-2 text-2xl font-extrabold tracking-tight">Prop not found</h1>
+            <p className="mb-7 text-sm text-white/45">
+              The prop you&apos;re looking for doesn&apos;t exist or is no longer available.
+            </p>
+            <button
+              onClick={() => router.push("/props")}
+              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-orange-500 px-6 py-3 text-sm font-bold text-black transition hover:bg-orange-400"
+            >
+              Browse props
+            </button>
+          </div>
+        </main>
+        <Footer />
+      </>
+    )
   }
 
   const isFree = parseFloat(prop.price) === 0
@@ -289,12 +276,6 @@ export default function PropDetailPage() {
             <ChevronRight className="h-3.5 w-3.5" />
             <span className="truncate max-w-[220px] text-white/60">{prop.name}</span>
           </nav>
-
-          {prop.__seed && (
-            <div className="mb-5 rounded-xl border border-yellow-500/30 bg-yellow-500/10 px-4 py-2 text-xs text-yellow-300">
-              Showing demo seed content (no matching prop found in the database).
-            </div>
-          )}
 
           {/* ===== BENTO GALLERY HERO ===== */}
           <section className="grid grid-cols-1 gap-2.5 sm:grid-cols-4 sm:grid-rows-2 sm:h-[440px]">

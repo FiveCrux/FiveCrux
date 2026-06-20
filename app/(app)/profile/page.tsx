@@ -297,7 +297,7 @@ export default function ProfilePage() {
 
       // Abort the request after 8s so a slow/down API never blocks the slot UI
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000);
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
       try {
         const response = await fetch("/api/user/ad-slots", {
           credentials: "include", // Important for session cookies
@@ -365,7 +365,7 @@ export default function ProfilePage() {
     if (!confirm("Are you sure you want to delete this ad?")) return;
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000);
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
     try {
       const response = await fetch(`/api/users/advertisements?id=${adId}`, {
         method: "DELETE",
@@ -446,7 +446,7 @@ export default function ProfilePage() {
 
     setUploadingProfilePicture(true);
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000);
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
     try {
       const formData = new FormData();
       formData.append("file", file);
@@ -490,7 +490,7 @@ export default function ProfilePage() {
       return;
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000);
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
     try {
       const response = await fetch("/api/user/profile-picture", {
         method: "DELETE",
@@ -526,7 +526,7 @@ export default function ProfilePage() {
 
     setSavingName(true);
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000);
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
     try {
       const response = await fetch("/api/user/name", {
         method: "PATCH",
