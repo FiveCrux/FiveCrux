@@ -38,7 +38,7 @@ export const discountTypeEnum = pgEnum('discount_type', [
 export const itemTypeEnum = pgEnum('item_type', ['subscription', 'prop']);
 
 export const coupons = pgTable('coupons', {
-  id: integer('id').primaryKey().notNull(),
+  id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
   code: text('code').notNull().unique(),
   discountType: discountTypeEnum('discount_type').notNull(),
   discountValue: numeric('discount_value', { precision: 10, scale: 2 }).notNull(),
@@ -60,7 +60,7 @@ export const coupons = pgTable('coupons', {
 });
 
 export const carts = pgTable('carts', {
-  id: integer('id').primaryKey().notNull(),
+  id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
   userId: text('user_id').references(() => users.id),
   status: text('status').default('active'),
   createdAt: timestamp('created_at').defaultNow(),
@@ -68,7 +68,7 @@ export const carts = pgTable('carts', {
 });
 
 export const cartItems = pgTable('cart_items', {
-  id: integer('id').primaryKey().notNull(),
+  id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
   cartId: integer('cart_id').notNull().references(() => carts.id, { onDelete: 'cascade' }),
   itemType: itemTypeEnum('item_type').notNull(),
   itemId: text('item_id').notNull(),
@@ -83,7 +83,7 @@ export const cartItems = pgTable('cart_items', {
 export const orderStatusEnum = pgEnum('order_status', ['pending', 'paid', 'failed']);
 
 export const orders = pgTable('orders', {
-  id: integer('id').primaryKey().notNull(),
+  id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
   userId: text('user_id').references(() => users.id),
   cartId: integer('cart_id').references(() => carts.id),
   couponId: integer('coupon_id').references(() => coupons.id),
@@ -96,7 +96,7 @@ export const orders = pgTable('orders', {
 });
 
 export const couponRedemptions = pgTable('coupon_redemptions', {
-  id: integer('id').primaryKey().notNull(),
+  id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
   couponId: integer('coupon_id').references(() => coupons.id),
   userId: text('user_id').references(() => users.id),
   orderId: integer('order_id').references(() => orders.id),
@@ -105,7 +105,7 @@ export const couponRedemptions = pgTable('coupon_redemptions', {
 });
 
 export const orderItems = pgTable('order_items', {
-  id: integer('id').primaryKey().notNull(),
+  id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
   orderId: integer('order_id').notNull().references(() => orders.id, { onDelete: 'cascade' }),
   itemType: itemTypeEnum('item_type').notNull(),
   itemId: text('item_id').notNull(),
@@ -174,7 +174,7 @@ export const props = approvedProps;
 
 // Base script fields (common to all script types)
 const baseScriptFields = {
-  id: integer('id').primaryKey().notNull(),
+  id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
   title: text('title').notNull(),
   description: text('description').notNull(),
   price: numeric('price').notNull(),
@@ -234,7 +234,7 @@ export const rejectedScripts = pgTable('rejected_scripts', {
 
 // Base giveaway fields (common to all giveaway types)
 const baseGiveawayFields = {
-  id: integer('id').primaryKey().notNull(),
+  id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
   title: text('title').notNull(),
   description: text('description').notNull(),
   totalValue: text('total_value').notNull(),
@@ -288,7 +288,7 @@ export const rejectedGiveaways = pgTable('rejected_giveaways', {
 
 // Giveaway requirements table
 export const giveawayRequirements = pgTable('giveaway_requirements', {
-  id: integer('id').primaryKey().notNull(),
+  id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
   giveawayId: integer('giveaway_id').notNull(),
   type: text('type').notNull(),
   description: text('description').notNull(),
@@ -299,7 +299,7 @@ export const giveawayRequirements = pgTable('giveaway_requirements', {
 
 // Giveaway prizes table
 export const giveawayPrizes = pgTable('giveaway_prizes', {
-  id: integer('id').primaryKey().notNull(),
+  id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
   giveawayId: integer('giveaway_id').notNull(),
   position: integer('position').notNull(),
   name: text('name').notNull(),
@@ -313,7 +313,7 @@ export const giveawayPrizes = pgTable('giveaway_prizes', {
 
 // Giveaway prize winners table (stores multiple winners per prize)
 export const giveawayPrizeWinners = pgTable('giveaway_prize_winners', {
-  id: integer('id').primaryKey().notNull(),
+  id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
   prizeId: integer('prize_id').notNull(),
   userId: text('user_id').notNull(),
   userName: text('user_name'),
@@ -324,7 +324,7 @@ export const giveawayPrizeWinners = pgTable('giveaway_prize_winners', {
 
 // Giveaway entries table
 export const giveawayEntries = pgTable('giveaway_entries', {
-  id: integer('id').primaryKey().notNull(),
+  id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
   giveawayId: integer('giveaway_id').notNull(),
   userId: text('user_id').notNull(),
   userName: text('user_name'),
@@ -342,7 +342,7 @@ export const giveawayEntries = pgTable('giveaway_entries', {
 
 // Base ad fields for approval system
 const baseAdFields = {
-  id: integer('id').primaryKey().notNull(),
+  id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
   title: text('title').notNull(),
   description: text('description').notNull(),
   imageUrl: text('image_url'),
@@ -385,7 +385,7 @@ export const rejectedAds = pgTable('rejected_ads', {
 
 // User Ad Slots table (one-time purchase, not subscription)
 export const userAdSlots = pgTable('user_ad_slots', {
-  id: integer('id').primaryKey().notNull(),
+  id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
   userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   slotNumber: integer('slot_number').array().notNull(), // Array of sequential slot numbers [1, 2, 3, ...]
   slotUniqueIds: text('slot_unique_ids').array().default([]), // Array of unique IDs for each slot
@@ -393,13 +393,13 @@ export const userAdSlots = pgTable('user_ad_slots', {
   endDate: timestamp('end_date'), // When this slot expires (calculated as purchaseDate + durationMonths: 1, 3, 6, or 12 months)
   packageId: text('package_id'), // Package type: 'starter', 'premium', or 'executive'
   durationMonths: integer('duration_months'), // Duration: 1, 3, 6, or 12 months
-  paypalOrderId: text('paypal_order_id'), // PayPal order ID for one-time payment
+  orderReference: text('order_reference'), // payment/order reference id (e.g. Tebex order id)
   status: text('status').default('active').notNull(), // 'active' | 'inactive'
 });
 
 // Featured scripts table (no approval needed - users can only feature approved scripts)
 export const featuredScripts = pgTable('featured_scripts', {
-  id: integer('id').primaryKey().notNull(),
+  id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
   scriptId: integer('script_id').notNull().references(() => approvedScripts.id, { onDelete: 'cascade' }), // Reference to the script being featured
   featuredSlotUniqueId: text('featured_slot_unique_id'), // Unique ID to identify which featured script slot this belongs to
   featuredSlotStatus: text('featured_slot_status').default('active').notNull(), // 'active' when endDate > current date, 'inactive' when current date passes endDate
@@ -415,7 +415,7 @@ export const featuredScripts = pgTable('featured_scripts', {
 
 // User Featured Script Slots table (one-time purchase, not subscription)
 export const userFeaturedScriptSlots = pgTable('user_featured_script_slots', {
-  id: integer('id').primaryKey().notNull(),
+  id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
   featuredUserId: text('featured_user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   featuredSlotNumber: integer('featured_slot_number').array().notNull(), // Array of sequential slot numbers [1, 2, 3, ...]
   featuredSlotUniqueIds: text('featured_slot_unique_ids').array().default([]), // Array of unique IDs for each slot
@@ -423,7 +423,7 @@ export const userFeaturedScriptSlots = pgTable('user_featured_script_slots', {
   featuredSlotEndDate: timestamp('featured_slot_end_date'), // When this slot expires (calculated as purchaseDate + durationWeeks: 1, 2, 4, or 8 weeks)
   featuredPackageId: text('featured_package_id'), // Package type: 'starter', 'premium', or 'executive'
   featuredDurationWeeks: integer('featured_duration_weeks'), // Duration in weeks: 1, 2, 4, or 8 weeks
-  featuredPaypalOrderId: text('featured_paypal_order_id'), // PayPal order ID for one-time payment
+  featuredOrderReference: text('featured_order_reference'), // payment/order reference id (e.g. Tebex order id)
   featuredSlotStatus: text('featured_slot_status').default('active').notNull(), // 'active' | 'inactive'
 });
 

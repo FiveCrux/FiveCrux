@@ -29,13 +29,20 @@ function createDb(): DB {
   }
 
   const connectionString = process.env.DATABASE_URL!;
+  // Pool size is configurable so it suits both a long-running server (a few
+  // generous pools) and serverless (small pool per instance + an external
+  // pooler URL — Neon/Supabase/PgBouncer — set in DATABASE_URL).
+  const poolMax = Number(process.env.DB_POOL_MAX) || 10;
   const client = postgres(connectionString, {
-    max: 3, // Maximum number of connections
-    idle_timeout: 20, // Close idle connections after 20 seconds
+    max: poolMax,
+    idle_timeout: 20, // Close idle connections after 20s
     connect_timeout: 10, // Connection timeout
-    max_lifetime: 60 * 30, // Close connections after 30 minutes
+    max_lifetime: 60 * 30, // Recycle connections after 30 min
+    // Transaction-mode poolers (PgBouncer) don't support prepared statements;
+    // disable them when DB_POOLER=transaction.
+    prepare: process.env.DB_POOLER !== 'transaction',
   });
-  console.log('Database connection initialized with connection pooling');
+  console.log(`Database connection initialized (pool max=${poolMax})`);
   return drizzle(client, { schema });
 }
 

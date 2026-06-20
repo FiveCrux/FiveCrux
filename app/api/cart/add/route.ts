@@ -20,10 +20,6 @@ import {
 
 import { resolvePackage, parsePackageItemId } from "@/lib/ad-pricing";
 
-function generateNumericId() {
-    return Math.floor(Date.now() / 1000) + Math.floor(Math.random() * 10000);
-}
-
 function normalizeMetadata(metadata: unknown) {
     if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) {
         return null;
@@ -133,7 +129,6 @@ export async function POST(request: NextRequest) {
 
             const [newCart] = await db.insert(carts)
                 .values({
-                    id: generateNumericId(),
                     userId: user.id,
                     status: "active",
                 })
@@ -207,7 +202,6 @@ export async function POST(request: NextRequest) {
 
             await db.insert(cartItems)
                 .values({
-                    id: generateNumericId(),
                     cartId: cart.id,
 
                     itemType,
