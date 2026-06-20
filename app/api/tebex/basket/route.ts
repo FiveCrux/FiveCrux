@@ -8,6 +8,7 @@ import {
 } from "@/lib/tebex";
 import { db } from "@/lib/db/client";
 import { tebexOrders } from "@/lib/db/schema";
+import { requireUser } from "@/lib/api-auth";
 
 /**
  * POST /api/tebex/basket
@@ -20,6 +21,11 @@ import { tebexOrders } from "@/lib/db/schema";
  */
 export async function POST(request: NextRequest) {
   try {
+    // SECURITY: require a logged-in buyer (records who started the order;
+    // prevents anonymous unbounded basket/order creation).
+    const auth = await requireUser();
+    if (!auth.ok) return auth.response;
+
     const body = await request.json().catch(() => ({}));
     const {
       storeToken,
@@ -53,7 +59,7 @@ export async function POST(request: NextRequest) {
     await db.insert(tebexOrders).values({
       id: randomUUID(),
       basketIdent: basket.ident,
-      userId: null,
+      userId: auth.userId,
       kind: "seller_product",
       storeToken,
       packageIds: [String(packageId)],
