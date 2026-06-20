@@ -109,6 +109,8 @@ export default function EditScriptPage() {
     featured: false,
     currency: "",
     currencySymbol: "",
+    tebexStoreToken: "",
+    tebexPackageId: "",
   })
 
   const [selectedCurrency, setSelectedCurrency] = useState<Currency | null>(null)
@@ -137,10 +139,12 @@ export default function EditScriptPage() {
   const [uploadingVideos, setUploadingVideos] = useState(false)
 
   const fetchScript = useCallback(async () => {
+    const c = new AbortController()
+    const t = setTimeout(() => c.abort(), 15000)
     try {
       setLoading(true)
-      const response = await fetch(`/api/scripts/${scriptId}`)
-      
+      const response = await fetch(`/api/scripts/${scriptId}`, { signal: c.signal })
+
       if (!response.ok) {
         throw new Error("Script not found")
       }
@@ -168,6 +172,9 @@ export default function EditScriptPage() {
         featured: scriptData.featured,
         currency: scriptData.currency || "",
         currencySymbol: scriptData.currency_symbol || "",
+        // Tebex Headless integration (per-seller webstore). Optional; null until linked.
+        tebexStoreToken: scriptData.tebexStoreToken || scriptData.tebex_store_token || "",
+        tebexPackageId: scriptData.tebexPackageId || scriptData.tebex_package_id || "",
       })
       
       // Set selected currency if it exists
@@ -209,6 +216,7 @@ export default function EditScriptPage() {
       console.error("Error fetching script:", error)
       router.push("/profile")
     } finally {
+      clearTimeout(t)
       setLoading(false)
     }
   }, [scriptId, session?.user, router])
@@ -430,6 +438,9 @@ export default function EditScriptPage() {
         videos: media.videos,
         screenshots: media.screenshots,
         cover_image: media.coverImage,
+        // Tebex Headless integration (per-seller webstore). Optional; null until linked.
+        tebexStoreToken: formData.tebexStoreToken.trim() || null,
+        tebexPackageId: formData.tebexPackageId.trim() || null,
         last_updated: new Date().toISOString(),
       }
 
@@ -475,9 +486,10 @@ export default function EditScriptPage() {
     return (
       <>
         <Navbar />
-        <div className="min-h-screen text-white flex items-center justify-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-orange-500"></div>
+        <div className="min-h-screen bg-[#0a0a0a] text-white flex items-center justify-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-orange-500"></div>
         </div>
+        <Footer />
       </>
     )
   }
@@ -489,11 +501,11 @@ export default function EditScriptPage() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen text-white relative overflow-hidden">
+      <div className="min-h-screen bg-[#0a0a0a] text-white relative overflow-hidden">
         {/* Animated background */}
         <div className="fixed inset-0 -z-10">
           <motion.div
-            className="absolute inset-0 bg-gradient-to-br from-black via-gray-900 to-black"
+            className="absolute inset-0 bg-gradient-to-br from-[#0a0a0a] via-[#0d0d0f] to-[#0a0a0a]"
             animate={{
               background: [
                 "radial-gradient(circle at 20% 50%, rgba(249, 115, 22, 0.05) 0%, transparent 50%)",
@@ -510,10 +522,10 @@ export default function EditScriptPage() {
         </div>
 
         {/* Header */}
-        <div className="bg-gradient-to-r from-orange-500/10 to-yellow-400/10 py-8 px-4 sm:px-6 lg:px-8 border-b border-gray-800/50">
+        <div className="bg-gradient-to-r from-orange-500/10 to-yellow-400/10 py-8 px-4 sm:px-6 lg:px-8 border-b border-white/[0.08]">
           <div className="max-w-7xl mx-auto">
             <motion.div
-              className="flex items-center gap-4"
+              className="flex flex-col sm:flex-row sm:items-center gap-4"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
@@ -521,13 +533,15 @@ export default function EditScriptPage() {
               <Button
                 variant="outline"
                 onClick={() => router.push("/profile")}
-                className="bg-gray-800/50 border-gray-700 text-white hover:bg-gray-700"
+                className="w-full sm:w-auto bg-white/[0.04] border-white/[0.08] text-white hover:bg-white/[0.08] hover:text-white backdrop-blur-xl"
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Profile
               </Button>
               <div>
-                <h1 className="text-3xl font-bold">Edit Script</h1>
+                <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-orange-500 to-yellow-400 bg-clip-text text-transparent">
+                  Edit Script
+                </h1>
                 <p className="text-gray-400">Update your script information</p>
               </div>
             </motion.div>
@@ -535,12 +549,12 @@ export default function EditScriptPage() {
         </div>
 
         {/* Form */}
-        <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="max-w-7xl mx-auto py-6 sm:py-8 px-4 sm:px-6 lg:px-8">
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
             {/* Form Section */}
             <div className="lg:col-span-2 space-y-6">
               {/* Basic Information */}
-              <Card className="bg-gray-800/30 border-gray-700/50 backdrop-blur-sm">
+              <Card className="bg-white/[0.04] border-white/[0.08] backdrop-blur-xl rounded-2xl">
                 <CardHeader>
                   <CardTitle className="text-white flex items-center gap-2">
                     <Package className="h-5 w-5 text-orange-500" />
@@ -557,7 +571,7 @@ export default function EditScriptPage() {
                       value={formData.title}
                       onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                       placeholder="Enter script title..."
-                      className="mt-2 bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-orange-500"
+                      className="mt-2 bg-white/[0.03] border-white/[0.08] text-white placeholder-gray-500 focus:border-orange-500 focus-visible:ring-orange-500/40 focus-visible:ring-2"
                       required
                     />
                   </div>
@@ -572,7 +586,7 @@ export default function EditScriptPage() {
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                       placeholder="Describe your script..."
                       rows={4}
-                      className="mt-2 bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-orange-500"
+                      className="mt-2 bg-white/[0.03] border-white/[0.08] text-white placeholder-gray-500 focus:border-orange-500 focus-visible:ring-orange-500/40 focus-visible:ring-2"
                       required
                     />
                   </div>
@@ -583,10 +597,10 @@ export default function EditScriptPage() {
                         Category *
                       </Label>
                       <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
-                        <SelectTrigger className="mt-2 bg-gray-900/50 border-gray-700 text-white focus:border-orange-500">
+                        <SelectTrigger className="mt-2 bg-white/[0.03] border-white/[0.08] text-white focus:ring-orange-500/40">
                           <SelectValue placeholder="Select category" />
                         </SelectTrigger>
-                        <SelectContent className="bg-gray-800 border-gray-700">
+                        <SelectContent className="bg-[#0d0d0f] border-white/[0.08] text-white">
                           {scriptCategories.map((category) => (
                             <SelectItem key={category.value} value={category.value} className="text-white">
                               {category.label}
@@ -601,10 +615,10 @@ export default function EditScriptPage() {
                         Framework
                       </Label>
                       <Select value={formData.framework} onValueChange={(value) => setFormData({ ...formData, framework: value })}>
-                        <SelectTrigger className="mt-2 bg-gray-900/50 border-gray-700 text-white focus:border-orange-500">
+                        <SelectTrigger className="mt-2 bg-white/[0.03] border-white/[0.08] text-white focus:ring-orange-500/40">
                           <SelectValue placeholder="Select framework" />
                         </SelectTrigger>
-                        <SelectContent className="bg-gray-800 border-gray-700">
+                        <SelectContent className="bg-[#0d0d0f] border-white/[0.08] text-white">
                           {frameworks.map((framework) => (
                             <SelectItem key={framework.value} value={framework.value} className="text-white">
                               {framework.label}
@@ -618,7 +632,7 @@ export default function EditScriptPage() {
               </Card>
 
               {/* Pricing */}
-              <Card className="bg-gray-800/30 border-gray-700/50 backdrop-blur-sm">
+              <Card className="bg-white/[0.04] border-white/[0.08] backdrop-blur-xl rounded-2xl">
                 <CardHeader>
                   <CardTitle className="text-white flex items-center gap-2">
                     <DollarSign className="h-5 w-5 text-orange-500" />
@@ -627,7 +641,7 @@ export default function EditScriptPage() {
                 </CardHeader>
                 <CardContent className="space-y-6">
                   {/* Free Toggle */}
-                  <div className="flex items-center space-x-2 pb-4 border-b border-gray-700">
+                  <div className="flex items-center space-x-2 pb-4 border-b border-white/[0.08]">
                     <Switch
                       id="isFree"
                       checked={isFree}
@@ -680,7 +694,7 @@ export default function EditScriptPage() {
                           currencies="all"
                           variant="default"
                           className={cn(
-                            "bg-gray-900/50 border-gray-700 text-white",
+                            "bg-white/[0.03] border-white/[0.08] text-white",
                             isFree && "cursor-not-allowed opacity-50"
                           )}
                         />
@@ -702,8 +716,8 @@ export default function EditScriptPage() {
                             onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                             placeholder="25.99"
                             className={cn(
-                              "pr-10 bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-orange-500",
-                              isFree && "cursor-not-allowed opacity-50 bg-gray-800/30"
+                              "pr-10 bg-white/[0.03] border-white/[0.08] text-white placeholder-gray-500 focus:border-orange-500 focus-visible:ring-orange-500/40 focus-visible:ring-2",
+                              isFree && "cursor-not-allowed opacity-50 bg-white/[0.02]"
                             )}
                             required={!isFree}
                             disabled={isFree || !selectedCurrency}
@@ -730,8 +744,8 @@ export default function EditScriptPage() {
                             onChange={(e) => setFormData({ ...formData, originalPrice: e.target.value })}
                             placeholder="35.99"
                             className={cn(
-                              "pr-10 bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-orange-500",
-                              isFree && "cursor-not-allowed opacity-50 bg-gray-800/30"
+                              "pr-10 bg-white/[0.03] border-white/[0.08] text-white placeholder-gray-500 focus:border-orange-500 focus-visible:ring-orange-500/40 focus-visible:ring-2",
+                              isFree && "cursor-not-allowed opacity-50 bg-white/[0.02]"
                             )}
                             disabled={isFree || !selectedCurrency}
                           />
@@ -771,7 +785,7 @@ export default function EditScriptPage() {
               </Card>
 
               {/* Features */}
-              <Card className="bg-gray-800/30 border-gray-700/50 backdrop-blur-sm">
+              <Card className="bg-white/[0.04] border-white/[0.08] backdrop-blur-xl rounded-2xl">
                 <CardHeader>
                   <CardTitle className="text-white flex items-center gap-2">
                     <Zap className="h-5 w-5 text-orange-500" />
@@ -791,7 +805,7 @@ export default function EditScriptPage() {
                         value={feature.text}
                         onChange={(e) => updateFeature(feature.id, e.target.value)}
                         placeholder="Describe a key feature..."
-                        className="flex-1 bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-orange-500"
+                        className="flex-1 bg-white/[0.03] border-white/[0.08] text-white placeholder-gray-500 focus:border-orange-500 focus-visible:ring-orange-500/40 focus-visible:ring-2"
                       />
                       <Button
                         type="button"
@@ -812,7 +826,7 @@ export default function EditScriptPage() {
               </Card>
 
               {/* Requirements */}
-              <Card className="bg-gray-800/30 border-gray-700/50 backdrop-blur-sm">
+              <Card className="bg-white/[0.04] border-white/[0.08] backdrop-blur-xl rounded-2xl">
                 <CardHeader>
                   <CardTitle className="text-white flex items-center gap-2">
                     <AlertCircle className="h-5 w-5 text-orange-500" />
@@ -832,7 +846,7 @@ export default function EditScriptPage() {
                         value={req.text}
                         onChange={(e) => updateRequirement(req.id, e.target.value)}
                         placeholder="Add a requirement..."
-                        className="flex-1 bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-orange-500"
+                        className="flex-1 bg-white/[0.03] border-white/[0.08] text-white placeholder-gray-500 focus:border-orange-500 focus-visible:ring-orange-500/40 focus-visible:ring-2"
                       />
                       <Button
                         type="button"
@@ -853,7 +867,7 @@ export default function EditScriptPage() {
               </Card>
 
               {/* Other Links */}
-              <Card className="bg-gray-800/30 border-gray-700/50 backdrop-blur-sm">
+              <Card className="bg-white/[0.04] border-white/[0.08] backdrop-blur-xl rounded-2xl">
                 <CardHeader>
                   <CardTitle className="text-white flex items-center gap-2">
                     <ExternalLink className="h-5 w-5 text-orange-500" />
@@ -873,7 +887,7 @@ export default function EditScriptPage() {
                         value={otherLink.text}
                         onChange={(e) => updateOtherLink(otherLink.id, e.target.value)}
                         placeholder="https://example.com/documentation"
-                        className="flex-1 bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-orange-500"
+                        className="flex-1 bg-white/[0.03] border-white/[0.08] text-white placeholder-gray-500 focus:border-orange-500 focus-visible:ring-orange-500/40 focus-visible:ring-2"
                       />
                       {otherLinks.length > 1 && (
                         <Button
@@ -896,7 +910,7 @@ export default function EditScriptPage() {
               </Card>
 
               {/* Link */}
-              <Card className="bg-gray-800/30 border-gray-700/50 backdrop-blur-sm">
+              <Card className="bg-white/[0.04] border-white/[0.08] backdrop-blur-xl rounded-2xl">
                 <CardHeader>
                   <CardTitle className="text-white flex items-center gap-2">
                     <ExternalLink className="h-7 w-5 text-orange-500" />
@@ -908,7 +922,7 @@ export default function EditScriptPage() {
                     value={link}
                     onChange={(e) => setLink(e.target.value)}
                     placeholder="https://demo.example.com"
-                    className="bg-gray-900/50 border-gray-700 text-white placeholder-gray-400 focus:border-orange-500"
+                    className="bg-white/[0.03] border-white/[0.08] text-white placeholder-gray-500 focus:border-orange-500 focus-visible:ring-orange-500/40 focus-visible:ring-2"
                     type="url"
                   />
                   <p className="text-sm text-gray-400 mt-2">
@@ -917,8 +931,50 @@ export default function EditScriptPage() {
                 </CardContent>
               </Card>
 
+              {/* Tebex Integration */}
+              <Card className="bg-white/[0.04] border-white/[0.08] backdrop-blur-xl rounded-2xl">
+                <CardHeader>
+                  <CardTitle className="text-white flex items-center gap-2">
+                    <Package className="h-5 w-5 text-orange-500" />
+                    Tebex Integration
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <p className="text-sm text-gray-400">
+                    Add these to sell this script directly via your Tebex store
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="tebexStoreToken" className="text-white font-medium">
+                        Tebex Store Token (Optional)
+                      </Label>
+                      <Input
+                        id="tebexStoreToken"
+                        value={formData.tebexStoreToken}
+                        onChange={(e) => setFormData({ ...formData, tebexStoreToken: e.target.value })}
+                        placeholder="e.g. abcd1234efgh5678"
+                        className="mt-2 bg-white/[0.03] border-white/[0.08] text-white placeholder-gray-500 focus:border-orange-500 focus-visible:ring-orange-500/40 focus-visible:ring-2"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="tebexPackageId" className="text-white font-medium">
+                        Tebex Package ID (Optional)
+                      </Label>
+                      <Input
+                        id="tebexPackageId"
+                        value={formData.tebexPackageId}
+                        onChange={(e) => setFormData({ ...formData, tebexPackageId: e.target.value })}
+                        placeholder="e.g. 1234567"
+                        className="mt-2 bg-white/[0.03] border-white/[0.08] text-white placeholder-gray-500 focus:border-orange-500 focus-visible:ring-orange-500/40 focus-visible:ring-2"
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
               {/* Media & Screenshots */}
-              <Card className="bg-gray-800/30 border-gray-700/50 backdrop-blur-sm">
+              <Card className="bg-white/[0.04] border-white/[0.08] backdrop-blur-xl rounded-2xl">
                 <CardHeader>
                   <CardTitle className="text-white flex items-center gap-2">
                     <ImageIcon className="h-5 w-5 text-orange-500" />
@@ -938,7 +994,7 @@ export default function EditScriptPage() {
                     />
                     <label
                       htmlFor="cover-image-upload"
-                      className={`mt-2 border-2 border-dashed border-gray-600 rounded-lg p-8 text-center transition-colors block ${
+                      className={`mt-2 border-2 border-dashed border-white/[0.12] rounded-xl p-8 text-center transition-colors block ${
                         uploadingCoverImage 
                           ? "opacity-50 cursor-not-allowed" 
                           : "hover:border-orange-500 cursor-pointer"
@@ -992,7 +1048,7 @@ export default function EditScriptPage() {
                     />
                     <label
                       htmlFor="screenshot-upload"
-                      className={`mt-2 border-2 border-dashed border-gray-600 rounded-lg p-8 text-center transition-colors block ${
+                      className={`mt-2 border-2 border-dashed border-white/[0.12] rounded-xl p-8 text-center transition-colors block ${
                         uploadingScreenshots 
                           ? "opacity-50 cursor-not-allowed" 
                           : "hover:border-orange-500 cursor-pointer"
@@ -1048,7 +1104,7 @@ export default function EditScriptPage() {
                     />
                     <label
                       htmlFor="video-upload"
-                      className={`mt-2 border-2 border-dashed border-gray-600 rounded-lg p-8 text-center transition-colors block ${
+                      className={`mt-2 border-2 border-dashed border-white/[0.12] rounded-xl p-8 text-center transition-colors block ${
                         uploadingVideos 
                           ? "opacity-50 cursor-not-allowed" 
                           : "hover:border-orange-500 cursor-pointer"
@@ -1094,7 +1150,7 @@ export default function EditScriptPage() {
               </Card>
 
               {/* Submit Button */}
-              <motion.div className="flex gap-4" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+              <motion.div className="flex flex-col sm:flex-row gap-4">
                 <Button
                   type="submit"
                   disabled={saving}
@@ -1116,7 +1172,7 @@ export default function EditScriptPage() {
                   type="button"
                   variant="outline"
                   onClick={() => router.push("/profile")}
-                  className="px-8 border-gray-600 text-gray-300 hover:text-white hover:border-orange-500"
+                  className="px-8 bg-white/[0.04] border-white/[0.08] text-gray-300 hover:text-white hover:bg-white/[0.08] hover:border-orange-500 backdrop-blur-xl"
                 >
                   Cancel
                 </Button>
@@ -1126,7 +1182,7 @@ export default function EditScriptPage() {
             {/* Preview Section */}
             <div className="lg:col-span-1">
               <div className="sticky top-24 space-y-6">
-                <Card className="bg-gray-800/30 border-gray-700/50 backdrop-blur-sm">
+                <Card className="bg-white/[0.04] border-white/[0.08] backdrop-blur-xl rounded-2xl">
                   <CardHeader>
                     <CardTitle className="text-white flex items-center gap-2">
                       <Zap className="h-5 w-5 text-orange-500" />
@@ -1137,7 +1193,7 @@ export default function EditScriptPage() {
                     <div className="space-y-4">
                       {/* Screenshots Preview */}
                       {media.screenshots.length > 0 ? (
-                        <div className="aspect-video bg-gray-700 rounded-lg overflow-hidden">
+                        <div className="aspect-video bg-white/[0.04] rounded-lg overflow-hidden">
                           <img
                             src={media.screenshots[0]}
                             alt="Main screenshot"
@@ -1145,7 +1201,7 @@ export default function EditScriptPage() {
                           />
                         </div>
                       ) : (
-                        <div className="aspect-video bg-gray-700 rounded-lg flex items-center justify-center">
+                        <div className="aspect-video bg-white/[0.04] rounded-lg flex items-center justify-center">
                           <ImageIcon className="h-12 w-12 text-gray-500" />
                         </div>
                       )}
@@ -1154,7 +1210,7 @@ export default function EditScriptPage() {
                       {media.screenshots.length > 1 && (
                         <div className="grid grid-cols-3 gap-2">
                           {media.screenshots.slice(1, 4).map((screenshot, index) => (
-                            <div key={index} className="aspect-square bg-gray-700 rounded-lg overflow-hidden">
+                            <div key={index} className="aspect-square bg-white/[0.04] rounded-lg overflow-hidden">
                               <img
                                 src={screenshot}
                                 alt={`Screenshot ${index + 2}`}
@@ -1163,7 +1219,7 @@ export default function EditScriptPage() {
                             </div>
                           ))}
                           {media.screenshots.length > 4 && (
-                            <div className="aspect-square bg-gray-700 rounded-lg flex items-center justify-center">
+                            <div className="aspect-square bg-white/[0.04] rounded-lg flex items-center justify-center">
                               <span className="text-gray-400 text-sm">+{media.screenshots.length - 4}</span>
                             </div>
                           )}

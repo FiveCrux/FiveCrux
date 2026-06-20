@@ -3,10 +3,18 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/auth'
 import { getApprovedAds, getPendingAds, getRejectedAds, approveAd, rejectAd } from '@/lib/database-new'
 
+// SECURITY: this is an admin moderation endpoint — without a role gate any
+// logged-in user could approve/reject any ad. Staff only.
+function isStaff(session: any): boolean {
+  const roles = (session?.user as any)?.roles || []
+  return roles.includes('admin') || roles.includes('founder') || roles.includes('moderator')
+}
+
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (!isStaff(session)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
     const url = new URL(request.url)
     const type = url.searchParams.get('type') || 'all'
@@ -42,6 +50,7 @@ export async function PATCH(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (!isStaff(session)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
     const body = await request.json()
     const { action, adId, adminNotes, rejectionReason } = body as {

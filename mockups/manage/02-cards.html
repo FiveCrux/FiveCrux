@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FiveCrux — Manage Listings · Cards</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<script>tailwind.config={theme:{extend:{fontFamily:{sans:["Inter","sans-serif"]},colors:{brand:{orange:"#f97316"}}}}}</script>
+<style>
+  body{font-family:Inter,sans-serif;background:#0a0a0a;color:#fff}
+  .num{font-variant-numeric:tabular-nums}
+  .micro{font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase}
+  .hairline{border-color:rgba(255,255,255,.07)}
+  .card{transition:transform .2s,border-color .2s,box-shadow .2s}
+  .card:hover{transform:translateY(-3px);border-color:rgba(255,255,255,.14);box-shadow:0 24px 50px -24px rgba(0,0,0,.85)}
+  .card:hover .overlay{opacity:1}
+  .overlay{opacity:0;transition:opacity .18s}
+  ::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:8px}
+</style>
+</head>
+<body class="min-h-screen pb-24">
+
+<!-- NAV -->
+<nav class="sticky top-0 z-40 border-b hairline bg-[#0a0a0a]/85 backdrop-blur-xl">
+  <div class="mx-auto flex max-w-6xl items-center gap-6 px-6 py-3.5">
+    <a href="#" class="text-lg font-extrabold tracking-tight"><span class="text-brand-orange">Five</span>Crux</a>
+    <div class="ml-4 hidden items-center gap-6 text-sm text-white/55 md:flex">
+      <a href="#" class="transition hover:text-white">Scripts</a>
+      <a href="#" class="transition hover:text-white">MLOs</a>
+      <a href="#" class="transition hover:text-white">Giveaways</a>
+      <a href="#" class="text-white">Sell</a>
+    </div>
+    <div class="ml-auto flex items-center gap-2">
+      <button class="relative grid h-9 w-9 place-items-center rounded-full border border-white/10 text-white/70 transition hover:text-white">
+        <i data-lucide="shopping-cart" class="h-4 w-4"></i>
+        <span class="absolute -right-0.5 -top-0.5 grid h-4 w-4 place-items-center rounded-full bg-brand-orange text-[10px] font-bold text-black">2</span>
+      </button>
+      <button class="rounded-full bg-white/[0.06] px-4 py-2 text-sm font-semibold text-white/85 transition hover:bg-white/10">Login</button>
+    </div>
+  </div>
+</nav>
+
+<main class="mx-auto max-w-6xl px-6 pt-9">
+
+  <span class="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 micro text-white/55">
+    <span class="h-1.5 w-1.5 rounded-full bg-brand-orange"></span> Concept · Card Grid
+  </span>
+
+  <!-- HEADER -->
+  <div class="mt-5 flex flex-wrap items-end justify-between gap-5">
+    <div>
+      <h1 class="text-[34px] font-extrabold leading-none tracking-tight">Manage listings</h1>
+      <p class="mt-2.5 text-sm leading-relaxed text-white/45">Edit, update, and track your published products.</p>
+    </div>
+    <button class="group inline-flex items-center gap-2 rounded-2xl bg-brand-orange px-5 py-3 text-sm font-bold text-black transition hover:bg-orange-400">
+      <i data-lucide="plus" class="h-4 w-4"></i> New listing
+    </button>
+  </div>
+
+  <!-- SUMMARY ROW -->
+  <div class="num mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 rounded-2xl border hairline bg-white/[0.02] px-5 py-3.5 text-sm text-white/55">
+    <span><span class="font-bold text-white">12</span> listings</span>
+    <span class="hidden h-3 w-px bg-white/10 sm:inline-block"></span>
+    <span><span class="font-bold text-white">2,480</span> sales</span>
+    <span class="hidden h-3 w-px bg-white/10 sm:inline-block"></span>
+    <span><span class="font-bold text-brand-orange">€18,420</span> revenue</span>
+    <span class="hidden h-3 w-px bg-white/10 sm:inline-block"></span>
+    <span class="inline-flex items-center gap-1"><span class="font-bold text-white">4.9</span> <i data-lucide="star" class="h-3.5 w-3.5 fill-amber-400 text-amber-400"></i> avg rating</span>
+  </div>
+
+  <!-- FILTER TABS -->
+  <div class="mt-6 flex flex-wrap items-center gap-3">
+    <div class="flex flex-wrap items-center gap-1 rounded-full border hairline bg-white/[0.03] p-1 text-sm">
+      <button class="rounded-full bg-white px-3.5 py-1.5 font-semibold text-black">All</button>
+      <button class="rounded-full px-3.5 py-1.5 font-medium text-white/55 transition hover:text-white">Scripts</button>
+      <button class="rounded-full px-3.5 py-1.5 font-medium text-white/55 transition hover:text-white">Giveaways</button>
+      <button class="rounded-full px-3.5 py-1.5 font-medium text-white/55 transition hover:text-white">Published</button>
+      <button class="rounded-full px-3.5 py-1.5 font-medium text-white/55 transition hover:text-white">Pending review</button>
+    </div>
+  </div>
+
+  <!-- CARD GRID -->
+  <div class="mt-7 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+
+    <!-- CARD 1 -->
+    <article class="card group overflow-hidden rounded-2xl border hairline bg-[#0e0e0e]">
+      <div class="relative h-40">
+        <img src="https://img.forgemods.de/images/thumb/images/4f205008-65c0-4591-9561-33c232a2bc20_gta5map_ls_legion_square_park_bed357ad-959c-4e1e-9420-c793a2ad905f.webp" class="h-full w-full object-cover" />
+        <div class="absolute inset-0 bg-gradient-to-t from-[#0e0e0e] via-transparent to-black/30"></div>
+        <span class="absolute left-3 top-3 inline-flex items-center gap-1 rounded-md bg-black/55 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-sky-300 ring-1 ring-white/10 backdrop-blur"><i data-lucide="code-2" class="h-2.5 w-2.5"></i> Script</span>
+        <span class="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2.5 py-1 text-[11px] font-semibold text-emerald-300 ring-1 ring-emerald-500/30 backdrop-blur"><span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span> Published</span>
+        <!-- hover overlay actions -->
+        <div class="overlay absolute inset-0 flex items-center justify-center gap-2 bg-black/55 backdrop-blur-sm">
+          <button title="Edit" class="grid h-11 w-11 place-items-center rounded-full bg-brand-orange text-black transition hover:bg-orange-400"><i data-lucide="pencil" class="h-4 w-4"></i></button>
+          <button title="View" class="grid h-11 w-11 place-items-center rounded-full bg-white/15 text-white ring-1 ring-white/20 transition hover:bg-white/25"><i data-lucide="eye" class="h-4 w-4"></i></button>
+          <button title="Delete" class="grid h-11 w-11 place-items-center rounded-full bg-rose-500/20 text-rose-300 ring-1 ring-rose-500/30 transition hover:bg-rose-500/30"><i data-lucide="trash-2" class="h-4 w-4"></i></button>
+        </div>
+      </div>
+      <div class="p-4">
+        <div class="flex items-start justify-between gap-3">
+          <h3 class="font-semibold leading-tight">Advanced Banking System</h3>
+          <span class="num shrink-0 text-lg font-extrabold tracking-tight">$19.99</span>
+        </div>
+        <div class="num mt-3 flex items-center gap-4 border-t hairline pt-3 text-xs text-white/50">
+          <span class="inline-flex items-center gap-1.5"><i data-lucide="shopping-bag" class="h-3.5 w-3.5 text-white/35"></i> 1,240 sales</span>
+          <span class="inline-flex items-center gap-1.5"><i data-lucide="star" class="h-3.5 w-3.5 fill-amber-400 text-amber-400"></i> 4.9</span>
+        </div>
+      </div>
+    </article>
+
+    <!-- CARD 2 -->
+    <article class="card group overflow-hidden rounded-2xl border hairline bg-[#0e0e0e]">
+      <div class="relative h-40">
+        <img src="https://img.forgemods.de/images/thumb/images/gta5map_gaming_e83b6804-9d4f-4a0c-bb8f-ed72882d7d9b.webp" class="h-full w-full object-cover" />
+        <div class="absolute inset-0 bg-gradient-to-t from-[#0e0e0e] via-transparent to-black/30"></div>
+        <span class="absolute left-3 top-3 inline-flex items-center gap-1 rounded-md bg-black/55 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-sky-300 ring-1 ring-white/10 backdrop-blur"><i data-lucide="code-2" class="h-2.5 w-2.5"></i> Script</span>
+        <span class="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2.5 py-1 text-[11px] font-semibold text-emerald-300 ring-1 ring-emerald-500/30 backdrop-blur"><span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span> Published</span>
+        <div class="overlay absolute inset-0 flex items-center justify-center gap-2 bg-black/55 backdrop-blur-sm">
+          <button title="Edit" class="grid h-11 w-11 place-items-center rounded-full bg-brand-orange text-black transition hover:bg-orange-400"><i data-lucide="pencil" class="h-4 w-4"></i></button>
+          <button title="View" class="grid h-11 w-11 place-items-center rounded-full bg-white/15 text-white ring-1 ring-white/20 transition hover:bg-white/25"><i data-lucide="eye" class="h-4 w-4"></i></button>
+          <button title="Delete" class="grid h-11 w-11 place-items-center rounded-full bg-rose-500/20 text-rose-300 ring-1 ring-rose-500/30 transition hover:bg-rose-500/30"><i data-lucide="trash-2" class="h-4 w-4"></i></button>
+        </div>
+      </div>
+      <div class="p-4">
+        <div class="flex items-start justify-between gap-3">
+          <h3 class="font-semibold leading-tight">Police MDT &amp; Dispatch</h3>
+          <span class="num shrink-0 text-lg font-extrabold tracking-tight">$24.99</span>
+        </div>
+        <div class="num mt-3 flex items-center gap-4 border-t hairline pt-3 text-xs text-white/50">
+          <span class="inline-flex items-center gap-1.5"><i data-lucide="shopping-bag" class="h-3.5 w-3.5 text-white/35"></i> 760 sales</span>
+          <span class="inline-flex items-center gap-1.5"><i data-lucide="star" class="h-3.5 w-3.5 fill-amber-400 text-amber-400"></i> 5.0</span>
+        </div>
+      </div>
+    </article>
+
+    <!-- CARD 3 -->
+    <article class="card group overflow-hidden rounded-2xl border hairline bg-[#0e0e0e]">
+      <div class="relative h-40">
+        <img src="https://img.forgemods.de/images/thumb/images/c56a6a29-9469-4875-8557-679884d124a6_gta5map_los_santos_medical_center_cd5cc62b-caf0-4021-bdf0-debb98f190fe.webp" class="h-full w-full object-cover" />
+        <div class="absolute inset-0 bg-gradient-to-t from-[#0e0e0e] via-transparent to-black/30"></div>
+        <span class="absolute left-3 top-3 inline-flex items-center gap-1 rounded-md bg-black/55 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-sky-300 ring-1 ring-white/10 backdrop-blur"><i data-lucide="code-2" class="h-2.5 w-2.5"></i> Script</span>
+        <span class="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 px-2.5 py-1 text-[11px] font-semibold text-amber-300 ring-1 ring-amber-500/30 backdrop-blur"><span class="h-1.5 w-1.5 rounded-full bg-amber-400"></span> Pending review</span>
+        <div class="overlay absolute inset-0 flex items-center justify-center gap-2 bg-black/55 backdrop-blur-sm">
+          <button title="Edit" class="grid h-11 w-11 place-items-center rounded-full bg-brand-orange text-black transition hover:bg-orange-400"><i data-lucide="pencil" class="h-4 w-4"></i></button>
+          <button title="View" class="grid h-11 w-11 place-items-center rounded-full bg-white/15 text-white ring-1 ring-white/20 transition hover:bg-white/25"><i data-lucide="eye" class="h-4 w-4"></i></button>
+          <button title="Delete" class="grid h-11 w-11 place-items-center rounded-full bg-rose-500/20 text-rose-300 ring-1 ring-rose-500/30 transition hover:bg-rose-500/30"><i data-lucide="trash-2" class="h-4 w-4"></i></button>
+        </div>
+      </div>
+      <div class="p-4">
+        <div class="flex items-start justify-between gap-3">
+          <h3 class="font-semibold leading-tight">Luxury Apartments MLO</h3>
+          <span class="num shrink-0 text-lg font-extrabold tracking-tight">$34.99</span>
+        </div>
+        <div class="num mt-3 flex items-center gap-4 border-t hairline pt-3 text-xs text-white/40">
+          <span class="inline-flex items-center gap-1.5"><i data-lucide="clock" class="h-3.5 w-3.5 text-amber-400/70"></i> Awaiting approval</span>
+        </div>
+      </div>
+    </article>
+
+    <!-- CARD 4 — giveaway -->
+    <article class="card group overflow-hidden rounded-2xl border hairline bg-[#0e0e0e]">
+      <div class="relative h-40">
+        <img src="https://img.forgemods.de/images/thumb/images/gta5map_vinewood_lake_villa_03_33f120b6-d81c-4c10-973d-c4522420e975.webp" class="h-full w-full object-cover" />
+        <div class="absolute inset-0 bg-gradient-to-t from-[#0e0e0e] via-transparent to-black/30"></div>
+        <span class="absolute left-3 top-3 inline-flex items-center gap-1 rounded-md bg-black/55 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-orange-300 ring-1 ring-white/10 backdrop-blur"><i data-lucide="gift" class="h-2.5 w-2.5"></i> Giveaway</span>
+        <span class="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-brand-orange/20 px-2.5 py-1 text-[11px] font-semibold text-orange-300 ring-1 ring-brand-orange/30 backdrop-blur"><span class="h-1.5 w-1.5 animate-pulse rounded-full bg-orange-400"></span> Active</span>
+        <div class="overlay absolute inset-0 flex items-center justify-center gap-2 bg-black/55 backdrop-blur-sm">
+          <button title="Edit" class="grid h-11 w-11 place-items-center rounded-full bg-brand-orange text-black transition hover:bg-orange-400"><i data-lucide="pencil" class="h-4 w-4"></i></button>
+          <button title="View" class="grid h-11 w-11 place-items-center rounded-full bg-white/15 text-white ring-1 ring-white/20 transition hover:bg-white/25"><i data-lucide="eye" class="h-4 w-4"></i></button>
+          <button title="Delete" class="grid h-11 w-11 place-items-center rounded-full bg-rose-500/20 text-rose-300 ring-1 ring-rose-500/30 transition hover:bg-rose-500/30"><i data-lucide="trash-2" class="h-4 w-4"></i></button>
+        </div>
+      </div>
+      <div class="p-4">
+        <div class="flex items-start justify-between gap-3">
+          <h3 class="font-semibold leading-tight">Server Bundle Giveaway</h3>
+          <div class="shrink-0 text-right">
+            <div class="micro text-white/35">Prize</div>
+            <span class="num text-lg font-extrabold tracking-tight text-brand-orange">€450</span>
+          </div>
+        </div>
+        <div class="num mt-3 flex items-center gap-4 border-t hairline pt-3 text-xs text-white/50">
+          <span class="inline-flex items-center gap-1.5"><i data-lucide="ticket" class="h-3.5 w-3.5 text-white/35"></i> 1,277 entries</span>
+          <span class="inline-flex items-center gap-1.5"><i data-lucide="clock" class="h-3.5 w-3.5 text-white/35"></i> 4d left</span>
+        </div>
+      </div>
+    </article>
+
+    <!-- CARD 5 -->
+    <article class="card group overflow-hidden rounded-2xl border hairline bg-[#0e0e0e]">
+      <div class="relative h-40">
+        <img src="https://img.forgemods.de/images/thumb/images/gta5map_gaming_e83b6804-9d4f-4a0c-bb8f-ed72882d7d9b.webp" class="h-full w-full object-cover" />
+        <div class="absolute inset-0 bg-gradient-to-t from-[#0e0e0e] via-transparent to-black/30"></div>
+        <span class="absolute left-3 top-3 inline-flex items-center gap-1 rounded-md bg-black/55 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-sky-300 ring-1 ring-white/10 backdrop-blur"><i data-lucide="code-2" class="h-2.5 w-2.5"></i> Script</span>
+        <span class="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2.5 py-1 text-[11px] font-semibold text-emerald-300 ring-1 ring-emerald-500/30 backdrop-blur"><span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span> Published</span>
+        <div class="overlay absolute inset-0 flex items-center justify-center gap-2 bg-black/55 backdrop-blur-sm">
+          <button title="Edit" class="grid h-11 w-11 place-items-center rounded-full bg-brand-orange text-black transition hover:bg-orange-400"><i data-lucide="pencil" class="h-4 w-4"></i></button>
+          <button title="View" class="grid h-11 w-11 place-items-center rounded-full bg-white/15 text-white ring-1 ring-white/20 transition hover:bg-white/25"><i data-lucide="eye" class="h-4 w-4"></i></button>
+          <button title="Delete" class="grid h-11 w-11 place-items-center rounded-full bg-rose-500/20 text-rose-300 ring-1 ring-rose-500/30 transition hover:bg-rose-500/30"><i data-lucide="trash-2" class="h-4 w-4"></i></button>
+        </div>
+      </div>
+      <div class="p-4">
+        <div class="flex items-start justify-between gap-3">
+          <h3 class="font-semibold leading-tight">Inventory HUD</h3>
+          <span class="shrink-0 text-lg font-extrabold tracking-tight text-emerald-400">Free</span>
+        </div>
+        <div class="num mt-3 flex items-center gap-4 border-t hairline pt-3 text-xs text-white/50">
+          <span class="inline-flex items-center gap-1.5"><i data-lucide="download" class="h-3.5 w-3.5 text-white/35"></i> 3,400 downloads</span>
+          <span class="inline-flex items-center gap-1.5"><i data-lucide="star" class="h-3.5 w-3.5 fill-amber-400 text-amber-400"></i> 4.7</span>
+        </div>
+      </div>
+    </article>
+
+    <!-- ADD NEW placeholder -->
+    <button class="card flex min-h-[280px] flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-white/12 bg-white/[0.015] text-white/40 transition hover:border-brand-orange/40 hover:text-brand-orange">
+      <span class="grid h-12 w-12 place-items-center rounded-full bg-white/[0.04] ring-1 ring-white/10"><i data-lucide="plus" class="h-5 w-5"></i></span>
+      <span class="text-sm font-semibold">New listing</span>
+    </button>
+
+  </div>
+
+  <p class="mt-6 text-center text-xs text-white/25">An empty state appears here when you have no listings yet — only the dashed "New listing" tile, centered with a short prompt.</p>
+
+</main>
+
+<!-- FOOTER -->
+<footer class="mt-16 border-t hairline px-6 py-8">
+  <div class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 text-xs text-white/35">
+    <span><span class="font-bold text-white/60"><span class="text-brand-orange">Five</span>Crux</span> · The FiveM marketplace</span>
+    <span>© 2026 FiveCrux. All rights reserved.</span>
+  </div>
+</footer>
+
+<script>lucide.createIcons()</script>
+</body>
+</html>

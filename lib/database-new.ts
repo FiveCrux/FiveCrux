@@ -1,4 +1,11 @@
+import { randomUUID } from 'crypto';
 import { db } from './db/client';
+
+// App-generated integer primary key (the prod DB uses manual integer PKs, not
+// DB identity). Seconds-resolution timestamp + random; fits PostgreSQL int4.
+function genId(): number {
+  return Math.floor(Date.now() / 1000) + Math.floor(Math.random() * 10000);
+}
 import { eq, and, or, like, gte, lte, sql, desc, asc, getTableColumns, ne, lt, inArray } from 'drizzle-orm';
 import { 
   users, pendingScripts, approvedScripts, rejectedScripts, 
@@ -153,7 +160,7 @@ export async function getUserPurchasedAdSlots(userId: string): Promise<number> {
   return user[0]?.purchasedAdSlots ?? 0;
 }
 
-// Add slots to user's purchased count (for PayPal purchases)
+// Add slots to user's purchased count (after a completed purchase)
 export async function addPurchasedAdSlots(userId: string, slotsToAdd: number): Promise<number> {
   // First get current value
   const currentUser = await db.select({ purchasedAdSlots: users.purchasedAdSlots })
@@ -245,12 +252,12 @@ export async function getUserActiveAdSlots(userId: string): Promise<number> {
 export async function createAdSlots(
   userId: string,
   slotsToAdd: number,
-  paypalOrderIds: string[],
+  orderRefIds: string[],
   packageId: string, // Package type: 'starter', 'premium', or 'executive'
   durationMonths: number // Duration in months (1, 3, 6, or 12)
 ): Promise<{ id: number; slotNumber: number[]; slotUniqueIds: string[] }> {
-  if (paypalOrderIds.length !== slotsToAdd) {
-    throw new Error('PayPal order IDs count must match slots to add');
+  if (orderRefIds.length !== slotsToAdd) {
+    throw new Error('Order reference IDs count must match slots to add');
   }
 
   if (!['starter', 'premium', 'executive'].includes(packageId)) {
@@ -282,20 +289,14 @@ export async function createAdSlots(
     slotUniqueIds.push(generateSlotUniqueId());
   }
 
-  // Generate ID using timestamp + random (same pattern as other tables)
-  const timestamp = Math.floor(Date.now() / 1000);
-  const randomSuffix = Math.floor(Math.random() * 10000);
-  const id = timestamp + randomSuffix;
+  // Use the first order reference ID (all slots are in one purchase).
+  const orderReference = orderRefIds[0] || null;
 
-  // Use the first PayPal order ID (or combine them if needed)
-  // Since all slots are in one purchase, we'll use the first order ID
-  const paypalOrderId = paypalOrderIds[0] || null;
-
-  // Create a single row with sequential slot numbers and unique IDs
+  // Create a single row with sequential slot numbers and unique IDs.
   const result = await db
     .insert(userAdSlots)
     .values({
-      id: id,
+      id: genId(), // app-generated integer PK (prod has manual PKs)
       userId: userId,
       slotNumber: slotNumbers, // Array of sequential slot numbers [1, 2, 3, 4, 5]
       slotUniqueIds: slotUniqueIds, // Array of unique IDs, one per slot
@@ -303,7 +304,7 @@ export async function createAdSlots(
       endDate: endDate,
       packageId: packageId,
       durationMonths: durationMonths,
-      paypalOrderId: paypalOrderId,
+      paypalOrderId: orderReference,
       status: 'active' as const,
     } as any)
     .returning({ 
@@ -605,11 +606,6 @@ export function getUserProfilePicture(user: { profilePicture?: string | null; im
 
 // Script functions
 export async function createScript(scriptData: NewScript & { framework?: string | string[] }): Promise<number> {
-  // Generate a smaller ID that fits PostgreSQL integer limits (max: 2,147,483,647)
-  const timestamp = Math.floor(Date.now() / 10000); // Divide by 10000 to get smaller number
-  const randomSuffix = Math.floor(Math.random() * 1000);
-  const id = timestamp + randomSuffix;
-  
   const frameworkArray = Array.isArray((scriptData as any).framework)
     ? ((scriptData as any).framework as string[])
     : (typeof (scriptData as any).framework === 'string' && (scriptData as any).framework
@@ -621,7 +617,7 @@ export async function createScript(scriptData: NewScript & { framework?: string 
 
   const scriptWithDefaults = {
     ...scriptData,
-    id,
+    id: genId(), // app-generated integer PK (prod has manual PKs)
     seller_name: scriptData.seller_name || 'Unknown Seller',
     seller_email: scriptData.seller_email || 'unknown@example.com',
     featured: scriptData.featured ?? false,
@@ -634,10 +630,13 @@ export async function createScript(scriptData: NewScript & { framework?: string 
     requirements: scriptData.requirements || [],
     link: scriptData.link || null,
     otherLinks: (scriptData as any).otherLinks || [],
+    // Tebex Headless integration: seller's own store token + package id (nullable).
+    tebexStoreToken: (scriptData as any).tebexStoreToken ?? null,
+    tebexPackageId: (scriptData as any).tebexPackageId ?? null,
     // Normalize framework as text[] for DB with validation
     framework: validatedFrameworks,
   };
-  
+
   const result = await db
     .insert(pendingScripts)
     .values(scriptWithDefaults)
@@ -864,9 +863,8 @@ export async function getScriptById(id: number) {
 
 // Prop functions
 export async function createProp(propData: Omit<NewPendingProp, 'id'> & { id?: string }): Promise<string> {
-  const timestamp = Math.floor(Date.now() / 1000);
-  const randomSuffix = Math.floor(Math.random() * 10000);
-  const id = propData.id || `prop_${timestamp}_${randomSuffix}`;
+  // Collision-resistant text id (props use text PKs).
+  const id = propData.id || `prop_${randomUUID()}`;
 
   const result = await db
     .insert(pendingProps)
@@ -874,6 +872,9 @@ export async function createProp(propData: Omit<NewPendingProp, 'id'> & { id?: s
       ...propData,
       id,
       images: propData.images || [],
+      // Tebex Headless integration: lister's own store token + package id (nullable).
+      tebexStoreToken: (propData as any).tebexStoreToken ?? null,
+      tebexPackageId: (propData as any).tebexPackageId ?? null,
     })
     .returning({ id: pendingProps.id });
 
@@ -1189,6 +1190,9 @@ export async function updateScriptForReapproval(id: number, updateData: any) {
     assignIfDefined('version', updateData.version);
     if (updateData.featured !== undefined) assignIfDefined('featured', Boolean(updateData.featured));
     if (updateData.free !== undefined) assignIfDefined('free', Boolean(updateData.free));
+    // Tebex Headless integration fields (nullable, accept null to clear)
+    if (updateData.tebexStoreToken !== undefined) assignIfDefined('tebexStoreToken', updateData.tebexStoreToken);
+    if (updateData.tebexPackageId !== undefined) assignIfDefined('tebexPackageId', updateData.tebexPackageId);
 
     console.log('Mapped update object for re-approval:', mappedUpdate);
 
@@ -1277,6 +1281,9 @@ export async function updatePendingScript(id: number, updateData: any) {
     assignIfDefined('version', updateData.version);
     if (updateData.featured !== undefined) assignIfDefined('featured', Boolean(updateData.featured));
     if (updateData.free !== undefined) assignIfDefined('free', Boolean(updateData.free));
+    // Tebex Headless integration fields (nullable, accept null to clear)
+    if (updateData.tebexStoreToken !== undefined) assignIfDefined('tebexStoreToken', updateData.tebexStoreToken);
+    if (updateData.tebexPackageId !== undefined) assignIfDefined('tebexPackageId', updateData.tebexPackageId);
 
     const result = await db.update(pendingScripts)
       .set(mappedUpdate)
@@ -1338,6 +1345,9 @@ export async function updateRejectedScriptForReapproval(id: number, updateData: 
     assignIfDefined('version', updateData.version);
     if (updateData.featured !== undefined) assignIfDefined('featured', Boolean(updateData.featured));
     if (updateData.free !== undefined) assignIfDefined('free', Boolean(updateData.free));
+    // Tebex Headless integration fields (nullable, accept null to clear)
+    if (updateData.tebexStoreToken !== undefined) assignIfDefined('tebexStoreToken', updateData.tebexStoreToken);
+    if (updateData.tebexPackageId !== undefined) assignIfDefined('tebexPackageId', updateData.tebexPackageId);
 
     const result = await db.transaction(async (tx) => {
       await tx.delete(rejectedScripts).where(eq(rejectedScripts.id, id));
@@ -1405,6 +1415,9 @@ export async function updateScript(id: number, updateData: any) {
     if (updateData.youtube_video_link !== undefined) assignIfDefined('youtubeVideoLink', updateData.youtube_video_link);
     assignIfDefined('version', updateData.version);
     if (updateData.featured !== undefined) assignIfDefined('featured', Boolean(updateData.featured));
+    // Tebex Headless integration fields (nullable, accept null to clear)
+    if (updateData.tebexStoreToken !== undefined) assignIfDefined('tebexStoreToken', updateData.tebexStoreToken);
+    if (updateData.tebexPackageId !== undefined) assignIfDefined('tebexPackageId', updateData.tebexPackageId);
 
     console.log('Mapped update object (approved_scripts):', mappedUpdate);
 
@@ -1442,16 +1455,11 @@ export async function deleteScript(id: number) {
 // Giveaway functions
 export async function createGiveaway(giveawayData: NewGiveaway) {
   console.log('createGiveaway called with:', giveawayData);
-  
-  // Generate a unique ID that fits PostgreSQL integer limits (max: 2,147,483,647)
-  const timestamp = Math.floor(Date.now() / 10000); // Divide by 10000 to get smaller number
-  const randomSuffix = Math.floor(Math.random() * 1000);
-  const id = timestamp + randomSuffix;
-  
+
   // Provide default values for required fields
   const giveawayWithDefaults = {
     ...giveawayData,
-    id: id,
+    id: genId(), // app-generated integer PK (prod has manual PKs)
     // Map snake_case input to camelCase schema fields
     totalValue: giveawayData.totalValue || (giveawayData as any).total_value || '0',
     endDate: giveawayData.endDate || (giveawayData as any).end_date || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
@@ -1485,16 +1493,11 @@ export async function createGiveaway(giveawayData: NewGiveaway) {
 
 export async function createGiveawayRequirement(requirementData: NewGiveawayRequirement) {
   console.log('createGiveawayRequirement called with:', requirementData);
-  
-  // Generate a unique ID that fits PostgreSQL integer limits (max: 2,147,483,647)
-  const timestamp = Math.floor(Date.now() / 10000); // Divide by 10000 to get smaller number
-  const randomSuffix = Math.floor(Math.random() * 1000);
-  const id = timestamp + randomSuffix;
-  
+
   // Map snake_case input to camelCase schema fields
   const mappedData = {
     ...requirementData,
-    id: id,
+    id: genId(), // app-generated integer PK (prod has manual PKs)
     giveawayId: requirementData.giveawayId || (requirementData as any).giveaway_id
   };
   
@@ -1506,16 +1509,11 @@ export async function createGiveawayRequirement(requirementData: NewGiveawayRequ
 
 export async function createGiveawayPrize(prizeData: NewGiveawayPrize) {
   console.log('createGiveawayPrize called with:', prizeData);
-  
-  // Generate a unique ID that fits PostgreSQL integer limits (max: 2,147,483,647)
-  const timestamp = Math.floor(Date.now() / 10000); // Divide by 10000 to get smaller number
-  const randomSuffix = Math.floor(Math.random() * 1000);
-  const id = timestamp + randomSuffix;
-  
+
   // Map snake_case input to camelCase schema fields
   const mappedData = {
     ...prizeData,
-    id: id,
+    id: genId(), // app-generated integer PK (prod has manual PKs)
     giveawayId: prizeData.giveawayId || (prizeData as any).giveaway_id,
     numberOfWinners: prizeData.numberOfWinners || (prizeData as any).number_of_winners || 1,
     position: prizeData.position || (prizeData as any).position || 1,
@@ -2141,17 +2139,11 @@ export async function rejectGiveaway(giveawayId: number, adminId: string, reject
 export async function createGiveawayEntry(entryData: NewGiveawayEntry) {
   try {
     console.log('createGiveawayEntry called with:', entryData);
-    
-    // Generate a unique ID for Xata Lite compatibility
-    // Use a smaller number that fits PostgreSQL integer limits
-    const timestamp = Math.floor(Date.now() / 1000); // Convert to seconds
-    const randomSuffix = Math.floor(Math.random() * 10000);
-    const id = timestamp + randomSuffix;
-    
+
     // Map snake_case input to camelCase schema fields
     const mappedData = {
       ...entryData,
-      id: id,
+      id: genId(), // app-generated integer PK (prod has manual PKs)
       giveawayId: entryData.giveawayId || (entryData as any).giveaway_id,
       userId: entryData.userId || (entryData as any).user_id,
       userName: (entryData as any).userName ?? (entryData as any).user_name ?? null,
@@ -2232,13 +2224,9 @@ export async function updateGiveawayEntryPoints(giveawayId: number, userId: stri
 
 // Create ad (routes to pending or approved based on user role)
 export async function createAd(adData: NewAd & { status?: string }) {
-  const timestamp = Math.floor(Date.now() / 1000);
-  const randomSuffix = Math.floor(Math.random() * 10000);
-  const id = timestamp + randomSuffix;
-
   const slotUniqueId = (adData as any).slotUniqueId ?? (adData as any).slot_unique_id ?? null;
   
-  // If slotUniqueId is provided, get the slot's endDate from PayPal
+  // If slotUniqueId is provided, inherit the slot's endDate.
   let adEndDate = (adData as any).endDate ?? (adData as any).end_date ?? null;
   if (slotUniqueId) {
     console.log('createAd: Looking up slot with uniqueId:', slotUniqueId);
@@ -2261,7 +2249,7 @@ export async function createAd(adData: NewAd & { status?: string }) {
 
   // Map snake_case input to camelCase schema fields and provide defaults
   const mapped = {
-    id: id,
+    id: genId(), // app-generated integer PK (prod has manual PKs)
     title: (adData as any).title,
     description: (adData as any).description,
     imageUrl: (adData as any).imageUrl ?? (adData as any).image_url ?? null,
@@ -2293,11 +2281,6 @@ export async function createAd(adData: NewAd & { status?: string }) {
 
 // Create pending ad (for user submissions)
 export async function createPendingAd(adData: NewAd) {
-  // Generate a unique ID that fits PostgreSQL integer limits (max: 2,147,483,647)
-  const timestamp = Math.floor(Date.now() / 10000); // Divide by 10000 to get smaller number
-  const randomSuffix = Math.floor(Math.random() * 1000);
-  const id = timestamp + randomSuffix;
-
   const slotUniqueId = (adData as any).slotUniqueId ?? (adData as any).slot_unique_id ?? null;
   
   // If slotUniqueId is provided, get the slot's endDate from PayPal
@@ -2323,7 +2306,7 @@ export async function createPendingAd(adData: NewAd) {
 
   // Map snake_case input to camelCase schema fields and provide defaults
   const mapped = {
-    id: id,
+    id: genId(), // app-generated integer PK (prod has manual PKs)
     title: (adData as any).title,
     description: (adData as any).description,
     imageUrl: (adData as any).imageUrl ?? (adData as any).image_url ?? null,
@@ -2386,29 +2369,17 @@ export async function getAds(filters?: {
 }
 
 // Helper function to get ads for specific page types
-export async function getAdsForPage(pageType: 'scripts' | 'giveaways', limit?: number) {
+export async function getAdsForPage(pageType: 'scripts' | 'giveaways' | 'props', limit?: number) {
   try {
     const allAds = await getAds({ status: "active", limit: 100 });
-    
-    let filteredAds;
-    if (pageType === 'scripts') {
-      // Show ads with category "both", "general", or "scripts"
-      filteredAds = allAds.filter((ad: any) => 
-        ad.category?.toLowerCase() === "both" || 
-        ad.category?.toLowerCase() === "general" ||
-        ad.category?.toLowerCase() === "scripts"
-      );
-    } else if (pageType === 'giveaways') {
-      // Show ads with category "both", "general", or "giveaways"
-      filteredAds = allAds.filter((ad: any) => 
-        ad.category?.toLowerCase() === "both" || 
-        ad.category?.toLowerCase() === "general" ||
-        ad.category?.toLowerCase() === "giveaways"
-      );
-    } else {
-      filteredAds = [];
-    }
-    
+
+    // Each page shows ads tagged "both"/"general" plus that page's own category.
+    const pageCategory = pageType.toLowerCase();
+    const filteredAds = allAds.filter((ad: any) => {
+      const c = ad.category?.toLowerCase();
+      return c === "both" || c === "general" || c === pageCategory;
+    });
+
     // Apply limit
     const limitVal = limit || 10;
     return filteredAds.slice(0, limitVal);
@@ -3006,13 +2977,13 @@ export async function getUserActiveFeaturedScriptSlots(userId: string): Promise<
 export async function createFeaturedScriptSlots(
   userId: string,
   slotsToAdd: number,
-  paypalOrderIds: string[],
+  orderRefIds: string[],
   packageId: string,
   durationMonths: number,
   durationWeeks?: number // Optional: if provided, use weeks instead of months
 ): Promise<{ id: number; slotNumber: number[]; slotUniqueIds: string[] }> {
-  if (paypalOrderIds.length !== slotsToAdd) {
-    throw new Error('PayPal order IDs count must match slots to add');
+  if (orderRefIds.length !== slotsToAdd) {
+    throw new Error('Order reference IDs count must match slots to add');
   }
 
   if (!['starter', 'premium', 'executive'].includes(packageId)) {
@@ -3053,11 +3024,7 @@ export async function createFeaturedScriptSlots(
     slotUniqueIds.push(generateFeaturedScriptSlotUniqueId());
   }
 
-  const timestamp = Math.floor(Date.now() / 1000);
-  const randomSuffix = Math.floor(Math.random() * 10000);
-  const id = timestamp + randomSuffix;
-
-  const paypalOrderId = paypalOrderIds[0] || null;
+  const orderReference = orderRefIds[0] || null;
 
   // Store weeks if provided, otherwise store months (for backward compatibility)
   const storedDurationWeeks = durationWeeks !== undefined ? durationWeeks : null;
@@ -3065,7 +3032,7 @@ export async function createFeaturedScriptSlots(
   const result = await db
     .insert(userFeaturedScriptSlots)
     .values({
-      id: id,
+      id: genId(), // app-generated integer PK (prod has manual PKs)
       featuredUserId: userId,
       featuredSlotNumber: slotNumbers,
       featuredSlotUniqueIds: slotUniqueIds,
@@ -3073,7 +3040,7 @@ export async function createFeaturedScriptSlots(
       featuredSlotEndDate: endDate,
       featuredPackageId: packageId,
       featuredDurationWeeks: storedDurationWeeks,
-      featuredPaypalOrderId: paypalOrderId,
+      featuredPaypalOrderId: orderReference,
       featuredSlotStatus: 'active' as const,
     } as any)
     .returning({ 
@@ -3118,10 +3085,6 @@ export async function getFeaturedScriptSlotByUniqueId(slotUniqueId: string) {
 
 // Create featured script (no approval needed - users can only feature approved scripts)
 export async function createFeaturedScript(featuredScriptData: NewFeaturedScript) {
-  const timestamp = Math.floor(Date.now() / 1000);
-  const randomSuffix = Math.floor(Math.random() * 10000);
-  const id = timestamp + randomSuffix;
-
   const slotUniqueId = (featuredScriptData as any).slotUniqueId ?? (featuredScriptData as any).slot_unique_id ?? null;
   
   let featuredScriptEndDate = (featuredScriptData as any).endDate ?? (featuredScriptData as any).end_date ?? null;
@@ -3135,7 +3098,7 @@ export async function createFeaturedScript(featuredScriptData: NewFeaturedScript
   const scriptId = (featuredScriptData as any).scriptId ?? (featuredScriptData as any).script_id;
 
   const mapped = {
-    id: id,
+    id: genId(), // app-generated integer PK (prod has manual PKs)
     scriptId: scriptId,
     featuredSlotUniqueId: slotUniqueId,
     featuredStartDate: (featuredScriptData as any).startDate ?? (featuredScriptData as any).start_date ?? new Date(),

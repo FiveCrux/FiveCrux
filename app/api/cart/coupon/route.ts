@@ -10,7 +10,8 @@ import { carts, couponRedemptions, coupons } from "@/lib/db/schema"
 function calculateDiscount(total: number, coupon: typeof coupons.$inferSelect) {
   const value = Number(coupon.discountValue)
 
-  if (coupon.discountType === "Percentage") {
+  // Case-insensitive: enum allows both "percentage" and "Percentage" (I3).
+  if (String(coupon.discountType).toLowerCase() === "percentage") {
     return Math.min(total, (total * value) / 100)
   }
 

@@ -1,46 +1,37 @@
 "use client"
 
-import { useRef, useState } from "react"
-import { motion, useInView, AnimatePresence } from "framer-motion"
+import { useEffect, useRef, useState } from "react"
+import { motion, useInView } from "framer-motion"
 import { Button } from "@/componentss/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/componentss/ui/card"
-import { Badge } from "@/componentss/ui/badge"
-import { Tabs, TabsList, TabsTrigger } from "@/componentss/ui/tabs"
 import Navbar from "@/componentss/shared/navbar"
 import Footer from "@/componentss/shared/footer"
-import { StarsBackground } from "@/components/animate-ui/components/backgrounds/stars"
-import { HexagonBackground } from "@/components/animate-ui/components/backgrounds/hexagon"
 import {
   Zap,
   TrendingUp,
   TargetIcon,
   BarChart3,
-  Users,
   Check,
   Star,
   ArrowRight,
+  ArrowUpRight,
   Sparkles,
-  Eye,
-  MousePointerClick,
-  Calendar,
-  Award,
   Crown,
   Loader2,
-  Tag,
   ShoppingCart,
   LayoutGrid,
   MessageSquare,
-  Sliders,
-  Trophy,
+  BadgeCheck,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useTheme } from "next-themes"
 import { toast } from "sonner"
+
 interface PricingDuration {
   label: string
   months: number
   weeks?: number // For featured script slots
-  price: number
+  // NOTE: the real price is NOT stored here — it comes live from Tebex
+  // (fetched from /api/advertise/pricing). `originalPrice` is the marketing
+  // strike-through reference only (no Tebex equivalent).
   originalPrice: number
 }
 
@@ -64,10 +55,10 @@ const pricingPackages: PricingPackage[] = [
     gradient: "from-gray-600 to-gray-700",
     icon: TargetIcon,
     durations: [
-      { label: "1 Month", months: 1, price: 40, originalPrice: 70 },
-      { label: "3 Months", months: 3, price: 110, originalPrice: 210 },
-      { label: "6 Months", months: 6, price: 200, originalPrice: 420 },
-      { label: "Yearly", months: 12, price: 360, originalPrice: 840 }
+      { label: "1 Month", months: 1, originalPrice: 70 },
+      { label: "3 Months", months: 3, originalPrice: 210 },
+      { label: "6 Months", months: 6, originalPrice: 420 },
+      { label: "Yearly", months: 12, originalPrice: 840 }
     ]
   },
   {
@@ -79,10 +70,10 @@ const pricingPackages: PricingPackage[] = [
     icon: TrendingUp,
     popular: true,
     durations: [
-      { label: "1 Month", months: 1, price: 100, originalPrice: 210 },
-      { label: "3 Months", months: 3, price: 275, originalPrice: 630 },
-      { label: "6 Months", months: 6, price: 500, originalPrice: 1260 },
-      { label: "Yearly", months: 12, price: 900, originalPrice: 2520 }
+      { label: "1 Month", months: 1, originalPrice: 210 },
+      { label: "3 Months", months: 3, originalPrice: 630 },
+      { label: "6 Months", months: 6, originalPrice: 1260 },
+      { label: "Yearly", months: 12, originalPrice: 2520 }
     ]
   },
   {
@@ -93,10 +84,10 @@ const pricingPackages: PricingPackage[] = [
     gradient: "from-yellow-400 via-orange-500 to-red-500",
     icon: Crown,
     durations: [
-      { label: "1 Month", months: 1, price: 150, originalPrice: 350 },
-      { label: "3 Months", months: 3, price: 420, originalPrice: 1050 },
-      { label: "6 Months", months: 6, price: 750, originalPrice: 2100 },
-      { label: "Yearly", months: 12, price: 1350, originalPrice: 4200 }
+      { label: "1 Month", months: 1, originalPrice: 350 },
+      { label: "3 Months", months: 3, originalPrice: 1050 },
+      { label: "6 Months", months: 6, originalPrice: 2100 },
+      { label: "Yearly", months: 12, originalPrice: 4200 }
     ]
   }
 ]
@@ -111,10 +102,10 @@ const featuredScriptPackages: PricingPackage[] = [
     gradient: "from-purple-600 to-pink-600",
     icon: Star,
     durations: [
-      { label: "1 Week", months: 0.25, weeks: 1, price: 20, originalPrice: 40 },
-      { label: "2 Weeks", months: 0.5, weeks: 2, price: 35, originalPrice: 80 },
-      { label: "4 Weeks", months: 1, weeks: 4, price: 60, originalPrice: 160 },
-      { label: "8 Weeks", months: 2, weeks: 8, price: 100, originalPrice: 320 }
+      { label: "1 Week", months: 0.25, weeks: 1, originalPrice: 40 },
+      { label: "2 Weeks", months: 0.5, weeks: 2, originalPrice: 80 },
+      { label: "4 Weeks", months: 1, weeks: 4, originalPrice: 160 },
+      { label: "8 Weeks", months: 2, weeks: 8, originalPrice: 320 }
     ]
   },
   {
@@ -126,10 +117,10 @@ const featuredScriptPackages: PricingPackage[] = [
     icon: Sparkles,
     popular: true,
     durations: [
-      { label: "1 Week", months: 0.25, weeks: 1, price: 50, originalPrice: 120 },
-      { label: "2 Weeks", months: 0.5, weeks: 2, price: 80, originalPrice: 240 },
-      { label: "4 Weeks", months: 1, weeks: 4, price: 150, originalPrice: 480 },
-      { label: "8 Weeks", months: 2, weeks: 8, price: 260, originalPrice: 960 }
+      { label: "1 Week", months: 0.25, weeks: 1, originalPrice: 120 },
+      { label: "2 Weeks", months: 0.5, weeks: 2, originalPrice: 240 },
+      { label: "4 Weeks", months: 1, weeks: 4, originalPrice: 480 },
+      { label: "8 Weeks", months: 2, weeks: 8, originalPrice: 960 }
     ]
   },
   {
@@ -140,54 +131,100 @@ const featuredScriptPackages: PricingPackage[] = [
     gradient: "from-pink-500 via-purple-500 to-indigo-500",
     icon: Crown,
     durations: [
-      { label: "1 Week", months: 0.25, weeks: 1, price: 80, originalPrice: 200 },
-      { label: "2 Weeks", months: 0.5, weeks: 2, price: 120, originalPrice: 400 },
-      { label: "4 Weeks", months: 1, weeks: 4, price: 220, originalPrice: 800 },
-      { label: "8 Weeks", months: 2, weeks: 8, price: 400, originalPrice: 1200 }
+      { label: "1 Week", months: 0.25, weeks: 1, originalPrice: 200 },
+      { label: "2 Weeks", months: 0.5, weeks: 2, originalPrice: 400 },
+      { label: "4 Weeks", months: 1, weeks: 4, originalPrice: 800 },
+      { label: "8 Weeks", months: 2, weeks: 8, originalPrice: 1200 }
     ]
   }
 ]
 
-const benefitsData = [
-  {
-    title: "Maximum Visibility",
-    description: "Reach thousands of active FiveM server owners and developers directly.",
-    metric: "500K+ monthly impressions",
-    icon: Eye,
-    iconBg: "rgba(249,115,22,0.12)",
-    iconColor: "#f97316"
-  },
-  {
-    title: "High Click-Through Rates",
-    description: "Targeted audience ensures optimal engagement and conversions.",
-    metric: "8.4% average click-through rate",
-    icon: MousePointerClick,
-    iconBg: "rgba(29,158,117,0.12)",
-    iconColor: "#1d9e75"
-  },
-  {
-    title: "Flexible Campaigns",
-    description: "Choose your own duration and adjust your slot count dynamically.",
-    metric: "1 week to 12 months",
-    icon: Sliders,
-    iconBg: "rgba(74,140,230,0.12)",
-    iconColor: "#4a8ce6"
-  },
-  {
-    title: "Proven Results",
-    description: "Join hundreds of sellers who have scaled their FiveM script sales.",
-    metric: "2.5x average ROI increase",
-    icon: Trophy,
-    iconBg: "rgba(140,90,220,0.12)",
-    iconColor: "#8c5adc"
-  }
+/* ----------------------------------------------------------------------------
+ * Presentational demo data (reach stats / chart / trusted-by / testimonial).
+ * These are illustrative only — no real analytics endpoint is wired up.
+ * -------------------------------------------------------------------------- */
+const reachStats = [
+  { value: 2400, suffix: "+", decimals: 0, label: "Active servers reached", accent: false },
+  { value: 48, suffix: "k+", decimals: 0, label: "Monthly ad views", accent: false },
+  { value: 8.4, suffix: "%", decimals: 1, label: "Average click-through", accent: true },
 ]
 
+const viewsTrend = [
+  { month: "Jan", x: 0, y: 160 },
+  { month: "Feb", x: 75, y: 150 },
+  { month: "Mar", x: 150, y: 165 },
+  { month: "Apr", x: 225, y: 120 },
+  { month: "May", x: 375, y: 90 },
+  { month: "Jun", x: 600, y: 40 },
+]
+
+const placementBars = [
+  { label: "Listing", height: 46, tone: "bg-white/15" },
+  { label: "Search", height: 68, tone: "bg-white/25" },
+  { label: "Homepage", height: 100, tone: "bg-gradient-to-t from-orange-600 to-[#f97316]", accent: true },
+]
+
+const trustedCreators = [
+  { name: "CruxDev", letter: "C", from: "from-orange-500", to: "to-amber-400", text: "text-black", verified: true },
+  { name: "MapMasters", letter: "M", from: "from-violet-500", to: "to-indigo-600", text: "text-white", verified: true },
+  { name: "NightShift", letter: "N", from: "from-sky-500", to: "to-blue-700", text: "text-white", verified: true },
+  { name: "HighRoller", letter: "H", from: "from-yellow-500", to: "to-amber-700", text: "text-black", verified: true },
+  { name: "PixelForge", letter: "P", from: "from-emerald-500", to: "to-green-700", text: "text-black", verified: false },
+]
+
+/* Count-up hook — fires when the element scrolls into view (subtle, demo only) */
+function useCountUp(target: number, decimals: number, active: boolean, duration = 1400) {
+  const [value, setValue] = useState(0)
+
+  useEffect(() => {
+    if (!active) return
+    let raf = 0
+    const start = performance.now()
+    const tick = (now: number) => {
+      const p = Math.min((now - start) / duration, 1)
+      const eased = 1 - Math.pow(1 - p, 3)
+      setValue(target * eased)
+      if (p < 1) raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [target, active, duration])
+
+  return Number(value.toFixed(decimals)).toLocaleString(undefined, {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  })
+}
+
+function ReachStat({ stat, active }: { stat: typeof reachStats[number]; active: boolean }) {
+  const display = useCountUp(stat.value, stat.decimals, active)
+  return (
+    <div className="bg-[#0a0a0a] px-8 py-10 text-center">
+      <div
+        className={cn(
+          "text-5xl md:text-6xl font-extrabold tracking-tight tabular-nums",
+          stat.accent ? "text-[#f97316]" : "text-white"
+        )}
+      >
+        {display}
+        {stat.suffix}
+      </div>
+      <div className="mt-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/55">
+        {stat.label}
+      </div>
+    </div>
+  )
+}
+
 export default function AdvertisePage() {
-  const heroRef = useRef(null)
-  const pricingRef = useRef(null)
-  const benefitsRef = useRef(null)
-  const { resolvedTheme } = useTheme()
+  const heroRef = useRef<HTMLDivElement>(null)
+  const pricingRef = useRef<HTMLDivElement>(null)
+
+  const statsRef = useRef<HTMLDivElement>(null)
+  const statsInView = useInView(statsRef, { once: true, amount: 0.4 })
+
+  const chartRef = useRef<HTMLDivElement>(null)
+  const chartInView = useInView(chartRef, { once: true, amount: 0.3 })
 
   // State for selected tab (ad slots or featured script slots)
   const [activeTab, setActiveTab] = useState<"ads" | "featured-scripts">("ads")
@@ -196,6 +233,37 @@ export default function AdvertisePage() {
   const [selectedDurationIndex, setSelectedDurationIndex] = useState<number>(0)
 
   const [addingCartItemId, setAddingCartItemId] = useState<string | null>(null)
+
+  // Live prices from Tebex (single source of truth). null = still loading.
+  const [livePrices, setLivePrices] = useState<Record<string, number> | null>(null)
+  const [pricingConfigured, setPricingConfigured] = useState(true)
+
+  useEffect(() => {
+    let cancelled = false
+    fetch("/api/advertise/pricing")
+      .then((r) => r.json())
+      .then((d) => {
+        if (cancelled) return
+        setLivePrices(d?.prices || {})
+        setPricingConfigured(d?.configured !== false)
+      })
+      .catch(() => {
+        if (cancelled) return
+        setLivePrices({})
+        setPricingConfigured(false)
+      })
+    return () => { cancelled = true }
+  }, [])
+
+  // Live Tebex price for a package+duration, or null if not configured/priced yet.
+  const livePriceFor = (
+    packageType: "ads" | "featured-scripts",
+    packageId: string,
+    durationAmount: number
+  ): number | null => {
+    const v = livePrices?.[`${packageType}:${packageId}:${durationAmount}`]
+    return typeof v === "number" ? v : null
+  }
 
   const handleAddToCart = async (pkg: PricingPackage, durationIndex: number) => {
     const duration = pkg.durations[durationIndex]
@@ -206,7 +274,16 @@ export default function AdvertisePage() {
       : duration.weeks || Math.round(duration.months * 4)
     const itemId = `${packageType}:${pkg.packageId}:${durationAmount}`
 
+    const livePrice = livePriceFor(packageType, pkg.packageId, durationAmount)
+    if (livePrice == null) {
+      toast.error("Pricing for this package isn't available yet.")
+      return
+    }
+
     setAddingCartItemId(itemId)
+
+    const c = new AbortController()
+    const t = setTimeout(() => c.abort(), 15000)
 
     try {
       const response = await fetch("/api/cart/add", {
@@ -218,7 +295,7 @@ export default function AdvertisePage() {
           itemType: "subscription",
           itemId,
           title: `${couponScope} - ${pkg.name} (${duration.label})`,
-          price: duration.price,
+          price: livePrice, // display only; the server re-resolves the authoritative Tebex price
           metadata: {
             packageType,
             couponScope,
@@ -233,7 +310,10 @@ export default function AdvertisePage() {
             originalPrice: duration.originalPrice,
           },
         }),
+        signal: c.signal,
       })
+
+      clearTimeout(t)
 
       const data = await response.json().catch(() => ({}))
 
@@ -247,6 +327,7 @@ export default function AdvertisePage() {
       console.error("Add to cart error:", error)
       toast.error(error instanceof Error ? error.message : "Failed to add item to cart")
     } finally {
+      clearTimeout(t)
       setAddingCartItemId(null)
     }
   }
@@ -254,347 +335,505 @@ export default function AdvertisePage() {
   // Get current packages based on active tab
   const currentPackages = activeTab === "ads" ? pricingPackages : featuredScriptPackages
 
+  // Build the inline SVG path from the demo trend points
+  const linePath = viewsTrend.map((p, i) => `${i === 0 ? "M" : "L"}${p.x},${p.y}`).join(" ")
+  const fillPath = `${linePath} L600,200 L0,200 Z`
+  const lastPoint = viewsTrend[viewsTrend.length - 1]
+
   return (
     <>
       <Navbar />
-      <div
-        className="min-h-screen text-white relative overflow-hidden pb-16"
-        style={{
-          backgroundColor: "#0d0d0f",
-          backgroundImage: `
-            linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
-            radial-gradient(circle at 50% 0%, rgba(249, 115, 22, 0.07) 0%, transparent 60%)
-          `,
-          backgroundSize: "60px 100%, 100% 100%",
-        }}
-      >
-        {/* Hero Section */}
-        <div
-          ref={heroRef}
-          className="max-w-7xl mx-auto pt-24 pb-8 px-10 flex flex-col items-center text-center gap-6"
+      <main className="min-h-screen bg-[#0a0a0a] text-white antialiased selection:bg-[#f97316]/30">
+        {/* ===== STATS HERO ===== */}
+        <section
+          className="border-b border-white/[0.07]"
+          style={{
+            backgroundImage:
+              "radial-gradient(70% 60% at 50% 0%, rgba(249,115,22,0.16), transparent 70%)",
+          }}
         >
-          {/* Eyebrow Pill */}
-          <div className="inline-flex items-center gap-1 bg-[#f97316]/10 border border-[#f97316]/20 text-[#f97316] text-[11px] font-bold uppercase tracking-wider px-4 py-1.5 rounded-full">
-            <Zap className="w-3 h-3 mr-1" />
-            Advertising plans
-          </div>
+          <div className="mx-auto max-w-7xl px-5 pt-28 pb-12 sm:pt-32 md:pt-36">
+            <motion.div
+              ref={heroRef}
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, ease: "easeOut" }}
+              className="mx-auto max-w-3xl text-center"
+            >
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/[0.07] bg-white/[0.03] px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/55">
+                <TrendingUp className="h-3.5 w-3.5 text-[#f97316]" />
+                Advertising plans
+              </span>
+              <h1 className="mt-7 text-4xl font-extrabold leading-[1.05] tracking-tight md:text-6xl">
+                Advertise on <span className="text-[#f97316]">FiveCrux</span>
+              </h1>
+              <p className="mx-auto mt-5 max-w-xl text-lg text-white/55">
+                Put your scripts, server, or brand in front of thousands of active FiveM
+                server owners.
+              </p>
+              <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                <Button
+                  type="button"
+                  onClick={() => pricingRef.current?.scrollIntoView({ behavior: "smooth" })}
+                  className="h-11 w-full rounded-xl border-none bg-[#f97316] px-6 text-sm font-semibold text-black shadow-[0_0_24px_rgba(249,115,22,0.25)] hover:bg-[#ea6c0a] sm:w-auto"
+                >
+                  View pricing
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
+            </motion.div>
 
-          {/* Title */}
-          <h1 className="text-[34px] font-bold text-white tracking-tight leading-tight max-w-2xl">
-            <span className="text-[#f97316]">Grow</span> Your Reach With Premium Advertising
-          </h1>
-
-          {/* Subtitle */}
-          <p className="text-[14px] text-white/35 max-w-[420px] leading-relaxed">
-            Reach thousands of active FiveM server owners, developers, and players with our premium targeted advertising placements.
-          </p>
-        </div>
-
-        {/* Trust Bar */}
-        <div className="flex flex-wrap items-center justify-center gap-3 mt-4 mb-16 max-w-5xl mx-auto px-10">
-          <div className="flex items-center gap-3 bg-white/[0.04] border border-white/[0.08] rounded-lg p-[8px_16px]">
-            <Users className="w-5 h-5 text-[#f97316]" />
-            <div className="flex flex-col items-start leading-tight">
-              <span className="text-lg font-bold text-white">2,400+</span>
-              <span className="text-[12px] text-white/35">active buyers</span>
+            {/* big animated stat blocks */}
+            <div
+              ref={statsRef}
+              className="mt-14 grid gap-px overflow-hidden rounded-3xl border border-white/[0.07] bg-white/[0.04] sm:grid-cols-3"
+            >
+              {reachStats.map((stat) => (
+                <ReachStat key={stat.label} stat={stat} active={statsInView} />
+              ))}
+            </div>
+            <div className="mt-4 flex items-center justify-center gap-2 text-sm text-white/55">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+              </span>
+              Live across the marketplace right now
             </div>
           </div>
-          <div className="w-[1px] h-8 bg-white/[0.07] hidden md:block" />
-          
-          <div className="flex items-center gap-3 bg-white/[0.04] border border-white/[0.08] rounded-lg p-[8px_16px]">
-            <Award className="w-5 h-5 text-[#f97316]" />
-            <div className="flex flex-col items-start leading-tight">
-              <span className="text-lg font-bold text-white">500+</span>
-              <span className="text-[12px] text-white/35">advertisers served</span>
+        </section>
+
+        {/* ===== VISIBILITY VISUAL ===== */}
+        <section ref={chartRef} className="mx-auto max-w-7xl px-5 py-16">
+          <div className="grid gap-6 lg:grid-cols-5">
+            {/* line chart: monthly views trend */}
+            <div className="rounded-3xl border border-white/[0.07] bg-white/[0.025] p-7 lg:col-span-3">
+              <div className="flex items-start justify-between">
+                <div>
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/55">
+                    Monthly ad views
+                  </div>
+                  <div className="mt-1 text-3xl font-extrabold tracking-tight tabular-nums">
+                    48,200
+                  </div>
+                </div>
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1 text-sm font-semibold text-emerald-400 ring-1 ring-emerald-500/25">
+                  <ArrowUpRight className="h-3.5 w-3.5" /> +32% QoQ
+                </span>
+              </div>
+              <svg
+                viewBox="0 0 600 200"
+                className="mt-6 w-full"
+                preserveAspectRatio="none"
+                role="img"
+                aria-label="Monthly views trend line"
+              >
+                <defs>
+                  <linearGradient id="advViewsFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#f97316" stopOpacity="0.35" />
+                    <stop offset="100%" stopColor="#f97316" stopOpacity="0" />
+                  </linearGradient>
+                </defs>
+                <line x1="0" y1="50" x2="600" y2="50" stroke="rgba(255,255,255,0.05)" />
+                <line x1="0" y1="100" x2="600" y2="100" stroke="rgba(255,255,255,0.05)" />
+                <line x1="0" y1="150" x2="600" y2="150" stroke="rgba(255,255,255,0.05)" />
+                <path d={fillPath} fill="url(#advViewsFill)" />
+                <motion.path
+                  d={linePath}
+                  fill="none"
+                  stroke="#f97316"
+                  strokeWidth="2.5"
+                  strokeLinejoin="round"
+                  strokeLinecap="round"
+                  initial={{ pathLength: 0 }}
+                  animate={chartInView ? { pathLength: 1 } : { pathLength: 0 }}
+                  transition={{ duration: 1.6, ease: "easeOut" }}
+                />
+                <motion.circle
+                  cx={lastPoint.x}
+                  cy={lastPoint.y}
+                  r="4"
+                  fill="#f97316"
+                  initial={{ opacity: 0 }}
+                  animate={chartInView ? { opacity: 1 } : { opacity: 0 }}
+                  transition={{ delay: 1.4, duration: 0.4 }}
+                />
+              </svg>
+              <div className="mt-3 flex justify-between text-[11px] tabular-nums text-white/55">
+                {viewsTrend.map((p) => (
+                  <span key={p.month}>{p.month}</span>
+                ))}
+              </div>
+            </div>
+
+            {/* bar chart: clicks by placement */}
+            <div className="rounded-3xl border border-white/[0.07] bg-white/[0.025] p-7 lg:col-span-2">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/55">
+                Clicks by placement
+              </div>
+              <div className="mt-1 text-3xl font-extrabold tracking-tight tabular-nums">4,072</div>
+              <div className="mt-7 flex h-44 items-end justify-around gap-4">
+                {placementBars.map((bar, i) => (
+                  <div key={bar.label} className="flex h-full flex-col items-center justify-end">
+                    <motion.div
+                      className={cn("w-9 rounded-t-lg", bar.tone)}
+                      initial={{ height: 0 }}
+                      animate={chartInView ? { height: `${bar.height}%` } : { height: 0 }}
+                      transition={{ duration: 1.1, delay: i * 0.1, ease: [0.16, 1, 0.3, 1] }}
+                    />
+                    <span
+                      className={cn(
+                        "mt-3 text-[10px] font-semibold uppercase tracking-[0.18em]",
+                        bar.accent ? "text-[#f97316]" : "text-white/55"
+                      )}
+                    >
+                      {bar.label}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-5 border-t border-white/[0.07] pt-4 text-xs text-white/55">
+                Homepage spotlight drives{" "}
+                <span className="font-semibold text-white">2.1×</span> the clicks of standard
+                listing placement.
+              </p>
             </div>
           </div>
-          <div className="w-[1px] h-8 bg-white/[0.07] hidden md:block" />
+        </section>
 
-          <div className="flex items-center gap-3 bg-white/[0.04] border border-white/[0.08] rounded-lg p-[8px_16px]">
-            <TrendingUp className="w-5 h-5 text-[#f97316]" />
-            <div className="flex flex-col items-start leading-tight">
-              <span className="text-lg font-bold text-white">8.4%</span>
-              <span className="text-[12px] text-white/35">avg click-through rate</span>
+        {/* ===== PACKAGES ===== */}
+        <section
+          ref={pricingRef}
+          className="scroll-mt-24 border-y border-white/[0.07] bg-white/[0.015]"
+        >
+          <div className="mx-auto max-w-7xl px-5 py-16">
+            <div className="text-center">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#f97316]">
+                Packages
+              </div>
+              <h2 className="mt-3 text-3xl font-extrabold tracking-tight md:text-4xl">
+                Reach that scales with your budget
+              </h2>
+              <p className="mx-auto mt-3 max-w-xl text-white/50">
+                Banner Ad Slots &amp; Featured Script Slots, in three packages. Compare at a
+                glance.
+              </p>
             </div>
-          </div>
-          <div className="w-[1px] h-8 bg-white/[0.07] hidden md:block" />
 
-          <div className="flex items-center gap-3 bg-white/[0.04] border border-white/[0.08] rounded-lg p-[8px_16px]">
-            <Zap className="w-5 h-5 text-[#f97316]" />
-            <div className="flex flex-col items-start leading-tight">
-              <span className="text-lg font-bold text-white">Live</span>
-              <span className="text-[12px] text-white/35">instantly on purchase</span>
+            {/* Controls: tab toggle + duration selector */}
+            <div className="mt-10 flex flex-col items-center gap-3.5">
+              {/* Slot Type Toggle */}
+              <div className="flex items-center rounded-[10px] border border-white/[0.08] bg-white/[0.04] p-1">
+                <button
+                  onClick={() => {
+                    setActiveTab("ads")
+                    setSelectedDurationIndex(0)
+                  }}
+                  className={cn(
+                    "rounded-[7px] px-4 py-1.5 text-xs font-semibold transition-all duration-200",
+                    activeTab === "ads"
+                      ? "bg-[#f97316] text-black shadow-sm"
+                      : "text-white/55 hover:text-white/80"
+                  )}
+                >
+                  Ad slots
+                </button>
+                <button
+                  onClick={() => {
+                    setActiveTab("featured-scripts")
+                    setSelectedDurationIndex(0)
+                  }}
+                  className={cn(
+                    "rounded-[7px] px-4 py-1.5 text-xs font-semibold transition-all duration-200",
+                    activeTab === "featured-scripts"
+                      ? "bg-[#f97316] text-black shadow-sm"
+                      : "text-white/55 hover:text-white/80"
+                  )}
+                >
+                  Featured script slots
+                </button>
+              </div>
+
+              {/* Duration Selector */}
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                {currentPackages[0].durations.map((duration, durIndex) => {
+                  const isActive = selectedDurationIndex === durIndex
+                  const savingsBadges = [null, "-43%", "-52%", "-57%"]
+                  const badge = savingsBadges[durIndex]
+
+                  return (
+                    <button
+                      key={durIndex}
+                      onClick={() => setSelectedDurationIndex(durIndex)}
+                      className={cn(
+                        "relative rounded-lg border px-4 py-2 text-xs font-semibold transition-all duration-200",
+                        isActive
+                          ? "border-[#f97316]/40 bg-[#f97316]/[0.08] text-white"
+                          : "border-white/[0.08] bg-white/[0.02] text-white/55 hover:text-white/80"
+                      )}
+                    >
+                      {duration.label}
+                      {badge && (
+                        <span className="absolute -right-1.5 -top-2 rounded bg-[#f97316] px-1 py-px text-[9px] font-bold leading-none text-black">
+                          {badge}
+                        </span>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
             </div>
-          </div>
-        </div>
 
-        {/* Controls and Pricing Section */}
-        <div ref={pricingRef} className="max-w-7xl mx-auto mb-16">
-          {/* Controls Section */}
-          <div className="flex flex-col items-center gap-[14px] mb-12">
-            {/* Slot Type Toggle */}
-            <div className="flex items-center bg-white/[0.04] border border-white/[0.08] rounded-[10px] p-1">
-              <button
-                onClick={() => {
-                  setActiveTab("ads");
-                  setSelectedDurationIndex(0);
-                }}
-                className={cn(
-                  "px-4 py-1.5 rounded-[7px] text-xs font-semibold transition-all duration-200",
+            {/* Pricing Cards Grid */}
+            <div className="mt-12 grid grid-cols-1 gap-5 md:grid-cols-3">
+              {currentPackages.map((pkg, index) => {
+                const selectedDuration = pkg.durations[selectedDurationIndex]
+                const durationAmount =
                   activeTab === "ads"
-                    ? "bg-[#f97316] text-white shadow-sm"
-                    : "text-white/40 hover:text-white/80"
-                )}
-              >
-                Ad slots
-              </button>
-              <button
-                onClick={() => {
-                  setActiveTab("featured-scripts");
-                  setSelectedDurationIndex(0);
-                }}
-                className={cn(
-                  "px-4 py-1.5 rounded-[7px] text-xs font-semibold transition-all duration-200",
-                  activeTab === "featured-scripts"
-                    ? "bg-[#f97316] text-white shadow-sm"
-                    : "text-white/40 hover:text-white/80"
-                )}
-              >
-                Featured script slots
-              </button>
-            </div>
+                    ? selectedDuration.months
+                    : selectedDuration.weeks || Math.round(selectedDuration.months * 4)
+                const livePrice = livePriceFor(activeTab, pkg.packageId, durationAmount)
+                const priceLoading = livePrices === null
+                const discount =
+                  livePrice != null && selectedDuration.originalPrice > 0
+                    ? Math.round(((selectedDuration.originalPrice - livePrice) / selectedDuration.originalPrice) * 100)
+                    : 0
+                const cartItemId = `${activeTab === "ads" ? "ads" : "featured-scripts"}:${pkg.packageId}:${durationAmount}`
+                const isAddingToCart = addingCartItemId === cartItemId
 
-            {/* Duration Selector */}
-            <div className="flex items-center gap-2">
-              {currentPackages[0].durations.map((duration, durIndex) => {
-                const isActive = selectedDurationIndex === durIndex;
-                const savingsBadges = [null, "-43%", "-52%", "-57%"];
-                const badge = savingsBadges[durIndex];
+                // Features list
+                const packageFeatures =
+                  activeTab === "ads"
+                    ? [
+                        {
+                          text: `${pkg.slotsPerMonth} ad slot${pkg.slotsPerMonth > 1 ? "s" : ""} (unlocked instantly)`,
+                          icon: Check,
+                        },
+                        { text: "Featured placement in marketplace", icon: Star },
+                        { text: "Real-time analytics dashboard", icon: BarChart3 },
+                        { text: "24/7 Discord support access", icon: MessageSquare },
+                      ]
+                    : [
+                        {
+                          text: `${pkg.slotsPerMonth} featured script slot${pkg.slotsPerMonth > 1 ? "s" : ""}`,
+                          icon: Check,
+                        },
+                        { text: "Premium homepage placement", icon: Star },
+                        { text: "Real-time analytics dashboard", icon: BarChart3 },
+                        { text: "24/7 Discord support access", icon: MessageSquare },
+                      ]
+
+                const isPopular = pkg.popular
+                const perLabel =
+                  activeTab === "ads"
+                    ? `${selectedDuration.months} mo`
+                    : `${selectedDuration.weeks || Math.round(selectedDuration.months * 4)} wk`
 
                 return (
-                  <button
-                    key={durIndex}
-                    onClick={() => setSelectedDurationIndex(durIndex)}
+                  <motion.div
+                    key={pkg.packageId}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: "-60px" }}
+                    transition={{ duration: 0.45, delay: index * 0.08, ease: "easeOut" }}
                     className={cn(
-                      "relative px-4 py-2 rounded-lg text-xs font-semibold border transition-all duration-200",
-                      isActive
-                        ? "bg-[#f97316]/[0.08] border-[#f97316]/40 text-white"
-                        : "bg-white/[0.02] border-white/[0.08] text-white/45 hover:text-white/80"
+                      "relative flex flex-col rounded-3xl p-7 transition-all duration-200",
+                      isPopular
+                        ? "bg-[#f97316]/[0.06] ring-1 ring-inset ring-[#f97316]/40 md:scale-[1.02]"
+                        : "border border-white/[0.07] bg-white/[0.025] hover:border-[#f97316]/25"
                     )}
+                    style={{
+                      boxShadow: isPopular ? "0 0 40px rgba(249,115,22,0.14)" : "none",
+                    }}
                   >
-                    {duration.label}
-                    {badge && (
-                      <span
-                        className="absolute bg-[#f97316] text-white font-bold"
-                        style={{
-                          top: "-8px",
-                          right: "-6px",
-                          fontSize: "9px",
-                          borderRadius: "4px",
-                          padding: "1px 4px",
-                          lineHeight: "1",
-                        }}
-                      >
-                        {badge}
-                      </span>
+                    {isPopular && (
+                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-[#f97316] px-3 py-0.5 text-[10px] font-bold uppercase tracking-[0.18em] text-black">
+                        Most popular
+                      </div>
                     )}
-                  </button>
-                );
+
+                    <div className="flex-1">
+                      {/* Plan label */}
+                      <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/55">
+                        {activeTab === "ads" ? "Ad Slots" : "Featured Script"}
+                      </div>
+
+                      {/* Plan name */}
+                      <div className="mt-2 text-xl font-bold text-white">{pkg.name}</div>
+
+                      {/* Description */}
+                      <p className="mt-2 text-[12px] leading-normal text-white/55">
+                        {pkg.description}
+                      </p>
+
+                      {/* Slots badge */}
+                      <div className="mt-5 inline-flex items-center gap-1.5 rounded-md border border-[#f97316]/15 bg-[#f97316]/[0.08] px-2 py-0.5 text-xs font-semibold text-[#f97316]">
+                        <LayoutGrid className="h-3.5 w-3.5" />
+                        <span>
+                          {pkg.slotsPerMonth} slot{pkg.slotsPerMonth > 1 ? "s" : ""}{" "}
+                          {activeTab === "ads" ? "per month" : "per week"}
+                        </span>
+                      </div>
+
+                      {/* Price block — live from Tebex */}
+                      <div className="mt-6">
+                        {priceLoading ? (
+                          <div className="h-[68px] animate-pulse rounded-md bg-white/[0.06]" aria-label="Loading price" />
+                        ) : livePrice == null ? (
+                          <div className="flex items-baseline gap-1.5">
+                            <span className="text-2xl font-extrabold tracking-tight text-white/70">
+                              Coming soon
+                            </span>
+                          </div>
+                        ) : (
+                          <>
+                            {selectedDuration.originalPrice > livePrice && (
+                              <div className="text-[12px] tabular-nums text-white/55 line-through">
+                                €{selectedDuration.originalPrice}
+                              </div>
+                            )}
+                            <div className="mt-0.5 flex items-baseline gap-1.5">
+                              <span className="text-4xl font-extrabold tracking-tight tabular-nums text-white">
+                                €{livePrice}
+                              </span>
+                              <span className="text-xs font-medium text-white/55">/ {perLabel}</span>
+                            </div>
+                            {discount > 0 && (
+                              <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-400 ring-1 ring-emerald-500/25">
+                                <Check className="h-3.5 w-3.5" />
+                                <span className="tabular-nums">
+                                  Save €{selectedDuration.originalPrice - livePrice} ({discount}%)
+                                </span>
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
+
+                      {/* Divider */}
+                      <div className="my-6 h-px bg-white/[0.07]" />
+
+                      {/* Feature list */}
+                      <ul className="space-y-3">
+                        {packageFeatures.map((feat, fidx) => {
+                          const FeatIcon = feat.icon
+                          return (
+                            <li key={fidx} className="flex items-center gap-2.5">
+                              <FeatIcon className="h-[15px] w-[15px] flex-shrink-0 text-[#f97316]" />
+                              <span className="text-[12px] leading-snug text-white/[0.6]">
+                                {feat.text}
+                              </span>
+                            </li>
+                          )
+                        })}
+                      </ul>
+                    </div>
+
+                    {/* CTA Button */}
+                    <Button
+                      type="button"
+                      onClick={() => handleAddToCart(pkg, selectedDurationIndex)}
+                      disabled={isAddingToCart || priceLoading || livePrice == null}
+                      className={cn(
+                        "mt-8 h-11 w-full rounded-xl text-[13px] font-semibold transition-all duration-200",
+                        isPopular
+                          ? "border-none bg-[#f97316] text-black shadow-sm hover:bg-orange-400"
+                          : "border border-white/[0.1] bg-white/[0.06] text-white/80 hover:bg-white/[0.1] hover:text-white"
+                      )}
+                    >
+                      {isAddingToCart ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <ShoppingCart className="mr-2 h-4 w-4" />
+                      )}
+                      {isAddingToCart
+                        ? "Adding..."
+                        : priceLoading
+                          ? "Loading…"
+                          : livePrice == null
+                            ? "Unavailable"
+                            : "Add to Cart"}
+                    </Button>
+                  </motion.div>
+                )
               })}
             </div>
           </div>
+        </section>
 
-          {/* Pricing Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 px-10">
-            {currentPackages.map((pkg, index) => {
-              const selectedDuration = pkg.durations[selectedDurationIndex];
-              const discount = Math.round(((selectedDuration.originalPrice - selectedDuration.price) / selectedDuration.originalPrice) * 100);
-              const durationAmount = activeTab === "ads"
-                ? selectedDuration.months
-                : selectedDuration.weeks || Math.round(selectedDuration.months * 4);
-              const cartItemId = `${activeTab === "ads" ? "ads" : "featured-scripts"}:${pkg.packageId}:${durationAmount}`;
-              const isAddingToCart = addingCartItemId === cartItemId;
-
-              // Features list
-              const packageFeatures = activeTab === "ads" ? [
-                { text: `${pkg.slotsPerMonth} ad slot${pkg.slotsPerMonth > 1 ? 's' : ''} (unlocked instantly)`, icon: Check },
-                { text: "Featured placement in marketplace", icon: Star },
-                { text: "Real-time analytics dashboard", icon: BarChart3 },
-                { text: "24/7 Discord support access", icon: MessageSquare }
-              ] : [
-                { text: `${pkg.slotsPerMonth} featured script slot${pkg.slotsPerMonth > 1 ? 's' : ''}`, icon: Check },
-                { text: "Premium homepage placement", icon: Star },
-                { text: "Real-time analytics dashboard", icon: BarChart3 },
-                { text: "24/7 Discord support access", icon: MessageSquare }
-              ];
-
-              const isPopular = pkg.popular;
-
-              return (
-                <div
-                  key={pkg.packageId}
-                  className={cn(
-                    "relative bg-[#16161a] rounded-[14px] p-[24px_22px] flex flex-col justify-between transition-all duration-200",
-                    isPopular
-                      ? "border-2 border-[#f97316]"
-                      : "border border-white/5 hover:border-[#f97316]/25"
-                  )}
-                  style={{
-                    boxShadow: isPopular ? "0 0 20px rgba(249, 115, 22, 0.15)" : "none",
-                  }}
-                >
-                  {isPopular && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#f97316] text-white text-[10px] font-bold uppercase tracking-wider px-3 py-0.5 rounded-full">
-                      Most popular
-                    </div>
-                  )}
-
-                  <div>
-                    {/* Plan label */}
-                    <div className="text-[10px] uppercase font-semibold text-white/25 mb-1">
-                      {activeTab === "ads" ? "Ad Slots" : "Featured Script"}
-                    </div>
-
-                    {/* Plan name */}
-                    <div className="text-lg font-bold text-white mb-2">
-                      {pkg.name}
-                    </div>
-
-                    {/* Description */}
-                    <div className="text-[12px] text-white/35 leading-normal mb-4">
-                      {pkg.description}
-                    </div>
-
-                    {/* Slots badge */}
-                    <div className="inline-flex items-center gap-1.5 bg-[#f97316]/[0.08] border border-[#f97316]/15 text-[#f97316] text-xs font-semibold px-2 py-0.5 rounded-md mb-6">
-                      <LayoutGrid className="w-3.5 h-3.5" />
-                      <span>
-                        {pkg.slotsPerMonth} slot{pkg.slotsPerMonth > 1 ? 's' : ''} {activeTab === "ads" ? "per month" : "per week"}
-                      </span>
-                    </div>
-
-                    {/* Old Price */}
-                    <div className="text-[12px] line-through text-white/25 mb-0.5">
-                      €{selectedDuration.originalPrice}
-                    </div>
-
-                    {/* Main Price */}
-                    <div className="flex items-baseline gap-1 mb-2">
-                      <span className="text-3xl font-bold text-white">€{selectedDuration.price}</span>
-                      <span className="text-xs text-white/35 font-normal">
-                        / {activeTab === "ads" ? `${selectedDuration.months} mo` : `${selectedDuration.weeks || Math.round(selectedDuration.months * 4)} wk`}
-                      </span>
-                    </div>
-
-                    {/* Savings line */}
-                    <div className="flex items-center gap-1 text-[11px] font-semibold text-[#1d9e75] mb-6">
-                      <Check className="w-3.5 h-3.5" />
-                      <span>Save €{selectedDuration.originalPrice - selectedDuration.price} ({discount}%)</span>
-                    </div>
-
-                    {/* Divider */}
-                    <div className="h-[1px] bg-white/[0.06] my-5" />
-
-                    {/* Feature list */}
-                    <ul className="space-y-3 mb-8">
-                      {packageFeatures.map((feat, fidx) => {
-                        const FeatIcon = feat.icon;
-                        return (
-                          <li key={fidx} className="flex items-center gap-2">
-                            <FeatIcon className="w-[15px] h-[15px] text-[#1d9e75] flex-shrink-0" />
-                            <span className="text-[12px] text-white/[0.55] leading-none">
-                              {feat.text}
-                            </span>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </div>
-
-                  {/* CTA Button */}
-                  <Button
-                    type="button"
-                    onClick={() => handleAddToCart(pkg, selectedDurationIndex)}
-                    disabled={isAddingToCart}
-                    className={cn(
-                      "w-full h-10 rounded-[9px] text-[13px] font-semibold transition-all duration-200",
-                      isPopular
-                        ? "bg-[#f97316] hover:bg-[#ea6c0a] text-white border-none shadow-sm"
-                        : "bg-white/[0.06] border border-white/[0.1] text-white/70 hover:bg-white/[0.1] hover:text-white"
-                    )}
-                  >
-                    {isAddingToCart ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <ShoppingCart className="w-4 h-4 mr-2" />
-                    )}
-                    {isAddingToCart ? "Adding..." : "Add to Cart"}
-                  </Button>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Why Advertise Section */}
-        <div ref={benefitsRef} className="max-w-7xl mx-auto mb-16">
-          {/* Centered header */}
-          <div className="text-center mb-10">
-            <div className="text-[11px] font-bold text-[#f97316] uppercase tracking-wider mb-2">
-              Why Advertise Here
+        {/* ===== TRUSTED BY + TESTIMONIAL + CTA ===== */}
+        <section className="mx-auto max-w-7xl px-5 py-16">
+          <div className="text-center">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/55">
+              Trusted by creators advertising on FiveCrux
             </div>
-            <h2 className="text-[22px] font-bold text-white mb-2">
-              Reach Your Target Audience
-            </h2>
-            <p className="text-[13px] text-white/35 max-w-md mx-auto">
-              Connect with the most active and engaged FiveM community owners
-            </p>
           </div>
-
-          {/* 2x2 Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-[14px] px-10">
-            {benefitsData.map((benefit, index) => {
-              const BenefitIcon = benefit.icon;
-              return (
-                <div
-                  key={index}
-                  className="bg-[#16161a] border border-white/5 rounded-xl p-[20px_18px] flex gap-4 items-start"
+          <div className="mx-auto mt-7 flex max-w-4xl flex-wrap items-center justify-center gap-3">
+            {trustedCreators.map((creator) => (
+              <span
+                key={creator.name}
+                className="inline-flex items-center gap-2 rounded-full border border-white/[0.07] bg-white/[0.02] px-4 py-2 text-sm font-semibold"
+              >
+                <span
+                  className={cn(
+                    "grid h-6 w-6 place-items-center rounded-full bg-gradient-to-br text-[11px] font-black",
+                    creator.from,
+                    creator.to,
+                    creator.text
+                  )}
                 >
-                  {/* Icon Block */}
-                  <div
-                    className="flex-shrink-0 w-[38px] h-[38px] rounded-[9px] flex items-center justify-center"
-                    style={{
-                      backgroundColor: benefit.iconBg,
-                      color: benefit.iconColor
-                    }}
-                  >
-                    <BenefitIcon className="w-[18px] h-[18px]" />
-                  </div>
-
-                  {/* Text details */}
-                  <div className="flex flex-col">
-                    <h3 className="text-[13px] font-semibold text-[#f0f0f2] mb-1">
-                      {benefit.title}
-                    </h3>
-                    <p className="text-[12px] text-white/35 leading-[1.55] mb-2">
-                      {benefit.description}
-                    </p>
-                    {/* Supporting metric stat text */}
-                    <span
-                      className="text-[10px] font-bold uppercase tracking-wider"
-                      style={{ color: benefit.iconColor }}
-                    >
-                      {benefit.metric}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
+                  {creator.letter}
+                </span>
+                {creator.name}
+                {creator.verified && <BadgeCheck className="h-4 w-4 text-[#f97316]" />}
+              </span>
+            ))}
           </div>
-        </div>
+
+          <figure className="mx-auto mt-12 max-w-3xl rounded-3xl border border-white/[0.07] bg-white/[0.02] p-8 text-center md:p-10">
+            <div className="flex justify-center gap-1 text-[#f97316]">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Star key={i} className="h-4 w-4 fill-current" />
+              ))}
+            </div>
+            <blockquote className="mt-5 text-xl font-semibold leading-relaxed tracking-tight md:text-2xl">
+              &ldquo;We boosted our garage script into the homepage spotlight for two weeks and
+              did <span className="tabular-nums text-[#f97316]">3×</span> our normal sales. The
+              real-time analytics made it easy to justify the spend.&rdquo;
+            </blockquote>
+            <figcaption className="mt-6 flex items-center justify-center gap-3 text-sm">
+              <span className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-orange-500 to-amber-400 font-black text-black">
+                C
+              </span>
+              <span>
+                <span className="font-semibold">CruxDev</span>{" "}
+                <span className="text-white/55">· 12.4k sales · Verified seller</span>
+              </span>
+            </figcaption>
+          </figure>
+
+          {/* final CTA */}
+          <div className="mx-auto mt-12 max-w-3xl rounded-3xl bg-gradient-to-br from-[#f97316] to-orange-600 p-8 text-center text-black md:p-10">
+            <h2 className="text-2xl font-extrabold tracking-tight md:text-3xl">
+              Ready to get in front of FiveM?
+            </h2>
+            <p className="mx-auto mt-2 max-w-md text-sm font-medium text-black/70">
+              Choose a slot, submit your creative, and go live — usually within hours.
+            </p>
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+              <Button
+                type="button"
+                onClick={() => pricingRef.current?.scrollIntoView({ behavior: "smooth" })}
+                className="group h-auto rounded-2xl border-none bg-black px-6 py-3.5 font-bold text-white hover:bg-black/85"
+              >
+                View packages
+                <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+              </Button>
+            </div>
+          </div>
+        </section>
 
         <Footer />
-      </div>
+      </main>
     </>
   )
 }

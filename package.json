@@ -8,13 +8,18 @@
     "lint": "next lint",
     "start": "next start",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
-    "db:studio": "drizzle-kit studio --config=drizzle.config.ts",
-    "typecheck": "tsc --noEmit"
+    "db:migrate": "node scripts/db-guard.mjs && drizzle-kit migrate",
+    "db:studio": "node scripts/db-guard.mjs && drizzle-kit studio --config=drizzle.config.ts",
+    "typecheck": "tsc --noEmit",
+    "db:setup-local": "tsx scripts/setup-pglite.ts",
+    "dev:local": "cross-env USE_PGLITE=true ALLOW_DEV_LOGIN=true next dev",
+    "db:view": "rimraf .pglite-studio 2>/dev/null & xcopy .pglite .pglite-studio /E /I /Q /Y >/dev/null & drizzle-kit studio --config=drizzle.studio.config.ts",
+    "db:push": "node scripts/db-guard.mjs && drizzle-kit push"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.914.0",
     "@aws-sdk/s3-request-presigner": "^3.914.0",
+    "@electric-sql/pglite": "^0.5.3",
     "@emotion/is-prop-valid": "latest",
     "@hookform/resolvers": "^3.9.1",
     "@paypal/checkout-server-sdk": "^1.0.3",
@@ -86,14 +91,21 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.3",
     "@types/node": "^22",
     "@types/pg": "^8.15.5",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
+    "axe-core": "^4.12.1",
+    "chrome-launcher": "^1.2.1",
+    "cross-env": "^10.1.0",
     "eslint": "9.36.0",
     "eslint-config-next": "15.5.4",
+    "lighthouse": "^13.4.0",
+    "playwright": "^1.61.0",
     "postcss": "^8.5",
     "tailwindcss": "^3.4.17",
+    "tsx": "^4.22.4",
     "typescript": "^5"
   }
 }

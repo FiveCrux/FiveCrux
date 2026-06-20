@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FiveCrux — Premium FiveM Marketplace</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: { sans: ['Inter', 'sans-serif'] },
+        colors: { brand: { orange: '#f97316', yellow: '#facc15' } }
+      }
+    }
+  }
+</script>
+<style>
+  body{font-family:'Inter',sans-serif;background:#0a0a0a}
+  .glass{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);backdrop-filter:blur(12px)}
+  .glass-strong{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.10);backdrop-filter:blur(16px)}
+  .orange-glow{box-shadow:0 0 0 1px rgba(249,115,22,0.5),0 8px 32px rgba(249,115,22,0.35)}
+  .card-hover{transition:all .25s ease}
+  .card-hover:hover{transform:translateY(-5px);border-color:rgba(249,115,22,0.35);box-shadow:0 16px 48px rgba(0,0,0,0.5)}
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-track{background:#0a0a0a}
+  ::-webkit-scrollbar-thumb{background:#262626;border-radius:8px;border:2px solid #0a0a0a}
+  ::-webkit-scrollbar-thumb:hover{background:#404040}
+  html{scrollbar-color:#262626 #0a0a0a;scrollbar-width:thin}
+  .cover-grid{background-image:linear-gradient(rgba(255,255,255,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.04) 1px,transparent 1px);background-size:22px 22px}
+</style>
+</head>
+<body class="text-white antialiased">
+
+<!-- ================= NAVBAR ================= -->
+<header class="sticky top-0 z-50 px-3 sm:px-6 pt-3">
+  <nav class="glass-strong max-w-7xl mx-auto rounded-2xl px-4 sm:px-5 py-3 flex items-center gap-4">
+    <a href="#" class="text-xl font-extrabold tracking-tight shrink-0">
+      <span class="text-brand-orange">Five</span><span class="text-brand-yellow">Crux</span>
+    </a>
+    <ul class="hidden lg:flex items-center gap-1 ml-2 text-sm font-medium text-neutral-300">
+      <li><a href="#" class="px-3 py-2 rounded-lg hover:bg-white/5 hover:text-white transition">Home</a></li>
+      <li><a href="#" class="px-3 py-2 rounded-lg bg-white/5 text-white transition">Scripts</a></li>
+      <li><a href="#" class="px-3 py-2 rounded-lg hover:bg-white/5 hover:text-white transition">Props</a></li>
+      <li><a href="#" class="px-3 py-2 rounded-lg hover:bg-white/5 hover:text-white transition">Giveaways</a></li>
+      <li><a href="#" class="px-3 py-2 rounded-lg hover:bg-white/5 hover:text-white transition">Advertise</a></li>
+    </ul>
+    <div class="flex items-center gap-2 sm:gap-3 ml-auto">
+      <button class="relative w-10 h-10 rounded-xl glass flex items-center justify-center hover:bg-white/10 transition">
+        <i data-lucide="shopping-cart" class="w-5 h-5 text-neutral-200"></i>
+        <span class="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-brand-orange text-black text-[11px] font-bold flex items-center justify-center">2</span>
+      </button>
+      <button class="hidden sm:flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-brand-orange to-brand-yellow text-black font-bold text-sm orange-glow hover:opacity-95 transition">
+        <i data-lucide="upload" class="w-4 h-4"></i>
+        Start Selling
+      </button>
+      <button class="px-4 py-2.5 rounded-xl glass text-sm font-semibold text-neutral-200 hover:bg-white/10 transition">Login</button>
+    </div>
+  </nav>
+</header>
+
+<!-- ================= SLIM HERO STRIP ================= -->
+<section class="max-w-7xl mx-auto px-3 sm:px-6 pt-8 pb-6">
+  <div class="glass rounded-2xl px-5 sm:px-8 py-7 relative overflow-hidden">
+    <div class="absolute -top-24 -right-16 w-72 h-72 bg-brand-orange/15 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute -bottom-24 left-1/3 w-72 h-72 bg-brand-yellow/10 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="relative">
+      <div class="flex flex-wrap items-center gap-x-3 gap-y-1 mb-4">
+        <h1 class="text-lg sm:text-xl font-extrabold">Premium FiveM Marketplace</h1>
+        <span class="hidden sm:inline text-neutral-500">·</span>
+        <p class="text-sm text-neutral-400"><span class="text-white font-semibold">1,200+</span> scripts · <span class="text-white font-semibold">350+</span> creators</p>
+      </div>
+
+      <!-- Search bar -->
+      <div class="flex flex-col md:flex-row gap-2 md:gap-0 md:items-stretch max-w-3xl">
+        <div class="flex-1 flex items-center gap-3 glass-strong rounded-xl md:rounded-r-none px-4 py-3">
+          <i data-lucide="search" class="w-5 h-5 text-neutral-400 shrink-0"></i>
+          <input type="text" placeholder="Search scripts, MLOs, vehicles…" class="bg-transparent w-full outline-none text-sm placeholder:text-neutral-500">
+        </div>
+        <div class="relative">
+          <select class="appearance-none h-full glass-strong md:border-l-0 md:rounded-none px-4 py-3 pr-10 text-sm text-neutral-300 outline-none cursor-pointer rounded-xl md:rounded-none w-full">
+            <option>All categories</option>
+            <option>Scripts</option>
+            <option>MLOs</option>
+            <option>Vehicles</option>
+            <option>HUD</option>
+          </select>
+          <i data-lucide="chevron-down" class="w-4 h-4 text-neutral-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+        </div>
+        <button class="flex items-center justify-center gap-2 px-6 py-3 rounded-xl md:rounded-l-none bg-gradient-to-r from-brand-orange to-brand-yellow text-black font-bold text-sm hover:opacity-95 transition">
+          <i data-lucide="search" class="w-4 h-4"></i>
+          Search
+        </button>
+      </div>
+
+      <!-- Category chips -->
+      <div class="flex flex-wrap items-center gap-2 mt-4">
+        <span class="text-xs text-neutral-500 mr-1">Popular:</span>
+        <a href="#" class="px-3 py-1.5 rounded-full glass text-xs font-medium text-neutral-300 hover:text-white hover:border-brand-orange/40 transition">Scripts</a>
+        <a href="#" class="px-3 py-1.5 rounded-full glass text-xs font-medium text-neutral-300 hover:text-white hover:border-brand-orange/40 transition">MLOs</a>
+        <a href="#" class="px-3 py-1.5 rounded-full glass text-xs font-medium text-neutral-300 hover:text-white hover:border-brand-orange/40 transition">Vehicles</a>
+        <a href="#" class="px-3 py-1.5 rounded-full glass text-xs font-medium text-neutral-300 hover:text-white hover:border-brand-orange/40 transition">HUD</a>
+        <a href="#" class="px-3 py-1.5 rounded-full glass text-xs font-medium text-neutral-300 hover:text-white hover:border-brand-orange/40 transition">ESX</a>
+        <a href="#" class="px-3 py-1.5 rounded-full glass text-xs font-medium text-neutral-300 hover:text-white hover:border-brand-orange/40 transition">QBCore</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= MAIN BROWSE AREA ================= -->
+<main class="max-w-7xl mx-auto px-3 sm:px-6 pb-16">
+  <div class="flex flex-col lg:flex-row gap-6">
+
+    <!-- ===== FILTER SIDEBAR ===== -->
+    <aside class="lg:w-[260px] lg:shrink-0">
+      <div class="lg:sticky lg:top-24 space-y-4">
+
+        <div class="flex items-center gap-2 px-1">
+          <i data-lucide="sliders-horizontal" class="w-4 h-4 text-brand-orange"></i>
+          <h2 class="text-sm font-bold uppercase tracking-wider text-neutral-300">Filters</h2>
+          <button class="ml-auto text-xs text-neutral-500 hover:text-white transition">Reset</button>
+        </div>
+
+        <!-- Categories -->
+        <div class="glass rounded-2xl p-4">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-neutral-400 mb-3">Categories</h3>
+          <ul class="space-y-1 text-sm">
+            <li><a href="#" class="flex items-center justify-between px-2 py-1.5 rounded-lg bg-white/5 text-white"><span>Scripts</span><span class="text-xs text-neutral-400">820</span></a></li>
+            <li><a href="#" class="flex items-center justify-between px-2 py-1.5 rounded-lg text-neutral-300 hover:bg-white/5 hover:text-white transition"><span>Props</span><span class="text-xs text-neutral-500">240</span></a></li>
+            <li><a href="#" class="flex items-center justify-between px-2 py-1.5 rounded-lg text-neutral-300 hover:bg-white/5 hover:text-white transition"><span>MLOs</span><span class="text-xs text-neutral-500">130</span></a></li>
+            <li><a href="#" class="flex items-center justify-between px-2 py-1.5 rounded-lg text-neutral-300 hover:bg-white/5 hover:text-white transition"><span>Vehicles</span><span class="text-xs text-neutral-500">95</span></a></li>
+            <li><a href="#" class="flex items-center justify-between px-2 py-1.5 rounded-lg text-neutral-300 hover:bg-white/5 hover:text-white transition"><span>Weapons</span><span class="text-xs text-neutral-500">60</span></a></li>
+            <li><a href="#" class="flex items-center justify-between px-2 py-1.5 rounded-lg text-neutral-300 hover:bg-white/5 hover:text-white transition"><span>Clothing</span><span class="text-xs text-neutral-500">40</span></a></li>
+          </ul>
+        </div>
+
+        <!-- Framework -->
+        <div class="glass rounded-2xl p-4">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-neutral-400 mb-3">Framework</h3>
+          <div class="space-y-2.5 text-sm">
+            <label class="flex items-center gap-3 cursor-pointer group">
+              <input type="checkbox" checked class="w-4 h-4 rounded accent-brand-orange bg-transparent">
+              <span class="text-neutral-200 group-hover:text-white transition">ESX</span>
+            </label>
+            <label class="flex items-center gap-3 cursor-pointer group">
+              <input type="checkbox" checked class="w-4 h-4 rounded accent-brand-orange bg-transparent">
+              <span class="text-neutral-200 group-hover:text-white transition">QBCore</span>
+            </label>
+            <label class="flex items-center gap-3 cursor-pointer group">
+              <input type="checkbox" class="w-4 h-4 rounded accent-brand-orange bg-transparent">
+              <span class="text-neutral-200 group-hover:text-white transition">QBox</span>
+            </label>
+            <label class="flex items-center gap-3 cursor-pointer group">
+              <input type="checkbox" class="w-4 h-4 rounded accent-brand-orange bg-transparent">
+              <span class="text-neutral-200 group-hover:text-white transition">Standalone</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Price -->
+        <div class="glass rounded-2xl p-4">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-neutral-400 mb-3">Price</h3>
+          <div class="space-y-2.5 text-sm">
+            <label class="flex items-center gap-3 cursor-pointer group">
+              <input type="radio" name="price" checked class="w-4 h-4 accent-brand-orange">
+              <span class="text-neutral-200 group-hover:text-white transition">All</span>
+            </label>
+            <label class="flex items-center gap-3 cursor-pointer group">
+              <input type="radio" name="price" class="w-4 h-4 accent-brand-orange">
+              <span class="text-neutral-200 group-hover:text-white transition">Free</span>
+            </label>
+            <label class="flex items-center gap-3 cursor-pointer group">
+              <input type="radio" name="price" class="w-4 h-4 accent-brand-orange">
+              <span class="text-neutral-200 group-hover:text-white transition">Paid</span>
+            </label>
+            <label class="flex items-center gap-3 cursor-pointer group">
+              <input type="radio" name="price" class="w-4 h-4 accent-brand-orange">
+              <span class="text-neutral-200 group-hover:text-white transition">Under $20</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Rating -->
+        <div class="glass rounded-2xl p-4">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-neutral-400 mb-3">Rating</h3>
+          <div class="space-y-2 text-sm">
+            <label class="flex items-center gap-3 cursor-pointer group px-1 py-1 rounded-lg hover:bg-white/5 transition">
+              <input type="radio" name="rating" class="w-4 h-4 accent-brand-orange">
+              <span class="flex items-center gap-0.5">
+                <i data-lucide="star" class="w-3.5 h-3.5 fill-brand-yellow text-brand-yellow"></i>
+                <i data-lucide="star" class="w-3.5 h-3.5 fill-brand-yellow text-brand-yellow"></i>
+                <i data-lucide="star" class="w-3.5 h-3.5 fill-brand-yellow text-brand-yellow"></i>
+                <i data-lucide="star" class="w-3.5 h-3.5 fill-brand-yellow text-brand-yellow"></i>
+                <i data-lucide="star" class="w-3.5 h-3.5 fill-brand-yellow text-brand-yellow"></i>
+              </span>
+            </label>
+            <label class="flex items-center gap-3 cursor-pointer group px-1 py-1 rounded-lg hover:bg-white/5 transition">
+              <input type="radio" name="rating" checked class="w-4 h-4 accent-brand-orange">
+              <span class="flex items-center gap-0.5">
+                <i data-lucide="star" class="w-3.5 h-3.5 fill-brand-yellow text-brand-yellow"></i>
+                <i data-lucide="star" class="w-3.5 h-3.5 fill-brand-yellow text-brand-yellow"></i>
+                <i data-lucide="star" class="w-3.5 h-3.5 fill-brand-yellow text-brand-yellow"></i>
+                <i data-lucide="star" class="w-3.5 h-3.5 fill-brand-yellow text-brand-yellow"></i>
+                <i data-lucide="star" class="w-3.5 h-3.5 text-neutral-600"></i>
+                <span class="text-xs text-neutral-400 ml-1">& up</span>
+              </span>
+            </label>
+            <label class="flex items-center gap-3 cursor-pointer group px-1 py-1 rounded-lg hover:bg-white/5 transition">
+              <input type="radio" name="rating" class="w-4 h-4 accent-brand-orange">
+              <span class="flex items-center gap-0.5">
+                <i data-lucide="star" class="w-3.5 h-3.5 fill-brand-yellow text-brand-yellow"></i>
+                <i data-lucide="star" class="w-3.5 h-3.5 fill-brand-yellow text-brand-yellow"></i>
+                <i data-lucide="star" class="w-3.5 h-3.5 fill-brand-yellow text-brand-yellow"></i>
+                <i data-lucide="star" class="w-3.5 h-3.5 text-neutral-600"></i>
+                <i data-lucide="star" class="w-3.5 h-3.5 text-neutral-600"></i>
+                <span class="text-xs text-neutral-400 ml-1">& up</span>
+              </span>
+            </label>
+          </div>
+        </div>
+
+      </div>
+    </aside>
+
+    <!-- ===== RIGHT PRODUCT AREA ===== -->
+    <section class="flex-1 min-w-0">
+
+      <!-- Top result bar -->
+      <div class="glass rounded-2xl px-4 sm:px-5 py-3 flex items-center gap-3 mb-5">
+        <p class="text-sm text-neutral-300"><span class="font-bold text-white">1,200</span> results</p>
+        <div class="ml-auto flex items-center gap-2 sm:gap-3">
+          <div class="relative">
+            <button class="flex items-center gap-2 glass-strong rounded-xl px-3.5 py-2 text-sm font-medium text-neutral-200 hover:bg-white/10 transition">
+              <span class="text-neutral-400 hidden sm:inline">Sort by:</span> Popular
+              <i data-lucide="chevron-down" class="w-4 h-4 text-neutral-400"></i>
+            </button>
+          </div>
+          <div class="flex items-center glass-strong rounded-xl p-1">
+            <button class="w-8 h-8 rounded-lg bg-brand-orange/20 text-brand-orange flex items-center justify-center">
+              <i data-lucide="layout-grid" class="w-4 h-4"></i>
+            </button>
+            <button class="w-8 h-8 rounded-lg text-neutral-400 hover:text-white flex items-center justify-center transition">
+              <i data-lucide="list" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PRODUCT GRID -->
+      <div id="grid" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5"></div>
+
+      <!-- Pagination -->
+      <div class="flex items-center justify-center gap-2 mt-10">
+        <button class="w-10 h-10 rounded-xl glass text-neutral-400 hover:text-white hover:bg-white/10 transition flex items-center justify-center">
+          <i data-lucide="chevron-left" class="w-4 h-4"></i>
+        </button>
+        <button class="w-10 h-10 rounded-xl bg-brand-orange text-black font-bold text-sm flex items-center justify-center">1</button>
+        <button class="w-10 h-10 rounded-xl glass text-neutral-300 hover:text-white hover:bg-white/10 transition text-sm font-medium flex items-center justify-center">2</button>
+        <button class="w-10 h-10 rounded-xl glass text-neutral-300 hover:text-white hover:bg-white/10 transition text-sm font-medium flex items-center justify-center">3</button>
+        <span class="px-2 text-neutral-500">…</span>
+        <button class="flex items-center gap-1.5 h-10 px-4 rounded-xl glass text-neutral-200 hover:text-white hover:bg-white/10 transition text-sm font-semibold">
+          Next <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+    </section>
+  </div>
+</main>
+
+<!-- ================= FOOTER ================= -->
+<footer class="border-t border-white/10">
+  <div class="max-w-7xl mx-auto px-3 sm:px-6 py-8 flex flex-col sm:flex-row items-center gap-4">
+    <a href="#" class="text-lg font-extrabold tracking-tight">
+      <span class="text-brand-orange">Five</span><span class="text-brand-yellow">Crux</span>
+    </a>
+    <nav class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-neutral-400 sm:ml-4">
+      <a href="#" class="hover:text-white transition">Scripts</a>
+      <a href="#" class="hover:text-white transition">Props</a>
+      <a href="#" class="hover:text-white transition">Giveaways</a>
+      <a href="#" class="hover:text-white transition">Advertise</a>
+      <a href="#" class="flex items-center gap-1.5 hover:text-white transition"><i data-lucide="message-circle" class="w-4 h-4"></i>Discord</a>
+    </nav>
+    <p class="text-xs text-neutral-500 sm:ml-auto">© 2026 FiveCrux. All rights reserved.</p>
+  </div>
+</footer>
+
+<script>
+  // ===== Product data =====
+  const products = [
+    { title:"Advanced Banking System", slug:"advanced-banking", fw:["ESX","QBCore"], price:19.99, was:30, rating:4.9, seller:"CruxDev", tag:"FEATURED", g:"from-emerald-500/30 to-teal-600/20" },
+    { title:"Police MDT & Dispatch", slug:"police-mdt", fw:["QBCore"], price:24.99, rating:5.0, seller:"NightShift", g:"from-blue-500/30 to-indigo-600/20" },
+    { title:"Inventory HUD Reloaded", slug:"inventory-hud", fw:["ESX","Standalone"], price:0, rating:4.7, seller:"PixelForge", tag:"FREE", g:"from-fuchsia-500/30 to-purple-600/20" },
+    { title:"Luxury Apartments MLO", slug:"luxury-apartments", fw:["Standalone"], price:34.99, rating:4.8, seller:"MapMasters", g:"from-amber-500/30 to-orange-600/20" },
+    { title:"Drift Car Pack (15)", slug:"drift-car-pack", fw:["Standalone"], price:14.99, rating:4.6, seller:"RevHead", g:"from-rose-500/30 to-red-600/20" },
+    { title:"Advanced Garage", slug:"advanced-garage", fw:["QBCore"], price:12.99, rating:4.5, seller:"GarageGuru", g:"from-cyan-500/30 to-sky-600/20" },
+    { title:"Hospital Interior MLO", slug:"hospital-mlo", fw:["Standalone"], price:29.99, rating:4.9, seller:"MapMasters", tag:"FEATURED", g:"from-teal-500/30 to-green-600/20" },
+    { title:"Phone System v2", slug:"phone-system-v2", fw:["ESX","QBCore"], price:22.50, rating:4.8, seller:"ConnectDev", g:"from-violet-500/30 to-indigo-600/20" },
+    { title:"Weapon Pack Tactical", slug:"weapon-pack-tactical", fw:["Standalone"], price:9.99, rating:4.4, seller:"Armory", g:"from-stone-500/30 to-neutral-600/20" },
+    { title:"Job Center Reworked", slug:"job-center-reworked", fw:["QBCore"], price:0, rating:4.6, seller:"WorkForce", tag:"FREE", g:"from-lime-500/30 to-green-600/20" },
+    { title:"Casino Heist Script", slug:"casino-heist", fw:["ESX"], price:39.99, rating:5.0, seller:"HighRoller", tag:"FEATURED", g:"from-yellow-500/30 to-amber-600/20" },
+    { title:"Custom Clothing Pack", slug:"custom-clothing", fw:["Standalone"], price:7.99, rating:4.3, seller:"ThreadCo", g:"from-pink-500/30 to-rose-600/20" },
+    // repeats to fill grid
+    { title:"Police MDT & Dispatch", slug:"police-mdt", fw:["QBCore"], price:24.99, rating:5.0, seller:"NightShift", g:"from-blue-500/30 to-indigo-600/20" },
+    { title:"Drift Car Pack (15)", slug:"drift-car-pack", fw:["Standalone"], price:14.99, rating:4.6, seller:"RevHead", g:"from-rose-500/30 to-red-600/20" },
+    { title:"Phone System v2", slug:"phone-system-v2", fw:["ESX","QBCore"], price:22.50, rating:4.8, seller:"ConnectDev", g:"from-violet-500/30 to-indigo-600/20" },
+  ];
+
+  const fwColors = {
+    "ESX":"bg-blue-500/15 text-blue-300 border-blue-500/30",
+    "QBCore":"bg-purple-500/15 text-purple-300 border-purple-500/30",
+    "QBox":"bg-cyan-500/15 text-cyan-300 border-cyan-500/30",
+    "Standalone":"bg-neutral-500/15 text-neutral-300 border-neutral-500/30"
+  };
+
+  function priceHTML(p){
+    if(p.price === 0) return `<span class="text-emerald-400 font-extrabold text-lg">Free</span>`;
+    let html = `<span class="text-white font-extrabold text-lg">$${p.price.toFixed(2)}</span>`;
+    if(p.was) html += `<span class="text-neutral-500 line-through text-sm ml-1.5">$${p.was.toFixed(2)}</span>`;
+    return html;
+  }
+
+  function cornerTag(p){
+    if(p.tag === "FEATURED") return `<span class="absolute top-3 left-3 z-10 px-2.5 py-1 rounded-full bg-gradient-to-r from-brand-orange to-brand-yellow text-black text-[10px] font-extrabold tracking-wide flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.4H22l-6 4.6 2.3 7.4L12 17l-6.3 4.4L8 14 2 9.4h7.6z"/></svg>FEATURED</span>`;
+    if(p.tag === "FREE") return `<span class="absolute top-3 left-3 z-10 px-2.5 py-1 rounded-full bg-emerald-500 text-black text-[10px] font-extrabold tracking-wide">FREE</span>`;
+    return "";
+  }
+
+  function fwBadges(fw){
+    return fw.map(f => `<span class="px-2 py-0.5 rounded-md border text-[10px] font-bold ${fwColors[f]||fwColors.Standalone}">${f}</span>`).join("");
+  }
+
+  function card(p){
+    return `
+    <article class="glass rounded-2xl overflow-hidden card-hover group flex flex-col">
+      <div class="relative h-40 cover-grid bg-gradient-to-br ${p.g} flex items-center justify-center">
+        ${cornerTag(p)}
+        <button class="absolute top-3 right-3 z-10 w-8 h-8 rounded-lg glass-strong flex items-center justify-center text-neutral-300 hover:text-rose-400 transition">
+          <i data-lucide="heart" class="w-4 h-4"></i>
+        </button>
+        <span class="text-[13px] font-mono font-medium text-white/25 select-none tracking-wider">${p.slug}</span>
+        <div class="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition flex items-center justify-center opacity-0 group-hover:opacity-100">
+          <span class="px-4 py-2 rounded-xl bg-white text-black text-xs font-bold flex items-center gap-1.5">Quick View <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i></span>
+        </div>
+      </div>
+      <div class="p-4 flex flex-col flex-1">
+        <div class="flex items-center gap-1.5 mb-2">${fwBadges(p.fw)}</div>
+        <h3 class="font-bold text-[15px] leading-snug mb-2 group-hover:text-brand-orange transition">${p.title}</h3>
+        <div class="flex items-center gap-2 mb-3">
+          <span class="w-6 h-6 rounded-full bg-gradient-to-br from-brand-orange to-brand-yellow flex items-center justify-center text-black text-[10px] font-extrabold">${p.seller.slice(0,2).toUpperCase()}</span>
+          <span class="text-xs text-neutral-400">${p.seller}</span>
+          <span class="ml-auto flex items-center gap-1 text-xs">
+            <i data-lucide="star" class="w-3.5 h-3.5 fill-brand-yellow text-brand-yellow"></i>
+            <span class="font-semibold text-neutral-200">${p.rating.toFixed(1)}</span>
+          </span>
+        </div>
+        <div class="flex items-center justify-between mt-auto pt-3 border-t border-white/5">
+          <div>${priceHTML(p)}</div>
+          <button class="w-9 h-9 rounded-xl bg-brand-orange/15 text-brand-orange hover:bg-brand-orange hover:text-black transition flex items-center justify-center">
+            <i data-lucide="shopping-cart" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+    </article>`;
+  }
+
+  document.getElementById("grid").innerHTML = products.map(card).join("");
+  lucide.createIcons();
+</script>
+</body>
+</html>

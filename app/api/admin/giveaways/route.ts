@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
 
     // Check if user has admin role
     const userRoles = (session.user as any).roles || [];
-    if (!userRoles.includes('admin')) {
+    if (!userRoles.includes('admin') && !userRoles.includes('founder')) {
       return NextResponse.json({ error: "Forbidden: Admin access required" }, { status: 403 });
     }
 
@@ -207,7 +207,7 @@ export async function PATCH(request: NextRequest) {
 
     // Check if user has admin role
     const userRoles = (session.user as any).roles || [];
-    if (!userRoles.includes('admin')) {
+    if (!userRoles.includes('admin') && !userRoles.includes('founder')) {
       return NextResponse.json({ error: "Forbidden: Admin access required" }, { status: 403 });
     }
 

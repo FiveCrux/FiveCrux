@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FiveCrux — Entry Card (immersive)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<script>tailwind.config={theme:{extend:{fontFamily:{sans:["Inter","sans-serif"]},colors:{brand:{orange:"#f97316"}}}}}</script>
+<style>
+  body{font-family:Inter,sans-serif;background:#070707;color:#fff}
+  .num{font-variant-numeric:tabular-nums}
+  .panel{background:rgba(14,14,14,0.55);backdrop-filter:blur(22px) saturate(140%);-webkit-backdrop-filter:blur(22px) saturate(140%)}
+</style>
+</head>
+<body class="grid min-h-screen place-items-center px-6 py-12">
+
+<div class="w-full max-w-[390px]">
+  <!-- the card: the prize photo IS the card -->
+  <div class="relative h-[520px] overflow-hidden rounded-[28px] border border-white/[0.08] shadow-[0_30px_70px_-24px_rgba(0,0,0,0.85)]">
+
+    <!-- full-bleed prize image -->
+    <img src="https://img.forgemods.de/images/thumb/images/4f205008-65c0-4591-9561-33c232a2bc20_gta5map_ls_legion_square_park_bed357ad-959c-4e1e-9420-c793a2ad905f.webp"
+         class="absolute inset-0 h-full w-full object-cover" />
+
+    <!-- legibility gradients -->
+    <div class="absolute inset-0 bg-gradient-to-b from-black/55 via-transparent to-transparent"></div>
+    <div class="absolute inset-x-0 bottom-0 h-[62%] bg-gradient-to-t from-black via-black/70 to-transparent"></div>
+
+    <!-- TOP: category pill + host chip -->
+    <div class="absolute inset-x-5 top-5 flex items-center justify-between">
+      <span class="rounded-full bg-black/40 px-2.5 py-1 text-[11px] font-semibold tracking-wide text-white/90 backdrop-blur-md ring-1 ring-white/15">FiveM · MLO</span>
+      <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2.5 py-1 text-[11px] font-bold text-emerald-300 backdrop-blur-md ring-1 ring-emerald-400/30">
+        <i data-lucide="ticket" class="h-3 w-3"></i> Free entry
+      </span>
+    </div>
+
+    <!-- HIGH on image: prize name -->
+    <div class="absolute inset-x-5 top-16">
+      <div class="text-[11px] font-medium uppercase tracking-[0.2em] text-orange-400 drop-shadow">You could win</div>
+      <h3 class="mt-1 text-[26px] font-extrabold leading-[1.05] tracking-tight drop-shadow-lg">LS Legion<br>Square Park</h3>
+    </div>
+
+    <!-- BOTTOM: floating frosted panel -->
+    <div class="absolute inset-x-4 bottom-4 panel rounded-[22px] border border-white/[0.12] p-5 shadow-[0_16px_40px_-16px_rgba(0,0,0,0.7)]">
+
+      <!-- worth + countdown row -->
+      <div class="flex items-end justify-between">
+        <div>
+          <div class="text-[10px] font-medium uppercase tracking-[0.18em] text-white/45">Prize worth</div>
+          <div class="num mt-0.5 text-[30px] font-extrabold leading-none tracking-tight">$19.99</div>
+        </div>
+        <div class="text-right">
+          <div class="text-[10px] font-medium uppercase tracking-[0.18em] text-white/45">Ends in</div>
+          <div class="num mt-0.5 text-[20px] font-bold leading-none tracking-tight">
+            <span class="text-white">4d</span> <span class="text-white">23h</span> <span class="text-white/45">33m</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- thin progress -->
+      <div class="mt-4 h-1 w-full overflow-hidden rounded-full bg-white/[0.12]">
+        <div class="h-full rounded-full bg-gradient-to-r from-orange-500 to-orange-400" style="width:62%"></div>
+      </div>
+      <div class="mt-1.5 flex justify-between text-[10px] text-white/35">
+        <span>Jun 19</span><span>Jun 24, 2026</span>
+      </div>
+
+      <!-- CTA -->
+      <button class="group mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-orange-500 py-3.5 font-bold text-black transition hover:bg-orange-400">
+        Enter Giveaway
+        <i data-lucide="arrow-right" class="h-4 w-4 transition-transform group-hover:translate-x-0.5"></i>
+      </button>
+
+      <!-- trust line -->
+      <p class="mt-2.5 flex items-center justify-center gap-1.5 text-[11px] text-white/45">
+        <i data-lucide="shield-check" class="h-3.5 w-3.5"></i> Winner drawn automatically &amp; fairly
+      </p>
+
+      <!-- hairline divider -->
+      <div class="my-4 h-px w-full bg-white/[0.1]"></div>
+
+      <!-- social proof + host -->
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="flex -space-x-2">
+            <span class="grid h-6 w-6 place-items-center rounded-full bg-orange-500/80 text-[9px] font-bold text-black ring-2 ring-black/40">A</span>
+            <span class="grid h-6 w-6 place-items-center rounded-full bg-sky-500/80 text-[9px] font-bold text-black ring-2 ring-black/40">R</span>
+            <span class="grid h-6 w-6 place-items-center rounded-full bg-violet-500/80 text-[9px] font-bold text-black ring-2 ring-black/40">K</span>
+          </div>
+          <p class="text-[12px] text-white/55"><span class="num font-semibold text-white">1,277</span> entered · <span class="text-white/40">not you</span></p>
+        </div>
+        <button class="flex items-center gap-1.5 text-[12px] font-semibold text-white/70 transition hover:text-white">
+          <span class="grid h-6 w-6 place-items-center rounded-full bg-gradient-to-br from-orange-500 to-amber-400 text-[10px] font-black text-black">F</span>
+          Forge
+          <i data-lucide="badge-check" class="h-3.5 w-3.5 text-orange-400"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <p class="mt-4 text-center text-xs text-white/30">Cinematic / image-immersive concept — the prize is the card.</p>
+</div>
+
+<script>lucide.createIcons()</script>
+</body>
+</html>

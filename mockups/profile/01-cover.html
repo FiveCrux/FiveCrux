@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FiveCrux — Creator Profile (Cover)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<script>tailwind.config={theme:{extend:{fontFamily:{sans:["Inter","sans-serif"]},colors:{brand:{orange:"#f97316"}}}}}</script>
+<style>
+  body{font-family:Inter,sans-serif;background:#0a0a0a;color:#fff}
+  .num{font-variant-numeric:tabular-nums}
+  .micro{font-size:11px;letter-spacing:0.16em;text-transform:uppercase}
+  ::-webkit-scrollbar{height:8px;width:8px}
+  ::-webkit-scrollbar-thumb{background:#262626;border-radius:8px}
+  .no-scrollbar::-webkit-scrollbar{display:none}
+</style>
+</head>
+<body class="min-h-screen antialiased">
+
+<!-- ===================== TOP NAV ===================== -->
+<header class="sticky top-0 z-50 border-b border-white/[0.06] bg-[#0a0a0a]/80 backdrop-blur-xl">
+  <div class="mx-auto flex h-16 max-w-7xl items-center gap-6 px-5 sm:px-8">
+    <a href="#" class="text-xl font-extrabold tracking-tight"><span class="text-brand-orange">Five</span><span class="text-white">Crux</span></a>
+    <nav class="ml-4 hidden items-center gap-1 text-sm md:flex">
+      <a href="#" class="rounded-lg px-3 py-2 text-white/55 transition hover:bg-white/5 hover:text-white">Home</a>
+      <a href="#" class="rounded-lg px-3 py-2 text-white/55 transition hover:bg-white/5 hover:text-white">Scripts</a>
+      <a href="#" class="rounded-lg px-3 py-2 text-white/55 transition hover:bg-white/5 hover:text-white">Props</a>
+      <a href="#" class="rounded-lg px-3 py-2 text-white/55 transition hover:bg-white/5 hover:text-white">Giveaways</a>
+      <a href="#" class="rounded-lg px-3 py-2 text-white/55 transition hover:bg-white/5 hover:text-white">Advertise</a>
+    </nav>
+    <div class="ml-auto flex items-center gap-2">
+      <button class="relative grid h-10 w-10 place-items-center rounded-xl border border-white/[0.08] bg-white/[0.02] text-white/70 transition hover:text-white">
+        <i data-lucide="shopping-cart" class="h-[18px] w-[18px]"></i>
+        <span class="absolute -right-1 -top-1 grid h-4 w-4 place-items-center rounded-full bg-brand-orange text-[10px] font-bold text-black">2</span>
+      </button>
+      <button class="rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-black transition hover:bg-white/90">Login</button>
+    </div>
+  </div>
+</header>
+
+<main class="mx-auto max-w-7xl px-5 pb-20 sm:px-8">
+
+  <!-- concept chip -->
+  <div class="flex justify-center pt-5">
+    <span class="inline-flex items-center gap-2 rounded-full border border-brand-orange/25 bg-brand-orange/10 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-300">
+      <i data-lucide="layout-template" class="h-3.5 w-3.5"></i> Concept — Creator Cover Profile
+    </span>
+  </div>
+
+  <!-- ===================== COVER + IDENTITY ===================== -->
+  <section class="mt-5 overflow-hidden rounded-[28px] border border-white/[0.07] bg-[#0e0e0e] shadow-[0_30px_80px_-30px_rgba(0,0,0,0.9)]">
+
+    <!-- cover banner -->
+    <div class="relative h-[180px] sm:h-[220px]">
+      <img src="https://img.forgemods.de/images/thumb/images/gta5map_vinewood_lake_villa_03_33f120b6-d81c-4c10-973d-c4522420e975.webp" class="h-full w-full object-cover" alt="cover" />
+      <div class="absolute inset-0 bg-gradient-to-t from-[#0e0e0e] via-[#0e0e0e]/30 to-[#0e0e0e]/10"></div>
+      <div class="absolute inset-0 bg-gradient-to-r from-[#0e0e0e]/60 via-transparent to-transparent"></div>
+      <!-- top-right actions -->
+      <div class="absolute right-4 top-4 flex items-center gap-2">
+        <button class="grid h-9 w-9 place-items-center rounded-xl bg-black/40 text-white/80 ring-1 ring-white/15 backdrop-blur-md transition hover:text-white">
+          <i data-lucide="share-2" class="h-[16px] w-[16px]"></i>
+        </button>
+        <button class="grid h-9 w-9 place-items-center rounded-xl bg-black/40 text-white/80 ring-1 ring-white/15 backdrop-blur-md transition hover:text-white">
+          <i data-lucide="more-horizontal" class="h-[16px] w-[16px]"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- identity row -->
+    <div class="px-6 pb-7 sm:px-8">
+      <div class="flex flex-col gap-6 lg:flex-row lg:items-end">
+
+        <!-- avatar overlapping cover -->
+        <div class="-mt-14 flex shrink-0 items-end gap-5 sm:-mt-16">
+          <div class="relative">
+            <div class="grid h-[104px] w-[104px] place-items-center rounded-3xl bg-gradient-to-br from-brand-orange via-orange-500 to-amber-400 text-4xl font-black text-black ring-4 ring-[#0e0e0e] sm:h-[120px] sm:w-[120px] sm:text-5xl">C</div>
+            <span class="absolute -bottom-1.5 -right-1.5 grid h-8 w-8 place-items-center rounded-full bg-[#0e0e0e] ring-1 ring-white/10">
+              <i data-lucide="badge-check" class="h-5 w-5 text-brand-orange" fill="currentColor" stroke="#0e0e0e"></i>
+            </span>
+          </div>
+        </div>
+
+        <!-- name + tags + bio -->
+        <div class="min-w-0 flex-1">
+          <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
+            <h1 class="text-2xl font-extrabold tracking-tight sm:text-3xl">CruxDev</h1>
+            <span class="inline-flex items-center gap-1.5 rounded-full bg-brand-orange/12 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-orange-300 ring-1 ring-brand-orange/25">
+              <i data-lucide="badge-check" class="h-3.5 w-3.5"></i> Verified Creator
+            </span>
+            <span class="inline-flex items-center gap-1.5 rounded-full bg-white/[0.05] px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-white/70 ring-1 ring-white/10">
+              <i data-lucide="crown" class="h-3.5 w-3.5 text-amber-400"></i> Founder
+            </span>
+          </div>
+          <p class="mt-2.5 max-w-xl text-[15px] leading-relaxed text-white/55">Premium FiveM scripts &amp; MLOs — trusted by <span class="font-semibold text-white/80">2,400+ servers</span>.</p>
+          <div class="mt-3.5 flex flex-wrap items-center gap-x-5 gap-y-2 text-[13px] text-white/45">
+            <span class="inline-flex items-center gap-1.5"><i data-lucide="calendar-days" class="h-4 w-4"></i> Member since Jan 2024</span>
+            <a href="#" class="inline-flex items-center gap-1.5 text-indigo-300 transition hover:text-indigo-200"><i data-lucide="message-circle" class="h-4 w-4"></i> Discord</a>
+            <a href="#" class="inline-flex items-center gap-1.5 text-white/55 transition hover:text-white"><i data-lucide="link" class="h-4 w-4"></i> cruxdev.gg</a>
+          </div>
+        </div>
+
+        <!-- owner actions -->
+        <div class="flex shrink-0 items-center gap-2.5">
+          <button class="inline-flex items-center gap-2 rounded-xl border border-white/[0.1] bg-white/[0.03] px-4 py-2.5 text-sm font-semibold text-white/80 transition hover:bg-white/[0.06] hover:text-white">
+            <i data-lucide="share-2" class="h-4 w-4"></i> Share
+          </button>
+          <button class="inline-flex items-center gap-2 rounded-xl bg-brand-orange px-4 py-2.5 text-sm font-bold text-black transition hover:bg-orange-400">
+            <i data-lucide="pencil" class="h-4 w-4"></i> Edit profile
+          </button>
+        </div>
+      </div>
+
+      <!-- stats row -->
+      <div class="mt-7 grid grid-cols-2 divide-white/[0.06] rounded-2xl border border-white/[0.06] bg-white/[0.015] sm:grid-cols-4 sm:divide-x">
+        <div class="px-5 py-4">
+          <div class="micro text-white/40">Products</div>
+          <div class="num mt-1 text-2xl font-extrabold tracking-tight">12</div>
+        </div>
+        <div class="border-l border-white/[0.06] px-5 py-4 sm:border-l-0">
+          <div class="micro text-white/40">Sales</div>
+          <div class="num mt-1 text-2xl font-extrabold tracking-tight">2,480</div>
+        </div>
+        <div class="border-t border-white/[0.06] px-5 py-4 sm:border-t-0">
+          <div class="micro text-white/40">Avg rating</div>
+          <div class="num mt-1 flex items-center gap-1.5 text-2xl font-extrabold tracking-tight">4.9 <i data-lucide="star" class="h-4 w-4 text-amber-400" fill="currentColor"></i></div>
+        </div>
+        <div class="border-l border-t border-white/[0.06] px-5 py-4 sm:border-t-0">
+          <div class="micro text-white/40">Giveaways</div>
+          <div class="num mt-1 text-2xl font-extrabold tracking-tight">4</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== TAB BAR ===================== -->
+  <div class="sticky top-16 z-40 -mx-5 mt-6 border-b border-white/[0.06] bg-[#0a0a0a]/85 px-5 backdrop-blur-xl sm:-mx-8 sm:px-8">
+    <nav class="no-scrollbar flex gap-1 overflow-x-auto">
+      <button class="relative whitespace-nowrap px-4 py-3.5 text-sm font-semibold text-white">Overview<span class="absolute inset-x-3 -bottom-px h-0.5 rounded-full bg-brand-orange"></span></button>
+      <button class="whitespace-nowrap px-4 py-3.5 text-sm font-medium text-white/45 transition hover:text-white">Products</button>
+      <button class="whitespace-nowrap px-4 py-3.5 text-sm font-medium text-white/45 transition hover:text-white">Giveaways</button>
+      <button class="whitespace-nowrap px-4 py-3.5 text-sm font-medium text-white/45 transition hover:text-white">Reviews</button>
+      <button class="whitespace-nowrap px-4 py-3.5 text-sm font-medium text-white/45 transition hover:text-white">Settings</button>
+    </nav>
+  </div>
+
+  <!-- ===================== CONTENT GRID ===================== -->
+  <div class="mt-8 grid gap-8 lg:grid-cols-[1fr_320px]">
+
+    <!-- LEFT: products -->
+    <section>
+      <div class="flex items-end justify-between">
+        <div>
+          <h2 class="text-lg font-bold tracking-tight">Products</h2>
+          <p class="mt-0.5 text-[13px] text-white/40">12 published items</p>
+        </div>
+        <div class="hidden items-center gap-2 text-[13px] text-white/45 sm:flex">
+          <span class="micro">Sort</span>
+          <button class="inline-flex items-center gap-1.5 rounded-lg border border-white/[0.08] bg-white/[0.02] px-3 py-1.5 font-medium text-white/70 transition hover:text-white">Best selling <i data-lucide="chevron-down" class="h-3.5 w-3.5"></i></button>
+        </div>
+      </div>
+
+      <div class="mt-5 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+
+        <!-- CARD template repeated -->
+        <!-- 1 -->
+        <article class="group overflow-hidden rounded-2xl border border-white/[0.07] bg-[#0e0e0e] transition hover:border-white/[0.14]">
+          <div class="relative h-40 overflow-hidden">
+            <img src="https://img.forgemods.de/images/thumb/images/4f205008-65c0-4591-9561-33c232a2bc20_gta5map_ls_legion_square_park_bed357ad-959c-4e1e-9420-c793a2ad905f.webp" class="h-full w-full object-cover transition duration-500 group-hover:scale-105" alt="" />
+            <div class="absolute inset-0 bg-gradient-to-t from-[#0e0e0e]/80 to-transparent"></div>
+            <div class="absolute left-3 top-3 flex gap-1.5">
+              <span class="rounded-md bg-black/55 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-300 ring-1 ring-emerald-400/25 backdrop-blur">ESX</span>
+              <span class="rounded-md bg-black/55 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-sky-300 ring-1 ring-sky-400/25 backdrop-blur">QBCore</span>
+            </div>
+          </div>
+          <div class="p-4">
+            <h3 class="truncate text-[15px] font-bold tracking-tight">Advanced Banking System</h3>
+            <div class="mt-3 flex items-center justify-between">
+              <span class="num text-lg font-extrabold tracking-tight">$19.99</span>
+              <span class="num inline-flex items-center gap-1 text-[13px] font-semibold text-white/55"><i data-lucide="star" class="h-3.5 w-3.5 text-amber-400" fill="currentColor"></i>4.9</span>
+            </div>
+          </div>
+        </article>
+
+        <!-- 2 -->
+        <article class="group overflow-hidden rounded-2xl border border-white/[0.07] bg-[#0e0e0e] transition hover:border-white/[0.14]">
+          <div class="relative h-40 overflow-hidden">
+            <img src="https://img.forgemods.de/images/thumb/images/gta5map_gaming_e83b6804-9d4f-4a0c-bb8f-ed72882d7d9b.webp" class="h-full w-full object-cover transition duration-500 group-hover:scale-105" alt="" />
+            <div class="absolute inset-0 bg-gradient-to-t from-[#0e0e0e]/80 to-transparent"></div>
+            <div class="absolute left-3 top-3 flex gap-1.5">
+              <span class="rounded-md bg-black/55 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-sky-300 ring-1 ring-sky-400/25 backdrop-blur">QBCore</span>
+            </div>
+          </div>
+          <div class="p-4">
+            <h3 class="truncate text-[15px] font-bold tracking-tight">Police MDT &amp; Dispatch</h3>
+            <div class="mt-3 flex items-center justify-between">
+              <span class="num text-lg font-extrabold tracking-tight">$24.99</span>
+              <span class="num inline-flex items-center gap-1 text-[13px] font-semibold text-white/55"><i data-lucide="star" class="h-3.5 w-3.5 text-amber-400" fill="currentColor"></i>5.0</span>
+            </div>
+          </div>
+        </article>
+
+        <!-- 3 -->
+        <article class="group overflow-hidden rounded-2xl border border-white/[0.07] bg-[#0e0e0e] transition hover:border-white/[0.14]">
+          <div class="relative h-40 overflow-hidden">
+            <img src="https://img.forgemods.de/images/thumb/images/c56a6a29-9469-4875-8557-679884d124a6_gta5map_los_santos_medical_center_cd5cc62b-caf0-4021-bdf0-debb98f190fe.webp" class="h-full w-full object-cover transition duration-500 group-hover:scale-105" alt="" />
+            <div class="absolute inset-0 bg-gradient-to-t from-[#0e0e0e]/80 to-transparent"></div>
+            <div class="absolute left-3 top-3 flex gap-1.5">
+              <span class="rounded-md bg-black/55 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-300 ring-1 ring-emerald-400/25 backdrop-blur">ESX</span>
+            </div>
+          </div>
+          <div class="p-4">
+            <h3 class="truncate text-[15px] font-bold tracking-tight">Inventory HUD Reloaded</h3>
+            <div class="mt-3 flex items-center justify-between">
+              <span class="inline-flex items-center gap-1.5 rounded-md bg-emerald-500/12 px-2 py-0.5 text-[12px] font-bold text-emerald-400 ring-1 ring-emerald-500/25">Free</span>
+              <span class="num inline-flex items-center gap-1 text-[13px] font-semibold text-white/55"><i data-lucide="star" class="h-3.5 w-3.5 text-amber-400" fill="currentColor"></i>4.7</span>
+            </div>
+          </div>
+        </article>
+
+        <!-- 4 -->
+        <article class="group overflow-hidden rounded-2xl border border-white/[0.07] bg-[#0e0e0e] transition hover:border-white/[0.14]">
+          <div class="relative h-40 overflow-hidden">
+            <img src="https://img.forgemods.de/images/thumb/images/gta5map_vinewood_lake_villa_03_33f120b6-d81c-4c10-973d-c4522420e975.webp" class="h-full w-full object-cover transition duration-500 group-hover:scale-105" alt="" />
+            <div class="absolute inset-0 bg-gradient-to-t from-[#0e0e0e]/80 to-transparent"></div>
+            <div class="absolute left-3 top-3 flex gap-1.5">
+              <span class="rounded-md bg-black/55 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white/70 ring-1 ring-white/15 backdrop-blur">Standalone</span>
+            </div>
+          </div>
+          <div class="p-4">
+            <h3 class="truncate text-[15px] font-bold tracking-tight">Luxury Apartments MLO</h3>
+            <div class="mt-3 flex items-center justify-between">
+              <span class="num text-lg font-extrabold tracking-tight">$34.99</span>
+              <span class="num inline-flex items-center gap-1 text-[13px] font-semibold text-white/55"><i data-lucide="star" class="h-3.5 w-3.5 text-amber-400" fill="currentColor"></i>4.8</span>
+            </div>
+          </div>
+        </article>
+
+        <!-- 5 -->
+        <article class="group overflow-hidden rounded-2xl border border-white/[0.07] bg-[#0e0e0e] transition hover:border-white/[0.14]">
+          <div class="relative h-40 overflow-hidden">
+            <img src="https://img.forgemods.de/images/thumb/images/4f205008-65c0-4591-9561-33c232a2bc20_gta5map_ls_legion_square_park_bed357ad-959c-4e1e-9420-c793a2ad905f.webp" class="h-full w-full object-cover transition duration-500 group-hover:scale-105" alt="" />
+            <div class="absolute inset-0 bg-gradient-to-t from-[#0e0e0e]/80 to-transparent"></div>
+            <div class="absolute left-3 top-3 flex gap-1.5">
+              <span class="rounded-md bg-black/55 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-300 ring-1 ring-emerald-400/25 backdrop-blur">ESX</span>
+              <span class="rounded-md bg-black/55 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-sky-300 ring-1 ring-sky-400/25 backdrop-blur">QBCore</span>
+            </div>
+          </div>
+          <div class="p-4">
+            <h3 class="truncate text-[15px] font-bold tracking-tight">Phone System v2</h3>
+            <div class="mt-3 flex items-center justify-between">
+              <span class="num text-lg font-extrabold tracking-tight">$22.50</span>
+              <span class="num inline-flex items-center gap-1 text-[13px] font-semibold text-white/55"><i data-lucide="star" class="h-3.5 w-3.5 text-amber-400" fill="currentColor"></i>4.8</span>
+            </div>
+          </div>
+        </article>
+
+        <!-- 6 -->
+        <article class="group overflow-hidden rounded-2xl border border-white/[0.07] bg-[#0e0e0e] transition hover:border-white/[0.14]">
+          <div class="relative h-40 overflow-hidden">
+            <img src="https://img.forgemods.de/images/thumb/images/gta5map_gaming_e83b6804-9d4f-4a0c-bb8f-ed72882d7d9b.webp" class="h-full w-full object-cover transition duration-500 group-hover:scale-105" alt="" />
+            <div class="absolute inset-0 bg-gradient-to-t from-[#0e0e0e]/80 to-transparent"></div>
+            <div class="absolute left-3 top-3 flex gap-1.5">
+              <span class="rounded-md bg-black/55 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white/70 ring-1 ring-white/15 backdrop-blur">Standalone</span>
+            </div>
+          </div>
+          <div class="p-4">
+            <h3 class="truncate text-[15px] font-bold tracking-tight">Drift Car Pack</h3>
+            <div class="mt-3 flex items-center justify-between">
+              <span class="num text-lg font-extrabold tracking-tight">$14.99</span>
+              <span class="num inline-flex items-center gap-1 text-[13px] font-semibold text-white/55"><i data-lucide="star" class="h-3.5 w-3.5 text-amber-400" fill="currentColor"></i>4.6</span>
+            </div>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- RIGHT: side strips -->
+    <aside class="space-y-6">
+
+      <!-- Latest reviews -->
+      <section class="rounded-2xl border border-white/[0.07] bg-[#0e0e0e]">
+        <div class="flex items-center justify-between border-b border-white/[0.06] px-5 py-4">
+          <h3 class="text-sm font-bold tracking-tight">Latest reviews</h3>
+          <a href="#" class="text-xs font-semibold text-brand-orange transition hover:text-orange-300">View all</a>
+        </div>
+        <div class="divide-y divide-white/[0.05]">
+          <!-- review -->
+          <div class="px-5 py-4">
+            <div class="flex items-center gap-2.5">
+              <span class="grid h-8 w-8 place-items-center rounded-full bg-sky-500/80 text-xs font-bold text-black">M</span>
+              <div class="min-w-0">
+                <div class="truncate text-[13px] font-semibold">MidnightRP</div>
+                <div class="num flex items-center gap-0.5 text-amber-400">
+                  <i data-lucide="star" class="h-3 w-3" fill="currentColor"></i><i data-lucide="star" class="h-3 w-3" fill="currentColor"></i><i data-lucide="star" class="h-3 w-3" fill="currentColor"></i><i data-lucide="star" class="h-3 w-3" fill="currentColor"></i><i data-lucide="star" class="h-3 w-3" fill="currentColor"></i>
+                </div>
+              </div>
+              <span class="ml-auto text-[11px] text-white/30">2d</span>
+            </div>
+            <p class="mt-2.5 text-[13px] leading-relaxed text-white/55">Banking system dropped right into our server. Clean code, zero conflicts.</p>
+          </div>
+          <div class="px-5 py-4">
+            <div class="flex items-center gap-2.5">
+              <span class="grid h-8 w-8 place-items-center rounded-full bg-violet-500/80 text-xs font-bold text-black">K</span>
+              <div class="min-w-0">
+                <div class="truncate text-[13px] font-semibold">KaizenServers</div>
+                <div class="num flex items-center gap-0.5 text-amber-400">
+                  <i data-lucide="star" class="h-3 w-3" fill="currentColor"></i><i data-lucide="star" class="h-3 w-3" fill="currentColor"></i><i data-lucide="star" class="h-3 w-3" fill="currentColor"></i><i data-lucide="star" class="h-3 w-3" fill="currentColor"></i><i data-lucide="star" class="h-3 w-3 text-white/20" fill="currentColor"></i>
+                </div>
+              </div>
+              <span class="ml-auto text-[11px] text-white/30">5d</span>
+            </div>
+            <p class="mt-2.5 text-[13px] leading-relaxed text-white/55">The MLO is gorgeous and well-optimized. Support replies fast on Discord.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Recent activity -->
+      <section class="rounded-2xl border border-white/[0.07] bg-[#0e0e0e]">
+        <div class="border-b border-white/[0.06] px-5 py-4">
+          <h3 class="text-sm font-bold tracking-tight">Recent activity</h3>
+        </div>
+        <ul class="space-y-1 px-3 py-3 text-[13px]">
+          <li class="flex items-start gap-3 rounded-xl px-2 py-2">
+            <span class="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-emerald-500/12 text-emerald-400"><i data-lucide="trending-up" class="h-4 w-4"></i></span>
+            <p class="text-white/60"><span class="font-semibold text-white">Phone System v2</span> hit <span class="num font-semibold">500</span> sales</p>
+          </li>
+          <li class="flex items-start gap-3 rounded-xl px-2 py-2">
+            <span class="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-brand-orange/12 text-brand-orange"><i data-lucide="gift" class="h-4 w-4"></i></span>
+            <p class="text-white/60">Launched a giveaway for <span class="font-semibold text-white">Luxury Apartments MLO</span></p>
+          </li>
+          <li class="flex items-start gap-3 rounded-xl px-2 py-2">
+            <span class="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-sky-500/12 text-sky-400"><i data-lucide="upload" class="h-4 w-4"></i></span>
+            <p class="text-white/60">Published <span class="font-semibold text-white">Drift Car Pack</span></p>
+          </li>
+        </ul>
+      </section>
+
+    </aside>
+  </div>
+</main>
+
+<!-- ===================== FOOTER ===================== -->
+<footer class="border-t border-white/[0.06] bg-[#0a0a0a]">
+  <div class="mx-auto max-w-7xl px-5 py-10 sm:px-8">
+    <div class="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
+      <div class="max-w-xs">
+        <div class="text-lg font-extrabold tracking-tight"><span class="text-brand-orange">Five</span><span class="text-white">Crux</span></div>
+        <p class="mt-2.5 text-[13px] leading-relaxed text-white/40">The marketplace for premium FiveM scripts, MLOs and props — built for serious server owners.</p>
+      </div>
+      <div class="grid grid-cols-2 gap-x-12 gap-y-2 text-[13px] sm:grid-cols-3">
+        <div class="space-y-2">
+          <div class="micro mb-1 text-white/35">Marketplace</div>
+          <a href="#" class="block text-white/55 transition hover:text-white">Scripts</a>
+          <a href="#" class="block text-white/55 transition hover:text-white">Props</a>
+          <a href="#" class="block text-white/55 transition hover:text-white">Giveaways</a>
+        </div>
+        <div class="space-y-2">
+          <div class="micro mb-1 text-white/35">Company</div>
+          <a href="#" class="block text-white/55 transition hover:text-white">About</a>
+          <a href="#" class="block text-white/55 transition hover:text-white">Advertise</a>
+          <a href="#" class="block text-white/55 transition hover:text-white">Contact</a>
+        </div>
+        <div class="space-y-2">
+          <div class="micro mb-1 text-white/35">Legal</div>
+          <a href="#" class="block text-white/55 transition hover:text-white">Terms</a>
+          <a href="#" class="block text-white/55 transition hover:text-white">Privacy</a>
+        </div>
+      </div>
+    </div>
+    <div class="mt-8 flex flex-col items-center justify-between gap-3 border-t border-white/[0.06] pt-6 text-[12px] text-white/35 sm:flex-row">
+      <span>© 2026 FiveCrux. All rights reserved.</span>
+      <div class="flex items-center gap-4">
+        <a href="#" class="transition hover:text-white">Discord</a>
+        <a href="#" class="transition hover:text-white">X / Twitter</a>
+        <a href="#" class="transition hover:text-white">YouTube</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>lucide.createIcons()</script>
+</body>
+</html>

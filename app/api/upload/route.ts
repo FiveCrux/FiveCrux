@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/auth"
 import { uploadToS3, generateS3Key } from "@/lib/s3"
 
 // Configure route for larger body sizes (Vercel has 4.5MB default limit)
@@ -33,6 +35,13 @@ const DIMENSION_LIMITS = {
 
 export async function POST(request: NextRequest) {
   try {
+    // SECURITY: require a logged-in user — uploads cost storage/bandwidth and
+    // host public content; they must not be anonymous.
+    const session = await getServerSession(authOptions)
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
     // Log request details for debugging
     const contentType = request.headers.get("content-type")
     const contentLength = request.headers.get("content-length")

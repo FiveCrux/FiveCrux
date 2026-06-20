@@ -11,9 +11,9 @@ export async function hasPurchasedProp(userId: string, propId: string): Promise<
         and(
           eq(orders.userId, userId),
           eq(orderItems.itemType, 'prop'),
-          eq(orderItems.itemId, propId)
-          // If order status needs to be completed, uncomment below:
-          // eq(orders.status, 'paid')
+          eq(orderItems.itemId, propId),
+          // Only a paid (and not refunded) order counts as owned (M8).
+          eq(orders.status, 'paid')
         )
       )
       .limit(1);

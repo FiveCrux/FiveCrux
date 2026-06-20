@@ -1,0 +1,31 @@
+{
+  "_comment": "FiveCrux platform package map → Tebex package ids. Replace each 0 with the Tebex package id you create in FiveCrux's OWN store at the matching price (USD, must equal lib/ad-pricing.ts). Then set this whole object (minus _comment lines) as the TEBEX_PACKAGE_MAP_JSON env var. Keys: `${packageType}:${tier}:${duration}` (ads=months, featured-scripts=weeks).",
+
+  "_ads_comment": "Ad slots — duration in MONTHS",
+  "ads:starter:1": 0,
+  "ads:starter:3": 0,
+  "ads:starter:6": 0,
+  "ads:starter:12": 0,
+  "ads:premium:1": 0,
+  "ads:premium:3": 0,
+  "ads:premium:6": 0,
+  "ads:premium:12": 0,
+  "ads:executive:1": 0,
+  "ads:executive:3": 0,
+  "ads:executive:6": 0,
+  "ads:executive:12": 0,
+
+  "_featured_comment": "Featured-script slots — duration in WEEKS",
+  "featured-scripts:starter:1": 0,
+  "featured-scripts:starter:2": 0,
+  "featured-scripts:starter:4": 0,
+  "featured-scripts:starter:8": 0,
+  "featured-scripts:premium:1": 0,
+  "featured-scripts:premium:2": 0,
+  "featured-scripts:premium:4": 0,
+  "featured-scripts:premium:8": 0,
+  "featured-scripts:executive:1": 0,
+  "featured-scripts:executive:2": 0,
+  "featured-scripts:executive:4": 0,
+  "featured-scripts:executive:8": 0
+}

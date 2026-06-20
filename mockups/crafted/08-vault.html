@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FiveCrux — Vault / Unlock</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<script>tailwind.config={theme:{extend:{fontFamily:{sans:["Inter","sans-serif"]},colors:{brand:{orange:"#f97316"}}}}}</script>
+<style>
+  body{font-family:Inter,sans-serif;background:#070707;color:#fff}
+  .num{font-variant-numeric:tabular-nums}
+  /* subtle lock 'breathing' — restrained, not gimmicky */
+  @keyframes haloPulse{0%,100%{opacity:.55;transform:scale(1)}50%{opacity:.9;transform:scale(1.04)}}
+  .lock-halo{animation:haloPulse 3.2s ease-in-out infinite}
+  .vault-grid{background-image:linear-gradient(rgba(255,255,255,0.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.035) 1px,transparent 1px);background-size:22px 22px}
+</style>
+</head>
+<body class="grid min-h-screen place-items-center px-6 py-12">
+
+<div class="w-full max-w-[400px]">
+  <!-- VAULT / UNLOCK: prize is locked; entering unlocks your chance -->
+  <div class="overflow-hidden rounded-[26px] border border-white/[0.07] bg-[#0e0e0e] shadow-[0_24px_60px_-20px_rgba(0,0,0,0.85)]">
+
+    <!-- The locked prize -->
+    <div class="relative h-48">
+      <img src="https://img.forgemods.de/images/thumb/images/4f205008-65c0-4591-9561-33c232a2bc20_gta5map_ls_legion_square_park_bed357ad-959c-4e1e-9420-c793a2ad905f.webp" class="h-full w-full object-cover" />
+      <!-- dim + grid overlay to read as 'behind glass / locked' -->
+      <div class="absolute inset-0 bg-black/45"></div>
+      <div class="absolute inset-0 vault-grid opacity-60"></div>
+      <div class="absolute inset-0 bg-gradient-to-t from-[#0e0e0e] via-[#0e0e0e]/35 to-transparent"></div>
+
+      <!-- centered lock motif -->
+      <div class="absolute inset-0 grid place-items-center">
+        <div class="relative grid h-14 w-14 place-items-center">
+          <span class="lock-halo absolute inset-0 rounded-full bg-orange-500/25 blur-md"></span>
+          <span class="relative grid h-14 w-14 place-items-center rounded-full bg-black/55 ring-1 ring-orange-500/40 backdrop-blur-sm">
+            <i data-lucide="lock" class="h-5 w-5 text-orange-400"></i>
+          </span>
+        </div>
+      </div>
+
+      <span class="absolute left-4 top-4 rounded-full bg-black/45 px-2.5 py-1 text-[11px] font-semibold tracking-wide text-white/85 backdrop-blur-md ring-1 ring-white/10">FiveM · MLO</span>
+      <span class="absolute right-4 top-4 inline-flex items-center gap-1.5 rounded-full bg-black/45 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-orange-300/90 backdrop-blur-md ring-1 ring-orange-500/25">
+        <i data-lucide="lock" class="h-3 w-3"></i> Locked
+      </span>
+    </div>
+
+    <div class="px-6 pb-6 pt-5">
+      <!-- prize title -->
+      <div class="text-[11px] font-medium uppercase tracking-[0.18em] text-white/40">Behind the vault</div>
+      <h3 class="mt-1 text-xl font-extrabold leading-tight tracking-tight">LS Legion Square Park</h3>
+
+      <!-- the reward behind the lock -->
+      <div class="mt-4 flex items-end justify-between rounded-2xl border border-white/[0.06] bg-white/[0.02] px-4 py-3.5">
+        <div>
+          <div class="text-[10px] font-medium uppercase tracking-[0.16em] text-white/40">Reward inside</div>
+          <div class="num mt-0.5 text-[30px] font-extrabold leading-none tracking-tight">$19.99</div>
+        </div>
+        <span class="mb-0.5 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/12 px-3 py-1 text-xs font-bold text-emerald-400 ring-1 ring-emerald-500/25">
+          <i data-lucide="key-round" class="h-3.5 w-3.5"></i> Free to unlock
+        </span>
+      </div>
+
+      <!-- countdown = time to unlock -->
+      <div class="mt-5">
+        <div class="flex items-baseline justify-between">
+          <span class="text-sm text-white/45">Unlocks close in</span>
+          <span class="num text-sm font-semibold"><span class="text-white">4d</span> <span class="text-white">23h</span> <span class="text-white/50">33m</span></span>
+        </div>
+        <div class="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/[0.07]">
+          <div class="h-full rounded-full bg-gradient-to-r from-orange-500 to-orange-400" style="width:62%"></div>
+        </div>
+        <div class="mt-1.5 flex justify-between text-[11px] text-white/30">
+          <span>Opened Jun 19</span><span>Closes Jun 24, 2026</span>
+        </div>
+      </div>
+
+      <!-- CTA: unlock -->
+      <button class="group mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-orange-500 py-3.5 font-bold text-black transition hover:bg-orange-400">
+        <i data-lucide="lock-open" class="h-4 w-4 transition-transform group-hover:-rotate-12"></i>
+        Unlock my entry
+      </button>
+      <p class="mt-2.5 flex items-center justify-center gap-1.5 text-[12px] text-white/35">
+        <i data-lucide="shield-check" class="h-3.5 w-3.5"></i> Winner drawn automatically &amp; fairly
+      </p>
+
+      <!-- social proof -->
+      <div class="mt-5 flex items-center gap-3">
+        <div class="flex -space-x-2">
+          <span class="grid h-7 w-7 place-items-center rounded-full bg-orange-500/80 text-[10px] font-bold text-black ring-2 ring-[#0e0e0e]">A</span>
+          <span class="grid h-7 w-7 place-items-center rounded-full bg-sky-500/80 text-[10px] font-bold text-black ring-2 ring-[#0e0e0e]">R</span>
+          <span class="grid h-7 w-7 place-items-center rounded-full bg-violet-500/80 text-[10px] font-bold text-black ring-2 ring-[#0e0e0e]">K</span>
+          <span class="grid h-7 w-7 place-items-center rounded-full bg-white/10 text-[10px] font-bold ring-2 ring-[#0e0e0e]">+</span>
+        </div>
+        <p class="text-sm text-white/55"><span class="num font-semibold text-white">1,277</span> unlocked — <span class="text-white/40">you haven't yet</span></p>
+      </div>
+    </div>
+
+    <!-- host footer -->
+    <div class="flex items-center gap-3 border-t border-white/[0.06] bg-white/[0.015] px-6 py-4">
+      <span class="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-orange-500 to-amber-400 text-sm font-black text-black">F</span>
+      <div class="leading-tight">
+        <div class="flex items-center gap-1 text-sm font-semibold">Forge Studios <i data-lucide="badge-check" class="h-3.5 w-3.5 text-orange-400"></i></div>
+        <div class="text-xs text-white/40">Vault host</div>
+      </div>
+      <button class="ml-auto text-xs font-semibold text-white/60 transition hover:text-white">View profile →</button>
+    </div>
+  </div>
+</div>
+
+<script>lucide.createIcons()</script>
+</body>
+</html>
