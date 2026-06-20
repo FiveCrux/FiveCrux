@@ -15,7 +15,7 @@ import {
   applyCoupon,
   FIVECRUX_TEBEX_PUBLIC_TOKEN,
 } from "@/lib/tebex";
-import { getTebexPackageId } from "@/lib/tebex-packages";
+import { resolveTebexPackageId } from "@/lib/tebex-pricing";
 
 function generateNumericId() {
   return Math.floor(Date.now() / 1000) + Math.floor(Math.random() * 10000);
@@ -114,7 +114,7 @@ export async function POST(request: NextRequest) {
           slotsToAdd: Number(meta.slotsToAdd ?? meta.slotsPerMonth ?? 1) || 1,
           durationMonths: meta.durationMonths != null ? Number(meta.durationMonths) : undefined,
           durationWeeks: meta.durationWeeks != null ? Number(meta.durationWeeks) : undefined,
-          tebexPackageId: getTebexPackageId(meta.packageType, meta.packageId, duration),
+          tebexPackageId: await resolveTebexPackageId(meta.packageType, meta.packageId, duration),
         });
       } else if (item.itemType === "prop") {
         const pkgId = meta?.tebexPackageId;
