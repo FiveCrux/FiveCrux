@@ -168,7 +168,6 @@ export default function PropsPage() {
   const categories = [
     { id: "props", name: "Props" },
     { id: "maps", name: "Maps" },
-    { id: "props", name: "Props" },
     { id: "clothing", name: "Clothing" },
     { id: "economy", name: "Economy" },
     { id: "vehicles", name: "Vehicles" },

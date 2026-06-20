@@ -418,42 +418,44 @@ export function GiveawayDetailClient({
     }
   }
 
-  const getServerIdFromInvite = async (inviteCode: string): Promise<string | null> => {
+  // Extract a Discord invite code WITHOUT throwing on non-URL free text.
+  const parseInviteCode = (link: string): string | null => {
+    if (typeof link !== "string") return null
+    const match = link.match(/(?:discord\.gg\/|discord\.com\/invite\/|discordapp\.com\/invite\/)([a-zA-Z0-9]+)/)
+    return match ? match[1] : null
+  }
+
+  // Time-boxed fetch so a slow/blocked external call can't hang the page.
+  const fetchWithTimeout = async (url: string, ms = 4000): Promise<Response | null> => {
+    const c = new AbortController()
+    const t = setTimeout(() => c.abort(), ms)
     try {
-      const response = await fetch(`https://discord.com/api/invites/${inviteCode}?with_counts=true`)
-      if (response.ok) {
-        const data = await response.json()
-        return data.guild?.id || null
-      }
+      return await fetch(url, { signal: c.signal })
+    } catch {
       return null
-    } catch (error) {
-      console.error('Error fetching server ID from invite:', error)
-      return null
+    } finally {
+      clearTimeout(t)
     }
   }
 
-  const extractDiscordServerName = async (link: string): Promise<string | null> => {
-    try {
-      const url = new URL(link)
-      const inviteCode = url.pathname.split('/').pop()
-
-      if (!inviteCode) return null
-
-      try {
-        const response = await fetch(`https://discord.com/api/invites/${inviteCode}?with_counts=true`)
-        if (response.ok) {
-          const data = await response.json()
-          return data.guild?.name || null
-        }
-      } catch (apiError) {
-        console.log('Could not fetch server name from Discord API:', apiError)
-      }
-
-      return null
-    } catch (error) {
-      console.error('Error extracting Discord server name:', error)
-      return null
+  const getServerIdFromInvite = async (inviteCode: string): Promise<string | null> => {
+    const response = await fetchWithTimeout(`https://discord.com/api/invites/${inviteCode}?with_counts=true`)
+    if (response?.ok) {
+      const data = await response.json().catch(() => null)
+      return data?.guild?.id || null
     }
+    return null
+  }
+
+  const extractDiscordServerName = async (link: string): Promise<string | null> => {
+    const inviteCode = parseInviteCode(link)
+    if (!inviteCode) return null
+    const response = await fetchWithTimeout(`https://discord.com/api/invites/${inviteCode}?with_counts=true`)
+    if (response?.ok) {
+      const data = await response.json().catch(() => null)
+      return data?.guild?.name || null
+    }
+    return null
   }
 
   useEffect(() => {

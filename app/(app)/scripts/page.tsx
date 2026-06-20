@@ -660,7 +660,7 @@ export default function ScriptsPage() {
 
             {/* Sort */}
             <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="h-auto w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-3 text-sm font-semibold text-white/70 focus:ring-0 focus:ring-offset-0 focus:outline-none sm:w-[190px]">
+              <SelectTrigger aria-label="Sort scripts by" className="h-auto w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-3 text-sm font-semibold text-white/70 focus:ring-0 focus:ring-offset-0 focus:outline-none sm:w-[190px]">
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
               <SelectContent className="border-white/10 bg-[#111113] text-white">
