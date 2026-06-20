@@ -59,5 +59,34 @@ export default async function Page({
   const data = await getScript(id);
   const initialData = data && !data.error ? data : null;
 
-  return <ScriptDetailClient initialData={initialData} id={id} />;
+  const jsonLd = initialData
+    ? {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        name: initialData.title,
+        description: initialData.description,
+        image:
+          initialData.cover_image ||
+          (Array.isArray(initialData.images) && initialData.images[0]) ||
+          undefined,
+        offers: {
+          "@type": "Offer",
+          price: Number(initialData.price) || 0,
+          priceCurrency: "EUR",
+          availability: "https://schema.org/InStock",
+        },
+      }
+    : null;
+
+  return (
+    <>
+      {jsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      )}
+      <ScriptDetailClient initialData={initialData} id={id} />
+    </>
+  );
 }

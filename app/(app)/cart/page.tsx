@@ -116,7 +116,7 @@ export default function CartPage() {
           /* Loading state */
           <div className="flex min-h-[40vh] flex-col items-center justify-center rounded-3xl border border-white/[0.07] bg-[#0e0e0e] p-12 text-center">
             <Loader2 className="h-10 w-10 animate-spin text-orange-500" />
-            <p className="mt-5 text-sm text-white/45">Loading your cart…</p>
+            <p className="mt-5 text-sm text-white/55">Loading your cart…</p>
           </div>
         ) : items.length === 0 ? (
           /* Empty-cart state */
@@ -132,7 +132,7 @@ export default function CartPage() {
             <h2 className="mb-3 text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
               Your cart is empty
             </h2>
-            <p className="mx-auto mb-8 max-w-md text-white/45">
+            <p className="mx-auto mb-8 max-w-md text-white/55">
               Add ad packages or featured script slots to see them here.
             </p>
             <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
@@ -166,7 +166,7 @@ export default function CartPage() {
                   <h1 className="text-[26px] font-extrabold tracking-tight md:text-[32px]">
                     Review &amp; Checkout
                   </h1>
-                  <p className="mt-1 text-sm text-white/45">
+                  <p className="mt-1 text-sm text-white/55">
                     Confirm your{" "}
                     <span className="font-semibold tabular-nums text-white/70">
                       {items.length} {items.length === 1 ? "item" : "items"}
@@ -185,10 +185,10 @@ export default function CartPage() {
               {/* Compact rows */}
               <div className="mt-6 overflow-hidden rounded-3xl border border-white/[0.07] bg-[#0e0e0e]">
                 <div className="flex items-center justify-between border-b border-white/[0.06] px-5 py-3.5">
-                  <span className="text-[11px] uppercase tracking-[0.16em] text-white/40">
+                  <span className="text-[11px] uppercase tracking-[0.16em] text-white/55">
                     Cart items
                   </span>
-                  <span className="text-[11px] uppercase tracking-[0.16em] tabular-nums text-white/30">
+                  <span className="text-[11px] uppercase tracking-[0.16em] tabular-nums text-white/55">
                     {items.length} · qty {totalQuantity}
                   </span>
                 </div>
@@ -205,17 +205,17 @@ export default function CartPage() {
                 <div className="rounded-2xl border border-white/[0.06] bg-[#0e0e0e] px-4 py-3.5">
                   <Zap className="h-5 w-5 text-orange-500" />
                   <div className="mt-2 text-sm font-semibold">Instant delivery</div>
-                  <div className="text-xs text-white/40">Files unlock now</div>
+                  <div className="text-xs text-white/55">Files unlock now</div>
                 </div>
                 <div className="rounded-2xl border border-white/[0.06] bg-[#0e0e0e] px-4 py-3.5">
                   <ShieldCheck className="h-5 w-5 text-emerald-400" />
                   <div className="mt-2 text-sm font-semibold">Secure payment</div>
-                  <div className="text-xs text-white/40">Encrypted checkout</div>
+                  <div className="text-xs text-white/55">Encrypted checkout</div>
                 </div>
                 <div className="rounded-2xl border border-white/[0.06] bg-[#0e0e0e] px-4 py-3.5">
                   <RefreshCw className="h-5 w-5 text-sky-400" />
                   <div className="mt-2 text-sm font-semibold">Lifetime updates</div>
-                  <div className="text-xs text-white/40">Free re-downloads</div>
+                  <div className="text-xs text-white/55">Free re-downloads</div>
                 </div>
               </div>
 

@@ -51,7 +51,7 @@ export default function ImpersonationWidget() {
     <div className="fixed bottom-4 left-4 z-[300] text-sm" style={{ fontFamily: "Inter, sans-serif" }}>
       {open && (
         <div className="mb-2 w-64 overflow-hidden rounded-2xl border border-white/12 bg-[#0e0e0e] p-1.5 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.8)]">
-          <div className="px-2.5 py-2 text-[10px] font-bold uppercase tracking-[0.18em] text-white/40">
+          <div className="px-2.5 py-2 text-[10px] font-bold uppercase tracking-[0.18em] text-white/55">
             Impersonate · {DEV_LOGIN ? "real session" : "mock"} · dev only
           </div>
           {IMPERSONATION_PRESETS.map((p) => {
@@ -64,10 +64,10 @@ export default function ImpersonationWidget() {
                 onClick={() => pick(p.key)}
                 className={`flex w-full items-start gap-2.5 rounded-xl px-2.5 py-2 text-left transition hover:bg-white/[0.06] disabled:opacity-50 ${isActive ? "text-orange-400" : "text-white/85"}`}
               >
-                <span className={`mt-0.5 text-xs ${isActive ? "text-orange-400" : "text-white/30"}`}>{isActive ? "●" : "○"}</span>
+                <span className={`mt-0.5 text-xs ${isActive ? "text-orange-400" : "text-white/55"}`}>{isActive ? "●" : "○"}</span>
                 <span className="min-w-0">
                   <span className="block font-semibold leading-tight">{p.label}</span>
-                  <span className="block text-xs leading-tight text-white/40">{p.description}</span>
+                  <span className="block text-xs leading-tight text-white/55">{p.description}</span>
                 </span>
               </button>
             )
@@ -87,7 +87,7 @@ export default function ImpersonationWidget() {
         <span>{busy ? "⏳" : "🎭"}</span>
         <span className="text-white/55">as</span>
         <span>{active.label}</span>
-        <span className="text-white/30">{open ? "▾" : "▴"}</span>
+        <span className="text-white/55">{open ? "▾" : "▴"}</span>
       </button>
     </div>
   )

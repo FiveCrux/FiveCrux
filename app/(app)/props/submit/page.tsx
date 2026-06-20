@@ -221,7 +221,7 @@ export default function SubmitPropPage() {
   // ---- styles ----
   const micro = "text-[11px] font-semibold tracking-[0.16em] uppercase"
   const fieldClass =
-    "mt-2 bg-[#0e0e0e] border-white/[0.08] text-white placeholder:text-white/30 rounded-[14px] focus-visible:ring-[3px] focus-visible:ring-orange-500/[0.18] focus-visible:ring-offset-0 focus-visible:border-orange-500 transition"
+    "mt-2 bg-[#0e0e0e] border-white/[0.08] text-white placeholder:text-white/55 rounded-[14px] focus-visible:ring-[3px] focus-visible:ring-orange-500/[0.18] focus-visible:ring-offset-0 focus-visible:border-orange-500 transition"
 
   // ---- live-preview derived values ----
   const priceNum = parseFloat(formData.price)
@@ -306,7 +306,7 @@ export default function SubmitPropPage() {
                   <section>
                     <SectionHeader icon={<ImageIcon className="h-4 w-4" />} title="Images" />
                     <div className="mt-5 space-y-4">
-                      <p className="text-sm text-white/45">
+                      <p className="text-sm text-white/55">
                         Add up to 10 preview images. The first image is used as the cover thumbnail.
                       </p>
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
@@ -332,7 +332,7 @@ export default function SubmitPropPage() {
                           </div>
                         ))}
                         {media.images.length < 10 && (
-                          <label className="aspect-video rounded-xl border border-dashed border-white/15 hover:border-orange-500/50 flex flex-col items-center justify-center gap-1.5 cursor-pointer bg-white/[0.02] hover:bg-orange-500/5 transition-colors text-center text-white/40 hover:text-white/70">
+                          <label className="aspect-video rounded-xl border border-dashed border-white/15 hover:border-orange-500/50 flex flex-col items-center justify-center gap-1.5 cursor-pointer bg-white/[0.02] hover:bg-orange-500/5 transition-colors text-center text-white/55 hover:text-white/70">
                             <input
                               type="file"
                               accept="image/*"
@@ -372,7 +372,7 @@ export default function SubmitPropPage() {
                           {uploadingZip ? (
                             <div className="flex flex-col items-center gap-2">
                               <div className="animate-spin w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full" />
-                              <span className="text-sm text-white/45">Uploading...</span>
+                              <span className="text-sm text-white/55">Uploading...</span>
                             </div>
                           ) : (
                             <div className="flex flex-col items-center gap-2">
@@ -466,7 +466,7 @@ export default function SubmitPropPage() {
                           />
                         </div>
                       </div>
-                      <p className="text-sm text-white/45">
+                      <p className="text-sm text-white/55">
                         Add these to sell this prop directly via your Tebex store.
                       </p>
                     </div>
@@ -475,7 +475,7 @@ export default function SubmitPropPage() {
 
                 {/* ============ RIGHT · LIVE PREVIEW ============ */}
                 <aside className="lg:sticky lg:top-24 lg:self-start">
-                  <div className={`mb-3 flex items-center gap-2 ${micro} text-white/45`}>
+                  <div className={`mb-3 flex items-center gap-2 ${micro} text-white/55`}>
                     <Eye className="h-3.5 w-3.5" /> Live preview
                   </div>
 
@@ -504,7 +504,7 @@ export default function SubmitPropPage() {
                       <h3 className="text-lg font-extrabold leading-tight tracking-tight">
                         {formData.name || "Untitled prop"}
                       </h3>
-                      <p className="mt-1.5 line-clamp-2 text-[13px] leading-relaxed text-white/45">
+                      <p className="mt-1.5 line-clamp-2 text-[13px] leading-relaxed text-white/55">
                         {formData.description || "No description yet."}
                       </p>
 
@@ -520,7 +520,7 @@ export default function SubmitPropPage() {
                                 €{hasPrice ? discountedPrice.toFixed(2) : "0.00"}
                               </span>
                               {hasDiscount && (
-                                <span className="text-sm text-white/35 line-through tabular-nums">
+                                <span className="text-sm text-white/55 line-through tabular-nums">
                                   €{priceNum.toFixed(2)}
                                 </span>
                               )}
@@ -549,13 +549,13 @@ export default function SubmitPropPage() {
                             {sellerName}
                             <BadgeCheck className="h-3.5 w-3.5 text-orange-500" />
                           </div>
-                          <div className="text-[11px] text-white/40">Seller</div>
+                          <div className="text-[11px] text-white/55">Seller</div>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-[12px] text-white/35">
+                  <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-[12px] text-white/55">
                     <Users className="h-3.5 w-3.5" /> This is exactly how buyers will see your listing.
                   </p>
 

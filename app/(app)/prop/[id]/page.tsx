@@ -60,5 +60,34 @@ export default async function Page({
   const data = await getProp(id);
   const initialData = data && !data.error ? data : null;
 
-  return <PropDetailClient initialData={initialData} id={id} />;
+  const jsonLd = initialData
+    ? {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        name: initialData.name,
+        description: initialData.description,
+        image:
+          (Array.isArray(initialData.images) && initialData.images[0]) ||
+          undefined,
+        offers: {
+          "@type": "Offer",
+          price:
+            Number(initialData.discountedPrice ?? initialData.price) || 0,
+          priceCurrency: "EUR",
+          availability: "https://schema.org/InStock",
+        },
+      }
+    : null;
+
+  return (
+    <>
+      {jsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      )}
+      <PropDetailClient initialData={initialData} id={id} />
+    </>
+  );
 }

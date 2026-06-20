@@ -154,7 +154,7 @@ export default function AdCard({ ad, className = "", variant = 'default' }: AdCa
               </CardTitle>
 
               {/* Description */}
-              <CardDescription className="text-white/40 text-xs leading-snug line-clamp-2">
+              <CardDescription className="text-white/55 text-xs leading-snug line-clamp-2">
                 {ad.description}
               </CardDescription>
 
@@ -263,7 +263,7 @@ export default function AdCard({ ad, className = "", variant = 'default' }: AdCa
               )} */}
 
               {/* Description */}
-              <CardDescription className="text-white/40 text-xs leading-snug line-clamp-2">
+              <CardDescription className="text-white/55 text-xs leading-snug line-clamp-2">
                 {ad.description}
               </CardDescription>
 
@@ -339,7 +339,7 @@ export default function AdCard({ ad, className = "", variant = 'default' }: AdCa
             </CardTitle>
 
             {/* Description */}
-            <CardDescription className="text-white/40 text-xs leading-snug line-clamp-2">
+            <CardDescription className="text-white/55 text-xs leading-snug line-clamp-2">
               {ad.description}
             </CardDescription>
 

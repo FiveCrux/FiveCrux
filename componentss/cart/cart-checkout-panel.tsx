@@ -92,7 +92,7 @@ export default function CartCheckoutPanel({ total }: CartCheckoutPanelProps) {
       <div className="flex items-center justify-between border-b border-dashed border-white/[0.12] px-6 py-5">
         <div>
           <div className="text-base font-extrabold tracking-tight text-white">Receipt</div>
-          <div className="mt-0.5 text-[11px] uppercase tracking-[0.16em] tabular-nums text-white/35">
+          <div className="mt-0.5 text-[11px] uppercase tracking-[0.16em] tabular-nums text-white/55">
             Order summary
           </div>
         </div>
@@ -120,7 +120,7 @@ export default function CartCheckoutPanel({ total }: CartCheckoutPanelProps) {
             type="button"
             onClick={applyCoupon}
             disabled={isApplying || !couponCode.trim()}
-            className="rounded-xl bg-white/[0.08] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/[0.14] disabled:cursor-not-allowed disabled:text-white/40"
+            className="rounded-xl bg-white/[0.08] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/[0.14] disabled:cursor-not-allowed disabled:text-white/55"
           >
             {isApplying ? "Applying..." : "Apply"}
           </button>
@@ -165,8 +165,8 @@ export default function CartCheckoutPanel({ total }: CartCheckoutPanelProps) {
 
         <div className="flex items-end justify-between">
           <div>
-            <div className="text-[11px] uppercase tracking-[0.16em] text-white/40">Total due</div>
-            <div className="text-xs text-white/30">EUR · one-time</div>
+            <div className="text-[11px] uppercase tracking-[0.16em] text-white/55">Total due</div>
+            <div className="text-xs text-white/55">EUR · one-time</div>
           </div>
           <div className="text-[38px] font-extrabold leading-none tracking-tight tabular-nums text-white">
             €{payableAmount.toFixed(2)}
@@ -182,12 +182,12 @@ export default function CartCheckoutPanel({ total }: CartCheckoutPanelProps) {
           <Lock className="h-4 w-4" />
           {isCheckingOut ? "Redirecting…" : `Checkout — €${payableAmount.toFixed(2)}`}
         </button>
-        <p className="mt-2.5 flex items-center justify-center gap-1.5 text-[12px] text-white/35">
+        <p className="mt-2.5 flex items-center justify-center gap-1.5 text-[12px] text-white/55">
           <CreditCard className="h-3.5 w-3.5" />
           Secure payment via Tebex
         </p>
 
-        <p className="mt-4 flex items-center justify-center gap-1.5 text-[12px] text-white/35">
+        <p className="mt-4 flex items-center justify-center gap-1.5 text-[12px] text-white/55">
           <ShieldCheck className="h-3.5 w-3.5 text-emerald-400/80" />
           Secure checkout · instant delivery
         </p>

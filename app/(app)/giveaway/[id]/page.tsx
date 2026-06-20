@@ -63,5 +63,32 @@ export default async function Page({
   const initialData =
     data && !data.error && (data.id || data.title) ? data : null;
 
-  return <GiveawayDetailClient initialData={initialData} id={id} />;
+  const jsonLd = initialData
+    ? {
+        "@context": "https://schema.org",
+        "@type": "Event",
+        name: initialData.title,
+        description: initialData.description,
+        ...(initialData.startDate
+          ? { startDate: initialData.startDate }
+          : {}),
+        ...(initialData.endDate ? { endDate: initialData.endDate } : {}),
+        image:
+          initialData.coverImage ||
+          (Array.isArray(initialData.images) && initialData.images[0]) ||
+          undefined,
+      }
+    : null;
+
+  return (
+    <>
+      {jsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      )}
+      <GiveawayDetailClient initialData={initialData} id={id} />
+    </>
+  );
 }

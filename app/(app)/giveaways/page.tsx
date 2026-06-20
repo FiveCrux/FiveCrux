@@ -340,7 +340,7 @@ export default function GiveawaysPage() {
           {ended ? (
             <button
               disabled
-              className="w-full cursor-not-allowed rounded-xl border border-white/[0.08] bg-white/[0.04] py-2.5 text-sm font-semibold text-white/30"
+              className="w-full cursor-not-allowed rounded-xl border border-white/[0.08] bg-white/[0.04] py-2.5 text-sm font-semibold text-white/55"
             >
               Ended
             </button>
@@ -481,7 +481,7 @@ export default function GiveawaysPage() {
                     <span className="text-2xl font-extrabold text-white">
                       {`${featuredGiveaway.currency_symbol || "$"}${featuredGiveaway.totalValue}`}
                     </span>{" "}
-                    <span className="text-white/45">prize value</span>
+                    <span className="text-white/55">prize value</span>
                   </div>
                   <span className="h-4 w-px bg-white/10" />
                   <span className="flex items-center gap-1.5 text-white/60">
@@ -509,7 +509,7 @@ export default function GiveawaysPage() {
                       <ArrowRight className="h-4 w-4" />
                     )}
                   </button>
-                  <span className="text-sm text-white/45">
+                  <span className="text-sm text-white/55">
                     Hosted by {featuredGiveaway.creator || "FiveCrux"}
                   </span>
                 </div>
@@ -523,7 +523,7 @@ export default function GiveawaysPage() {
               {activeTab === "active" ? "All giveaways" : "Ended giveaways"}
             </h3>
             {!loading && (
-              <span className="text-sm text-white/40">
+              <span className="text-sm text-white/55">
                 Showing {gridList.filter((it) => !("isAd" in it && it.isAd)).length}
               </span>
             )}
@@ -554,7 +554,7 @@ export default function GiveawaysPage() {
                       ? "No Giveaways Found"
                       : "No Ended Giveaways"}
                   </h3>
-                  <p className="mb-6 text-white/45">
+                  <p className="mb-6 text-white/55">
                     {searchQuery
                       ? `No giveaways match "${searchQuery}". Try adjusting your search.`
                       : activeTab === "active"

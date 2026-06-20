@@ -542,7 +542,7 @@ export default function SubmitScriptPage() {
 
   // ---- Shared field className matching the approved Live Preview design ----
   const fieldClass =
-    "bg-[#0e0e0e] border border-white/[0.08] rounded-[14px] text-white placeholder:text-white/30 focus:border-orange-500 focus-visible:border-orange-500 focus-visible:ring-2 focus-visible:ring-orange-500/20 transition-colors"
+    "bg-[#0e0e0e] border border-white/[0.08] rounded-[14px] text-white placeholder:text-white/55 focus:border-orange-500 focus-visible:border-orange-500 focus-visible:ring-2 focus-visible:ring-orange-500/20 transition-colors"
 
   // Reusable labeled section header
   const SectionHeader = ({ icon: Icon, title }: { icon: React.ComponentType<{ className?: string }>; title: string }) => (
@@ -670,7 +670,7 @@ export default function SubmitScriptPage() {
                                 "mt-2 w-full justify-between px-4 py-3 text-sm h-auto hover:text-white",
                                 fieldClass,
                                 "hover:bg-white/[0.04]",
-                                formData.framework.length === 0 && "text-white/40"
+                                formData.framework.length === 0 && "text-white/55"
                               )}
                             >
                               {formData.framework.length > 0
@@ -791,7 +791,7 @@ export default function SubmitScriptPage() {
                             <p className="mt-3 text-sm font-medium">
                               Drag &amp; drop or <span className="text-orange-500">browse</span>
                             </p>
-                            <p className="mt-1 text-[11px] text-white/30">1280×720 · PNG/JPG up to 5MB</p>
+                            <p className="mt-1 text-[11px] text-white/55">1280×720 · PNG/JPG up to 5MB</p>
                           </>
                         )}
                       </label>
@@ -848,7 +848,7 @@ export default function SubmitScriptPage() {
                         <label
                           htmlFor="screenshot-upload"
                           className={cn(
-                            "grid aspect-video place-items-center rounded-xl border border-dashed border-white/[0.12] text-white/40 transition-colors",
+                            "grid aspect-video place-items-center rounded-xl border border-dashed border-white/[0.12] text-white/55 transition-colors",
                             uploadingScreenshots ? "opacity-50 cursor-not-allowed" : "hover:border-orange-500/50 hover:text-white/70 cursor-pointer"
                           )}
                         >
@@ -859,7 +859,7 @@ export default function SubmitScriptPage() {
                           )}
                         </label>
                       </div>
-                      <p className="mt-2 text-[11px] text-white/30">PNG, JPG up to 5MB each (max 10 images)</p>
+                      <p className="mt-2 text-[11px] text-white/55">PNG, JPG up to 5MB each (max 10 images)</p>
                     </div>
 
                     {/* Demo videos */}
@@ -890,7 +890,7 @@ export default function SubmitScriptPage() {
                           <>
                             <Video className="mx-auto h-8 w-8 text-white/55" />
                             <p className="mt-2 text-sm font-medium">Upload demo videos</p>
-                            <p className="mt-1 text-[11px] text-white/30">MP4, MOV up to 4.5MB each</p>
+                            <p className="mt-1 text-[11px] text-white/55">MP4, MOV up to 4.5MB each</p>
                           </>
                         )}
                       </label>
@@ -919,7 +919,7 @@ export default function SubmitScriptPage() {
                         YouTube preview · optional
                       </Label>
                       <div className="relative mt-2">
-                        <Youtube className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/35" />
+                        <Youtube className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/55" />
                         <Input
                           id="youtube-video-link"
                           type="url"
@@ -946,7 +946,7 @@ export default function SubmitScriptPage() {
                     <div className="flex items-center justify-between rounded-2xl border border-white/[0.07] bg-white/[0.02] px-4 py-3">
                       <div>
                         <div className="text-sm font-semibold">Free download</div>
-                        <div className="text-xs text-white/40">Release at no cost</div>
+                        <div className="text-xs text-white/55">Release at no cost</div>
                       </div>
                       <Switch
                         id="isFree"
@@ -1009,7 +1009,7 @@ export default function SubmitScriptPage() {
                           Price *
                         </Label>
                         <div className={cn("mt-2 flex items-center px-4", fieldClass)}>
-                          <span className="text-sm text-white/40">{previewCurrencySymbol}</span>
+                          <span className="text-sm text-white/55">{previewCurrencySymbol}</span>
                           <Input
                             id="price"
                             type="number"
@@ -1030,7 +1030,7 @@ export default function SubmitScriptPage() {
                           Original · optional
                         </Label>
                         <div className={cn("mt-2 flex items-center px-4", fieldClass)}>
-                          <span className="text-sm text-white/40">{previewCurrencySymbol}</span>
+                          <span className="text-sm text-white/55">{previewCurrencySymbol}</span>
                           <Input
                             id="originalPrice"
                             type="number"
@@ -1081,7 +1081,7 @@ export default function SubmitScriptPage() {
                               <button
                                 type="button"
                                 onClick={() => removeFeature(feature.id)}
-                                className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-white/30 transition-colors hover:bg-white/5 hover:text-white/70"
+                                className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-white/55 transition-colors hover:bg-white/5 hover:text-white/70"
                               >
                                 <X className="h-4 w-4" />
                               </button>
@@ -1104,7 +1104,7 @@ export default function SubmitScriptPage() {
                       <div className="mt-2 space-y-2">
                         {requirements.map((requirement) => (
                           <div key={requirement.id} className="flex items-center gap-2">
-                            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white/[0.04] text-white/45">
+                            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white/[0.04] text-white/55">
                               <Package className="h-4 w-4" />
                             </span>
                             <Input
@@ -1117,7 +1117,7 @@ export default function SubmitScriptPage() {
                               <button
                                 type="button"
                                 onClick={() => removeRequirement(requirement.id)}
-                                className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-white/30 transition-colors hover:bg-white/5 hover:text-white/70"
+                                className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-white/55 transition-colors hover:bg-white/5 hover:text-white/70"
                               >
                                 <X className="h-4 w-4" />
                               </button>
@@ -1140,7 +1140,7 @@ export default function SubmitScriptPage() {
                         Link for purchase
                       </Label>
                       <div className="relative mt-2">
-                        <LinkIcon className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/35" />
+                        <LinkIcon className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/55" />
                         <Input
                           value={link}
                           onChange={(e) => setLink(e.target.value)}
@@ -1149,7 +1149,7 @@ export default function SubmitScriptPage() {
                           className={cn("w-full py-3 pl-11 pr-4 text-sm h-auto", fieldClass)}
                         />
                       </div>
-                      <p className="mt-2 text-xs text-white/45">
+                      <p className="mt-2 text-xs text-white/55">
                         The link customers visit when they click <b className="text-orange-500">Buy Now</b>.
                       </p>
                     </div>
@@ -1157,12 +1157,12 @@ export default function SubmitScriptPage() {
                     {/* Other links */}
                     <div>
                       <Label className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/50">
-                        Documentation / other links <span className="text-white/30">· optional</span>
+                        Documentation / other links <span className="text-white/55">· optional</span>
                       </Label>
                       <div className="mt-2 space-y-2">
                         {otherLinks.map((otherLink) => (
                           <div key={otherLink.id} className="flex items-center gap-2">
-                            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white/[0.04] text-white/45">
+                            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white/[0.04] text-white/55">
                               <LinkIcon className="h-4 w-4" />
                             </span>
                             <Input
@@ -1175,7 +1175,7 @@ export default function SubmitScriptPage() {
                               <button
                                 type="button"
                                 onClick={() => removeOtherLink(otherLink.id)}
-                                className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-white/30 transition-colors hover:bg-white/5 hover:text-white/70"
+                                className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-white/55 transition-colors hover:bg-white/5 hover:text-white/70"
                               >
                                 <X className="h-4 w-4" />
                               </button>
@@ -1225,8 +1225,8 @@ export default function SubmitScriptPage() {
                         />
                       </div>
                     </div>
-                    <p className="flex items-start gap-2 text-xs leading-relaxed text-white/45">
-                      <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-white/35" />
+                    <p className="flex items-start gap-2 text-xs leading-relaxed text-white/55">
+                      <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-white/55" />
                       Add these to sell this script directly via your Tebex store.
                     </p>
                   </div>
@@ -1264,7 +1264,7 @@ export default function SubmitScriptPage() {
 
             {/* ============ RIGHT · LIVE PREVIEW ============ */}
             <aside ref={previewRef} className="order-first lg:order-none lg:sticky lg:top-24 lg:self-start">
-              <div className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/45">
+              <div className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/55">
                 <Eye className="h-3.5 w-3.5" /> Live preview
               </div>
 
@@ -1296,7 +1296,7 @@ export default function SubmitScriptPage() {
                   <h3 className="text-lg font-extrabold leading-tight tracking-tight">
                     {formData.title || "Untitled script"}
                   </h3>
-                  <p className="mt-1.5 line-clamp-2 text-[13px] leading-relaxed text-white/45">
+                  <p className="mt-1.5 line-clamp-2 text-[13px] leading-relaxed text-white/55">
                     {formData.description || "No description yet."}
                   </p>
 
@@ -1320,7 +1320,7 @@ export default function SubmitScriptPage() {
                             {previewCurrencySymbol}{formData.price || "0.00"}
                           </span>
                           {formData.originalPrice && (
-                            <span className="text-sm text-white/35 line-through tabular-nums">
+                            <span className="text-sm text-white/55 line-through tabular-nums">
                               {previewCurrencySymbol}{formData.originalPrice}
                             </span>
                           )}
@@ -1341,13 +1341,13 @@ export default function SubmitScriptPage() {
                         {formData.sellerName || "Your Name"}
                         <BadgeCheck className="h-3.5 w-3.5 text-orange-500" />
                       </div>
-                      <div className="text-[11px] text-white/40">Verified seller</div>
+                      <div className="text-[11px] text-white/55">Verified seller</div>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-[12px] text-white/35">
+              <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-[12px] text-white/55">
                 <Users className="h-3.5 w-3.5" /> This is exactly how buyers will see your listing.
               </p>
 

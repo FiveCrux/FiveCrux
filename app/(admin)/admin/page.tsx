@@ -830,7 +830,7 @@ export default function AdminPage() {
       <div className="overflow-x-auto">
         <table className="w-full min-w-[640px] text-left">
           <thead>
-            <tr className="border-b border-white/[0.05] text-[11px] font-semibold uppercase tracking-[0.14em] text-white/30">
+            <tr className="border-b border-white/[0.05] text-[11px] font-semibold uppercase tracking-[0.14em] text-white/55">
               <th className="px-5 py-3 font-semibold">Submission</th>
               <th className="px-3 py-3 font-semibold">Type</th>
               <th className="px-3 py-3 font-semibold">Submitter</th>
@@ -859,7 +859,7 @@ export default function AdminPage() {
                       <div className="truncate text-[13px] font-semibold">
                         {row.title}
                       </div>
-                      <div className="text-[11px] text-white/35">
+                      <div className="text-[11px] text-white/55">
                         {row.key}
                       </div>
                     </div>
@@ -882,7 +882,7 @@ export default function AdminPage() {
                     </span>
                   </div>
                 </td>
-                <td className="px-3 py-3.5 text-[12px] text-white/45">
+                <td className="px-3 py-3.5 text-[12px] text-white/55">
                   {row.when}
                 </td>
                 <td className="px-5 py-3.5">
@@ -910,7 +910,7 @@ export default function AdminPage() {
                       onClick={row.onView}
                       disabled={!row.onView}
                       title="View"
-                      className="grid h-8 w-8 place-items-center rounded-lg text-white/45 ring-1 ring-white/10 hover:bg-white/5 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                      className="grid h-8 w-8 place-items-center rounded-lg text-white/55 ring-1 ring-white/10 hover:bg-white/5 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       <Eye className="h-4 w-4" />
                     </button>
@@ -920,7 +920,7 @@ export default function AdminPage() {
             ))}
             {pendingRows.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-5 py-10 text-center text-sm text-white/40">
+                <td colSpan={5} className="px-5 py-10 text-center text-sm text-white/55">
                   Nothing waiting for review.
                 </td>
               </tr>
@@ -965,7 +965,7 @@ export default function AdminPage() {
               <div className="text-[13px] font-semibold">
                 {session?.user?.name || "Admin"}
               </div>
-              <div className="text-[10px] text-white/40">
+              <div className="text-[10px] text-white/55">
                 {isFounder ? "Founder" : isModerator ? "Moderator" : "Admin"}
               </div>
             </div>
@@ -988,7 +988,7 @@ export default function AdminPage() {
                 mobileNavOpen ? "flex" : "hidden"
               } absolute z-20 h-[calc(100vh-4rem)] w-60 flex-col border-r border-white/[0.06] bg-[#0a0a0a] px-3 py-5 lg:sticky lg:top-16 lg:flex lg:shrink-0 lg:bg-transparent`}
             >
-              <div className="px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/30">
+              <div className="px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/55">
                 Workspace
               </div>
               <nav className="mt-2 space-y-0.5">
@@ -1022,7 +1022,7 @@ export default function AdminPage() {
                     );
                   })}
               </nav>
-              <div className="mt-6 px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/30">
+              <div className="mt-6 px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/55">
                 System
               </div>
               <nav className="mt-2 space-y-0.5">
@@ -1047,7 +1047,7 @@ export default function AdminPage() {
                   <Activity className="h-4 w-4 text-emerald-400" />
                   All systems normal
                 </div>
-                <p className="mt-1 text-[11px] leading-relaxed text-white/40">
+                <p className="mt-1 text-[11px] leading-relaxed text-white/55">
                   Moderation queue is healthy.
                 </p>
               </div>
@@ -1064,11 +1064,11 @@ export default function AdminPage() {
                   <h1 className="text-2xl font-extrabold tracking-tight">
                     Dashboard
                   </h1>
-                  <p className="mt-1 text-sm text-white/45">
+                  <p className="mt-1 text-sm text-white/55">
                     Overview of the FiveCrux marketplace and moderation queue.
                   </p>
                 </div>
-                <div className="flex items-center gap-2 text-[13px] text-white/45">
+                <div className="flex items-center gap-2 text-[13px] text-white/55">
                   <CalendarDays className="h-4 w-4" />
                   {new Date().toLocaleDateString("en-US", {
                     weekday: "short",
@@ -1098,7 +1098,7 @@ export default function AdminPage() {
                     className="rounded-2xl border border-white/[0.06] bg-[#0e0e0e] p-4"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/35">
+                      <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/55">
                         {tile.label}
                       </span>
                       <tile.icon className="h-4 w-4 text-white/25" />
@@ -1137,7 +1137,7 @@ export default function AdminPage() {
                         <button
                           type="button"
                           onClick={() => setActiveTab("users")}
-                          className="text-[12px] font-semibold text-white/45 hover:text-white"
+                          className="text-[12px] font-semibold text-white/55 hover:text-white"
                         >
                           Manage →
                         </button>
@@ -1174,7 +1174,7 @@ export default function AdminPage() {
                                 <div className="truncate text-[13px] font-semibold">
                                   {user.name || "Unknown"}
                                 </div>
-                                <div className="truncate text-[11px] text-white/35">
+                                <div className="truncate text-[11px] text-white/55">
                                   {user.email}
                                 </div>
                               </div>
@@ -1201,7 +1201,7 @@ export default function AdminPage() {
                           );
                         })}
                         {users.length === 0 && (
-                          <div className="px-5 py-8 text-center text-sm text-white/40">
+                          <div className="px-5 py-8 text-center text-sm text-white/55">
                             No users to display.
                           </div>
                         )}
@@ -1215,7 +1215,7 @@ export default function AdminPage() {
                   <div className="overflow-hidden rounded-2xl border border-white/[0.06] bg-[#0e0e0e]">
                     <div className="flex items-center justify-between border-b border-white/[0.06] px-5 py-4">
                       <h2 className="text-sm font-bold">Recent activity</h2>
-                      <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/30">
+                      <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/55">
                         Audit log
                       </span>
                     </div>
@@ -1236,7 +1236,7 @@ export default function AdminPage() {
                                     {script.title}
                                   </span>
                                 </p>
-                                <p className="mt-0.5 text-[11px] text-white/35">
+                                <p className="mt-0.5 text-[11px] text-white/55">
                                   by {script.seller_name} · {script.status}
                                 </p>
                               </div>
@@ -1248,8 +1248,8 @@ export default function AdminPage() {
                           <span className="mb-3 grid h-10 w-10 place-items-center rounded-full bg-white/[0.04] ring-1 ring-white/10">
                             <Activity className="h-4 w-4 text-white/25" />
                           </span>
-                          <p className="text-[13px] font-medium text-white/45">No recent activity</p>
-                          <p className="mt-0.5 text-[11px] text-white/30">
+                          <p className="text-[13px] font-medium text-white/55">No recent activity</p>
+                          <p className="mt-0.5 text-[11px] text-white/55">
                             Moderation actions will appear here.
                           </p>
                         </div>
@@ -1266,7 +1266,7 @@ export default function AdminPage() {
 
               {/* Settings placeholder section */}
               <TabsContent value="settings" className="m-0 mt-6">
-                <div className="rounded-2xl border border-white/[0.06] bg-[#0e0e0e] p-8 text-center text-sm text-white/45">
+                <div className="rounded-2xl border border-white/[0.06] bg-[#0e0e0e] p-8 text-center text-sm text-white/55">
                   <Settings className="mx-auto mb-3 h-8 w-8 text-white/25" />
                   Settings panel coming soon.
                 </div>

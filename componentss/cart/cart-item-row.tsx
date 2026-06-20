@@ -109,7 +109,7 @@ export default function CartItemRow({ item }: CartItemRowProps) {
         disabled={isRemoving}
         aria-label="Remove item"
         title={isRemoving ? "Removing…" : "Remove item"}
-        className="grid h-7 w-7 flex-none place-items-center rounded-lg text-white/30 transition hover:bg-red-500/10 hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-60"
+        className="grid h-7 w-7 flex-none place-items-center rounded-lg text-white/55 transition hover:bg-red-500/10 hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-60"
       >
         <Trash2 className="h-4 w-4" />
       </button>
