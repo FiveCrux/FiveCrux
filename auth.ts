@@ -82,13 +82,30 @@ export const authOptions: NextAuthOptions = {
 				return true
 			}
 		},
-		async jwt({ token, account }) {
+		async jwt({ token, account, user }) {
 			if (account) {
 				;(token as any).accessToken = (account as any).access_token
 				;(token as any).accessTokenExpiresAt = (account as any).expires_at
 					? Number((account as any).expires_at) * 1000
 					: undefined
 				;(token as any).refreshToken = (account as any).refresh_token
+			}
+			// Persist roles on the JWT so edge middleware can authorize without a DB
+			// hit. On first sign-in use the authorize() result (dev-credentials) or
+			// fall back to the DB row (Discord). The session callback still refreshes
+			// roles from the DB on every request, so this only needs to be seeded.
+			if (user) {
+				const fromUser = (user as any).roles as string[] | undefined
+				if (fromUser) {
+					;(token as any).roles = fromUser
+				} else if (token.sub) {
+					try {
+						const dbUser = await getUserById(token.sub)
+						;(token as any).roles = dbUser?.roles ?? []
+					} catch {
+						;(token as any).roles = (token as any).roles ?? []
+					}
+				}
 			}
 			return token
 		},
