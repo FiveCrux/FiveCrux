@@ -127,7 +127,7 @@ function buildPayload(form: CouponFormState): CouponPayload {
 const cardClass =
   "rounded-2xl border border-white/[0.08] bg-white/[0.04] backdrop-blur-xl";
 const inputClass =
-  "border-white/[0.08] bg-white/[0.04] text-white placeholder:text-white/35 focus-visible:ring-orange-500/60 focus-visible:ring-offset-0 focus-visible:border-orange-500/40";
+  "border-white/[0.08] bg-white/[0.04] text-white placeholder:text-white/55 focus-visible:ring-orange-500/60 focus-visible:ring-offset-0 focus-visible:border-orange-500/40";
 
 export default function ProfileCouponsPage() {
   const { data: session, status } = useSession();
@@ -354,13 +354,13 @@ export default function ProfileCouponsPage() {
             ) : coupons.length === 0 ? (
               <div className="flex flex-col items-center justify-center gap-4 py-16 text-center">
                 <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/[0.08] bg-white/[0.03]">
-                  <Ticket className="h-6 w-6 text-white/30" />
+                  <Ticket className="h-6 w-6 text-white/55" />
                 </div>
                 <div>
                   <p className="font-medium text-white/80">
                     No coupons created yet
                   </p>
-                  <p className="mt-1 text-sm text-white/45">
+                  <p className="mt-1 text-sm text-white/55">
                     Create your first discount code to get started.
                   </p>
                 </div>
@@ -378,7 +378,7 @@ export default function ProfileCouponsPage() {
                 <div className="hidden overflow-x-auto md:block">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b border-white/[0.06] text-left text-xs uppercase tracking-wider text-white/40">
+                      <tr className="border-b border-white/[0.06] text-left text-xs uppercase tracking-wider text-white/55">
                         <th className="px-5 py-3 font-medium">Code</th>
                         <th className="px-5 py-3 font-medium">Discount</th>
                         <th className="px-5 py-3 font-medium">Scope</th>
@@ -487,18 +487,18 @@ export default function ProfileCouponsPage() {
 
                       <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                         <div>
-                          <p className="text-xs text-white/40">Scope</p>
+                          <p className="text-xs text-white/55">Scope</p>
                           <p className="text-white/80">{coupon.scope}</p>
                         </div>
                         <div>
-                          <p className="text-xs text-white/40">Uses</p>
+                          <p className="text-xs text-white/55">Uses</p>
                           <p className="text-white/80">
                             {coupon.usedCount || 0}
                             {coupon.maxUses ? ` / ${coupon.maxUses}` : ""}
                           </p>
                         </div>
                         <div>
-                          <p className="text-xs text-white/40">Expiry</p>
+                          <p className="text-xs text-white/55">Expiry</p>
                           <p className="text-white/80">
                             {formatDate(coupon.expiryDate)}
                           </p>

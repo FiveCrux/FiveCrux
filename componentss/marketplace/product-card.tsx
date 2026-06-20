@@ -121,7 +121,7 @@ export function ProductCard({ product, className = "" }: { product: MarketProduc
             ) : (
               <span className="text-base font-extrabold text-white">
                 {discounted && (
-                  <span className="mr-1 text-xs font-medium text-white/40 line-through">
+                  <span className="mr-1 text-xs font-medium text-white/55 line-through">
                     ${product.originalPrice!.toFixed(2)}
                   </span>
                 )}

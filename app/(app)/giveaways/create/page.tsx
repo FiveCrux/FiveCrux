@@ -547,7 +547,7 @@ export default function CreateGiveawayPage() {
 
   // Shared input class for the redesigned "field" look
   const fieldClass =
-    "bg-[#0e0e0e] border border-white/[0.08] text-white placeholder:text-white/30 rounded-[14px] transition focus:border-[#f97316] focus-visible:ring-[3px] focus-visible:ring-[#f97316]/20"
+    "bg-[#0e0e0e] border border-white/[0.08] text-white placeholder:text-white/55 rounded-[14px] transition focus:border-[#f97316] focus-visible:ring-[3px] focus-visible:ring-[#f97316]/20"
 
   // Section header component (inline)
   const SectionHeader = ({ icon, title }: { icon: React.ReactNode; title: string }) => (
@@ -585,7 +585,7 @@ export default function CreateGiveawayPage() {
               Giveaways
             </Link>
             <span className="text-white/25">/</span>
-            <span className="text-white/45">Create</span>
+            <span className="text-white/55">Create</span>
           </nav>
 
           <div className="flex flex-wrap items-end justify-between gap-4">
@@ -602,7 +602,7 @@ export default function CreateGiveawayPage() {
                   <span className="text-[#f97316]">Create</span> Giveaway
                 </span>
               </h1>
-              <p className="text-[14px] text-white/35 font-medium mt-2 max-w-2xl">
+              <p className="text-[14px] text-white/55 font-medium mt-2 max-w-2xl">
                 Set up an exciting giveaway for your community with custom requirements and amazing prizes.
               </p>
             </div>
@@ -683,7 +683,7 @@ export default function CreateGiveawayPage() {
                           readOnly
                           className="mt-2 bg-white/[0.02] border-white/10 text-white/50 cursor-not-allowed rounded-[14px]"
                         />
-                        <p className="text-xs text-white/30 mt-1">Automatically filled from your Discord account</p>
+                        <p className="text-xs text-white/55 mt-1">Automatically filled from your Discord account</p>
                       </div>
 
                       <div>
@@ -697,7 +697,7 @@ export default function CreateGiveawayPage() {
                           readOnly
                           className="mt-2 bg-white/[0.02] border-white/10 text-white/50 cursor-not-allowed rounded-[14px]"
                         />
-                        <p className="text-xs text-white/30 mt-1">Automatically filled from your Discord account</p>
+                        <p className="text-xs text-white/55 mt-1">Automatically filled from your Discord account</p>
                       </div>
                     </div>
 
@@ -788,7 +788,7 @@ export default function CreateGiveawayPage() {
                               variant="ghost"
                               size="sm"
                               onClick={() => removePrize(prize.id)}
-                              className="text-white/30 hover:text-red-300 hover:bg-red-500/10"
+                              className="text-white/55 hover:text-red-300 hover:bg-red-500/10"
                             >
                               <X className="h-4 w-4" />
                             </Button>
@@ -880,7 +880,7 @@ export default function CreateGiveawayPage() {
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => removeRequirement(requirement.id)}
-                                className="text-white/30 hover:text-red-300 hover:bg-red-500/10"
+                                className="text-white/55 hover:text-red-300 hover:bg-red-500/10"
                               >
                                 <X className="h-4 w-4" />
                               </Button>
@@ -977,12 +977,12 @@ export default function CreateGiveawayPage() {
                             <p className="text-red-400 text-xs mt-1">{errors[`requirement_${requirement.id}_description`]}</p>
                           )}
                           {!errors[`requirement_${requirement.id}_description`] && requirement.type === "discord" && (
-                            <p className="text-xs text-white/40 mt-1">
+                            <p className="text-xs text-white/55 mt-1">
                               Enter your Discord server invite link (e.g., https://discord.gg/abc123)
                             </p>
                           )}
                           {!errors[`requirement_${requirement.id}_description`] && requirement.type === "youtube" && (
-                            <p className="text-xs text-white/40 mt-1">
+                            <p className="text-xs text-white/55 mt-1">
                               Enter your YouTube channel URL (e.g., https://youtube.com/@channel or https://youtu.be/videoId)
                             </p>
                           )}
@@ -1039,7 +1039,7 @@ export default function CreateGiveawayPage() {
                             <p className="mt-3 text-sm font-medium">
                               Click to <span className="text-[#f97316]">browse</span>
                             </p>
-                            <p className="mt-1 text-[11px] text-white/30">1280×720 · PNG, JPG up to 5MB</p>
+                            <p className="mt-1 text-[11px] text-white/55">1280×720 · PNG, JPG up to 5MB</p>
                           </>
                         )}
                       </label>
@@ -1093,7 +1093,7 @@ export default function CreateGiveawayPage() {
                           <>
                             <Plus className="h-5 w-5 text-white/50" />
                             <p className="mt-2 text-sm font-medium">Add screenshots</p>
-                            <p className="mt-1 text-[11px] text-white/30">PNG, JPG up to 5MB each (max 10)</p>
+                            <p className="mt-1 text-[11px] text-white/55">PNG, JPG up to 5MB each (max 10)</p>
                           </>
                         )}
                       </label>
@@ -1154,7 +1154,7 @@ export default function CreateGiveawayPage() {
                           <>
                             <Video className="h-5 w-5 text-white/50" />
                             <p className="mt-2 text-sm font-medium">Upload videos</p>
-                            <p className="mt-1 text-[11px] text-white/30">MP4, WebM up to 50MB each (max 5)</p>
+                            <p className="mt-1 text-[11px] text-white/55">MP4, WebM up to 50MB each (max 5)</p>
                           </>
                         )}
                       </label>
@@ -1192,7 +1192,7 @@ export default function CreateGiveawayPage() {
                         YouTube video link · optional
                       </Label>
                       <div className="relative mt-2">
-                        <Youtube className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/35" />
+                        <Youtube className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/55" />
                         <Input
                           id="youtubeVideoLink"
                           value={youtubeVideoLink}
@@ -1216,7 +1216,7 @@ export default function CreateGiveawayPage() {
                       {youtubeLinkError && !errors.youtubeVideoLink && (
                         <p className="text-red-500 text-sm mt-1">{youtubeLinkError}</p>
                       )}
-                      <p className="text-xs text-white/40 mt-2">
+                      <p className="text-xs text-white/55 mt-2">
                         Provide a direct link to a YouTube video showcasing your giveaway.
                       </p>
                     </div>
@@ -1230,7 +1230,7 @@ export default function CreateGiveawayPage() {
                     <div className="flex items-center justify-between rounded-2xl border border-white/[0.07] bg-white/[0.02] px-4 py-3">
                       <div>
                         <div className="text-sm font-semibold">Schedule this giveaway?</div>
-                        <div className="text-xs text-white/40">Set a future start date instead of going live now</div>
+                        <div className="text-xs text-white/55">Set a future start date instead of going live now</div>
                       </div>
                       <Switch
                         checked={isScheduled}
@@ -1319,7 +1319,7 @@ export default function CreateGiveawayPage() {
 
             {/* ============ RIGHT · LIVE PREVIEW ============ */}
             <aside ref={previewRef} className="lg:sticky lg:top-24 lg:self-start">
-              <div className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/45">
+              <div className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/55">
                 <Eye className="h-3.5 w-3.5" /> Live preview
               </div>
 
@@ -1346,16 +1346,16 @@ export default function CreateGiveawayPage() {
 
                 <div className="px-5 pb-5 pt-4">
                   <h3 className="text-lg font-extrabold leading-tight tracking-tight">{previewTitle}</h3>
-                  <p className="mt-1.5 line-clamp-2 text-[13px] leading-relaxed text-white/45">
+                  <p className="mt-1.5 line-clamp-2 text-[13px] leading-relaxed text-white/55">
                     {formData.description || "Your giveaway description will appear here..."}
                   </p>
 
                   {/* Prize value */}
                   <div className="mt-4 flex items-end justify-between border-t border-white/[0.06] pt-4">
                     <div>
-                      <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/40">Prize value</div>
+                      <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/55">Prize value</div>
                       <div className="mt-1 flex items-baseline gap-1">
-                        <span className="tabular-nums text-sm text-white/40">{previewSymbol}</span>
+                        <span className="tabular-nums text-sm text-white/55">{previewSymbol}</span>
                         <span className="tabular-nums text-[26px] font-extrabold leading-none tracking-tight">{previewValue}</span>
                       </div>
                     </div>
@@ -1389,13 +1389,13 @@ export default function CreateGiveawayPage() {
                       <div className="flex items-center gap-1 text-[13px] font-semibold">
                         {hostName} <BadgeCheck className="h-3.5 w-3.5 text-[#f97316]" />
                       </div>
-                      <div className="text-[11px] text-white/40">Host</div>
+                      <div className="text-[11px] text-white/55">Host</div>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-[12px] text-white/35">
+              <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-[12px] text-white/55">
                 <Users className="h-3.5 w-3.5" /> This is exactly how it will appear to entrants.
               </p>
 

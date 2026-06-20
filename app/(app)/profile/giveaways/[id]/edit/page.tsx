@@ -809,7 +809,7 @@ export default function EditGiveawayPage() {
                           readOnly
                           className="mt-2 bg-white/[0.02] border-white/[0.06] text-white/50 cursor-not-allowed"
                         />
-                        <p className="text-xs text-white/40 mt-1">Automatically filled from your Discord account</p>
+                        <p className="text-xs text-white/55 mt-1">Automatically filled from your Discord account</p>
                       </div>
 
                       <div>
@@ -823,7 +823,7 @@ export default function EditGiveawayPage() {
                           readOnly
                           className="mt-2 bg-white/[0.02] border-white/[0.06] text-white/50 cursor-not-allowed"
                         />
-                        <p className="text-xs text-white/40 mt-1">Automatically filled from your Discord account</p>
+                        <p className="text-xs text-white/55 mt-1">Automatically filled from your Discord account</p>
                       </div>
                     </div>
 
@@ -1063,12 +1063,12 @@ export default function EditGiveawayPage() {
                             <p className="text-red-400 text-xs mt-1">{errors[`requirement_${requirement.id}_description`]}</p>
                           )}
                           {!errors[`requirement_${requirement.id}_description`] && requirement.type === "discord" && (
-                            <p className="text-xs text-white/40 mt-1">
+                            <p className="text-xs text-white/55 mt-1">
                               Enter your Discord server invite link (e.g., https://discord.gg/abc123)
                             </p>
                           )}
                           {!errors[`requirement_${requirement.id}_description`] && requirement.type === "youtube" && (
-                            <p className="text-xs text-white/40 mt-1">
+                            <p className="text-xs text-white/55 mt-1">
                               Enter your YouTube channel URL (e.g., https://youtube.com/@channel or https://youtu.be/videoId)
                             </p>
                           )}
@@ -1226,9 +1226,9 @@ export default function EditGiveawayPage() {
                           </>
                         ) : (
                           <>
-                            <Upload className="h-12 w-12 text-white/40 mx-auto mb-4" />
+                            <Upload className="h-12 w-12 text-white/55 mx-auto mb-4" />
                             <p className="text-white/60">Click to upload cover image</p>
-                            <p className="text-sm text-white/40 mt-2">PNG, JPG up to 5MB</p>
+                            <p className="text-sm text-white/55 mt-2">PNG, JPG up to 5MB</p>
                           </>
                         )}
                       </label>
@@ -1280,9 +1280,9 @@ export default function EditGiveawayPage() {
                           </>
                         ) : (
                           <>
-                            <Upload className="h-12 w-12 text-white/40 mx-auto mb-4" />
+                            <Upload className="h-12 w-12 text-white/55 mx-auto mb-4" />
                             <p className="text-white/60">Upload additional images</p>
-                            <p className="text-sm text-white/40 mt-2">PNG, JPG up to 5MB each (max 10 images)</p>
+                            <p className="text-sm text-white/55 mt-2">PNG, JPG up to 5MB each (max 10 images)</p>
                           </>
                         )}
                       </label>
@@ -1341,9 +1341,9 @@ export default function EditGiveawayPage() {
                           </>
                         ) : (
                           <>
-                            <Video className="h-12 w-12 text-white/40 mx-auto mb-4" />
+                            <Video className="h-12 w-12 text-white/55 mx-auto mb-4" />
                             <p className="text-white/60">Upload videos</p>
-                            <p className="text-sm text-white/40 mt-2">MP4, WebM up to 4.5 mb each (max 5 videos)</p>
+                            <p className="text-sm text-white/55 mt-2">MP4, WebM up to 4.5 mb each (max 5 videos)</p>
                           </>
                         )}
                       </label>
@@ -1393,7 +1393,7 @@ export default function EditGiveawayPage() {
                       {youtubeLinkError && !errors.youtubeVideoLink && (
                         <p className="text-red-500 text-sm mt-1">{youtubeLinkError}</p>
                       )}
-                      <p className="text-sm text-white/40 mt-2">
+                      <p className="text-sm text-white/55 mt-2">
                         Provide a direct link to a YouTube video showcasing your giveaway.
                       </p>
                     </div>
@@ -1450,7 +1450,7 @@ export default function EditGiveawayPage() {
                   <CardContent>
                     <div className="space-y-4">
                       <div className="aspect-video bg-white/[0.04] border border-white/[0.08] rounded-xl flex items-center justify-center">
-                        <ImageIcon className="h-12 w-12 text-white/30" />
+                        <ImageIcon className="h-12 w-12 text-white/55" />
                       </div>
 
                       <div>

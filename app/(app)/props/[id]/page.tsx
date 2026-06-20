@@ -83,7 +83,7 @@ export default function PropDetailPage() {
               <Package className="h-8 w-8 text-orange-400" />
             </div>
             <h1 className="mb-2 text-2xl font-extrabold tracking-tight">Prop not found</h1>
-            <p className="mb-7 text-sm text-white/45">
+            <p className="mb-7 text-sm text-white/55">
               The prop you&apos;re looking for doesn&apos;t exist or is no longer available.
             </p>
             <button
@@ -269,7 +269,7 @@ export default function PropDetailPage() {
       <main className="min-h-screen bg-[#0a0a0a] text-white pt-20 [font-variant-numeric:tabular-nums]">
         <div className="mx-auto max-w-[1240px] px-5 pb-24">
           {/* Breadcrumb */}
-          <nav className="flex items-center gap-2 py-5 text-[13px] text-white/35">
+          <nav className="flex items-center gap-2 py-5 text-[13px] text-white/55">
             <span className="cursor-pointer transition hover:text-white/70" onClick={() => router.push('/')}>Home</span>
             <ChevronRight className="h-3.5 w-3.5" />
             <span className="cursor-pointer transition hover:text-white/70" onClick={() => router.push('/props')}>Props</span>
@@ -400,10 +400,10 @@ export default function PropDetailPage() {
                 <span className="flex items-center gap-1.5 text-white/55">
                   <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
                   <span className="font-semibold text-white">5.0</span>
-                  <span className="text-white/35">(0 reviews)</span>
+                  <span className="text-white/55">(0 reviews)</span>
                 </span>
                 {prop.createdAt && (
-                  <span className="flex items-center gap-1.5 text-white/45">
+                  <span className="flex items-center gap-1.5 text-white/55">
                     <Calendar className="h-4 w-4" /> Added {new Date(prop.createdAt).toLocaleDateString()}
                   </span>
                 )}
@@ -422,7 +422,7 @@ export default function PropDetailPage() {
                     €{finalPrice.toFixed(2)}
                   </span>
                   {hasDiscount && (
-                    <span className="mb-1 text-base text-white/35 line-through">
+                    <span className="mb-1 text-base text-white/55 line-through">
                       €{parseFloat(prop.price).toFixed(2)}
                     </span>
                   )}
@@ -436,7 +436,7 @@ export default function PropDetailPage() {
               <div className="mt-4 flex flex-col gap-2.5">
                 {renderPrimaryCta()}
               </div>
-              <p className="mt-3 flex items-center justify-center gap-1.5 text-[12px] text-white/35">
+              <p className="mt-3 flex items-center justify-center gap-1.5 text-[12px] text-white/55">
                 <ShieldCheck className="h-3.5 w-3.5" /> Instant delivery · escrow protected
               </p>
             </div>
@@ -448,7 +448,7 @@ export default function PropDetailPage() {
             <div className="min-w-0">
               {/* description */}
               <section>
-                <h2 className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/40">Overview</h2>
+                <h2 className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/55">Overview</h2>
                 <p className="mt-3 whitespace-pre-wrap text-[15px] leading-relaxed text-white/65">
                   {prop.description}
                 </p>
@@ -456,7 +456,7 @@ export default function PropDetailPage() {
 
               {/* what's included */}
               <section className="mt-9">
-                <h2 className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/40">What&apos;s included</h2>
+                <h2 className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/55">What&apos;s included</h2>
                 <ul className="mt-4 divide-y divide-white/[0.05] overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02]">
                   <li className="flex items-center gap-3 px-4 py-3 text-sm">
                     <CheckCircle className="h-4 w-4 text-emerald-400" /> Instant digital delivery
@@ -472,24 +472,24 @@ export default function PropDetailPage() {
 
               {/* files & technical */}
               <section className="mt-9">
-                <h2 className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/40">Files &amp; technical</h2>
+                <h2 className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/55">Files &amp; technical</h2>
                 <div className="mt-4 grid grid-cols-2 overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] sm:grid-cols-4">
                   <div className="border-r border-white/[0.05] p-4 text-center">
-                    <div className="text-[11px] uppercase tracking-[0.14em] text-white/35">Format</div>
+                    <div className="text-[11px] uppercase tracking-[0.14em] text-white/55">Format</div>
                     <div className="mt-1 text-sm font-semibold">YDR / YTD</div>
                   </div>
                   <div className="border-white/[0.05] p-4 text-center sm:border-r">
-                    <div className="text-[11px] uppercase tracking-[0.14em] text-white/35">File Type</div>
+                    <div className="text-[11px] uppercase tracking-[0.14em] text-white/55">File Type</div>
                     <div className="mt-1 text-sm font-semibold">ZIP Archive</div>
                   </div>
                   <div className="border-r border-t border-white/[0.05] p-4 text-center sm:border-t-0">
-                    <div className="text-[11px] uppercase tracking-[0.14em] text-white/35">Delivery</div>
+                    <div className="text-[11px] uppercase tracking-[0.14em] text-white/55">Delivery</div>
                     <div className="mt-1 flex items-center justify-center gap-1.5 text-sm font-semibold">
                       <CheckCircle className="h-4 w-4 text-emerald-400" /> Instant
                     </div>
                   </div>
                   <div className="border-t border-white/[0.05] p-4 text-center sm:border-t-0">
-                    <div className="text-[11px] uppercase tracking-[0.14em] text-white/35">Optimized</div>
+                    <div className="text-[11px] uppercase tracking-[0.14em] text-white/55">Optimized</div>
                     <div className="mt-1 flex items-center justify-center gap-1.5 text-sm font-semibold">
                       <CheckCircle className="h-4 w-4 text-emerald-400" /> High
                     </div>
@@ -515,7 +515,7 @@ export default function PropDetailPage() {
                     <div className="flex items-center gap-1.5 font-semibold">
                       {sellerName} <BadgeCheck className="h-4 w-4 text-orange-500" />
                     </div>
-                    <div className="text-xs text-white/40">Verified seller</div>
+                    <div className="text-xs text-white/55">Verified seller</div>
                   </div>
                 </div>
                 <button className="mt-4 w-full rounded-xl border border-white/[0.1] bg-white/[0.04] py-2.5 text-sm font-semibold transition hover:bg-white/[0.08]">
@@ -527,7 +527,7 @@ export default function PropDetailPage() {
                 <div className="flex items-center gap-2 text-sm font-semibold">
                   <LifeBuoy className="h-4 w-4 text-orange-500" /> Support included
                 </div>
-                <p className="mt-1.5 text-[13px] leading-snug text-white/45">
+                <p className="mt-1.5 text-[13px] leading-snug text-white/55">
                   Active Discord, documentation and free updates for the lifetime of this resource.
                 </p>
               </div>

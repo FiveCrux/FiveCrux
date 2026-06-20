@@ -245,7 +245,7 @@ export default function EditProductsPage() {
         <div className="mt-5 flex flex-wrap items-end justify-between gap-5">
           <div>
             <h1 className="text-3xl font-extrabold leading-none tracking-tight sm:text-[34px]">Manage listings</h1>
-            <p className="mt-2.5 text-sm leading-relaxed text-white/45">Edit, update, and track your published products.</p>
+            <p className="mt-2.5 text-sm leading-relaxed text-white/55">Edit, update, and track your published products.</p>
           </div>
           <Link href="/profile" className="shrink-0">
             <Button className="group inline-flex items-center gap-2 rounded-2xl bg-orange-500 px-5 py-3 text-sm font-bold text-black transition hover:bg-orange-400">
@@ -275,19 +275,19 @@ export default function EditProductsPage() {
         {/* SUMMARY ROW */}
         <div className="mt-7 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.06] sm:grid-cols-4">
           <div className="bg-[#0c0c0c] px-5 py-4">
-            <div className={`text-white/40 ${microLabel}`}>Listings</div>
+            <div className={`text-white/55 ${microLabel}`}>Listings</div>
             <div className="mt-1 text-2xl font-extrabold tracking-tight">{stats.listings}</div>
           </div>
           <div className="bg-[#0c0c0c] px-5 py-4">
-            <div className={`text-white/40 ${microLabel}`}>Total sales</div>
+            <div className={`text-white/55 ${microLabel}`}>Total sales</div>
             <div className="mt-1 text-2xl font-extrabold tracking-tight">{fmtNum(stats.sales)}</div>
           </div>
           <div className="bg-[#0c0c0c] px-5 py-4">
-            <div className={`text-white/40 ${microLabel}`}>Revenue</div>
+            <div className={`text-white/55 ${microLabel}`}>Revenue</div>
             <div className="mt-1 text-2xl font-extrabold tracking-tight text-orange-500">€{fmtNum(stats.revenue)}</div>
           </div>
           <div className="bg-[#0c0c0c] px-5 py-4">
-            <div className={`text-white/40 ${microLabel}`}>Avg rating</div>
+            <div className={`text-white/55 ${microLabel}`}>Avg rating</div>
             <div className="mt-1 flex items-center gap-1.5 text-2xl font-extrabold tracking-tight">
               {stats.avgRating}
               <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
@@ -313,12 +313,12 @@ export default function EditProductsPage() {
             ))}
           </div>
           <div className="relative ml-auto hidden sm:block">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/55" />
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search listings"
-              className="w-56 rounded-full border border-white/[0.07] bg-white/[0.03] py-2 pl-9 pr-3 text-sm text-white outline-none placeholder:text-white/30 focus:border-orange-500/60"
+              className="w-56 rounded-full border border-white/[0.07] bg-white/[0.03] py-2 pl-9 pr-3 text-sm text-white outline-none placeholder:text-white/55 focus:border-orange-500/60"
             />
           </div>
         </div>
@@ -357,7 +357,7 @@ export default function EditProductsPage() {
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[860px] border-collapse text-left">
                   <thead>
-                    <tr className="border-b border-white/[0.07] text-white/40">
+                    <tr className="border-b border-white/[0.07] text-white/55">
                       <th className={`w-12 py-3.5 pl-5 pr-2`}>
                         <span className="grid h-4 w-4 place-items-center rounded border border-white/20" />
                       </th>
@@ -393,7 +393,7 @@ export default function EditProductsPage() {
                                 className="h-11 w-16 flex-shrink-0 rounded-lg object-cover"
                               />
                             ) : (
-                              <span className="grid h-11 w-16 flex-shrink-0 place-items-center rounded-lg bg-white/[0.06] text-white/30">
+                              <span className="grid h-11 w-16 flex-shrink-0 place-items-center rounded-lg bg-white/[0.06] text-white/55">
                                 <Package className="h-4 w-4" />
                               </span>
                             )}
@@ -443,7 +443,7 @@ export default function EditProductsPage() {
                         {/* Sales / Entries */}
                         <td className="py-4 pr-4 text-right font-medium">
                           {row.countLabel === "—" ? (
-                            <span className="text-white/35">—</span>
+                            <span className="text-white/55">—</span>
                           ) : (
                             row.countLabel
                           )}
@@ -457,7 +457,7 @@ export default function EditProductsPage() {
                               <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
                             </span>
                           ) : (
-                            <span className="text-white/35">—</span>
+                            <span className="text-white/55">—</span>
                           )}
                         </td>
 
@@ -495,7 +495,7 @@ export default function EditProductsPage() {
               </div>
 
               {/* Table footer / pagination (presentational) */}
-              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/[0.07] px-5 py-3.5 text-xs text-white/40">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/[0.07] px-5 py-3.5 text-xs text-white/55">
                 <span>
                   Showing <span className="text-white/70">{filteredRows.length}</span> of{" "}
                   <span className="text-white/70">{rows.length}</span> listings

@@ -207,7 +207,7 @@ function ReachStat({ stat, active }: { stat: typeof reachStats[number]; active: 
         {display}
         {stat.suffix}
       </div>
-      <div className="mt-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/45">
+      <div className="mt-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/55">
         {stat.label}
       </div>
     </div>
@@ -336,7 +336,7 @@ export default function AdvertisePage() {
                 <Button
                   type="button"
                   onClick={() => pricingRef.current?.scrollIntoView({ behavior: "smooth" })}
-                  className="h-11 w-full rounded-xl border-none bg-[#f97316] px-6 text-sm font-semibold text-white shadow-[0_0_24px_rgba(249,115,22,0.25)] hover:bg-[#ea6c0a] sm:w-auto"
+                  className="h-11 w-full rounded-xl border-none bg-[#f97316] px-6 text-sm font-semibold text-black shadow-[0_0_24px_rgba(249,115,22,0.25)] hover:bg-[#ea6c0a] sm:w-auto"
                 >
                   View pricing
                   <ArrowRight className="ml-2 h-4 w-4" />
@@ -353,7 +353,7 @@ export default function AdvertisePage() {
                 <ReachStat key={stat.label} stat={stat} active={statsInView} />
               ))}
             </div>
-            <div className="mt-4 flex items-center justify-center gap-2 text-sm text-white/40">
+            <div className="mt-4 flex items-center justify-center gap-2 text-sm text-white/55">
               <span className="relative flex h-2 w-2">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
@@ -370,7 +370,7 @@ export default function AdvertisePage() {
             <div className="rounded-3xl border border-white/[0.07] bg-white/[0.025] p-7 lg:col-span-3">
               <div className="flex items-start justify-between">
                 <div>
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/40">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/55">
                     Monthly ad views
                   </div>
                   <div className="mt-1 text-3xl font-extrabold tracking-tight tabular-nums">
@@ -419,7 +419,7 @@ export default function AdvertisePage() {
                   transition={{ delay: 1.4, duration: 0.4 }}
                 />
               </svg>
-              <div className="mt-3 flex justify-between text-[11px] tabular-nums text-white/35">
+              <div className="mt-3 flex justify-between text-[11px] tabular-nums text-white/55">
                 {viewsTrend.map((p) => (
                   <span key={p.month}>{p.month}</span>
                 ))}
@@ -428,7 +428,7 @@ export default function AdvertisePage() {
 
             {/* bar chart: clicks by placement */}
             <div className="rounded-3xl border border-white/[0.07] bg-white/[0.025] p-7 lg:col-span-2">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/40">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/55">
                 Clicks by placement
               </div>
               <div className="mt-1 text-3xl font-extrabold tracking-tight tabular-nums">4,072</div>
@@ -444,7 +444,7 @@ export default function AdvertisePage() {
                     <span
                       className={cn(
                         "mt-3 text-[10px] font-semibold uppercase tracking-[0.18em]",
-                        bar.accent ? "text-[#f97316]" : "text-white/40"
+                        bar.accent ? "text-[#f97316]" : "text-white/55"
                       )}
                     >
                       {bar.label}
@@ -452,7 +452,7 @@ export default function AdvertisePage() {
                   </div>
                 ))}
               </div>
-              <p className="mt-5 border-t border-white/[0.07] pt-4 text-xs text-white/40">
+              <p className="mt-5 border-t border-white/[0.07] pt-4 text-xs text-white/55">
                 Homepage spotlight drives{" "}
                 <span className="font-semibold text-white">2.1×</span> the clicks of standard
                 listing placement.
@@ -492,8 +492,8 @@ export default function AdvertisePage() {
                   className={cn(
                     "rounded-[7px] px-4 py-1.5 text-xs font-semibold transition-all duration-200",
                     activeTab === "ads"
-                      ? "bg-[#f97316] text-white shadow-sm"
-                      : "text-white/40 hover:text-white/80"
+                      ? "bg-[#f97316] text-black shadow-sm"
+                      : "text-white/55 hover:text-white/80"
                   )}
                 >
                   Ad slots
@@ -506,8 +506,8 @@ export default function AdvertisePage() {
                   className={cn(
                     "rounded-[7px] px-4 py-1.5 text-xs font-semibold transition-all duration-200",
                     activeTab === "featured-scripts"
-                      ? "bg-[#f97316] text-white shadow-sm"
-                      : "text-white/40 hover:text-white/80"
+                      ? "bg-[#f97316] text-black shadow-sm"
+                      : "text-white/55 hover:text-white/80"
                   )}
                 >
                   Featured script slots
@@ -529,12 +529,12 @@ export default function AdvertisePage() {
                         "relative rounded-lg border px-4 py-2 text-xs font-semibold transition-all duration-200",
                         isActive
                           ? "border-[#f97316]/40 bg-[#f97316]/[0.08] text-white"
-                          : "border-white/[0.08] bg-white/[0.02] text-white/45 hover:text-white/80"
+                          : "border-white/[0.08] bg-white/[0.02] text-white/55 hover:text-white/80"
                       )}
                     >
                       {duration.label}
                       {badge && (
-                        <span className="absolute -right-1.5 -top-2 rounded bg-[#f97316] px-1 py-px text-[9px] font-bold leading-none text-white">
+                        <span className="absolute -right-1.5 -top-2 rounded bg-[#f97316] px-1 py-px text-[9px] font-bold leading-none text-black">
                           {badge}
                         </span>
                       )}
@@ -613,7 +613,7 @@ export default function AdvertisePage() {
 
                     <div className="flex-1">
                       {/* Plan label */}
-                      <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/40">
+                      <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/55">
                         {activeTab === "ads" ? "Ad Slots" : "Featured Script"}
                       </div>
 
@@ -621,7 +621,7 @@ export default function AdvertisePage() {
                       <div className="mt-2 text-xl font-bold text-white">{pkg.name}</div>
 
                       {/* Description */}
-                      <p className="mt-2 text-[12px] leading-normal text-white/40">
+                      <p className="mt-2 text-[12px] leading-normal text-white/55">
                         {pkg.description}
                       </p>
 
@@ -636,14 +636,14 @@ export default function AdvertisePage() {
 
                       {/* Price block */}
                       <div className="mt-6">
-                        <div className="text-[12px] tabular-nums text-white/30 line-through">
+                        <div className="text-[12px] tabular-nums text-white/55 line-through">
                           €{selectedDuration.originalPrice}
                         </div>
                         <div className="mt-0.5 flex items-baseline gap-1.5">
                           <span className="text-4xl font-extrabold tracking-tight tabular-nums text-white">
                             €{selectedDuration.price}
                           </span>
-                          <span className="text-xs font-medium text-white/35">/ {perLabel}</span>
+                          <span className="text-xs font-medium text-white/55">/ {perLabel}</span>
                         </div>
                         <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-400 ring-1 ring-emerald-500/25">
                           <Check className="h-3.5 w-3.5" />
@@ -701,7 +701,7 @@ export default function AdvertisePage() {
         {/* ===== TRUSTED BY + TESTIMONIAL + CTA ===== */}
         <section className="mx-auto max-w-7xl px-5 py-16">
           <div className="text-center">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/40">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/55">
               Trusted by creators advertising on FiveCrux
             </div>
           </div>
@@ -744,7 +744,7 @@ export default function AdvertisePage() {
               </span>
               <span>
                 <span className="font-semibold">CruxDev</span>{" "}
-                <span className="text-white/40">· 12.4k sales · Verified seller</span>
+                <span className="text-white/55">· 12.4k sales · Verified seller</span>
               </span>
             </figcaption>
           </figure>

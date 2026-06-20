@@ -67,7 +67,7 @@ const BADGE_STYLES: Record<BadgeVariant, { label: string; className: string }> =
   },
   standalone: {
     label: "Standalone",
-    className: "bg-white/[0.06] text-white/45 border border-white/10",
+    className: "bg-white/[0.06] text-white/55 border border-white/10",
   },
   featured: {
     label: "Featured",
@@ -117,7 +117,7 @@ function StarRating({
           );
         })}
       </div>
-      <span className="text-[10px] font-medium tracking-[0.01em] text-white/35">
+      <span className="text-[10px] font-medium tracking-[0.01em] text-white/55">
         ({count.toLocaleString()}{label ? ` ${label}` : ""})
       </span>
     </div>
@@ -279,7 +279,7 @@ export function ProductCard({
             {tags.map((tag) => (
               <span
                 key={tag}
-                className="rounded-md border border-white/10 bg-white/[0.06] px-[7px] py-[3px] text-[10px] font-semibold uppercase leading-snug tracking-[0.04em] text-white/40"
+                className="rounded-md border border-white/10 bg-white/[0.06] px-[7px] py-[3px] text-[10px] font-semibold uppercase leading-snug tracking-[0.04em] text-white/55"
               >
                 {tag}
               </span>
@@ -314,7 +314,7 @@ export function ProductCard({
           )}
 
           {/* Username */}
-          <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-white/40">
+          <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-white/55">
             {author}
           </span>
 

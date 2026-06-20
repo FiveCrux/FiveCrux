@@ -143,7 +143,7 @@ export default function FeaturedScriptCard({ item, index, className = "", style 
                     ))}
                   </motion.div>
                 )}
-              <CardDescription className="text-white/40 text-xs leading-snug flex items-center gap-1.5 flex-row">
+              <CardDescription className="text-white/55 text-xs leading-snug flex items-center gap-1.5 flex-row">
                 <Avatar className="h-4 w-4 flex-shrink-0">
                   <AvatarImage
                     src={item.seller_image || "/placeholder-user.jpg"}

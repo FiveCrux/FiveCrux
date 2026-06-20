@@ -267,7 +267,7 @@ export default function CategoryPage() {
           </span>
           <h1 className="text-3xl font-extrabold tracking-tight sm:text-5xl">{currentCategory.name}</h1>
           <p className="mt-3 max-w-2xl text-base text-white/55 sm:text-lg">{currentCategory.description}</p>
-          <div className="mt-5 flex flex-wrap items-center gap-3 text-sm text-white/40">
+          <div className="mt-5 flex flex-wrap items-center gap-3 text-sm text-white/55">
             <span className="font-semibold text-white/70">{filteredAndSortedScripts.length}</span>
             <span>products found</span>
             <span className="text-white/20">•</span>
@@ -283,12 +283,12 @@ export default function CategoryPage() {
         <div className="mx-auto max-w-7xl space-y-4">
           {/* Search */}
           <div className="relative">
-            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
+            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/55" />
             <Input
               placeholder="Search products..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="h-12 rounded-xl border-white/[0.08] bg-white/[0.04] pl-11 text-white backdrop-blur-md placeholder:text-white/40 focus-visible:border-orange-500/50 focus-visible:ring-orange-500/20"
+              className="h-12 rounded-xl border-white/[0.08] bg-white/[0.04] pl-11 text-white backdrop-blur-md placeholder:text-white/55 focus-visible:border-orange-500/50 focus-visible:ring-orange-500/20"
             />
           </div>
 
@@ -419,7 +419,7 @@ export default function CategoryPage() {
               <Package className="h-7 w-7 text-orange-400" />
             </div>
             <h3 className="mb-2 text-xl font-bold text-white">No products found</h3>
-            <p className="text-sm text-white/45">Try adjusting your filters or search terms.</p>
+            <p className="text-sm text-white/55">Try adjusting your filters or search terms.</p>
           </div>
         ) : (
           <div

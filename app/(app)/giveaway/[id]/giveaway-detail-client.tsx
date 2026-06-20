@@ -743,7 +743,7 @@ export function GiveawayDetailClient({
             <h1 className="mb-2 text-2xl font-extrabold tracking-tight">
               {error || "Giveaway not found"}
             </h1>
-            <p className="mb-7 text-sm text-white/45">
+            <p className="mb-7 text-sm text-white/55">
               This giveaway doesn&apos;t exist or is no longer available.
             </p>
             <Link
@@ -772,11 +772,11 @@ export function GiveawayDetailClient({
             <Link href="/" className="transition-colors hover:text-white">
               Home
             </Link>
-            <ChevronRight className="h-3.5 w-3.5 text-white/30" />
+            <ChevronRight className="h-3.5 w-3.5 text-white/55" />
             <Link href="/giveaways" className="transition-colors hover:text-white">
               Giveaways
             </Link>
-            <ChevronRight className="h-3.5 w-3.5 text-white/30" />
+            <ChevronRight className="h-3.5 w-3.5 text-white/55" />
             <span className="truncate text-white/85">{transformedGiveaway.title}</span>
           </nav>
           <Link
@@ -893,7 +893,7 @@ export function GiveawayDetailClient({
                   disabled={isEntered || isEnteringGiveaway || isGiveawayEnded || isGiveawayUpcoming}
                   className={`flex items-center justify-center gap-2 rounded-2xl px-6 py-3.5 font-bold shadow-lg transition-colors ${
                     isGiveawayEnded || isGiveawayUpcoming
-                      ? "cursor-not-allowed bg-white/10 text-white/40"
+                      ? "cursor-not-allowed bg-white/10 text-white/55"
                       : isEntered
                       ? "bg-green-500/15 text-green-400"
                       : "bg-orange-500 text-black shadow-orange-500/20 hover:bg-orange-400"
@@ -945,14 +945,14 @@ export function GiveawayDetailClient({
                       className="rounded-xl border border-white/15 bg-black/40 px-3.5 py-2 text-center backdrop-blur"
                     >
                       <div className="tabular-nums text-xl font-extrabold leading-none">{pad2(b.v)}</div>
-                      <div className="mt-1 text-[10px] tracking-[0.16em] text-white/45">{b.l}</div>
+                      <div className="mt-1 text-[10px] tracking-[0.16em] text-white/55">{b.l}</div>
                     </div>
                   ))}
                 </div>
               )}
             </div>
 
-            <p className="mt-4 inline-flex items-center gap-1.5 text-xs text-white/45">
+            <p className="mt-4 inline-flex items-center gap-1.5 text-xs text-white/55">
               <ShieldCheck className="h-3.5 w-3.5" /> Winner drawn automatically &amp; fairly
             </p>
           </div>
@@ -962,21 +962,21 @@ export function GiveawayDetailClient({
         <div className="border-y border-white/[0.06] bg-[#0d0d0d]">
           <div className="mx-auto grid max-w-[1240px] grid-cols-2 divide-x divide-white/[0.06] px-4 sm:grid-cols-4 sm:px-6 lg:px-8">
             <div className="py-5 pr-4">
-              <div className="text-[11px] uppercase tracking-[0.16em] text-white/35">Prize value</div>
+              <div className="text-[11px] uppercase tracking-[0.16em] text-white/55">Prize value</div>
               <div className="mt-1 tabular-nums text-lg font-bold">{prizeValueDisplay}</div>
             </div>
             <div className="py-5 pl-4 pr-4">
-              <div className="text-[11px] uppercase tracking-[0.16em] text-white/35">Entries</div>
+              <div className="text-[11px] uppercase tracking-[0.16em] text-white/55">Entries</div>
               <div className="mt-1 tabular-nums text-lg font-bold">
                 {transformedGiveaway.entries.toLocaleString()}
               </div>
             </div>
             <div className="py-5 pl-4 pr-4">
-              <div className="text-[11px] uppercase tracking-[0.16em] text-white/35">Your entries</div>
+              <div className="text-[11px] uppercase tracking-[0.16em] text-white/55">Your entries</div>
               <div className="mt-1 tabular-nums text-lg font-bold text-orange-500">{yourEntries}</div>
             </div>
             <div className="py-5 pl-4">
-              <div className="text-[11px] uppercase tracking-[0.16em] text-white/35">Ends</div>
+              <div className="text-[11px] uppercase tracking-[0.16em] text-white/55">Ends</div>
               <div className="mt-1 text-lg font-bold">{endsDateLabel}</div>
             </div>
           </div>
@@ -1141,7 +1141,7 @@ export function GiveawayDetailClient({
                 transition={{ duration: 0.6, delay: 0.1 }}
                 className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-6"
               >
-                <div className="text-[11px] uppercase tracking-[0.16em] text-white/35">Your entry</div>
+                <div className="text-[11px] uppercase tracking-[0.16em] text-white/55">Your entry</div>
                 <div className="mt-3 space-y-3 text-sm">
                   <div className="flex items-center justify-between">
                     <span className="text-white/50">Status</span>
@@ -1175,7 +1175,7 @@ export function GiveawayDetailClient({
                     disabled={isEntered || isEnteringGiveaway || isGiveawayEnded || isGiveawayUpcoming}
                     className={`mt-5 flex w-full items-center justify-center gap-2 rounded-xl py-3 font-semibold transition-colors ${
                       isGiveawayEnded || isGiveawayUpcoming
-                        ? "cursor-not-allowed bg-white/10 text-white/40"
+                        ? "cursor-not-allowed bg-white/10 text-white/55"
                         : isEntered
                         ? "bg-green-500/15 text-green-400"
                         : "bg-orange-500 text-black hover:bg-orange-400"
@@ -1214,7 +1214,7 @@ export function GiveawayDetailClient({
                   </button>
                 </motion.div>
 
-                <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-white/40">
+                <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-white/55">
                   <ShieldCheck className="h-3.5 w-3.5" /> Winner drawn automatically &amp; fairly
                 </p>
               </motion.div>
@@ -1240,7 +1240,7 @@ export function GiveawayDetailClient({
                     {transformedGiveaway.creator.name}
                     {transformedGiveaway.creator.verified && <VerifiedIcon size="sm" />}
                   </div>
-                  <div className="text-xs text-white/45">Giveaway host</div>
+                  <div className="text-xs text-white/55">Giveaway host</div>
                 </div>
                 {transformedGiveaway.creator.id ? (
                   <Link
@@ -1291,7 +1291,7 @@ export function GiveawayDetailClient({
                             — {prize.name}
                           </div>
                           {prize.description && (
-                            <div className="text-xs text-white/45">{prize.description}</div>
+                            <div className="text-xs text-white/55">{prize.description}</div>
                           )}
                         </div>
                         <div className="text-lg font-extrabold text-orange-500">{prize.value}</div>
@@ -1316,14 +1316,14 @@ export function GiveawayDetailClient({
                           <span className="text-sm font-semibold text-white">{prize.winnerName}</span>
                         </div>
                       ) : (
-                        <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2 text-center text-xs text-white/45">
+                        <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2 text-center text-xs text-white/55">
                           Winner will be announced soon
                         </div>
                       )}
                     </div>
                   ))
                 ) : (
-                  <p className="py-6 text-center text-sm text-white/45">
+                  <p className="py-6 text-center text-sm text-white/55">
                     No prizes configured for this giveaway
                   </p>
                 )}
@@ -1426,7 +1426,7 @@ export function GiveawayDetailClient({
                 <div className="col-span-full py-16 text-center">
                   <Gift className="mx-auto mb-4 h-12 w-12 text-white/20" />
                   <p className="text-white/50">No other giveaways available right now</p>
-                  <p className="mt-1 text-sm text-white/30">Check back soon for more prizes!</p>
+                  <p className="mt-1 text-sm text-white/55">Check back soon for more prizes!</p>
                 </div>
               )}
             </div>

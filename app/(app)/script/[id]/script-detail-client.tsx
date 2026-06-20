@@ -571,7 +571,7 @@ export function ScriptDetailClient({
       <main className="min-h-screen bg-[#0a0a0a] text-white antialiased [font-variant-numeric:tabular-nums]">
         <div className="mx-auto max-w-[1240px] px-5 pb-24 pt-20">
           {/* Breadcrumb */}
-          <nav className="flex items-center gap-2 py-5 text-[13px] text-white/35">
+          <nav className="flex items-center gap-2 py-5 text-[13px] text-white/55">
             <Link href="/scripts" className="transition hover:text-white/70">
               Marketplace
             </Link>
@@ -631,14 +631,14 @@ export function ScriptDetailClient({
                       {script.rating.toFixed(1)}
                     </span>
                     {script.review_count > 0 && (
-                      <span className="text-white/35">
+                      <span className="text-white/55">
                         ({script.review_count} reviews)
                       </span>
                     )}
                   </span>
                 )}
                 {script.downloads > 0 && (
-                  <span className="flex items-center gap-1.5 text-white/45">
+                  <span className="flex items-center gap-1.5 text-white/55">
                     <Download className="h-4 w-4" />
                     <span>{script.downloads.toLocaleString()}</span> downloads
                   </span>
@@ -660,7 +660,7 @@ export function ScriptDetailClient({
                       {script.price}
                     </span>
                     {script.original_price && (
-                      <span className="mb-1 text-base text-white/35 line-through">
+                      <span className="mb-1 text-base text-white/55 line-through">
                         {currency}
                         {script.original_price}
                       </span>
@@ -701,12 +701,12 @@ export function ScriptDetailClient({
                 </Button>
               </div>
               {canBuy ? (
-                <p className="mt-3 flex items-center justify-center gap-1.5 text-[12px] text-white/35">
+                <p className="mt-3 flex items-center justify-center gap-1.5 text-[12px] text-white/55">
                   <ShieldCheck className="h-3.5 w-3.5" /> Instant delivery · escrow
                   protected
                 </p>
               ) : (
-                <p className="mt-3 flex items-center justify-center gap-1.5 text-[12px] text-white/35">
+                <p className="mt-3 flex items-center justify-center gap-1.5 text-[12px] text-white/55">
                   <AlertCircle className="h-3.5 w-3.5" /> No purchase link
                   available
                 </p>
@@ -720,7 +720,7 @@ export function ScriptDetailClient({
             <div className="min-w-0">
               {/* Overview */}
               <section>
-                <h2 className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/40">
+                <h2 className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/55">
                   Overview
                 </h2>
                 <p className="mt-3 whitespace-pre-line text-[15px] leading-relaxed text-white/65">
@@ -731,7 +731,7 @@ export function ScriptDetailClient({
               {/* Features */}
               {hasFeatures && (
                 <section className="mt-9">
-                  <h2 className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/40">
+                  <h2 className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/55">
                     Features
                   </h2>
                   <div className="mt-4 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
@@ -755,7 +755,7 @@ export function ScriptDetailClient({
               {/* Requirements */}
               {hasRequirements && (
                 <section className="mt-9">
-                  <h2 className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/40">
+                  <h2 className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/55">
                     Requirements
                   </h2>
                   <ul className="mt-4 divide-y divide-white/[0.05] overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02]">
@@ -775,7 +775,7 @@ export function ScriptDetailClient({
               {/* meta strip */}
               <section className="mt-9 grid grid-cols-3 overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02]">
                 <div className="border-r border-white/[0.05] p-4 text-center">
-                  <div className="text-[11px] uppercase tracking-[0.14em] text-white/35">
+                  <div className="text-[11px] uppercase tracking-[0.14em] text-white/55">
                     Version
                   </div>
                   <div className="mt-1 text-sm font-semibold">
@@ -783,7 +783,7 @@ export function ScriptDetailClient({
                   </div>
                 </div>
                 <div className="border-r border-white/[0.05] p-4 text-center">
-                  <div className="text-[11px] uppercase tracking-[0.14em] text-white/35">
+                  <div className="text-[11px] uppercase tracking-[0.14em] text-white/55">
                     Updated
                   </div>
                   <div className="mt-1 text-sm font-semibold">
@@ -791,7 +791,7 @@ export function ScriptDetailClient({
                   </div>
                 </div>
                 <div className="p-4 text-center">
-                  <div className="text-[11px] uppercase tracking-[0.14em] text-white/35">
+                  <div className="text-[11px] uppercase tracking-[0.14em] text-white/55">
                     Downloads
                   </div>
                   <div className="mt-1 text-sm font-semibold">
@@ -829,7 +829,7 @@ export function ScriptDetailClient({
                         <BadgeCheck className="h-4 w-4 text-orange-500" />
                       )}
                     </div>
-                    <div className="text-xs text-white/40">
+                    <div className="text-xs text-white/55">
                       {verified ? "Verified seller" : "Seller"}
                     </div>
                   </div>
@@ -841,7 +841,7 @@ export function ScriptDetailClient({
                         ? script.rating.toFixed(1)
                         : "—"}
                     </div>
-                    <div className="text-[10px] uppercase tracking-wide text-white/35">
+                    <div className="text-[10px] uppercase tracking-wide text-white/55">
                       Rating
                     </div>
                   </div>
@@ -849,7 +849,7 @@ export function ScriptDetailClient({
                     <div className="text-sm font-bold">
                       {script.review_count > 0 ? script.review_count : "—"}
                     </div>
-                    <div className="text-[10px] uppercase tracking-wide text-white/35">
+                    <div className="text-[10px] uppercase tracking-wide text-white/55">
                       Reviews
                     </div>
                   </div>
@@ -859,7 +859,7 @@ export function ScriptDetailClient({
                         ? script.downloads.toLocaleString()
                         : "—"}
                     </div>
-                    <div className="text-[10px] uppercase tracking-wide text-white/35">
+                    <div className="text-[10px] uppercase tracking-wide text-white/55">
                       Sales
                     </div>
                   </div>
@@ -879,7 +879,7 @@ export function ScriptDetailClient({
                   <LifeBuoy className="h-4 w-4 text-orange-500" /> Support
                   included
                 </div>
-                <p className="mt-1.5 text-[13px] leading-snug text-white/45">
+                <p className="mt-1.5 text-[13px] leading-snug text-white/55">
                   Active Discord, documentation and free updates from the seller.
                 </p>
               </div>
@@ -952,7 +952,7 @@ export function ScriptDetailClient({
                             : `$${Number(p.price).toFixed(2)}`}
                         </span>
                         {typeof p.rating === "number" && p.rating > 0 && (
-                          <span className="flex items-center gap-1 text-xs text-white/45">
+                          <span className="flex items-center gap-1 text-xs text-white/55">
                             <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
                             {p.rating.toFixed(1)}
                           </span>

@@ -469,7 +469,7 @@ export default function PropsPage() {
           </div>
           <div className="relative mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
             <motion.nav
-              className="mb-4 flex items-center gap-2 text-sm text-white/40"
+              className="mb-4 flex items-center gap-2 text-sm text-white/55"
               initial={{ opacity: 0, x: -16 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.4 }}
@@ -513,7 +513,7 @@ export default function PropsPage() {
             transition={{ duration: 0.5 }}
           >
             <div className="relative flex-1">
-              <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
+              <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/55" />
               <input
                 type="text"
                 placeholder="Search props…"
