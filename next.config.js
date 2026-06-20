@@ -4,6 +4,10 @@ const nextConfig = {
     domains: ['localhost',
       'crux-marketplace-s3.s3.ap-south-1.amazonaws.com',
       'images.unsplash.com',
+      // Discord avatars (real users sign in with Discord) — without these,
+      // next/image throws on the avatar URL and crashes the page.
+      'cdn.discordapp.com',
+      'media.discordapp.net',
     ],
   },
   // @electric-sql/pglite ships WASM + a .data filesystem image that must be

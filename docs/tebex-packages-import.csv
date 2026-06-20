@@ -1,0 +1,25 @@
+name,price,currency,type,category
+Ads - Starter - 1 Month,40,EUR,single,Packages
+Ads - Starter - 3 Months,110,EUR,single,Packages
+Ads - Starter - 6 Months,200,EUR,single,Packages
+Ads - Starter - 12 Months,360,EUR,single,Packages
+Ads - Premium - 1 Month,100,EUR,single,Packages
+Ads - Premium - 3 Months,275,EUR,single,Packages
+Ads - Premium - 6 Months,500,EUR,single,Packages
+Ads - Premium - 12 Months,900,EUR,single,Packages
+Ads - Executive - 1 Month,150,EUR,single,Packages
+Ads - Executive - 3 Months,420,EUR,single,Packages
+Ads - Executive - 6 Months,750,EUR,single,Packages
+Ads - Executive - 12 Months,1350,EUR,single,Packages
+Featured - Starter - 1 Week,20,EUR,single,Packages
+Featured - Starter - 2 Weeks,35,EUR,single,Packages
+Featured - Starter - 4 Weeks,60,EUR,single,Packages
+Featured - Starter - 8 Weeks,100,EUR,single,Packages
+Featured - Premium - 1 Week,50,EUR,single,Packages
+Featured - Premium - 2 Weeks,80,EUR,single,Packages
+Featured - Premium - 4 Weeks,150,EUR,single,Packages
+Featured - Premium - 8 Weeks,260,EUR,single,Packages
+Featured - Executive - 1 Week,80,EUR,single,Packages
+Featured - Executive - 2 Weeks,120,EUR,single,Packages
+Featured - Executive - 4 Weeks,220,EUR,single,Packages
+Featured - Executive - 8 Weeks,400,EUR,single,Packages

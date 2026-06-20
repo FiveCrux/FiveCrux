@@ -28,6 +28,11 @@ const PACKAGE_PRICES = (() => {
   try { return JSON.parse(process.env.MOCK_TEBEX_PACKAGES || '{"990001":100}') }
   catch { return { "990001": 100 } }
 })()
+// Optional id -> name map so we can test dynamic name-based mapping.
+const PACKAGE_NAMES = (() => {
+  try { return JSON.parse(process.env.MOCK_TEBEX_NAMES || "{}") }
+  catch { return {} }
+})()
 const MOCK_CURRENCY = process.env.MOCK_TEBEX_CURRENCY || "EUR"
 
 function send(res, code, json) {
@@ -90,7 +95,7 @@ const server = createServer(async (req, res) => {
   if (req.method === "GET" && parts[1] === "accounts" && parts[3] === "packages" && parts.length === 4) {
     const data = Object.entries(PACKAGE_PRICES).map(([id, price]) => ({
       id: Number(id),
-      name: `Mock Package ${id}`,
+      name: PACKAGE_NAMES[id] || `Mock Package ${id}`,
       description: "",
       image: null,
       type: "single",

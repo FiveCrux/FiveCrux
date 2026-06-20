@@ -72,6 +72,23 @@ function mapFeatured(item: any): MarketProduct {
   }
 }
 
+// Map a regular approved script (from /api/scripts) into a MarketProduct so the
+// discovery rows (Trending / New / and Featured-fallback) have content even when
+// there are no active featured scripts yet.
+function mapScript(item: any): MarketProduct {
+  return {
+    id: item.id,
+    title: item.title || item.name || "Untitled",
+    framework: Array.isArray(item.framework) ? item.framework : item.framework ? [item.framework] : [],
+    price: Number(item.price ?? 0),
+    free: item.free ?? item.price === 0,
+    seller: item.seller_name || item.sellerName || item.seller,
+    sellerImage: item.seller_image || item.sellerImage,
+    coverImage: item.cover_image || item.coverImage,
+    href: `/script/${item.id}`,
+  }
+}
+
 // ── Horizontal scroll row ──
 function Row({ title, icon, emoji, items, seeAllHref }: {
   title: string
@@ -111,8 +128,12 @@ function HeroSpotlight({ items, query, setQuery, onSearch }: {
   onSearch: () => void
 }) {
   const [idx, setIdx] = useState(0)
-  const slides = items.length ? items : []
-  const active = slides[idx % slides.length] || items[0]
+  // Always append a "get featured here" promo slide — turns the hero into an
+  // advertising CTA showing which plan unlocks this premium placement.
+  const PROMO = { __promo: true } as any
+  const slides: any[] = items.length ? [...items, PROMO] : [PROMO]
+  const active = slides[idx % slides.length]
+  const isPromo = !!active?.__promo
 
   useEffect(() => {
     if (slides.length <= 1) return
@@ -126,8 +147,14 @@ function HeroSpotlight({ items, query, setQuery, onSearch }: {
   return (
     <section className="mt-4 px-3 sm:px-6">
       <div className="relative mx-auto max-w-7xl overflow-hidden rounded-2xl border border-white/[0.08]" style={{ minHeight: "70vh" }}>
-        {/* Cover image of active product */}
-        {active.coverImage ? (
+        {/* Background — promo slide gets a branded glow; products show their cover */}
+        {isPromo ? (
+          <>
+            <div className="absolute inset-0 bg-gradient-to-br from-[#1b1020] via-[#0a0a0a] to-[#2a1606]" />
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_78%_30%,rgba(249,115,22,0.38),transparent_55%)]" />
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_85%,rgba(168,85,247,0.20),transparent_50%)]" />
+          </>
+        ) : active.coverImage ? (
           <Image src={active.coverImage} alt={active.title} fill priority className="object-cover" sizes="100vw" />
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-fuchsia-700 via-purple-700 to-orange-600" />
@@ -152,30 +179,67 @@ function HeroSpotlight({ items, query, setQuery, onSearch }: {
 
         {/* Content */}
         <div className="relative z-10 flex flex-col justify-end px-5 pb-12 sm:px-10" style={{ minHeight: "calc(70vh - 90px)" }}>
-          <span className="mb-3 inline-flex items-center gap-1.5 self-start rounded-full bg-orange-500 px-2.5 py-1 text-[11px] font-bold text-black">
-            <Star className="h-3 w-3" /> FEATURED SPOTLIGHT
-          </span>
-          <h1 className="mb-3 max-w-3xl text-3xl font-black tracking-tight drop-shadow-lg sm:text-5xl">{active.title}</h1>
-          <div className="mb-4 flex flex-wrap items-center gap-2">
-            {active.framework?.slice(0, 2).map((fw) => (
-              <span key={fw} className="rounded-md border border-white/15 bg-white/10 px-2 py-1 text-xs font-bold backdrop-blur-sm">{fw}</span>
-            ))}
-            {typeof active.rating === "number" && (
-              <span className="flex items-center gap-1 text-sm font-semibold text-yellow-400">
-                <Star className="h-4 w-4 fill-yellow-400" /> {active.rating.toFixed(1)}
+          {isPromo ? (
+            <>
+              <span className="mb-4 inline-flex items-center gap-1.5 self-start rounded-full border border-orange-400/40 bg-orange-500/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.15em] text-orange-300 backdrop-blur-sm">
+                <Sparkles className="h-3.5 w-3.5" /> Premium Placement
               </span>
-            )}
-            {active.seller && <span className="text-sm text-white/70">by {active.seller}</span>}
-            <span className="ml-2 text-2xl font-black">{active.free || active.price === 0 ? "Free" : `$${active.price.toFixed(2)}`}</span>
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <Link href={active.href} className="flex items-center gap-2 rounded-xl bg-orange-500 px-6 py-3 font-bold text-black transition hover:bg-orange-400 shadow-[0_0_0_1px_rgba(249,115,22,0.5),0_8px_32px_rgba(249,115,22,0.35)]">
-              <Play className="h-4 w-4" /> View Script
-            </Link>
-            <Link href={active.href} className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.06] px-6 py-3 font-semibold backdrop-blur-md transition hover:bg-white/10">
-              <ShoppingCart className="h-4 w-4" /> Add to Cart
-            </Link>
-          </div>
+              <h1 className="mb-3 max-w-3xl text-4xl font-black leading-[1.05] tracking-tight drop-shadow-lg sm:text-6xl">
+                Put your script in the{" "}
+                <span className="bg-gradient-to-r from-orange-400 to-yellow-300 bg-clip-text text-transparent">spotlight</span>.
+              </h1>
+              <p className="mb-5 max-w-xl text-sm leading-relaxed text-white/75 sm:text-base">
+                Right here on the homepage — the first thing thousands of FiveM server owners
+                see every day. Grab a <span className="font-semibold text-white">Featured</span> slot
+                and get discovered first.
+              </p>
+              {/* Tier pills */}
+              <div className="mb-6 flex flex-wrap items-center gap-2">
+                {["Starter", "Premium", "Executive"].map((t) => (
+                  <span key={t} className="rounded-full border border-orange-500/30 bg-orange-500/10 px-3 py-1 text-xs font-semibold text-orange-200">
+                    {t}
+                  </span>
+                ))}
+                <span className="text-xs font-medium text-white/45">from €20 / week</span>
+              </div>
+              <div className="flex flex-wrap items-center gap-3">
+                <Link href="/advertise" className="group flex items-center gap-2 rounded-xl bg-orange-500 px-7 py-3.5 text-[15px] font-bold text-black transition hover:bg-orange-400 shadow-[0_0_0_1px_rgba(249,115,22,0.5),0_10px_40px_rgba(249,115,22,0.45)]">
+                  <Star className="h-4 w-4" /> Get Featured
+                  <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                </Link>
+                <Link href="/advertise" className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.06] px-6 py-3.5 font-semibold backdrop-blur-md transition hover:bg-white/10">
+                  See all plans
+                </Link>
+              </div>
+            </>
+          ) : (
+            <>
+              <span className="mb-3 inline-flex items-center gap-1.5 self-start rounded-full bg-orange-500 px-2.5 py-1 text-[11px] font-bold text-black">
+                <Star className="h-3 w-3" /> FEATURED SPOTLIGHT
+              </span>
+              <h1 className="mb-3 max-w-3xl text-3xl font-black tracking-tight drop-shadow-lg sm:text-5xl">{active.title}</h1>
+              <div className="mb-4 flex flex-wrap items-center gap-2">
+                {active.framework?.slice(0, 2).map((fw: string) => (
+                  <span key={fw} className="rounded-md border border-white/15 bg-white/10 px-2 py-1 text-xs font-bold backdrop-blur-sm">{fw}</span>
+                ))}
+                {typeof active.rating === "number" && (
+                  <span className="flex items-center gap-1 text-sm font-semibold text-yellow-400">
+                    <Star className="h-4 w-4 fill-yellow-400" /> {active.rating.toFixed(1)}
+                  </span>
+                )}
+                {active.seller && <span className="text-sm text-white/70">by {active.seller}</span>}
+                <span className="ml-2 text-2xl font-black">{active.free || active.price === 0 ? "Free" : `$${active.price.toFixed(2)}`}</span>
+              </div>
+              <div className="flex flex-wrap items-center gap-3">
+                <Link href={active.href} className="flex items-center gap-2 rounded-xl bg-orange-500 px-6 py-3 font-bold text-black transition hover:bg-orange-400 shadow-[0_0_0_1px_rgba(249,115,22,0.5),0_8px_32px_rgba(249,115,22,0.35)]">
+                  <Play className="h-4 w-4" /> View Script
+                </Link>
+                <Link href={active.href} className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.06] px-6 py-3 font-semibold backdrop-blur-md transition hover:bg-white/10">
+                  <ShoppingCart className="h-4 w-4" /> Add to Cart
+                </Link>
+              </div>
+            </>
+          )}
         </div>
 
         {slides.length > 1 && (
@@ -225,14 +289,26 @@ export function HomeClient({ initialFeatured = [] }: { initialFeatured: any[] })
     Array.isArray(initialFeatured) ? initialFeatured.map(mapFeatured) : []
   )
 
-  // Optional live featured overlay (DB may be empty in dev → seed is the source of truth).
+  // Regular approved scripts — power the discovery rows (and fall back for the
+  // hero/featured when there are no active featured scripts yet).
+  const [liveScripts, setLiveScripts] = useState<MarketProduct[]>([])
+
   useEffect(() => {
-    if (initialFeatured && initialFeatured.length) return
     let cancelled = false
-    fetch("/api/featured-scripts?status=active", { cache: "no-store" })
+    // Featured overlay (only when SSR didn't seed it).
+    if (!(initialFeatured && initialFeatured.length)) {
+      fetch("/api/featured-scripts?status=active", { cache: "no-store" })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => {
+          if (!cancelled && d?.featuredScripts?.length) setLiveFeatured(d.featuredScripts.map(mapFeatured))
+        })
+        .catch(() => {})
+    }
+    // Regular catalog for the discovery rows.
+    fetch("/api/scripts", { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
-        if (!cancelled && d?.featuredScripts?.length) setLiveFeatured(d.featuredScripts.map(mapFeatured))
+        if (!cancelled && Array.isArray(d?.scripts)) setLiveScripts(d.scripts.map(mapScript))
       })
       .catch(() => {})
     return () => {
@@ -241,21 +317,21 @@ export function HomeClient({ initialFeatured = [] }: { initialFeatured: any[] })
   }, [initialFeatured])
 
   const rows = useMemo(() => {
-    // Only the featured scripts row is backed by live data. Other discovery rows
-    // render from the API as it grows; with no live source they stay empty and the
-    // <Row> component renders nothing (it returns null when there are no items).
+    // Featured/hero use real featured scripts; if none exist yet, fall back to the
+    // regular catalog so the page is never empty. Trending/New come from the catalog.
+    const featuredOrFallback = liveFeatured.length ? liveFeatured : liveScripts
     return {
-      heroItems: liveFeatured.slice(0, 5),
-      featured: liveFeatured.slice(0, 10),
-      trending: [] as MarketProduct[],
-      newReleases: [] as MarketProduct[],
-      free: [] as MarketProduct[],
+      heroItems: featuredOrFallback.slice(0, 5),
+      featured: featuredOrFallback.slice(0, 10),
+      trending: liveScripts.slice(0, 12),
+      newReleases: liveScripts.slice(0, 12), // /api/scripts is ordered newest-first
+      free: liveScripts.filter((s) => s.free).slice(0, 12),
       mlo: [] as MarketProduct[],
       vehicles: [] as MarketProduct[],
       weapons: [] as MarketProduct[],
       clothing: [] as MarketProduct[],
     }
-  }, [liveFeatured])
+  }, [liveFeatured, liveScripts])
 
   const onSearch = () => {
     const q = query.trim()
