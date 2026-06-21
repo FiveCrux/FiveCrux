@@ -15,7 +15,8 @@ import {
   giveawayRequirements, giveawayPrizes, giveawayPrizeWinners, pendingAds, approvedAds, rejectedAds,
   userAdSlots, featuredScripts,
   userFeaturedScriptSlots,
-  type Script, type Giveaway 
+  categories,
+  type Script, type Giveaway, type NewCategory
 } from './db/schema';
 import type { 
   NewUser, NewScript, NewGiveaway, NewGiveawayEntry, 
@@ -3412,4 +3413,46 @@ export async function incrementFeaturedScriptViewCount(featuredScriptId: number)
     console.error(`[incrementFeaturedScriptViewCount] Error incrementing view count:`, error);
     return false;
   }
+}
+
+// ── Categories (dynamic browse taxonomy) ───────────────────────────────────
+
+/** Active categories for the storefront, optionally scoped to home / a section. */
+export async function getCategories(opts?: { home?: boolean; appliesTo?: 'scripts' | 'props' }) {
+  const conds = [eq(categories.isActive, true)];
+  if (opts?.home) conds.push(eq(categories.showOnHome, true));
+  if (opts?.appliesTo) conds.push(inArray(categories.appliesTo, [opts.appliesTo, 'both']));
+  return db
+    .select()
+    .from(categories)
+    .where(and(...conds))
+    .orderBy(opts?.home ? asc(categories.homeOrder) : asc(categories.sortOrder), asc(categories.name));
+}
+
+/** ALL categories incl. inactive — for the admin panel. */
+export async function getAllCategories() {
+  return db.select().from(categories).orderBy(asc(categories.sortOrder), asc(categories.name));
+}
+
+export async function createCategory(data: Omit<NewCategory, 'id'> & { id?: number }) {
+  const slug = String((data as any).slug || '').trim().toLowerCase();
+  if (!slug || !data.name) throw new Error('name and slug are required');
+  const [row] = await db
+    .insert(categories)
+    .values({ ...data, id: data.id ?? genId(), slug } as any)
+    .returning();
+  return row;
+}
+
+export async function updateCategory(id: number, data: Partial<NewCategory>) {
+  const patch: any = { ...data, updatedAt: new Date() };
+  if (patch.slug) patch.slug = String(patch.slug).trim().toLowerCase();
+  delete patch.id;
+  const [row] = await db.update(categories).set(patch).where(eq(categories.id, id)).returning();
+  return row ?? null;
+}
+
+export async function deleteCategory(id: number) {
+  const [row] = await db.delete(categories).where(eq(categories.id, id)).returning();
+  return row ?? null;
 }

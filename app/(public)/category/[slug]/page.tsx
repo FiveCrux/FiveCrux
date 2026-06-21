@@ -76,6 +76,19 @@ export default function CategoryPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [scripts, setScripts] = useState<Script[]>([])
   const [loading, setLoading] = useState(true)
+  // Dynamic category name from the DB (falls back to the static map / slug).
+  const [dbCategoryName, setDbCategoryName] = useState<string | null>(null)
+  useEffect(() => {
+    fetch("/api/categories")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        const m = Array.isArray(d?.categories)
+          ? d.categories.find((c: any) => c.slug?.toLowerCase() === categorySlug?.toLowerCase())
+          : null
+        if (m) setDbCategoryName(m.name)
+      })
+      .catch(() => {})
+  }, [categorySlug])
 
   // Category information
   const categoryInfo = {
@@ -113,12 +126,13 @@ export default function CategoryPage() {
     },
   }
 
-  const currentCategory =
+  const baseCategory =
     categoryInfo[categorySlug as keyof typeof categoryInfo] ||
     {
       name: `${categorySlug ? categorySlug.charAt(0).toUpperCase() + categorySlug.slice(1) : "All"} Products`,
       description: "Browse premium FiveM resources hand-picked for your server.",
     }
+  const currentCategory = { ...baseCategory, name: dbCategoryName || baseCategory.name }
 
   useEffect(() => {
     const fetchScripts = async () => {
