@@ -59,5 +59,19 @@ const remaining = await db.select().from(categories);
 console.assert(remaining.length === 2, `expected 2 after delete, got ${remaining.length}`);
 console.log(`✓ delete → ${remaining.length} remaining`);
 
+// ---- frameworks ------------------------------------------------------------
+const { frameworks } = schema;
+await db.insert(frameworks).values([
+  { id: 1, name: "QBCore", slug: "qbcore", isActive: true, sortOrder: 1 },
+  { id: 2, name: "ESX", slug: "esx", isActive: false, sortOrder: 2 },
+]);
+const activeFw = await db.select().from(frameworks).where(eq(frameworks.isActive, true));
+console.assert(activeFw.length === 1 && activeFw[0].slug === "qbcore", "framework active filter wrong");
+console.log(`✓ frameworks active filter → ${activeFw.map((f) => f.slug).join(", ")}`);
+let fwDup = false;
+try { await db.insert(frameworks).values({ id: 9, name: "Dup", slug: "qbcore" }); } catch { fwDup = true; }
+console.assert(fwDup, "framework duplicate slug should fail");
+console.log("✓ framework unique slug enforced");
+
 await client.close();
-console.log("\n✅ categories table + all CRUD/filter paths verified");
+console.log("\n✅ categories + frameworks tables + all CRUD/filter paths verified");

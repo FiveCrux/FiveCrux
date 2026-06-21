@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { motion, useInView, AnimatePresence } from "framer-motion";
+import { useFrameworks } from "@/lib/use-frameworks";
+import { PRICE_TIERS, classifyPriceTier } from "@/lib/price-tiers";
 import {
   Search,
   X,
@@ -64,12 +66,7 @@ function mapApiScript(s: any) {
       : s.framework
         ? [s.framework]
         : [],
-    priceCategory:
-      Number(s.price) <= 15
-        ? "Budget"
-        : Number(s.price) <= 30
-          ? "Standard"
-          : "Premium",
+    priceCategory: classifyPriceTier(s.price),
     tags: (s.tags || []) as string[],
     lastUpdated: s.updated_at,
     featured: s.featured || false,
@@ -281,15 +278,8 @@ export function ScriptsClient({ initialScripts = [] }: { initialScripts: any[] }
   }, []);
 
 
-  const frameworks = [
-    { value: "qbcore", label: "QBCore" },
-    { value: "qbox", label: "Qbox" },
-    { value: "esx", label: "ESX" },
-    { value: "ox", label: "OX" },
-    { value: "vrp", label: "VRP" },
-    { value: "standalone", label: "Standalone" },
-  ]
-  const priceCategories = ["Budget", "Standard", "Premium"];
+  const frameworks = useFrameworks()
+  const priceCategories = PRICE_TIERS;
 
   // Calculate min and max prices from scripts for dynamic slider range
   const priceBounds = useMemo(() => {
