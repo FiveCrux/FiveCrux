@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { motion, useInView } from "framer-motion"
+import { motion } from "framer-motion"
 import { Button } from "@/componentss/ui/button"
 import Navbar from "@/componentss/shared/navbar"
 import Footer from "@/componentss/shared/footer"
@@ -13,14 +13,12 @@ import {
   Check,
   Star,
   ArrowRight,
-  ArrowUpRight,
   Sparkles,
   Crown,
   Loader2,
   ShoppingCart,
   LayoutGrid,
   MessageSquare,
-  BadgeCheck,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
@@ -140,91 +138,20 @@ const featuredScriptPackages: PricingPackage[] = [
 ]
 
 /* ----------------------------------------------------------------------------
- * Presentational demo data (reach stats / chart / trusted-by / testimonial).
- * These are illustrative only — no real analytics endpoint is wired up.
+ * What an advertiser actually gets. Honest, qualitative value props — no
+ * fabricated reach/CTR numbers (FiveCrux has no analytics endpoint wired up
+ * yet, so any number here would be made up). Swap to real metrics once
+ * impression/click tracking exists.
  * -------------------------------------------------------------------------- */
-const reachStats = [
-  { value: 2400, suffix: "+", decimals: 0, label: "Active servers reached", accent: false },
-  { value: 48, suffix: "k+", decimals: 0, label: "Monthly ad views", accent: false },
-  { value: 8.4, suffix: "%", decimals: 1, label: "Average click-through", accent: true },
+const placementBenefits = [
+  { title: "Homepage & search placement", desc: "Your slot shows where buyers are actually browsing — not buried in a sidebar.", accent: true },
+  { title: "Featured for the full term", desc: "Stay highlighted for your whole booking — 1 month to a year, your choice.", accent: false },
+  { title: "Direct link to your store", desc: "Every click sends buyers straight to your own site or product — no middle step.", accent: false },
 ]
-
-const viewsTrend = [
-  { month: "Jan", x: 0, y: 160 },
-  { month: "Feb", x: 75, y: 150 },
-  { month: "Mar", x: 150, y: 165 },
-  { month: "Apr", x: 225, y: 120 },
-  { month: "May", x: 375, y: 90 },
-  { month: "Jun", x: 600, y: 40 },
-]
-
-const placementBars = [
-  { label: "Listing", height: 46, tone: "bg-white/15" },
-  { label: "Search", height: 68, tone: "bg-white/25" },
-  { label: "Homepage", height: 100, tone: "bg-gradient-to-t from-orange-600 to-[#f97316]", accent: true },
-]
-
-const trustedCreators = [
-  { name: "CruxDev", letter: "C", from: "from-orange-500", to: "to-amber-400", text: "text-black", verified: true },
-  { name: "MapMasters", letter: "M", from: "from-violet-500", to: "to-indigo-600", text: "text-white", verified: true },
-  { name: "NightShift", letter: "N", from: "from-sky-500", to: "to-blue-700", text: "text-white", verified: true },
-  { name: "HighRoller", letter: "H", from: "from-yellow-500", to: "to-amber-700", text: "text-black", verified: true },
-  { name: "PixelForge", letter: "P", from: "from-emerald-500", to: "to-green-700", text: "text-black", verified: false },
-]
-
-/* Count-up hook — fires when the element scrolls into view (subtle, demo only) */
-function useCountUp(target: number, decimals: number, active: boolean, duration = 1400) {
-  const [value, setValue] = useState(0)
-
-  useEffect(() => {
-    if (!active) return
-    let raf = 0
-    const start = performance.now()
-    const tick = (now: number) => {
-      const p = Math.min((now - start) / duration, 1)
-      const eased = 1 - Math.pow(1 - p, 3)
-      setValue(target * eased)
-      if (p < 1) raf = requestAnimationFrame(tick)
-    }
-    raf = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(raf)
-  }, [target, active, duration])
-
-  return Number(value.toFixed(decimals)).toLocaleString(undefined, {
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  })
-}
-
-function ReachStat({ stat, active }: { stat: typeof reachStats[number]; active: boolean }) {
-  const display = useCountUp(stat.value, stat.decimals, active)
-  return (
-    <div className="bg-[#0a0a0a] px-8 py-10 text-center">
-      <div
-        className={cn(
-          "text-5xl md:text-6xl font-extrabold tracking-tight tabular-nums",
-          stat.accent ? "text-[#f97316]" : "text-white"
-        )}
-      >
-        {display}
-        {stat.suffix}
-      </div>
-      <div className="mt-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/55">
-        {stat.label}
-      </div>
-    </div>
-  )
-}
 
 export default function AdvertisePage() {
   const heroRef = useRef<HTMLDivElement>(null)
   const pricingRef = useRef<HTMLDivElement>(null)
-
-  const statsRef = useRef<HTMLDivElement>(null)
-  const statsInView = useInView(statsRef, { once: true, amount: 0.4 })
-
-  const chartRef = useRef<HTMLDivElement>(null)
-  const chartInView = useInView(chartRef, { once: true, amount: 0.3 })
 
   // State for selected tab (ad slots or featured script slots)
   const [activeTab, setActiveTab] = useState<"ads" | "featured-scripts">("ads")
@@ -335,11 +262,6 @@ export default function AdvertisePage() {
   // Get current packages based on active tab
   const currentPackages = activeTab === "ads" ? pricingPackages : featuredScriptPackages
 
-  // Build the inline SVG path from the demo trend points
-  const linePath = viewsTrend.map((p, i) => `${i === 0 ? "M" : "L"}${p.x},${p.y}`).join(" ")
-  const fillPath = `${linePath} L600,200 L0,200 Z`
-  const lastPoint = viewsTrend[viewsTrend.length - 1]
-
   return (
     <>
       <Navbar />
@@ -383,119 +305,21 @@ export default function AdvertisePage() {
               </div>
             </motion.div>
 
-            {/* big animated stat blocks */}
-            <div
-              ref={statsRef}
-              className="mt-14 grid gap-px overflow-hidden rounded-3xl border border-white/[0.07] bg-white/[0.04] sm:grid-cols-3"
-            >
-              {reachStats.map((stat) => (
-                <ReachStat key={stat.label} stat={stat} active={statsInView} />
-              ))}
-            </div>
-            <div className="mt-4 flex items-center justify-center gap-2 text-sm text-white/55">
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
-              </span>
-              Live across the marketplace right now
-            </div>
-          </div>
-        </section>
-
-        {/* ===== VISIBILITY VISUAL ===== */}
-        <section ref={chartRef} className="mx-auto max-w-7xl px-5 py-16">
-          <div className="grid gap-6 lg:grid-cols-5">
-            {/* line chart: monthly views trend */}
-            <div className="rounded-3xl border border-white/[0.07] bg-white/[0.025] p-7 lg:col-span-3">
-              <div className="flex items-start justify-between">
-                <div>
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/55">
-                    Monthly ad views
+            {/* what you get — honest value props (no fabricated metrics) */}
+            <div className="mt-14 grid gap-px overflow-hidden rounded-3xl border border-white/[0.07] bg-white/[0.04] sm:grid-cols-3">
+              {placementBenefits.map((b) => (
+                <div key={b.title} className="bg-[#0a0a0a] px-7 py-9">
+                  <div
+                    className={cn(
+                      "text-lg font-extrabold tracking-tight",
+                      b.accent ? "text-[#f97316]" : "text-white"
+                    )}
+                  >
+                    {b.title}
                   </div>
-                  <div className="mt-1 text-3xl font-extrabold tracking-tight tabular-nums">
-                    48,200
-                  </div>
+                  <p className="mt-2 text-sm leading-relaxed text-white/55">{b.desc}</p>
                 </div>
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1 text-sm font-semibold text-emerald-400 ring-1 ring-emerald-500/25">
-                  <ArrowUpRight className="h-3.5 w-3.5" /> +32% QoQ
-                </span>
-              </div>
-              <svg
-                viewBox="0 0 600 200"
-                className="mt-6 w-full"
-                preserveAspectRatio="none"
-                role="img"
-                aria-label="Monthly views trend line"
-              >
-                <defs>
-                  <linearGradient id="advViewsFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#f97316" stopOpacity="0.35" />
-                    <stop offset="100%" stopColor="#f97316" stopOpacity="0" />
-                  </linearGradient>
-                </defs>
-                <line x1="0" y1="50" x2="600" y2="50" stroke="rgba(255,255,255,0.05)" />
-                <line x1="0" y1="100" x2="600" y2="100" stroke="rgba(255,255,255,0.05)" />
-                <line x1="0" y1="150" x2="600" y2="150" stroke="rgba(255,255,255,0.05)" />
-                <path d={fillPath} fill="url(#advViewsFill)" />
-                <motion.path
-                  d={linePath}
-                  fill="none"
-                  stroke="#f97316"
-                  strokeWidth="2.5"
-                  strokeLinejoin="round"
-                  strokeLinecap="round"
-                  initial={{ pathLength: 0 }}
-                  animate={chartInView ? { pathLength: 1 } : { pathLength: 0 }}
-                  transition={{ duration: 1.6, ease: "easeOut" }}
-                />
-                <motion.circle
-                  cx={lastPoint.x}
-                  cy={lastPoint.y}
-                  r="4"
-                  fill="#f97316"
-                  initial={{ opacity: 0 }}
-                  animate={chartInView ? { opacity: 1 } : { opacity: 0 }}
-                  transition={{ delay: 1.4, duration: 0.4 }}
-                />
-              </svg>
-              <div className="mt-3 flex justify-between text-[11px] tabular-nums text-white/55">
-                {viewsTrend.map((p) => (
-                  <span key={p.month}>{p.month}</span>
-                ))}
-              </div>
-            </div>
-
-            {/* bar chart: clicks by placement */}
-            <div className="rounded-3xl border border-white/[0.07] bg-white/[0.025] p-7 lg:col-span-2">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/55">
-                Clicks by placement
-              </div>
-              <div className="mt-1 text-3xl font-extrabold tracking-tight tabular-nums">4,072</div>
-              <div className="mt-7 flex h-44 items-end justify-around gap-4">
-                {placementBars.map((bar, i) => (
-                  <div key={bar.label} className="flex h-full flex-col items-center justify-end">
-                    <motion.div
-                      className={cn("w-9 rounded-t-lg", bar.tone)}
-                      initial={{ height: 0 }}
-                      animate={chartInView ? { height: `${bar.height}%` } : { height: 0 }}
-                      transition={{ duration: 1.1, delay: i * 0.1, ease: [0.16, 1, 0.3, 1] }}
-                    />
-                    <span
-                      className={cn(
-                        "mt-3 text-[10px] font-semibold uppercase tracking-[0.18em]",
-                        bar.accent ? "text-[#f97316]" : "text-white/55"
-                      )}
-                    >
-                      {bar.label}
-                    </span>
-                  </div>
-                ))}
-              </div>
-              <p className="mt-5 border-t border-white/[0.07] pt-4 text-xs text-white/55">
-                Homepage spotlight drives{" "}
-                <span className="font-semibold text-white">2.1×</span> the clicks of standard
-                listing placement.
-              </p>
+              ))}
             </div>
           </div>
         </section>
@@ -760,57 +584,8 @@ export default function AdvertisePage() {
           </div>
         </section>
 
-        {/* ===== TRUSTED BY + TESTIMONIAL + CTA ===== */}
+        {/* ===== CTA ===== */}
         <section className="mx-auto max-w-7xl px-5 py-16">
-          <div className="text-center">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/55">
-              Trusted by creators advertising on FiveCrux
-            </div>
-          </div>
-          <div className="mx-auto mt-7 flex max-w-4xl flex-wrap items-center justify-center gap-3">
-            {trustedCreators.map((creator) => (
-              <span
-                key={creator.name}
-                className="inline-flex items-center gap-2 rounded-full border border-white/[0.07] bg-white/[0.02] px-4 py-2 text-sm font-semibold"
-              >
-                <span
-                  className={cn(
-                    "grid h-6 w-6 place-items-center rounded-full bg-gradient-to-br text-[11px] font-black",
-                    creator.from,
-                    creator.to,
-                    creator.text
-                  )}
-                >
-                  {creator.letter}
-                </span>
-                {creator.name}
-                {creator.verified && <BadgeCheck className="h-4 w-4 text-[#f97316]" />}
-              </span>
-            ))}
-          </div>
-
-          <figure className="mx-auto mt-12 max-w-3xl rounded-3xl border border-white/[0.07] bg-white/[0.02] p-8 text-center md:p-10">
-            <div className="flex justify-center gap-1 text-[#f97316]">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Star key={i} className="h-4 w-4 fill-current" />
-              ))}
-            </div>
-            <blockquote className="mt-5 text-xl font-semibold leading-relaxed tracking-tight md:text-2xl">
-              &ldquo;We boosted our garage script into the homepage spotlight for two weeks and
-              did <span className="tabular-nums text-[#f97316]">3×</span> our normal sales. The
-              real-time analytics made it easy to justify the spend.&rdquo;
-            </blockquote>
-            <figcaption className="mt-6 flex items-center justify-center gap-3 text-sm">
-              <span className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-orange-500 to-amber-400 font-black text-black">
-                C
-              </span>
-              <span>
-                <span className="font-semibold">CruxDev</span>{" "}
-                <span className="text-white/55">· 12.4k sales · Verified seller</span>
-              </span>
-            </figcaption>
-          </figure>
-
           {/* final CTA */}
           <div className="mx-auto mt-12 max-w-3xl rounded-3xl bg-gradient-to-br from-[#f97316] to-orange-600 p-8 text-center text-black md:p-10">
             <h2 className="text-2xl font-extrabold tracking-tight md:text-3xl">

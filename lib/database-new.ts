@@ -16,14 +16,15 @@ import {
   userAdSlots, featuredScripts,
   userFeaturedScriptSlots,
   categories,
-  type Script, type Giveaway, type NewCategory
+  frameworks,
+  type Script, type Giveaway, type NewCategory, type NewFramework
 } from './db/schema';
 import type { 
   NewUser, NewScript, NewGiveaway, NewGiveawayEntry, 
   NewAd, 
   NewGiveawayRequirement, NewGiveawayPrize, NewFeaturedScript, NewPendingProp
 } from './db/schema';
-import { validateFrameworks, isValidFramework } from './constants';
+import { validateFrameworks } from './constants';
 import { announceScriptFeatured } from './discord';
 
 // Valid roles in the system
@@ -3454,5 +3455,42 @@ export async function updateCategory(id: number, data: Partial<NewCategory>) {
 
 export async function deleteCategory(id: number) {
   const [row] = await db.delete(categories).where(eq(categories.id, id)).returning();
+  return row ?? null;
+}
+
+/** Active frameworks for the storefront filter facets. */
+export async function getFrameworks() {
+  return db
+    .select()
+    .from(frameworks)
+    .where(eq(frameworks.isActive, true))
+    .orderBy(asc(frameworks.sortOrder), asc(frameworks.name));
+}
+
+/** ALL frameworks incl. inactive — for the admin panel. */
+export async function getAllFrameworks() {
+  return db.select().from(frameworks).orderBy(asc(frameworks.sortOrder), asc(frameworks.name));
+}
+
+export async function createFramework(data: Omit<NewFramework, 'id'> & { id?: number }) {
+  const slug = String((data as any).slug || '').trim().toLowerCase();
+  if (!slug || !data.name) throw new Error('name and slug are required');
+  const [row] = await db
+    .insert(frameworks)
+    .values({ ...data, id: data.id ?? genId(), slug } as any)
+    .returning();
+  return row;
+}
+
+export async function updateFramework(id: number, data: Partial<NewFramework>) {
+  const patch: any = { ...data, updatedAt: new Date() };
+  if (patch.slug) patch.slug = String(patch.slug).trim().toLowerCase();
+  delete patch.id;
+  const [row] = await db.update(frameworks).set(patch).where(eq(frameworks.id, id)).returning();
+  return row ?? null;
+}
+
+export async function deleteFramework(id: number) {
+  const [row] = await db.delete(frameworks).where(eq(frameworks.id, id)).returning();
   return row ?? null;
 }

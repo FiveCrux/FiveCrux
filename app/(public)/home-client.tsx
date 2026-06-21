@@ -15,12 +15,9 @@ import {
   Sparkles,
   Zap,
   Gift,
-  Building2,
   Code2,
   Package,
   Car,
-  Crosshair,
-  Shirt,
   Upload,
   BadgeDollarSign,
   Users,
@@ -85,6 +82,7 @@ function mapScript(item: any): MarketProduct {
     seller: item.seller_name || item.sellerName || item.seller,
     sellerImage: item.seller_image || item.sellerImage,
     coverImage: item.cover_image || item.coverImage,
+    category: item.category,
     href: `/script/${item.id}`,
   }
 }
@@ -348,12 +346,26 @@ export function HomeClient({ initialFeatured = [] }: { initialFeatured: any[] })
       trending: liveScripts.slice(0, 12),
       newReleases: liveScripts.slice(0, 12), // /api/scripts is ordered newest-first
       free: liveScripts.filter((s) => s.free).slice(0, 12),
-      mlo: [] as MarketProduct[],
-      vehicles: [] as MarketProduct[],
-      weapons: [] as MarketProduct[],
-      clothing: [] as MarketProduct[],
     }
   }, [liveFeatured, liveScripts])
+
+  // Per-category rows for the home-flagged categories — match scripts by category
+  // (slug or name, case-insensitive). Only categories with items get a row.
+  const categoryRows = useMemo(() => {
+    return homeCats
+      .map((cat) => {
+        const key = cat.slug.toLowerCase()
+        const name = cat.name.toLowerCase()
+        const items = liveScripts
+          .filter((s) => {
+            const c = (s.category || "").toLowerCase()
+            return c === key || c === name
+          })
+          .slice(0, 12)
+        return { cat, items }
+      })
+      .filter((r) => r.items.length > 0)
+  }, [homeCats, liveScripts])
 
   const onSearch = () => {
     const q = query.trim()
@@ -391,10 +403,18 @@ export function HomeClient({ initialFeatured = [] }: { initialFeatured: any[] })
         <Row title="Trending This Week" emoji="🔥" items={rows.trending} seeAllHref="/scripts" />
         <Row title="New Releases" icon={<Zap className="h-5 w-5 text-orange-400" />} items={rows.newReleases} seeAllHref="/scripts" />
         <Row title="Free Scripts" icon={<Gift className="h-5 w-5 text-green-400" />} items={rows.free} seeAllHref="/scripts?free=true" />
-        <Row title="Top MLOs & Maps" icon={<Building2 className="h-5 w-5 text-yellow-400" />} items={rows.mlo} seeAllHref="/scripts?category=mlo" />
-        <Row title="Vehicles" icon={<Car className="h-5 w-5 text-sky-400" />} items={rows.vehicles} seeAllHref="/scripts?category=vehicles" />
-        <Row title="Weapons" icon={<Crosshair className="h-5 w-5 text-red-400" />} items={rows.weapons} seeAllHref="/scripts?category=weapons" />
-        <Row title="Clothing & EUP" icon={<Shirt className="h-5 w-5 text-pink-400" />} items={rows.clothing} seeAllHref="/scripts?category=clothing" />
+        {categoryRows.map(({ cat, items }) => {
+          const Icon = categoryIcon(cat.icon)
+          return (
+            <Row
+              key={cat.slug}
+              title={cat.name}
+              icon={<Icon className="h-5 w-5 text-orange-400" />}
+              items={items}
+              seeAllHref={`/scripts?category=${cat.slug}`}
+            />
+          )
+        })}
       </main>
 
       {/* Start selling strip */}

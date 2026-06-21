@@ -205,6 +205,17 @@ async function main() {
   ]).onConflictDoNothing()
   console.log("✓ 6 browse categories")
 
+  // ---- Frameworks (dynamic, admin-managed) ----------------------------------
+  await db.insert(schema.frameworks).values([
+    { id: 9001, name: "QBCore", slug: "qbcore", isActive: true, sortOrder: 1 },
+    { id: 9002, name: "Qbox", slug: "qbox", isActive: true, sortOrder: 2 },
+    { id: 9003, name: "ESX", slug: "esx", isActive: true, sortOrder: 3 },
+    { id: 9004, name: "OX", slug: "ox", isActive: true, sortOrder: 4 },
+    { id: 9005, name: "VRP", slug: "vrp", isActive: true, sortOrder: 5 },
+    { id: 9006, name: "Standalone", slug: "standalone", isActive: true, sortOrder: 6 },
+  ]).onConflictDoNothing()
+  console.log("✓ 6 frameworks")
+
   await client.close()
   console.log("\n✅ Local PGlite DB ready. Start the app with USE_PGLITE=true.")
 }

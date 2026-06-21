@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { motion, useInView, AnimatePresence } from "framer-motion";
+import { useFrameworks } from "@/lib/use-frameworks";
+import { PRICE_TIERS, classifyPriceTier } from "@/lib/price-tiers";
 import {
   Search,
   SlidersHorizontal,
@@ -127,12 +129,7 @@ export default function PropsPage() {
               seller_roles: s.user?.roles || null,
               discount: Number(s.discountPercentage) || 0,
               framework: [],
-              priceCategory:
-                Number(s.price) <= 15
-                  ? "Budget"
-                  : Number(s.price) <= 30
-                  ? "Standard"
-                  : "Premium",
+              priceCategory: classifyPriceTier(s.price),
               tags: [],
               lastUpdated: s.updatedAt || s.createdAt,
               featured: false,
@@ -173,15 +170,8 @@ export default function PropsPage() {
     { id: "vehicles", name: "Vehicles" },
   ];
 
-  const frameworks = [
-    { value: "qbcore", label: "QBCore" },
-    { value: "qbox", label: "Qbox" },
-    { value: "esx", label: "ESX" },
-    { value: "ox", label: "OX" },
-    { value: "vrp", label: "VRP" },
-    { value: "standalone", label: "Standalone" },
-  ];
-  const priceCategories = ["Budget", "Standard", "Premium"];
+  const frameworks = useFrameworks();
+  const priceCategories = PRICE_TIERS;
 
   // Calculate min and max prices from props for dynamic slider range
   const priceBounds = useMemo(() => {
