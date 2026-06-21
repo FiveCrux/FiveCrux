@@ -596,111 +596,51 @@ export function ScriptDetailClient({
             </div>
           )}
 
-          {/* Title + meta + price/CTA bar */}
-          <section className="mt-6 flex flex-col gap-6 rounded-[24px] border border-white/[0.07] bg-[#0e0e0e] p-6 shadow-[0_24px_60px_-30px_rgba(0,0,0,0.9)] lg:flex-row lg:items-center lg:gap-8 lg:p-7">
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-md bg-white/[0.06] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/55">
-                  {categoryLabel}
-                </span>
-                {script.framework &&
-                  script.framework.map((fw, idx) => (
-                    <span
-                      key={idx}
-                      className="rounded-md bg-sky-500/10 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-sky-300 ring-1 ring-sky-500/20"
-                    >
-                      {fw}
-                    </span>
-                  ))}
-              </div>
-              <h1 className="mt-3 text-[28px] font-extrabold leading-tight tracking-tight sm:text-[32px]">
-                {script.title}
-              </h1>
-              <div className="mt-2.5 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
-                <span className="flex items-center gap-2 text-white/55">
-                  <span className="grid h-6 w-6 place-items-center rounded-full bg-gradient-to-br from-orange-500 to-amber-400 text-[10px] font-black text-black">
-                    {sellerInitial}
+          {/* Title + meta */}
+          <section className="mt-6 rounded-[24px] border border-white/[0.07] bg-[#0e0e0e] p-6 shadow-[0_24px_60px_-30px_rgba(0,0,0,0.9)] lg:p-7">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-md bg-white/[0.06] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/55">
+                {categoryLabel}
+              </span>
+              {script.framework &&
+                script.framework.map((fw, idx) => (
+                  <span
+                    key={idx}
+                    className="rounded-md bg-sky-500/10 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-sky-300 ring-1 ring-sky-500/20"
+                  >
+                    {fw}
                   </span>
-                  {script.seller_name}
-                  {verified && <BadgeCheck className="h-4 w-4 text-orange-500" />}
-                </span>
-                {typeof script.rating === "number" && script.rating > 0 && (
-                  <span className="flex items-center gap-1.5 text-white/55">
-                    <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-                    <span className="font-semibold text-white">
-                      {script.rating.toFixed(1)}
-                    </span>
-                    {script.review_count > 0 && (
-                      <span className="text-white/55">
-                        ({script.review_count} reviews)
-                      </span>
-                    )}
-                  </span>
-                )}
-                {script.downloads > 0 && (
-                  <span className="flex items-center gap-1.5 text-white/55">
-                    <Download className="h-4 w-4" />
-                    <span>{script.downloads.toLocaleString()}</span> downloads
-                  </span>
-                )}
-              </div>
+                ))}
             </div>
-
-            {/* price + cta */}
-            <div className="lg:w-[320px] lg:flex-none lg:border-l lg:border-white/[0.07] lg:pl-8">
-              <div className="flex items-end gap-3">
-                {isFree ? (
-                  <span className="text-[38px] font-extrabold leading-none tracking-tight text-green-400">
-                    Free
+            <h1 className="mt-3 text-[28px] font-extrabold leading-tight tracking-tight sm:text-[32px]">
+              {script.title}
+            </h1>
+            <div className="mt-2.5 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
+              <span className="flex items-center gap-2 text-white/55">
+                <span className="grid h-6 w-6 place-items-center rounded-full bg-gradient-to-br from-orange-500 to-amber-400 text-[10px] font-black text-black">
+                  {sellerInitial}
+                </span>
+                {script.seller_name}
+                {verified && <BadgeCheck className="h-4 w-4 text-orange-500" />}
+              </span>
+              {typeof script.rating === "number" && script.rating > 0 && (
+                <span className="flex items-center gap-1.5 text-white/55">
+                  <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+                  <span className="font-semibold text-white">
+                    {script.rating.toFixed(1)}
                   </span>
-                ) : (
-                  <>
-                    <span className="text-[38px] font-extrabold leading-none tracking-tight">
-                      {currency}
-                      {script.price}
+                  {script.review_count > 0 && (
+                    <span className="text-white/55">
+                      ({script.review_count} reviews)
                     </span>
-                    {script.original_price && (
-                      <span className="mb-1 text-base text-white/55 line-through">
-                        {currency}
-                        {script.original_price}
-                      </span>
-                    )}
-                    {script.original_price && discount > 0 && (
-                      <span className="mb-1 rounded-md bg-emerald-500/12 px-2 py-0.5 text-xs font-bold text-emerald-400 ring-1 ring-emerald-500/25">
-                        −{discount}%
-                      </span>
-                    )}
-                  </>
-                )}
-              </div>
-              <div className="mt-4 flex flex-col gap-2.5">
-                <Button
-                  onClick={handleBuy}
-                  disabled={!canBuy || buying}
-                  className="group flex h-auto w-full items-center justify-center gap-2 rounded-2xl bg-orange-500 py-3.5 font-bold text-black transition hover:bg-orange-400 disabled:opacity-50"
-                >
-                  {buying ? (
-                    <>
-                      <Loader2 className="h-[18px] w-[18px] animate-spin" />
-                      Processing...
-                    </>
-                  ) : (
-                    <>
-                      <ShoppingCart className="h-[18px] w-[18px]" />
-                      {isFree ? "Get it Free" : "Buy Now"}
-                    </>
                   )}
-                </Button>
-              </div>
-              {canBuy ? (
-                <p className="mt-3 flex items-center justify-center gap-1.5 text-[12px] text-white/55">
-                  <ShieldCheck className="h-3.5 w-3.5" /> Redirects to the seller store
-                </p>
-              ) : (
-                <p className="mt-3 flex items-center justify-center gap-1.5 text-[12px] text-white/55">
-                  <AlertCircle className="h-3.5 w-3.5" /> No purchase link
-                  available
-                </p>
+                </span>
+              )}
+              {script.downloads > 0 && (
+                <span className="flex items-center gap-1.5 text-white/55">
+                  <Download className="h-4 w-4" />
+                  <span>{script.downloads.toLocaleString()}</span> downloads
+                </span>
               )}
             </div>
           </section>
@@ -794,8 +734,119 @@ export function ScriptDetailClient({
               </section>
             </div>
 
-            {/* RIGHT: seller card */}
-            <aside className="lg:sticky lg:top-24 lg:h-fit">
+            {/* RIGHT: buy card + seller */}
+            <aside className="flex flex-col gap-4 lg:sticky lg:top-24 lg:h-fit">
+              {/* Buy card — orange clip-path price header + CTA + perks */}
+              <div className="overflow-hidden rounded-[18px] border border-white/[0.08] bg-white/[0.02]">
+                <div
+                  className="relative bg-gradient-to-br from-orange-500 to-orange-600 px-6 pb-9 pt-5"
+                  style={{ clipPath: "polygon(0 0,100% 0,100% 74%,0 100%)" }}
+                >
+                  {!isFree && script.original_price && discount > 0 && (
+                    <span className="absolute right-5 top-5 rounded-full bg-white px-3 py-1 text-xs font-extrabold text-orange-600">
+                      −{discount}%
+                    </span>
+                  )}
+                  <small className="text-[11px] font-bold uppercase tracking-[0.14em] text-white/85">
+                    {isFree ? "Free download" : "One-time purchase"}
+                  </small>
+                  <div className="mt-1 flex flex-wrap items-center gap-2.5 text-[40px] font-black leading-none tracking-tight text-white">
+                    {isFree ? (
+                      "Free"
+                    ) : (
+                      <>
+                        {currency}
+                        {script.price}
+                        {script.original_price && (
+                          <del className="text-[17px] font-normal text-white/60">
+                            {currency}
+                            {script.original_price}
+                          </del>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </div>
+                <div className="-mt-3 flex flex-col gap-4 px-6 pb-6">
+                  <div className="flex items-center gap-2.5">
+                    <Button
+                      onClick={handleBuy}
+                      disabled={!canBuy || buying}
+                      className="group flex h-[52px] flex-1 items-center justify-center gap-2 rounded-full bg-gradient-to-br from-orange-500 to-orange-600 font-bold text-white shadow-[0_4px_20px_rgba(249,115,22,0.3)] transition hover:from-orange-400 hover:to-orange-500 disabled:opacity-50"
+                    >
+                      {buying ? (
+                        <>
+                          <Loader2 className="h-[18px] w-[18px] animate-spin" /> Processing…
+                        </>
+                      ) : (
+                        <>
+                          <ShoppingCart className="h-[18px] w-[18px]" />
+                          {isFree ? "Get it Free" : "Buy Now"}
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                  <div className="flex flex-col gap-2.5">
+                    <div className="flex items-center gap-2.5 text-[13.5px] text-white/70">
+                      <span className="grid h-[30px] w-[30px] flex-none place-items-center rounded-lg bg-orange-500/12 text-orange-500">
+                        <Zap className="h-3.5 w-3.5" />
+                      </span>
+                      Instant access right after checkout
+                    </div>
+                    <div className="flex items-center gap-2.5 text-[13.5px] text-white/70">
+                      <span className="grid h-[30px] w-[30px] flex-none place-items-center rounded-lg bg-orange-500/12 text-orange-500">
+                        <ShieldCheck className="h-3.5 w-3.5" />
+                      </span>
+                      Secure checkout on the seller store
+                    </div>
+                    <div className="flex items-center gap-2.5 text-[13.5px] text-white/70">
+                      <span className="grid h-[30px] w-[30px] flex-none place-items-center rounded-lg bg-orange-500/12 text-orange-500">
+                        <LifeBuoy className="h-3.5 w-3.5" />
+                      </span>
+                      Updates &amp; support from the seller
+                    </div>
+                  </div>
+                  {!canBuy && (
+                    <p className="flex items-center justify-center gap-1.5 text-[12px] text-white/55">
+                      <AlertCircle className="h-3.5 w-3.5" /> No purchase link available yet
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* External links (only when present) */}
+              {(script.youtube_video_link ||
+                (script.other_links && script.other_links.length > 0)) && (
+                <div className="rounded-[18px] border border-white/[0.07] bg-white/[0.02] p-4">
+                  <div className="text-[11px] font-bold uppercase tracking-[0.1em] text-white/45">
+                    Links
+                  </div>
+                  <div className="mt-2.5 flex flex-wrap gap-2">
+                    {script.youtube_video_link && (
+                      <a
+                        href={script.youtube_video_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-red-500/20 bg-red-500/10 px-3.5 text-xs font-semibold text-red-300 transition hover:bg-red-500/15"
+                      >
+                        <Play className="h-3.5 w-3.5" /> YouTube
+                      </a>
+                    )}
+                    {script.other_links?.filter(Boolean).map((url, i) => (
+                      <a
+                        key={i}
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-white/[0.08] bg-white/[0.05] px-3.5 text-xs font-semibold text-white/55 transition hover:text-white"
+                      >
+                        <ArrowRight className="h-3.5 w-3.5" /> Link {i + 1}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="rounded-[22px] border border-white/[0.07] bg-[#0e0e0e] p-5">
                 <div className="flex items-center gap-3">
                   {script.seller_image ? (
