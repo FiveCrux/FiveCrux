@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useMemo } from "react"
 import { Search, Filter, Grid, List, ChevronDown, Package } from "lucide-react"
+import { useFrameworks } from "@/lib/use-frameworks"
+import { PRICE_TIERS, PRICE_TIER_LABELS, classifyPriceTier } from "@/lib/price-tiers"
 import { Button } from "@/componentss/ui/button"
 import { Input } from "@/componentss/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/componentss/ui/select"
@@ -164,15 +166,8 @@ export default function CategoryPage() {
     fetchScripts()
   }, [categorySlug])
 
-  const frameworks = [
-    { value: "All Frameworks", label: "All Frameworks" },
-    { value: "qbcore", label: "QBCore" },
-    { value: "qbox", label: "Qbox" },
-    { value: "esx", label: "ESX" },
-    { value: "ox", label: "OX" },
-    { value: "standalone", label: "Standalone" }
-  ]
-  const priceCategories = ["Budget ($0-$15)", "Standard ($15-$30)", "Premium ($30+)"]
+  const frameworks = [{ value: "All Frameworks", label: "All Frameworks" }, ...useFrameworks()]
+  const priceCategories = PRICE_TIERS
 
   const handleFrameworkChange = (framework: string, checked: boolean) => {
     if (checked) {
@@ -224,9 +219,7 @@ export default function CategoryPage() {
 
       // Price category filter
       if (selectedPriceCategories.length > 0) {
-        const priceCategory = product.price <= 15 ? "Budget ($0-$15)" :
-                            product.price <= 30 ? "Standard ($15-$30)" : "Premium ($30+)"
-        if (!selectedPriceCategories.includes(priceCategory)) {
+        if (!selectedPriceCategories.includes(classifyPriceTier(product.price))) {
           return false
         }
       }
@@ -394,7 +387,7 @@ export default function CategoryPage() {
                           className="border-white/20 data-[state=checked]:border-orange-500 data-[state=checked]:bg-orange-500"
                         />
                         <label htmlFor={category} className="text-sm text-white/70">
-                          {category}
+                          {PRICE_TIER_LABELS[category]}
                         </label>
                       </div>
                     ))}

@@ -11,11 +11,18 @@ export const FRAMEWORK_LABELS: Record<ValidFramework, string> = {
   standalone: 'Standalone'
 };
 
-// Helper function to validate frameworks
-export function validateFrameworks(frameworks: string[]): ValidFramework[] {
-  return frameworks.filter(framework => 
-    VALID_FRAMEWORKS.includes(framework as ValidFramework)
-  ) as ValidFramework[];
+// Sanitize a submitted framework list. Frameworks are now admin-managed in the
+// DB (the `frameworks` table) — the submit form only offers valid options — so
+// this no longer whitelists against a fixed set. It just normalizes: trim,
+// lowercase, drop empties, dedupe. (Kept sync so create/update paths need no
+// DB round-trip.)
+export function validateFrameworks(frameworks: string[]): string[] {
+  const seen = new Set<string>();
+  for (const f of frameworks || []) {
+    const slug = String(f || '').trim().toLowerCase();
+    if (slug) seen.add(slug);
+  }
+  return Array.from(seen);
 }
 
 // Helper function to check if framework is valid
