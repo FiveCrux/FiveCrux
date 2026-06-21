@@ -33,6 +33,20 @@ export const categories = pgTable('categories', {
 export type Category = typeof categories.$inferSelect;
 export type NewCategory = typeof categories.$inferInsert;
 
+// Frameworks (QBCore / ESX / OX / …) — the framework filter facet, admin-managed
+// and dynamic, the same way categories are.
+export const frameworks = pgTable('frameworks', {
+  id: integer('id').primaryKey().notNull(),          // app-generated (matches prod PK style)
+  name: text('name').notNull(),                      // "QBCore" (label)
+  slug: text('slug').notNull().unique(),             // "qbcore" (value used in filters)
+  isActive: boolean('is_active').notNull().default(true),
+  sortOrder: integer('sort_order').notNull().default(0),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+export type Framework = typeof frameworks.$inferSelect;
+export type NewFramework = typeof frameworks.$inferInsert;
+
 export const couponScopeEnum = pgEnum('coupon_scope', [
   'subscription',
   'prop',

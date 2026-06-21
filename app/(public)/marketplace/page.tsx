@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react"
 import { motion } from "framer-motion"
 import Link from "next/link"
 import { Search, Upload, SlidersHorizontal, X } from "lucide-react"
+import { useFrameworks } from "@/lib/use-frameworks"
 import { Button } from "@/componentss/ui/button"
 import Navbar from "@/componentss/shared/navbar"
 import Footer from "@/componentss/shared/footer"
@@ -52,9 +53,9 @@ const CATEGORIES = [
   { value: "prop", label: "Props" },
 ]
 
-const FRAMEWORKS = ["Standalone", "ESX", "QBCore", "Qbox", "OX"]
-
 export default function MarketplacePage() {
+  // Dynamic frameworks (DB-managed). value = slug (matches stored framework), label = display.
+  const frameworkOptions = useFrameworks()
   // ── data + filter state ──────────────────────────────────────────────
   const [products, setProducts] = useState<MarketProduct[]>([])
   const [loading, setLoading] = useState(true)
@@ -229,17 +230,17 @@ export default function MarketplacePage() {
             >
               <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-white/50">Framework</h3>
               <div className="flex flex-wrap gap-2">
-                {FRAMEWORKS.map((fw) => (
+                {frameworkOptions.map((fw) => (
                   <button
-                    key={fw}
-                    onClick={() => toggleFramework(fw)}
+                    key={fw.value}
+                    onClick={() => toggleFramework(fw.value)}
                     className={`rounded-lg border px-3 py-1.5 text-xs font-bold uppercase transition ${
-                      activeFrameworks.includes(fw)
+                      activeFrameworks.includes(fw.value)
                         ? "border-orange-500/60 bg-orange-500/15 text-orange-300"
                         : "border-white/15 bg-white/[0.04] text-white/60 hover:border-white/30"
                     }`}
                   >
-                    {fw}
+                    {fw.label}
                   </button>
                 ))}
               </div>

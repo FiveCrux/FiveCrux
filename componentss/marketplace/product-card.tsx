@@ -16,6 +16,7 @@ export interface MarketProduct {
   sellerImage?: string
   coverImage?: string
   tag?: "FEATURED" | "FREE" | null
+  category?: string
   href: string
 }
 

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react"
 import { motion } from "framer-motion"
 import { useSession } from "next-auth/react"
 import { useRouter, useParams } from "next/navigation"
+import { useFrameworks } from "@/lib/use-frameworks"
 import {
   Upload,
   Plus,
@@ -77,20 +78,12 @@ const scriptCategories = [
   { value: "economy", label: "Economy" },
   { value: "vehicles", label: "Vehicles" }
 ]
-const frameworks = [
-  { value: "qbcore", label: "QBCore" },
-  { value: "qbox", label: "Qbox" },
-  { value: "esx", label: "ESX" },
-  { value: "ox", label: "OX" },
-  { value: "vrp", label: "VRP" },
-  { value: "standalone", label: "Standalone" },
-]
-
 export default function EditScriptPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const params = useParams()
   const scriptId = params.id as string
+  const frameworks = useFrameworks()
 
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)

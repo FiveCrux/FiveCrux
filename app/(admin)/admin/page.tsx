@@ -1050,6 +1050,14 @@ export default function AdminPage() {
                   <Tag className="h-[18px] w-[18px]" />
                   Categories
                 </Link>
+                <Link
+                  href="/admin/frameworks"
+                  onClick={() => setMobileNavOpen(false)}
+                  className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-white/60 transition-colors hover:bg-white/[0.04] hover:text-white"
+                >
+                  <FileCode2 className="h-[18px] w-[18px]" />
+                  Frameworks
+                </Link>
               </nav>
               <div className="mt-auto rounded-2xl border border-white/[0.06] bg-white/[0.02] p-3.5">
                 <div className="flex items-center gap-2 text-[13px] font-semibold">

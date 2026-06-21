@@ -5,6 +5,7 @@ import type React from "react"
 import { useState, useRef, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter, useSearchParams } from "next/navigation"
+import { useFrameworks } from "@/lib/use-frameworks"
 import {
   Upload,
   Plus,
@@ -97,6 +98,9 @@ export default function SubmitScriptPage() {
       )
       .catch(() => {})
   }, [])
+
+  // Dynamic frameworks (DB-managed) for the framework picker.
+  const frameworks = useFrameworks()
 
   const [features, setFeatures] = useState([{ id: 1, text: "" }])
   const [requirements, setRequirements] = useState([{ id: 1, text: "" }])
@@ -244,15 +248,6 @@ export default function SubmitScriptPage() {
     router.push('/auth/signin')
     return null
   }
-
-  const frameworks = [
-    { value: "qbcore", label: "QBCore" },
-    { value: "qbox", label: "Qbox" },
-    { value: "esx", label: "ESX" },
-    { value: "ox", label: "OX" },
-    { value: "vrp", label: "VRP" },
-    { value: "standalone", label: "Standalone" },
-  ]
 
   const addFeature = () => {
     const newId = Math.max(...features.map((f) => f.id)) + 1
