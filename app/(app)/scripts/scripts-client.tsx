@@ -267,14 +267,18 @@ export function ScriptsClient({ initialScripts = [] }: { initialScripts: any[] }
     fetchFeaturedScripts();
   }, []);
 
-  const categories = [
-    { id: "scripts", name: "Scripts" },
-    { id: "maps", name: "Maps" },
-    { id: "props", name: "Props" },
-    { id: "clothing", name: "Clothing" },
-    { id: "economy", name: "Economy" },
-    { id: "vehicles", name: "Vehicles" },
-  ];
+  // Dynamic categories (DB-managed). `id` is the slug used in filters + URL.
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+  useEffect(() => {
+    fetch("/api/categories")
+      .then((r) => (r.ok ? r.json() : null))
+      .then(
+        (d) =>
+          Array.isArray(d?.categories) &&
+          setCategories(d.categories.map((c: any) => ({ id: c.slug, name: c.name })))
+      )
+      .catch(() => {});
+  }, []);
 
 
   const frameworks = [
