@@ -28,18 +28,18 @@ import {
   Megaphone,
   ChevronDown,
   MessagesSquare,
+  type LucideIcon,
 } from "lucide-react"
+import { categoryIcon } from "@/lib/category-icons"
 import Navbar from "@/componentss/shared/navbar"
 import Footer from "@/componentss/shared/footer"
 import { ProductCard, type MarketProduct } from "@/componentss/marketplace/product-card"
 
-const CATEGORIES = [
+// Fixed section shortcuts (these are pages, not categories). The actual browse
+// categories are dynamic (DB) and fetched + appended at runtime.
+const SHORTCUTS: { name: string; icon: LucideIcon; href: string }[] = [
   { name: "Scripts", icon: Code2, href: "/scripts" },
   { name: "Props", icon: Package, href: "/props" },
-  { name: "MLOs", icon: Building2, href: "/scripts?category=mlo" },
-  { name: "Vehicles", icon: Car, href: "/scripts?category=vehicles" },
-  { name: "Weapons", icon: Crosshair, href: "/scripts?category=weapons" },
-  { name: "Clothing", icon: Shirt, href: "/scripts?category=clothing" },
   { name: "Giveaways", icon: Gift, href: "/giveaways" },
 ]
 
@@ -293,6 +293,28 @@ export function HomeClient({ initialFeatured = [] }: { initialFeatured: any[] })
   // hero/featured when there are no active featured scripts yet).
   const [liveScripts, setLiveScripts] = useState<MarketProduct[]>([])
 
+  // Dynamic browse categories (DB-managed, admin-curated for the home page).
+  const [homeCats, setHomeCats] = useState<{ name: string; slug: string; icon: string | null }[]>([])
+  useEffect(() => {
+    fetch("/api/categories?home=true")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => Array.isArray(d?.categories) && setHomeCats(d.categories))
+      .catch(() => {})
+  }, [])
+
+  // Fixed page shortcuts + dynamic category chips.
+  const categoryChips = useMemo<{ name: string; icon: LucideIcon; href: string }[]>(
+    () => [
+      ...SHORTCUTS,
+      ...homeCats.map((c) => ({
+        name: c.name,
+        icon: categoryIcon(c.icon),
+        href: `/scripts?category=${c.slug}`,
+      })),
+    ],
+    [homeCats]
+  )
+
   useEffect(() => {
     let cancelled = false
     // Featured overlay (only when SSR didn't seed it).
@@ -348,7 +370,7 @@ export function HomeClient({ initialFeatured = [] }: { initialFeatured: any[] })
       <section className="mt-5 px-3 sm:px-6">
         <div className="mx-auto max-w-7xl overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <div className="flex w-max items-center gap-2.5 pb-1">
-            {CATEGORIES.map((c, i) => {
+            {categoryChips.map((c, i) => {
               const Icon = c.icon
               return (
                 <Link key={c.name} href={c.href}

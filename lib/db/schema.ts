@@ -10,10 +10,28 @@ export const users = pgTable('users', {
   profilePicture: text('profile_picture'),
   username: text('username'),
   roles: text('roles').array().default(['user']),
-  purchasedAdSlots: integer('purchased_ad_slots').default(0), 
+  purchasedAdSlots: integer('purchased_ad_slots').default(0),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 });
+
+// Categories — admin-managed browse taxonomy (dynamic). ONE source for the home
+// chips, the /scripts filter, the submit-form dropdown, and category pages.
+export const categories = pgTable('categories', {
+  id: integer('id').primaryKey().notNull(),          // app-generated (matches prod PK style)
+  name: text('name').notNull(),                      // "MLOs"
+  slug: text('slug').notNull().unique(),             // "mlo" — matches script/prop `category`
+  icon: text('icon'),                                // lucide icon NAME (mapped on the client)
+  appliesTo: text('applies_to').notNull().default('scripts'),   // 'scripts' | 'props' | 'both'
+  isActive: boolean('is_active').notNull().default(true),       // live anywhere
+  showOnHome: boolean('show_on_home').notNull().default(false), // show on home chips
+  homeOrder: integer('home_order').notNull().default(0),        // order on home
+  sortOrder: integer('sort_order').notNull().default(0),        // order in filters
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+export type Category = typeof categories.$inferSelect;
+export type NewCategory = typeof categories.$inferInsert;
 
 export const couponScopeEnum = pgEnum('coupon_scope', [
   'subscription',
