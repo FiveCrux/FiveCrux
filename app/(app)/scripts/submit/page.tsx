@@ -85,6 +85,19 @@ export default function SubmitScriptPage() {
 
   const [selectedCurrency, setSelectedCurrency] = useState<Currency | null>(null)
 
+  // Dynamic categories (DB-managed) for the category dropdown.
+  const [scriptCategories, setScriptCategories] = useState<{ value: string; label: string }[]>([])
+  useEffect(() => {
+    fetch("/api/categories")
+      .then((r) => (r.ok ? r.json() : null))
+      .then(
+        (d) =>
+          Array.isArray(d?.categories) &&
+          setScriptCategories(d.categories.map((c: any) => ({ value: c.slug, label: c.name })))
+      )
+      .catch(() => {})
+  }, [])
+
   const [features, setFeatures] = useState([{ id: 1, text: "" }])
   const [requirements, setRequirements] = useState([{ id: 1, text: "" }])
   const [otherLinks, setOtherLinks] = useState([{ id: 1, text: "" }])
@@ -231,15 +244,6 @@ export default function SubmitScriptPage() {
     router.push('/auth/signin')
     return null
   }
-
-  const scriptCategories = [
-    { value: "scripts", label: "Scripts" },
-    { value: "maps", label: "Maps" },
-    { value: "props", label: "Props" },
-    { value: "clothing", label: "Clothing" },
-    { value: "economy", label: "Economy" },
-    { value: "vehicles", label: "Vehicles" }
-  ]
 
   const frameworks = [
     { value: "qbcore", label: "QBCore" },

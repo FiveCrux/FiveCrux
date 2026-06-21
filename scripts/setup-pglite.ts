@@ -194,6 +194,17 @@ async function main() {
   }).onConflictDoNothing()
   console.log("✓ 1 coupon (CRUX10 — 10% off)")
 
+  // ---- Browse categories (dynamic, admin-managed) ---------------------------
+  await db.insert(schema.categories).values([
+    { id: 8001, name: "MLOs", slug: "mlo", icon: "Building2", appliesTo: "scripts", isActive: true, showOnHome: true, homeOrder: 1, sortOrder: 1 },
+    { id: 8002, name: "Vehicles", slug: "vehicles", icon: "Car", appliesTo: "scripts", isActive: true, showOnHome: true, homeOrder: 2, sortOrder: 2 },
+    { id: 8003, name: "Weapons", slug: "weapons", icon: "Crosshair", appliesTo: "scripts", isActive: true, showOnHome: true, homeOrder: 3, sortOrder: 3 },
+    { id: 8004, name: "Clothing", slug: "clothing", icon: "Shirt", appliesTo: "both", isActive: true, showOnHome: true, homeOrder: 4, sortOrder: 4 },
+    { id: 8005, name: "Maps", slug: "maps", icon: "Map", appliesTo: "scripts", isActive: true, showOnHome: true, homeOrder: 5, sortOrder: 5 },
+    { id: 8006, name: "Economy", slug: "economy", icon: "Coins", appliesTo: "scripts", isActive: true, showOnHome: true, homeOrder: 6, sortOrder: 6 },
+  ]).onConflictDoNothing()
+  console.log("✓ 6 browse categories")
+
   await client.close()
   console.log("\n✅ Local PGlite DB ready. Start the app with USE_PGLITE=true.")
 }
