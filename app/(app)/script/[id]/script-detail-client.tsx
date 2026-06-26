@@ -61,6 +61,7 @@ interface Script {
   status: "pending" | "approved" | "rejected";
   featured: boolean;
   free?: boolean;
+  hidePrice?: boolean;
   downloads: number;
   rating: number;
   review_count: number;
@@ -458,16 +459,18 @@ export function ScriptDetailClient({
                   className="relative bg-gradient-to-br from-orange-500 to-orange-600 px-6 pb-9 pt-5"
                   style={{ clipPath: "polygon(0 0,100% 0,100% 74%,0 100%)" }}
                 >
-                  {!isFree && script.original_price && discount > 0 && (
+                  {!script.hidePrice && !isFree && script.original_price && discount > 0 && (
                     <span className="absolute right-5 top-5 rounded-full bg-white px-3 py-1 text-xs font-extrabold text-orange-600">
                       −{discount}%
                     </span>
                   )}
                   <small className="text-[11px] font-bold uppercase tracking-[0.14em] text-white/85">
-                    {isFree ? "Free download" : "One-time purchase"}
+                    {script.hidePrice ? "Premium resource" : isFree ? "Free download" : "One-time purchase"}
                   </small>
                   <div className="mt-1 flex flex-wrap items-center gap-2.5 text-[40px] font-black leading-none tracking-tight text-white">
-                    {isFree ? (
+                    {script.hidePrice ? (
+                      <span className="text-[26px]">See price on seller store</span>
+                    ) : isFree ? (
                       "Free"
                     ) : (
                       <>
