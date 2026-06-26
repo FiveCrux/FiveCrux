@@ -11,6 +11,7 @@ export interface MarketProduct {
   price: number
   originalPrice?: number
   free?: boolean
+  hidePrice?: boolean
   rating?: number
   seller?: string
   sellerImage?: string
@@ -117,7 +118,9 @@ export function ProductCard({ product, className = "" }: { product: MarketProduc
         </div>
         <div className="flex items-center justify-between border-t border-white/10 pt-2.5">
           <div>
-            {isFree ? (
+            {product.hidePrice ? (
+              <span className="text-sm font-semibold text-white/45">View details</span>
+            ) : isFree ? (
               <span className="text-base font-extrabold text-green-400">Free</span>
             ) : (
               <span className="text-base font-extrabold text-white">

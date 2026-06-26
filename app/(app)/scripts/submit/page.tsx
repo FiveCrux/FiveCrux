@@ -63,6 +63,8 @@ export default function SubmitScriptPage() {
   const [isEditMode, setIsEditMode] = useState(false)
   const [isLoadingScript, setIsLoadingScript] = useState(false)
   const [isFree, setIsFree] = useState(false)
+  // When true, the price is hidden everywhere (buyers see it on the seller's store).
+  const [hidePrice, setHidePrice] = useState(false)
   const [uploadingCoverImage, setUploadingCoverImage] = useState(false)
   const [uploadingScreenshots, setUploadingScreenshots] = useState(false)
   const [uploadingVideos, setUploadingVideos] = useState(false)
@@ -215,6 +217,7 @@ export default function SubmitScriptPage() {
 
             // Set free status from database
             setIsFree(script.free === true || script.free === 1)
+            setHidePrice(script.hidePrice === true || script.hidePrice === 1)
           } else {
             console.error('Failed to fetch script')
             router.push('/scripts/submit')
@@ -459,6 +462,7 @@ export default function SubmitScriptPage() {
         currency: isFree ? null : (formData.currency || null),
         currency_symbol: isFree ? null : (formData.currencySymbol || null),
         free: isFree,
+        hidePrice,
         seller_name: formData.sellerName,
         seller_email: formData.sellerEmail,
         features: features.filter((f) => f.text.trim()).map((f) => f.text.trim()),
@@ -967,6 +971,19 @@ export default function SubmitScriptPage() {
                       />
                     </div>
 
+                    {/* Show price toggle — off hides the price everywhere (buyers see it on the seller store) */}
+                    <div className="flex items-center justify-between rounded-2xl border border-white/[0.07] bg-white/[0.02] px-4 py-3">
+                      <div>
+                        <div className="text-sm font-semibold">Show price on listing</div>
+                        <div className="text-xs text-white/55">Turn off to hide the price — buyers see it on your store</div>
+                      </div>
+                      <Switch
+                        id="showPrice"
+                        checked={!hidePrice}
+                        onCheckedChange={(checked) => setHidePrice(!checked)}
+                      />
+                    </div>
+
                     {/* Currency */}
                     <div className={cn("transition-opacity", isFree && "opacity-50 pointer-events-none")}>
                       <Label className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/50">Currency *</Label>
@@ -1311,7 +1328,9 @@ export default function SubmitScriptPage() {
 
                   <div className="mt-4 flex items-end justify-between border-t border-white/[0.06] pt-4">
                     <div className="flex items-baseline gap-2">
-                      {isFree ? (
+                      {hidePrice ? (
+                        <span className="text-sm font-semibold text-white/45">See price on seller store</span>
+                      ) : isFree ? (
                         <span className="text-[26px] font-extrabold leading-none tracking-tight tabular-nums text-orange-500">Free</span>
                       ) : (
                         <>

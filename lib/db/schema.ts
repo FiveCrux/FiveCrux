@@ -229,6 +229,9 @@ const baseScriptFields = {
   coverImage: text('cover_image'),
   featured: boolean('featured').default(false),
   free: boolean('free').default(false),
+  // When true, the price is hidden everywhere (hero, cards, detail) — the seller
+  // wants buyers to see the price on their own store instead. Default: show it.
+  hidePrice: boolean('hide_price').default(false),
   // Tebex Headless integration: seller's OWN webstore public token and the
   // Tebex package id that backs this product. Nullable until the seller has
   // linked their Tebex store / package.

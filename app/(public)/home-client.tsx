@@ -61,6 +61,7 @@ function mapFeatured(item: any): MarketProduct {
     framework: Array.isArray(item.scriptFramework) ? item.scriptFramework : item.scriptFramework ? [item.scriptFramework] : item.framework || [],
     price: Number(item.scriptPrice ?? item.price ?? 0),
     free: item.scriptFree ?? item.free ?? false,
+    hidePrice: item.scriptHidePrice ?? item.hidePrice ?? item.hide_price ?? false,
     seller: item.scriptSellerName || item.seller_name || item.seller,
     sellerImage: item.scriptSellerImage || item.seller_image,
     coverImage: item.scriptCoverImage || item.cover_image,
@@ -79,6 +80,7 @@ function mapScript(item: any): MarketProduct {
     framework: Array.isArray(item.framework) ? item.framework : item.framework ? [item.framework] : [],
     price: Number(item.price ?? 0),
     free: item.free ?? item.price === 0,
+    hidePrice: item.hidePrice ?? item.hide_price ?? false,
     seller: item.seller_name || item.sellerName || item.seller,
     sellerImage: item.seller_image || item.sellerImage,
     coverImage: item.cover_image || item.coverImage,
@@ -226,7 +228,9 @@ function HeroSpotlight({ items, query, setQuery, onSearch }: {
                   </span>
                 )}
                 {active.seller && <span className="text-sm text-white/70">by {active.seller}</span>}
-                <span className="ml-2 text-2xl font-black">{active.free || active.price === 0 ? "Free" : `$${active.price.toFixed(2)}`}</span>
+                {!active.hidePrice && (
+                  <span className="ml-2 text-2xl font-black">{active.free || active.price === 0 ? "Free" : `$${active.price.toFixed(2)}`}</span>
+                )}
               </div>
               <div className="flex flex-wrap items-center gap-3">
                 <Link href={active.href} className="flex items-center gap-2 rounded-xl bg-orange-500 px-6 py-3 font-bold text-black transition hover:bg-orange-400 shadow-[0_0_0_1px_rgba(249,115,22,0.5),0_8px_32px_rgba(249,115,22,0.35)]">
