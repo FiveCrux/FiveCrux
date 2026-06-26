@@ -95,6 +95,7 @@ export async function PATCH(
         status: "pending",
         featured: body.featured,
         free: body.free || false,
+        hidePrice: body.hidePrice || false,
         tebexStoreToken: body.tebexStoreToken,
         tebexPackageId: body.tebexPackageId,
       })
@@ -124,6 +125,7 @@ export async function PATCH(
         status: "pending",
         featured: body.featured,
         free: body.free || false,
+        hidePrice: body.hidePrice || false,
         tebexStoreToken: body.tebexStoreToken,
         tebexPackageId: body.tebexPackageId,
       })
@@ -152,6 +154,7 @@ export async function PATCH(
         last_updated: body.last_updated,
         featured: body.featured,
         free: body.free || false,
+        hidePrice: body.hidePrice || false,
         tebexStoreToken: body.tebexStoreToken,
         tebexPackageId: body.tebexPackageId,
       })

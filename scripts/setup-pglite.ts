@@ -65,6 +65,8 @@ async function main() {
       framework: ["QBCore"], sellerId: seller.id, seller_name: seller.name, seller_email: seller.email,
       features: ["Dynamic pricing", "Police integration", "Configurable zones"], requirements: ["qb-core"],
       images: [imgs[1]], screenshots: [imgs[1], imgs[2]], coverImage: imgs[1], featured: true, free: false,
+      // Demo the "hide price" toggle — price hidden on hero/cards/detail.
+      hidePrice: true,
     },
     {
       id: 1003, title: "Free HUD Starter", description: "Clean, lightweight HUD with health/armor/hunger/thirst. A great free starting point.",

@@ -624,6 +624,7 @@ export async function createScript(scriptData: NewScript & { framework?: string 
     seller_email: scriptData.seller_email || 'unknown@example.com',
     featured: scriptData.featured ?? false,
     free: (scriptData as any).free ?? false,
+    hidePrice: (scriptData as any).hidePrice ?? false,
     images: scriptData.images || [],
     videos: scriptData.videos || [],
     screenshots: scriptData.screenshots || [],
@@ -1192,6 +1193,7 @@ export async function updateScriptForReapproval(id: number, updateData: any) {
     assignIfDefined('version', updateData.version);
     if (updateData.featured !== undefined) assignIfDefined('featured', Boolean(updateData.featured));
     if (updateData.free !== undefined) assignIfDefined('free', Boolean(updateData.free));
+    if (updateData.hidePrice !== undefined) assignIfDefined('hidePrice', Boolean(updateData.hidePrice));
     // Tebex Headless integration fields (nullable, accept null to clear)
     if (updateData.tebexStoreToken !== undefined) assignIfDefined('tebexStoreToken', updateData.tebexStoreToken);
     if (updateData.tebexPackageId !== undefined) assignIfDefined('tebexPackageId', updateData.tebexPackageId);
@@ -1283,6 +1285,7 @@ export async function updatePendingScript(id: number, updateData: any) {
     assignIfDefined('version', updateData.version);
     if (updateData.featured !== undefined) assignIfDefined('featured', Boolean(updateData.featured));
     if (updateData.free !== undefined) assignIfDefined('free', Boolean(updateData.free));
+    if (updateData.hidePrice !== undefined) assignIfDefined('hidePrice', Boolean(updateData.hidePrice));
     // Tebex Headless integration fields (nullable, accept null to clear)
     if (updateData.tebexStoreToken !== undefined) assignIfDefined('tebexStoreToken', updateData.tebexStoreToken);
     if (updateData.tebexPackageId !== undefined) assignIfDefined('tebexPackageId', updateData.tebexPackageId);
@@ -1347,6 +1350,7 @@ export async function updateRejectedScriptForReapproval(id: number, updateData: 
     assignIfDefined('version', updateData.version);
     if (updateData.featured !== undefined) assignIfDefined('featured', Boolean(updateData.featured));
     if (updateData.free !== undefined) assignIfDefined('free', Boolean(updateData.free));
+    if (updateData.hidePrice !== undefined) assignIfDefined('hidePrice', Boolean(updateData.hidePrice));
     // Tebex Headless integration fields (nullable, accept null to clear)
     if (updateData.tebexStoreToken !== undefined) assignIfDefined('tebexStoreToken', updateData.tebexStoreToken);
     if (updateData.tebexPackageId !== undefined) assignIfDefined('tebexPackageId', updateData.tebexPackageId);
@@ -1417,6 +1421,7 @@ export async function updateScript(id: number, updateData: any) {
     if (updateData.youtube_video_link !== undefined) assignIfDefined('youtubeVideoLink', updateData.youtube_video_link);
     assignIfDefined('version', updateData.version);
     if (updateData.featured !== undefined) assignIfDefined('featured', Boolean(updateData.featured));
+    if (updateData.hidePrice !== undefined) assignIfDefined('hidePrice', Boolean(updateData.hidePrice));
     // Tebex Headless integration fields (nullable, accept null to clear)
     if (updateData.tebexStoreToken !== undefined) assignIfDefined('tebexStoreToken', updateData.tebexStoreToken);
     if (updateData.tebexPackageId !== undefined) assignIfDefined('tebexPackageId', updateData.tebexPackageId);
