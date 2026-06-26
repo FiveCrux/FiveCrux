@@ -1328,7 +1328,9 @@ export default function SubmitScriptPage() {
 
                   <div className="mt-4 flex items-end justify-between border-t border-white/[0.06] pt-4">
                     <div className="flex items-baseline gap-2">
-                      {isFree ? (
+                      {hidePrice ? (
+                        <span className="text-sm font-semibold text-white/45">See price on seller store</span>
+                      ) : isFree ? (
                         <span className="text-[26px] font-extrabold leading-none tracking-tight tabular-nums text-orange-500">Free</span>
                       ) : (
                         <>
