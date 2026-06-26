@@ -75,6 +75,13 @@ export default function CartCheckoutPanel({ total }: CartCheckoutPanelProps) {
         throw new Error(data.error || "Checkout failed")
       }
 
+      // FiveM store: buyer must log in first. Redirect to Tebex auth; after login
+      // Tebex sends them to /api/cart/tebex-continue → payment.
+      if (data.authUrl) {
+        window.location.href = data.authUrl
+        return
+      }
+
       if (!data.checkoutUrl) {
         throw new Error("Payment gateway did not return a checkout URL")
       }
