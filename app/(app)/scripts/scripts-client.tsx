@@ -71,6 +71,7 @@ function mapApiScript(s: any) {
     lastUpdated: s.updated_at,
     featured: s.featured || false,
     free: s.free || false,
+    hidePrice: s.hidePrice ?? s.hide_price ?? false,
   };
 }
 
@@ -561,6 +562,7 @@ export function ScriptsClient({ initialScripts = [] }: { initialScripts: any[] }
       price: s.price,
       originalPrice: s.originalPrice,
       free: isFree,
+      hidePrice: (s as any).hidePrice ?? false,
       rating: typeof s.rating === "number" && s.rating > 0 ? s.rating : undefined,
       seller: s.seller,
       sellerImage: s.seller_image ?? undefined,
@@ -584,6 +586,7 @@ export function ScriptsClient({ initialScripts = [] }: { initialScripts: any[] }
             ? Number(item.original_price)
             : undefined,
         free: isFree,
+        hidePrice: item.scriptHidePrice ?? item.hidePrice ?? item.hide_price ?? false,
         rating: undefined,
         seller: item.seller_name || item.seller,
         sellerImage: item.seller_image ?? undefined,
