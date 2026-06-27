@@ -18,6 +18,7 @@ import {
   ProductCard,
   type MarketProduct,
 } from "@/componentss/marketplace/product-card";
+import SideAdsFrame from "@/componentss/ads/side-banners";
 
 // Module-level so the SSR seed initializer and the client fallback fetch map
 // identically (no shape drift). Mirrors scripts-client's mapApiScript.
@@ -472,6 +473,7 @@ export function PropsClient({
   return (
     <>
       <Navbar />
+      <SideAdsFrame>
       <main className="min-h-screen bg-[#0a0a0a] text-white">
         {/* ── Header ───────────────────────────────────────────────────── */}
         <section className="relative overflow-hidden border-b border-white/[0.06]">
@@ -922,6 +924,7 @@ export function PropsClient({
           )}
         </section>
       </main>
+      </SideAdsFrame>
       <Footer />
     </>
   );
