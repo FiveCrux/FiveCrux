@@ -443,7 +443,7 @@ export default function PropsPage() {
       sellerImage: prop.seller_image || undefined,
       coverImage: prop.image,
       tag: prop.featured ? "FEATURED" : isFree ? "FREE" : null,
-      href: `/props/${prop.id}`,
+      href: `/prop/${prop.id}`,
     };
   }, []);
 
