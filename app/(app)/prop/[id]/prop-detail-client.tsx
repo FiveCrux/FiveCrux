@@ -3,25 +3,23 @@
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
-import { motion } from "framer-motion"
 import Image from "next/image"
 import {
   Package,
-  Download,
-  Star,
-  CheckCircle,
   ChevronRight,
-  User,
-  Calendar,
   ShoppingCart,
   Zap,
   ShieldCheck,
   BadgeCheck,
-  Images,
   LifeBuoy,
+  Check,
+  Loader2,
+  X,
+  ArrowRight,
 } from "lucide-react"
 import Navbar from "@/componentss/shared/navbar"
 import Footer from "@/componentss/shared/footer"
+import Link from "next/link"
 import { toast } from "sonner"
 
 export function PropDetailClient({
@@ -36,57 +34,43 @@ export function PropDetailClient({
   const { data: session } = useSession()
   const id = idProp ?? (params.id as string)
 
-  // Seed from the server-fetched item for instant first paint + SEO.
   const [prop, setProp] = useState<any>(initialData ?? null)
-  // With server-seeded data there's no blank spinner; only spin when we start empty.
   const [loading, setLoading] = useState(!initialData)
   const [addingToCart, setAddingToCart] = useState(false)
   const [activeImage, setActiveImage] = useState(0)
+  const [isFullscreen, setIsFullscreen] = useState(false)
 
   useEffect(() => {
     const fetchProp = async () => {
       try {
-        // Abort a hanging/slow request (e.g. DB unreachable) after 8s so the page
-        // falls back to seed instead of spinning forever.
         const controller = new AbortController()
         const timeoutId = setTimeout(() => controller.abort(), 15000)
         const response = await fetch(`/api/props/${id}`, { signal: controller.signal })
         clearTimeout(timeoutId)
         if (response.ok) {
           const data = await response.json()
-          // Only overwrite the server seed with a valid payload; never clobber it with null.
-          if (data && !data.error) {
-            setProp(data)
-          } else if (!initialData) {
-            setProp(null)
-          }
+          if (data && !data.error) setProp(data)
+          else if (!initialData) setProp(null)
         } else if (!initialData) {
-          // No matching record (404 / empty DB) — show the not-found state.
           setProp(null)
         }
-      } catch (error) {
-        // Network error / abort / timeout — keep any server seed, else not-found.
+      } catch {
         if (!initialData) setProp(null)
       } finally {
         setLoading(false)
       }
     }
-
-    // NOTE: unlike scripts/giveaways, the prop detail GET returns a
-    // session-specific `hasPurchased` flag (drives the Download button). The
-    // ISR-cached server fetch is unauthenticated, so we still re-fetch on the
-    // client to recover the per-user state — but the page already painted from
-    // the seed, so this is a background refresh, not a blocking load.
-    if (id) {
-      fetchProp()
-    }
-  }, [id, router, initialData])
+    if (id) fetchProp()
+  }, [id, initialData])
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-orange-500"></div>
-      </div>
+      <>
+        <Navbar />
+        <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-orange-500" />
+        </div>
+      </>
     )
   }
 
@@ -117,365 +101,215 @@ export function PropDetailClient({
   }
 
   const isFree = parseFloat(prop.price) === 0
-  const finalPrice = prop.discountedPrice ? parseFloat(prop.discountedPrice) : parseFloat(prop.price)
   const hasDiscount = parseFloat(prop.discountPercentage) > 0
-
-  const images: string[] = Array.isArray(prop.images) ? prop.images : []
-  const hasImages = images.length > 0
-  const sellerName = prop.user?.name || prop.user?.username || "FiveCrux Community"
-  const sellerAvatar = prop.user?.profilePicture || prop.user?.image || null
+  const discount = Math.round(parseFloat(prop.discountPercentage) || 0)
+  const currency = prop.currencySymbol || "€"
+  const images: string[] = Array.isArray(prop.images) ? prop.images.filter(Boolean) : []
+  const activeSrc = images[activeImage] ?? images[0] ?? null
+  const sellerName = prop.user?.name || prop.user?.username || "FiveCrux"
   const sellerInitial = sellerName.charAt(0).toUpperCase()
-  // Bento tiles: main lead = active image; the next two distinct images fill the small tiles.
-  const leadImage = hasImages ? images[activeImage] : null
-  const smallTile1 = hasImages ? images[(activeImage + 1) % images.length] : null
-  const smallTile2 = hasImages ? images[(activeImage + 2) % images.length] : null
-  const extraCount = Math.max(images.length - 3, 0)
+  const price = parseFloat(prop.price) || 0
+  const finalPrice = prop.discountedPrice ? parseFloat(prop.discountedPrice) : price
 
   const handleAddToCart = async () => {
     if (!session) {
       toast.error("Please log in to purchase props")
-      router.push('/auth/signin')
+      router.push("/auth/signin")
       return
     }
-
     try {
       setAddingToCart(true)
-      const res = await fetch('/api/cart/add', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          itemType: 'prop',
-          itemId: prop.id,
-          title: prop.name,
-          price: finalPrice
-        })
+      const res = await fetch("/api/cart/add", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ itemType: "prop", itemId: prop.id, title: prop.name, price: finalPrice }),
       })
-
       if (res.ok) {
         toast.success("Added to cart!")
-        router.push('/cart')
+        router.push("/cart")
       } else {
-        const error = await res.json()
+        const error = await res.json().catch(() => ({}))
         toast.error(error.error || "Failed to add to cart")
       }
-    } catch (error) {
+    } catch {
       toast.error("An unexpected error occurred")
     } finally {
       setAddingToCart(false)
     }
   }
 
-  // Primary CTA — props are sold through FiveCrux's cart (Tebex checkout) and the
-  // file is delivered by Tebex via email. Purchased → email-delivery confirmation
-  // (no in-app download); else → Add to Cart.
-  const renderPrimaryCta = () => {
-    if (prop.hasPurchased) {
-      return (
-        <div className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-green-500 to-emerald-500 py-3.5 font-bold text-black">
-          <BadgeCheck className="h-[18px] w-[18px]" /> Purchased — sent to your email
-        </div>
-      )
-    }
-    return (
-      <button
-        onClick={handleAddToCart}
-        disabled={addingToCart}
-        className="group flex w-full items-center justify-center gap-2 rounded-2xl bg-orange-500 py-3.5 font-bold text-black transition hover:bg-orange-400 disabled:opacity-70"
-      >
-        {addingToCart ? (
-          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-black"></div>
-        ) : (
-          <>
-            <ShoppingCart className="h-[18px] w-[18px]" /> Add to Cart
-          </>
-        )}
-      </button>
-    )
-  }
-
   return (
     <>
       <Navbar />
-      <main className="min-h-screen bg-[#0a0a0a] text-white pt-20 [font-variant-numeric:tabular-nums]">
-        <div className="mx-auto max-w-[1240px] px-5 pb-24">
+      <main className="min-h-screen bg-[#0a0a0a] text-white antialiased [font-variant-numeric:tabular-nums]">
+        <div className="mx-auto max-w-[1200px] px-5 pb-24 pt-20">
           {/* Breadcrumb */}
           <nav className="flex items-center gap-2 py-5 text-[13px] text-white/55">
-            <span className="cursor-pointer transition hover:text-white/70" onClick={() => router.push('/')}>Home</span>
+            <Link href="/props" className="transition hover:text-white/70">Marketplace</Link>
             <ChevronRight className="h-3.5 w-3.5" />
-            <span className="cursor-pointer transition hover:text-white/70" onClick={() => router.push('/props')}>Props</span>
+            <Link href="/props" className="transition hover:text-white/70">Props</Link>
             <ChevronRight className="h-3.5 w-3.5" />
-            <span className="truncate max-w-[220px] text-white/60">{prop.name}</span>
+            <span className="truncate text-white/60">{prop.name}</span>
           </nav>
 
-          {/* ===== BENTO GALLERY HERO ===== */}
-          <section className="grid grid-cols-1 gap-2.5 sm:grid-cols-4 sm:grid-rows-2 sm:h-[440px]">
-            {/* large lead */}
-            <figure className={`group relative col-span-1 row-span-2 overflow-hidden rounded-[22px] border border-white/[0.07] ${images.length > 1 ? "sm:col-span-2 lg:col-span-3" : "sm:col-span-4"}`}>
-              {leadImage ? (
-                <motion.div key={activeImage} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full w-full">
-                  <Image
-                    src={leadImage}
-                    alt={prop.name}
-                    fill
-                    sizes="(max-width: 640px) 100vw, 75vw"
-                    className="object-cover transition duration-700 group-hover:scale-[1.03]"
-                  />
-                </motion.div>
-              ) : (
-                <div className="flex h-[280px] w-full flex-col items-center justify-center bg-black/50 text-gray-500 sm:h-full">
-                  <Package className="mb-3 h-14 w-14 opacity-50" />
-                  <span>No images available</span>
-                </div>
-              )}
-              {!leadImage && <div className="min-h-[280px] sm:min-h-[420px]" />}
-              <div className="pointer-events-none absolute inset-0 bg-gradient-to-tr from-black/40 via-transparent to-transparent" />
-              {hasDiscount && (
-                <span className="absolute right-4 top-4 rounded-full bg-emerald-500/90 px-2.5 py-1 text-[11px] font-bold text-black shadow-lg backdrop-blur-md">
-                  −{prop.discountPercentage}%
-                </span>
-              )}
-              {isFree && (
-                <span className="absolute left-4 top-4 rounded-full bg-green-500 px-2.5 py-1 text-[11px] font-bold text-black shadow-lg">
-                  FREE
-                </span>
-              )}
-              {leadImage && !isFree && !hasDiscount && (
-                <span className="absolute left-4 top-4 rounded-full bg-black/45 px-2.5 py-1 text-[11px] font-semibold tracking-wide text-white/85 ring-1 ring-white/10 backdrop-blur-md">
-                  FiveM Prop
-                </span>
-              )}
-            </figure>
-
-            {/* small tile 1 */}
-            <figure className={`group relative hidden min-h-[140px] overflow-hidden rounded-[22px] border border-white/[0.07] ${images.length > 1 ? "sm:block" : ""}`}>
-              {smallTile1 ? (
-                <Image
-                  src={smallTile1}
-                  alt=""
-                  fill
-                  sizes="25vw"
-                  className="object-cover transition duration-700 group-hover:scale-[1.04]"
-                />
-              ) : (
-                <div className="h-full w-full bg-white/[0.03]" />
-              )}
-            </figure>
-
-            {/* small tile 2 */}
-            <figure className={`group relative hidden min-h-[140px] overflow-hidden rounded-[22px] border border-white/[0.07] ${images.length > 1 ? "sm:block" : ""}`}>
-              {smallTile2 ? (
-                <Image
-                  src={smallTile2}
-                  alt=""
-                  fill
-                  sizes="25vw"
-                  className="object-cover transition duration-700 group-hover:scale-[1.04]"
-                />
-              ) : (
-                <div className="h-full w-full bg-white/[0.03]" />
-              )}
-              {extraCount > 0 && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/55 opacity-0 transition group-hover:opacity-100">
-                  <span className="flex items-center gap-1.5 text-sm font-semibold">
-                    <Images className="h-4 w-4" /> +{extraCount} more
-                  </span>
-                </div>
-              )}
-            </figure>
-          </section>
-
-          {/* thumbnail strip — switches the main tile */}
-          {images.length > 1 && (
-            <div className="hide-scroll mt-2.5 flex gap-2.5 overflow-x-auto">
-              {images.map((img, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setActiveImage(idx)}
-                  className={`relative h-16 w-28 flex-none overflow-hidden rounded-xl border object-cover transition ${
-                    activeImage === idx
-                      ? 'border-orange-500/60 opacity-100 ring-2 ring-orange-500/60'
-                      : 'border-white/[0.07] opacity-80 hover:opacity-100'
-                  }`}
-                >
-                  <Image src={img} alt="" fill sizes="112px" className="object-cover" />
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* ===== TITLE + PRICE BAR ===== */}
-          <section className="mt-6 flex flex-col gap-6 rounded-[24px] border border-white/[0.07] bg-[#0e0e0e] p-6 shadow-[0_24px_60px_-30px_rgba(0,0,0,0.9)] lg:flex-row lg:items-center lg:gap-8 lg:p-7">
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-md bg-white/[0.06] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/55">
-                  FiveM Prop
-                </span>
-              </div>
-              <h1 className="mt-3 text-[28px] font-extrabold leading-tight tracking-tight sm:text-[32px]">
-                {prop.name}
-              </h1>
-              <div className="mt-2.5 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
-                <span className="flex items-center gap-2 text-white/55">
-                  {sellerAvatar ? (
-                    <span className="relative grid h-6 w-6 place-items-center overflow-hidden rounded-full bg-white/10">
-                      <Image src={sellerAvatar} alt={sellerName} fill sizes="24px" className="object-cover" />
-                    </span>
-                  ) : (
-                    <span className="grid h-6 w-6 place-items-center rounded-full bg-gradient-to-br from-orange-500 to-amber-400 text-[10px] font-black text-black">
-                      {sellerInitial}
-                    </span>
-                  )}
-                  {sellerName} <BadgeCheck className="h-4 w-4 text-orange-500" />
-                </span>
-                <span className="flex items-center gap-1.5 text-white/55">
-                  <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-                  <span className="font-semibold text-white">5.0</span>
-                  <span className="text-white/55">(0 reviews)</span>
-                </span>
-                {prop.createdAt && (
-                  <span className="flex items-center gap-1.5 text-white/55">
-                    <Calendar className="h-4 w-4" /> Added {new Date(prop.createdAt).toLocaleDateString()}
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* price + cta */}
-            <div className="lg:w-[320px] lg:flex-none lg:border-l lg:border-white/[0.07] lg:pl-8">
-              {isFree ? (
-                <span className="text-[38px] font-extrabold leading-none tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-500">
-                  FREE
-                </span>
-              ) : (
-                <div className="flex items-end gap-3">
-                  <span className="text-[38px] font-extrabold leading-none tracking-tight">
-                    €{finalPrice.toFixed(2)}
-                  </span>
-                  {hasDiscount && (
-                    <span className="mb-1 text-base text-white/55 line-through">
-                      €{parseFloat(prop.price).toFixed(2)}
-                    </span>
-                  )}
-                  {hasDiscount && (
-                    <span className="mb-1 rounded-md bg-emerald-500/12 px-2 py-0.5 text-xs font-bold text-emerald-400 ring-1 ring-emerald-500/25">
-                      −{prop.discountPercentage}%
-                    </span>
-                  )}
-                </div>
-              )}
-              <div className="mt-4 flex flex-col gap-2.5">
-                {renderPrimaryCta()}
-              </div>
-              <p className="mt-3 flex items-center justify-center gap-1.5 text-[12px] text-white/55">
-                <ShieldCheck className="h-3.5 w-3.5" /> Instant delivery · escrow protected
-              </p>
-            </div>
-          </section>
-
-          {/* ===== BODY: content + seller ===== */}
-          <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-[1fr_320px]">
-            {/* LEFT: content */}
+          {/* Tworst grid: media + details (left), title + buy card (right) */}
+          <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-[1fr_380px]">
+            {/* LEFT — media + details */}
             <div className="min-w-0">
-              {/* description */}
-              <section>
-                <h2 className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/55">Overview</h2>
-                <p className="mt-3 whitespace-pre-wrap text-[15px] leading-relaxed text-white/65">
-                  {prop.description}
-                </p>
-              </section>
+              {images.length > 0 ? (
+                <>
+                  <div className="overflow-hidden rounded-[20px] border border-white/[0.07]">
+                    <button type="button" onClick={() => setIsFullscreen(true)} className="group relative block h-[300px] w-full sm:h-[400px]">
+                      <Image src={activeSrc as string} alt={prop.name} fill sizes="(max-width:1024px) 100vw, 760px" className="object-cover transition duration-700 group-hover:scale-[1.03]" />
+                      <span className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
+                      <span className="absolute left-4 top-4 rounded-full bg-black/45 px-2.5 py-1 text-[11px] font-semibold tracking-wide text-white/85 ring-1 ring-white/10 backdrop-blur-md">
+                        FiveM Prop
+                      </span>
+                    </button>
+                  </div>
+                  {images.length > 1 && (
+                    <div className="mt-2.5 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                      {images.map((src, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => setActiveImage(i)}
+                          className={`relative h-[52px] w-20 flex-shrink-0 overflow-hidden rounded-lg border transition ${i === activeImage ? "border-orange-500 opacity-100" : "border-white/[0.08] opacity-50 hover:opacity-100"}`}
+                        >
+                          <Image src={src} alt="" fill sizes="80px" className="object-cover" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="flex h-[300px] items-center justify-center rounded-[20px] border border-white/[0.07] bg-white/[0.03] sm:h-[400px]">
+                  <Package className="h-16 w-16 text-gray-600" />
+                </div>
+              )}
 
-              {/* what's included */}
-              <section className="mt-9">
-                <h2 className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/55">What&apos;s included</h2>
-                <ul className="mt-4 divide-y divide-white/[0.05] overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02]">
-                  <li className="flex items-center gap-3 px-4 py-3 text-sm">
-                    <CheckCircle className="h-4 w-4 text-emerald-400" /> Instant digital delivery
-                  </li>
-                  <li className="flex items-center gap-3 px-4 py-3 text-sm">
-                    <CheckCircle className="h-4 w-4 text-emerald-400" /> FiveM resource ready
-                  </li>
-                  <li className="flex items-center gap-3 px-4 py-3 text-sm">
-                    <CheckCircle className="h-4 w-4 text-emerald-400" /> Verified high optimization
-                  </li>
+              {/* Details */}
+              <section className="mt-8">
+                <h3 className="text-lg font-bold">Details</h3>
+                {prop.description ? (
+                  <div className="mt-3 whitespace-pre-line text-[15px] leading-relaxed text-white/55" dangerouslySetInnerHTML={{ __html: prop.description }} />
+                ) : (
+                  <p className="mt-3 text-[15px] text-white/55">No description provided.</p>
+                )}
+                <h3 className="mt-8 text-[11px] font-bold uppercase tracking-[0.18em] text-white/55">What&apos;s included</h3>
+                <ul className="mt-3 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                  {["Instant digital delivery", "FiveM resource — drop-in ready", "Lifetime access to the file", "Updates from the seller"].map((f) => (
+                    <li key={f} className="flex items-start gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 text-sm leading-snug text-white/65">
+                      <span className="mt-0.5 grid h-7 w-7 flex-none place-items-center rounded-lg bg-orange-500/12 text-orange-500">
+                        <Check className="h-3.5 w-3.5" />
+                      </span>
+                      {f}
+                    </li>
+                  ))}
                 </ul>
               </section>
-
-              {/* files & technical */}
-              <section className="mt-9">
-                <h2 className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/55">Files &amp; technical</h2>
-                <div className="mt-4 grid grid-cols-2 overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] sm:grid-cols-4">
-                  <div className="border-r border-white/[0.05] p-4 text-center">
-                    <div className="text-[11px] uppercase tracking-[0.14em] text-white/55">Format</div>
-                    <div className="mt-1 text-sm font-semibold">YDR / YTD</div>
-                  </div>
-                  <div className="border-white/[0.05] p-4 text-center sm:border-r">
-                    <div className="text-[11px] uppercase tracking-[0.14em] text-white/55">File Type</div>
-                    <div className="mt-1 text-sm font-semibold">ZIP Archive</div>
-                  </div>
-                  <div className="border-r border-t border-white/[0.05] p-4 text-center sm:border-t-0">
-                    <div className="text-[11px] uppercase tracking-[0.14em] text-white/55">Delivery</div>
-                    <div className="mt-1 flex items-center justify-center gap-1.5 text-sm font-semibold">
-                      <CheckCircle className="h-4 w-4 text-emerald-400" /> Instant
-                    </div>
-                  </div>
-                  <div className="border-t border-white/[0.05] p-4 text-center sm:border-t-0">
-                    <div className="text-[11px] uppercase tracking-[0.14em] text-white/55">Optimized</div>
-                    <div className="mt-1 flex items-center justify-center gap-1.5 text-sm font-semibold">
-                      <CheckCircle className="h-4 w-4 text-emerald-400" /> High
-                    </div>
-                  </div>
-                </div>
-              </section>
             </div>
 
-            {/* RIGHT: seller card (sticky) */}
-            <aside className="lg:sticky lg:top-24 lg:h-fit">
-              <div className="rounded-[22px] border border-white/[0.07] bg-[#0e0e0e] p-5">
-                <div className="flex items-center gap-3">
-                  {sellerAvatar ? (
-                    <span className="relative grid h-12 w-12 place-items-center overflow-hidden rounded-2xl bg-white/10">
-                      <Image src={sellerAvatar} alt={sellerName} fill sizes="48px" className="object-cover" />
-                    </span>
-                  ) : (
-                    <span className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-orange-500 to-amber-400 text-lg font-black text-black">
-                      {sellerInitial}
-                    </span>
-                  )}
-                  <div className="leading-tight">
-                    <div className="flex items-center gap-1.5 font-semibold">
-                      {sellerName} <BadgeCheck className="h-4 w-4 text-orange-500" />
-                    </div>
-                    <div className="text-xs text-white/55">Verified seller</div>
-                  </div>
-                </div>
-                <button className="mt-4 w-full rounded-xl border border-white/[0.1] bg-white/[0.04] py-2.5 text-sm font-semibold transition hover:bg-white/[0.08]">
-                  View store
-                </button>
+            {/* RIGHT — title + buy card (sticky) */}
+            <aside className="flex flex-col gap-4 lg:sticky lg:top-24 lg:h-fit">
+              <h1 className="text-[26px] font-extrabold leading-tight tracking-tight sm:text-[30px]">{prop.name}</h1>
+
+              {/* Seller line */}
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-white/55">
+                <span className="flex items-center gap-2">
+                  <span className="grid h-6 w-6 place-items-center rounded-full bg-gradient-to-br from-orange-500 to-amber-400 text-[10px] font-black text-black">
+                    {sellerInitial}
+                  </span>
+                  {sellerName}
+                  <BadgeCheck className="h-4 w-4 text-orange-500" />
+                </span>
               </div>
 
-              <div className="mt-4 rounded-[22px] border border-white/[0.07] bg-white/[0.02] p-5">
-                <div className="flex items-center gap-2 text-sm font-semibold">
-                  <LifeBuoy className="h-4 w-4 text-orange-500" /> Support included
-                </div>
-                <p className="mt-1.5 text-[13px] leading-snug text-white/55">
-                  Active Discord, documentation and free updates for the lifetime of this resource.
-                </p>
+              {/* Tag */}
+              <div className="flex flex-wrap gap-1.5">
+                <span className="rounded-full border border-white/[0.1] bg-white/[0.06] px-3.5 py-1 text-[11px] font-bold text-white/55">FiveM Prop</span>
+                {isFree && (
+                  <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3.5 py-1 text-[11px] font-bold text-emerald-400">FREE</span>
+                )}
               </div>
+
+              {/* Buy card — orange clip-path price header + CTA + perks */}
+              <div className="overflow-hidden rounded-[18px] border border-white/[0.08] bg-white/[0.02]">
+                <div className="relative bg-gradient-to-br from-orange-500 to-orange-600 px-6 pb-9 pt-5" style={{ clipPath: "polygon(0 0,100% 0,100% 74%,0 100%)" }}>
+                  {!isFree && hasDiscount && discount > 0 && (
+                    <span className="absolute right-5 top-5 rounded-full bg-white px-3 py-1 text-xs font-extrabold text-orange-600">−{discount}%</span>
+                  )}
+                  <small className="text-[11px] font-bold uppercase tracking-[0.14em] text-white/85">
+                    {isFree ? "Free download" : "One-time purchase"}
+                  </small>
+                  <div className="mt-1 flex flex-wrap items-center gap-2.5 text-[40px] font-black leading-none tracking-tight text-white">
+                    {isFree ? (
+                      "Free"
+                    ) : (
+                      <>
+                        {currency}{finalPrice.toFixed(2)}
+                        {hasDiscount && (
+                          <del className="text-[17px] font-normal text-white/60">{currency}{price.toFixed(2)}</del>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </div>
+                <div className="-mt-3 flex flex-col gap-4 px-6 pb-6">
+                  {prop.hasPurchased ? (
+                    <div className="flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 py-3.5 font-bold text-black">
+                      <BadgeCheck className="h-[18px] w-[18px]" /> Purchased — sent to your email
+                    </div>
+                  ) : (
+                    <button
+                      onClick={handleAddToCart}
+                      disabled={addingToCart}
+                      className="group flex h-[52px] items-center justify-center gap-2 rounded-full bg-gradient-to-br from-orange-500 to-orange-600 font-bold text-white shadow-[0_4px_20px_rgba(249,115,22,0.3)] transition hover:from-orange-400 hover:to-orange-500 disabled:opacity-50"
+                    >
+                      {addingToCart ? (
+                        <><Loader2 className="h-[18px] w-[18px] animate-spin" /> Adding…</>
+                      ) : (
+                        <><ShoppingCart className="h-[18px] w-[18px]" /> {isFree ? "Get it Free" : "Add to Cart"}</>
+                      )}
+                    </button>
+                  )}
+                  <div className="flex flex-col gap-2.5">
+                    <div className="flex items-center gap-2.5 text-[13.5px] text-white/70">
+                      <span className="grid h-[30px] w-[30px] flex-none place-items-center rounded-lg bg-orange-500/12 text-orange-500"><Zap className="h-3.5 w-3.5" /></span>
+                      Instant delivery to your email
+                    </div>
+                    <div className="flex items-center gap-2.5 text-[13.5px] text-white/70">
+                      <span className="grid h-[30px] w-[30px] flex-none place-items-center rounded-lg bg-orange-500/12 text-orange-500"><ShieldCheck className="h-3.5 w-3.5" /></span>
+                      Secure checkout via Tebex
+                    </div>
+                    <div className="flex items-center gap-2.5 text-[13.5px] text-white/70">
+                      <span className="grid h-[30px] w-[30px] flex-none place-items-center rounded-lg bg-orange-500/12 text-orange-500"><LifeBuoy className="h-3.5 w-3.5" /></span>
+                      Updates &amp; support included
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Browse more */}
+              <Link href="/props" className="block w-full rounded-xl border border-white/[0.1] bg-white/[0.04] py-2.5 text-center text-sm font-semibold transition hover:bg-white/[0.08]">
+                Browse more props
+              </Link>
             </aside>
           </div>
         </div>
       </main>
-      <Footer />
 
-      <style jsx global>{`
-        .hide-scroll::-webkit-scrollbar {
-          display: none;
-        }
-        .hide-scroll {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-      `}</style>
+      {/* Fullscreen image lightbox */}
+      {isFullscreen && activeSrc && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4" onClick={() => setIsFullscreen(false)}>
+          <button type="button" onClick={() => setIsFullscreen(false)} className="absolute right-4 top-4 z-10 rounded-full bg-black/80 p-3 text-white transition-colors hover:bg-orange-500">
+            <X className="h-6 w-6" />
+          </button>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={activeSrc} alt={prop.name} className="max-h-[90vh] max-w-full object-contain" onClick={(e) => e.stopPropagation()} />
+        </div>
+      )}
+      <Footer />
     </>
   )
 }
