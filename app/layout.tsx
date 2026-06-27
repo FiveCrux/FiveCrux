@@ -33,11 +33,11 @@ export default function RootLayout({
             <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
               <AutoCheckWrapper>
               <FirebaseAnalytics />
-                {/* Scarce side-banner ad rails (every page, wide screens only). */}
+                {/* Scarce side-banner ad rails (every page; desktop ≥1280px). */}
                 <SideBanners />
-                {/* Inset content on very wide screens so it clears the fixed rails;
-                    below the breakpoint there are no rails and content is full width. */}
-                <div className="min-[1700px]:px-[216px]">{children}</div>
+                {/* Inset content on desktop so it clears the slim fixed rails;
+                    below xl there are no rails and content is full width. */}
+                <div className="xl:px-[208px]">{children}</div>
               </AutoCheckWrapper>
               <Toaster />
               <Sonner />

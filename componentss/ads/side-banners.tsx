@@ -14,9 +14,10 @@ type Banner = {
   endDate: string | null
 } | null
 
-// Two scarce side-rail slots (left + right) shown on EVERY page on wide screens.
-// They slide in from the screen edges; below the breakpoint they're hidden and
-// the page goes full width (the root layout removes the inset to match).
+// Two side-rail ad slots (left + right), shown on desktop (≥1280px). Each is a
+// fixed-size SKYSCRAPER anchored near the top (not a full-height bar) so there's
+// clean negative space around it — reads as a real ad unit, not a cluttered
+// sidebar. Below xl they're hidden and the page goes full width.
 export default function SideBanners() {
   const [active, setActive] = useState<{ left: Banner; right: Banner }>({ left: null, right: null })
 
@@ -45,55 +46,50 @@ function Rail({ side, banner }: { side: "left" | "right"; banner: Banner }) {
   const isLeft = side === "left"
   return (
     <motion.aside
-      initial={{ x: isLeft ? -140 : 140, opacity: 0 }}
+      initial={{ x: isLeft ? -120 : 120, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
-      transition={{ type: "spring", bounce: 0, duration: 0.8, delay: isLeft ? 0.15 : 0.28 }}
-      aria-label={`${side} banner ad`}
-      className={`fixed top-[84px] bottom-4 z-30 hidden w-[200px] min-[1700px]:flex ${
-        isLeft ? "left-3" : "right-3"
+      transition={{ type: "spring", bounce: 0, duration: 0.7, delay: isLeft ? 0.15 : 0.25 }}
+      aria-label={`${side} sponsored banner`}
+      // Top-anchored skyscraper (160×600, caps on short viewports). Fixed so it
+      // stays beside the catalogue as you scroll.
+      className={`fixed top-[96px] z-30 hidden h-[600px] max-h-[calc(100vh-128px)] w-[160px] xl:block ${
+        isLeft ? "left-6" : "right-6"
       }`}
     >
-      {/* outer-edge accent — reinforces "docked to the side" */}
-      <span
-        className={`pointer-events-none absolute top-9 bottom-9 w-[3px] rounded-full bg-gradient-to-b from-transparent via-orange-500/70 to-transparent ${
-          isLeft ? "-left-2" : "-right-2"
-        }`}
-      />
       {banner && banner.imageUrl ? (
         <Link
           href={banner.linkUrl || "#"}
           target={banner.linkUrl ? "_blank" : undefined}
           rel="noopener noreferrer sponsored"
-          className="group relative flex-1 overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0e0e0f] shadow-[0_24px_60px_rgba(0,0,0,0.55)] transition-all hover:-translate-y-1 hover:border-orange-500/40"
+          className="group relative block h-full overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0e0e0f] shadow-[0_18px_50px_rgba(0,0,0,0.45)] transition-all hover:-translate-y-0.5 hover:border-orange-500/40"
         >
-          <span className="absolute left-3 top-3 z-10 rounded-full border border-white/10 bg-black/55 px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.12em] text-white/70 backdrop-blur-sm">
-            Sponsored
+          <span className="absolute left-2.5 top-2.5 z-10 rounded-full border border-white/10 bg-black/55 px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.12em] text-white/55 backdrop-blur-sm">
+            Ad
           </span>
-          {/* advertiser image can be any host → plain img (no next/image domain config) */}
+          {/* advertiser image (any host) → plain img, no next/image domain config */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={banner.imageUrl} alt={banner.title || "Sponsored"} className="h-full w-full object-cover" />
           {banner.title && (
-            <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-3 text-sm font-semibold text-white">
+            <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent p-2.5 text-xs font-semibold text-white">
               {banner.title}
             </span>
           )}
         </Link>
       ) : (
+        // Quiet empty state — subtle, so two unsold slots don't look cluttered.
         <Link
           href="/advertise#side-banners"
-          className="group flex flex-1 flex-col items-center justify-center gap-3 rounded-2xl border-[1.5px] border-dashed border-orange-500/40 bg-orange-500/[0.04] p-5 text-center transition-colors hover:border-orange-500/70 hover:bg-orange-500/[0.07]"
+          className="group flex h-full flex-col items-center justify-center gap-2.5 rounded-2xl border border-white/[0.07] bg-white/[0.015] px-3 text-center transition-colors hover:border-orange-500/40 hover:bg-orange-500/[0.04]"
         >
-          <span className="grid h-12 w-12 place-items-center rounded-xl bg-orange-500/12 text-orange-400">
-            <Megaphone className="h-6 w-6" />
+          <span className="grid h-9 w-9 place-items-center rounded-lg bg-white/[0.04] text-white/40 transition-colors group-hover:bg-orange-500/12 group-hover:text-orange-400">
+            <Megaphone className="h-[18px] w-[18px]" />
           </span>
-          <span className="text-[11px] font-bold uppercase tracking-[0.04em] text-orange-400">Premium placement</span>
-          <span className="text-base font-extrabold text-white">Your banner here</span>
-          <span className="text-xs leading-relaxed text-white/55">
-            A sticky banner beside the catalogue, on every page.
+          <span className="text-[13px] font-semibold text-white/55 transition-colors group-hover:text-white">
+            Advertise here
           </span>
-          <span className="text-[11px] text-white/40">Only 2 side slots exist.</span>
-          <span className="mt-1 inline-flex items-center gap-1 rounded-lg bg-orange-500 px-3.5 py-2 text-xs font-bold text-black">
-            Advertise <ArrowRight className="h-3.5 w-3.5" />
+          <span className="text-[10px] text-white/30">from €30/wk</span>
+          <span className="mt-0.5 inline-flex items-center gap-1 text-[11px] font-semibold text-orange-400/80 transition-colors group-hover:text-orange-400">
+            Book <ArrowRight className="h-3 w-3" />
           </span>
         </Link>
       )}
