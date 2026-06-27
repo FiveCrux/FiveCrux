@@ -392,7 +392,7 @@ export function ScriptDetailClient({
                   </ul>
                 )}
                 {script.description && (
-                  <p className="mt-4 whitespace-pre-line text-[15px] leading-relaxed text-white/55">{script.description}</p>
+                  <p className="mt-4 whitespace-pre-line break-words [overflow-wrap:anywhere] text-[15px] leading-relaxed text-white/55">{script.description}</p>
                 )}
               </section>
 
