@@ -282,7 +282,15 @@ function FaqItem({ q, a }: { q: string; a: string }) {
   )
 }
 
-export function HomeClient({ initialFeatured = [] }: { initialFeatured: any[] }) {
+export function HomeClient({
+  initialFeatured = [],
+  initialCategories = [],
+  initialScripts = [],
+}: {
+  initialFeatured: any[]
+  initialCategories?: { name: string; slug: string; icon: string | null }[]
+  initialScripts?: any[]
+}) {
   const router = useRouter()
   const [query, setQuery] = useState("")
   // Seed from server-fetched featured scripts so the hero/featured row renders
@@ -291,18 +299,23 @@ export function HomeClient({ initialFeatured = [] }: { initialFeatured: any[] })
     Array.isArray(initialFeatured) ? initialFeatured.map(mapFeatured) : []
   )
 
-  // Regular approved scripts — power the discovery rows (and fall back for the
-  // hero/featured when there are no active featured scripts yet).
-  const [liveScripts, setLiveScripts] = useState<MarketProduct[]>([])
+  // Regular approved scripts — power the discovery rows. Seeded from the server
+  // (SSR/ISR) so the rows are in the first paint; client fetch is a fallback.
+  const [liveScripts, setLiveScripts] = useState<MarketProduct[]>(() =>
+    Array.isArray(initialScripts) ? initialScripts.map(mapScript) : []
+  )
 
-  // Dynamic browse categories (DB-managed, admin-curated for the home page).
-  const [homeCats, setHomeCats] = useState<{ name: string; slug: string; icon: string | null }[]>([])
+  // Dynamic browse categories — seeded from the server so chips render instantly.
+  const [homeCats, setHomeCats] = useState<{ name: string; slug: string; icon: string | null }[]>(
+    Array.isArray(initialCategories) ? initialCategories : []
+  )
   useEffect(() => {
+    if (initialCategories && initialCategories.length) return // already seeded server-side
     fetch("/api/categories?home=true")
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => Array.isArray(d?.categories) && setHomeCats(d.categories))
       .catch(() => {})
-  }, [])
+  }, [initialCategories])
 
   // Fixed page shortcuts + dynamic category chips.
   const categoryChips = useMemo<{ name: string; icon: LucideIcon; href: string }[]>(
@@ -328,13 +341,15 @@ export function HomeClient({ initialFeatured = [] }: { initialFeatured: any[] })
         })
         .catch(() => {})
     }
-    // Regular catalog for the discovery rows.
-    fetch("/api/scripts", { cache: "no-store" })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => {
-        if (!cancelled && Array.isArray(d?.scripts)) setLiveScripts(d.scripts.map(mapScript))
-      })
-      .catch(() => {})
+    // Regular catalog for the discovery rows (only when SSR didn't seed it).
+    if (!(initialScripts && initialScripts.length)) {
+      fetch("/api/scripts", { cache: "no-store" })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => {
+          if (!cancelled && Array.isArray(d?.scripts)) setLiveScripts(d.scripts.map(mapScript))
+        })
+        .catch(() => {})
+    }
     return () => {
       cancelled = true
     }
