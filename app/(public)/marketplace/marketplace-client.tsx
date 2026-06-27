@@ -9,6 +9,7 @@ import { Button } from "@/componentss/ui/button"
 import Navbar from "@/componentss/shared/navbar"
 import Footer from "@/componentss/shared/footer"
 import { ProductCard, type MarketProduct } from "@/componentss/marketplace/product-card"
+import SideAdsFrame from "@/componentss/ads/side-banners"
 
 // Raw script shape returned by /api/scripts
 interface ApiScript {
@@ -149,6 +150,7 @@ export function MarketplaceClient({ initialScripts = [] }: { initialScripts?: an
   return (
     <>
       <Navbar />
+      <SideAdsFrame>
       <main className="min-h-screen bg-[#0a0a0a] text-white">
         {/* ── Hero ─────────────────────────────────────────────────────── */}
         <section className="relative overflow-hidden border-b border-white/[0.06]">
@@ -306,6 +308,7 @@ export function MarketplaceClient({ initialScripts = [] }: { initialScripts?: an
           )}
         </section>
       </main>
+      </SideAdsFrame>
       <Footer />
     </>
   )
