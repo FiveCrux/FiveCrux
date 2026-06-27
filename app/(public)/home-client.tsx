@@ -30,6 +30,7 @@ import {
 import { categoryIcon } from "@/lib/category-icons"
 import Navbar from "@/componentss/shared/navbar"
 import Footer from "@/componentss/shared/footer"
+import SideAdsFrame from "@/componentss/ads/side-banners"
 import { ProductCard, type MarketProduct } from "@/componentss/marketplace/product-card"
 
 // Fixed section shortcuts (these are pages, not categories). The actual browse
@@ -378,6 +379,7 @@ export function HomeClient({
     <div className="min-h-screen overflow-x-clip bg-[#0a0a0a] text-white">
       <Navbar />
 
+      <SideAdsFrame>
       <HeroSpotlight items={rows.heroItems} />
 
       {/* Category chips */}
@@ -538,6 +540,7 @@ export function HomeClient({
           </div>
         </div>
       </section>
+      </SideAdsFrame>
 
       <div className="mt-20">
         <Footer />

@@ -14,12 +14,12 @@ type Banner = {
   endDate: string | null
 } | null
 
-// Wraps the whole app: a centred website frame with the two side-banner ad slots
-// as part of the SAME frame (sticky columns beside the content) — not floating
-// divs pinned to the raw browser edges. On <xl the rails hide and content fills
-// the frame; the frame caps width on huge screens so the ads stay next to the
-// content, integrated.
-export default function SideBannerLayout({ children }: { children: ReactNode }) {
+// Wrap a page's CONTENT sections (hero, rows, features…) with this so the two
+// side-banner ad slots sit INSIDE the same content frame, as sticky columns
+// beside the content — part of the page, not divs pinned to the raw browser
+// edges. Place it between the page's <Navbar/> and <Footer/>. On <xl the rails
+// hide and content fills the frame.
+export default function SideAdsFrame({ children }: { children: ReactNode }) {
   const [active, setActive] = useState<{ left: Banner; right: Banner }>({ left: null, right: null })
 
   useEffect(() => {
@@ -36,7 +36,7 @@ export default function SideBannerLayout({ children }: { children: ReactNode }) 
   }, [])
 
   return (
-    <div className="mx-auto flex w-full max-w-[1680px] items-start gap-5 px-2.5">
+    <div className="mx-auto flex w-full max-w-[1680px] items-start gap-4 px-2.5">
       <Rail side="left" banner={active.left} />
       <div className="min-w-0 flex-1">{children}</div>
       <Rail side="right" banner={active.right} />

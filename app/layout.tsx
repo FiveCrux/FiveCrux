@@ -11,7 +11,6 @@ import { AutoCheckWrapper } from "@/components/auto-check-wrapper"
 import { Analytics } from "@vercel/analytics/next"
 import FirebaseAnalytics from "@/componentss/FirebaseAnalytics"
 import ImpersonationWidget from "@/componentss/dev/impersonation-widget"
-import SideBannerLayout from "@/componentss/ads/side-banners"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
@@ -33,9 +32,7 @@ export default function RootLayout({
             <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
               <AutoCheckWrapper>
               <FirebaseAnalytics />
-                {/* Side-banner ad slots live INSIDE the site frame (sticky columns
-                    beside the content), not as separate edge-pinned divs. */}
-                <SideBannerLayout>{children}</SideBannerLayout>
+                {children}
               </AutoCheckWrapper>
               <Toaster />
               <Sonner />
