@@ -20,6 +20,7 @@ import {
 
 import { resolvePackage, resolvePackageMeta, parsePackageItemId } from "@/lib/ad-pricing";
 import { getLivePriceByPackageId } from "@/lib/tebex-pricing";
+import { getTebexProp } from "@/lib/tebex-props";
 
 // App-generated integer PK (prod uses manual integer PKs, not DB identity).
 function generateNumericId() {
@@ -169,12 +170,10 @@ export async function POST(request: NextRequest) {
                 where: eq(subscriptions.id, itemId),
             });
         } else {
-            // Props: priced LIVE from the prop's Tebex package (never the client).
-            // FiveCrux is the only lister; each prop carries its FiveCrux-store
-            // tebex_package_id. A prop with no live Tebex price isn't purchasable.
-            const prop = await db.query.approvedProps.findFirst({
-                where: eq(approvedProps.id, itemId),
-            });
+            // Props: listed only by FiveCrux and managed in Tebex's "PROPS"
+            // category. The prop id IS the Tebex package id. Priced LIVE from
+            // Tebex (never the client).
+            const prop = await getTebexProp(itemId);
             if (prop) {
                 const live = await getLivePriceByPackageId(prop.tebexPackageId);
                 if (!live) {
