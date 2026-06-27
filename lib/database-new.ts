@@ -58,24 +58,28 @@ export async function upsertUser(user: {
   email?: string | null;
   image?: string | null;
   username?: string | null;
-  forceAdminIfUsername?: string | null;
+  // Usernames that should always be founders (owner/staff bootstrap accounts).
+  // Applies to NEW and EXISTING users so the owner can't get locked out.
+  forceAdminUsernames?: string[] | null;
 }) {
   // Check if user already exists
   const existingUser = await getUserById(user.id);
-  
+
+  const isForceAdmin =
+    !!user.username && (user.forceAdminUsernames ?? []).includes(user.username);
+
   // Determine roles based on user status
   let userRoles: string[];
-  
+
   if (existingUser) {
-    // Existing user: Keep their current roles (don't overwrite)
-    userRoles = validateRoles(existingUser.roles || ['user']);
+    // Existing user: keep their roles, but ensure force-admins are founders.
+    const current = validateRoles(existingUser.roles || ['user']);
+    userRoles = isForceAdmin && !current.includes('founder')
+      ? validateRoles([...current, 'founder'])
+      : current;
   } else {
-    // New user: Assign default roles
-    if (user.forceAdminIfUsername && user.username === user.forceAdminIfUsername) {
-      userRoles = ['founder']; // Give founder role to special user
-    } else {
-      userRoles = ['user']; // Default role for new users
-    }
+    // New user: founder if bootstrap account, else default.
+    userRoles = isForceAdmin ? ['founder'] : ['user'];
   }
   
   await db.insert(users).values({
@@ -92,8 +96,9 @@ export async function upsertUser(user: {
       email: user.email ?? null,
       image: user.image ?? null,
       username: user.username ?? null,
-      // Don't overwrite roles for existing users
-      roles: existingUser ? existingUser.roles : userRoles,
+      // userRoles already preserves existing users' roles (and only upgrades
+      // force-admin bootstrap accounts to founder) — see above.
+      roles: userRoles,
       updatedAt: new Date(),
     },
   });
