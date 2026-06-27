@@ -132,7 +132,13 @@ export async function GET(request: NextRequest) {
     // status may not exist on approved_scripts selection; avoid strict access
     console.log("Scripts API - Script ids:", scripts.map(s => ({ id: (s as any).id, title: (s as any).title })))
 
-    return NextResponse.json({ scripts })
+    // Only the public listing (approved scripts) is CDN-cacheable; never cache
+    // pending/other variants. Mirrors /api/categories' caching.
+    const headers: Record<string, string> =
+      filters.status === "approved"
+        ? { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300" }
+        : {}
+    return NextResponse.json({ scripts }, { headers })
   } catch (error: any) {
     console.error("Error fetching scripts:", error)
     

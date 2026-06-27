@@ -44,7 +44,7 @@ const DiscordIcon = ({ className = "" }: { className?: string }) => (
 export default function Footer() {
   return (
     <footer className="relative w-full overflow-hidden border-t border-white/[0.08] bg-[#0a0a0a]">
-      <div className="mx-auto max-w-[1240px] px-6 sm:px-8">
+      <div className="w-full px-2.5">
         {/* Top: link groups + Discord */}
         <div className="flex flex-wrap items-start justify-between gap-x-10 gap-y-8 pt-12 pb-7">
           <div className="flex flex-wrap gap-x-12 gap-y-8">

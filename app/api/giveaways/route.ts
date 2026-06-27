@@ -138,7 +138,13 @@ export async function GET(request: NextRequest) {
       is_upcoming: giveaway.isUpcoming || false, // Include upcoming status
     }))
 
-    return NextResponse.json(transformedGiveaways)
+    // Cache only the default public listing at the CDN; status-filtered/paged
+    // variants stay dynamic.
+    const headers: Record<string, string> =
+      status === "all" && offset === 0
+        ? { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300" }
+        : {}
+    return NextResponse.json(transformedGiveaways, { headers })
   } catch (error) {
     console.error("Error fetching giveaways:", error)
     return NextResponse.json({ error: "Failed to fetch giveaways" }, { status: 500 })
