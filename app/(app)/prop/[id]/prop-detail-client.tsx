@@ -192,7 +192,7 @@ export function PropDetailClient({
               <section className="mt-8">
                 <h3 className="text-lg font-bold">Details</h3>
                 {prop.description ? (
-                  <div className="mt-3 whitespace-pre-line text-[15px] leading-relaxed text-white/55" dangerouslySetInnerHTML={{ __html: prop.description }} />
+                  <div className="mt-3 whitespace-pre-line break-words [overflow-wrap:anywhere] text-[15px] leading-relaxed text-white/55" dangerouslySetInnerHTML={{ __html: prop.description }} />
                 ) : (
                   <p className="mt-3 text-[15px] text-white/55">No description provided.</p>
                 )}
