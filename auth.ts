@@ -71,7 +71,7 @@ export const authOptions: NextAuthOptions = {
 					email: user.email || null,
 					image: user.image || null,
 					username: username ? String(username) : null,
-					forceAdminIfUsername: "sidakftw",
+					forceAdminUsernames: ["sidakftw", "naarcoss._49546"],
 				})
 				return true
 			} catch (e) {
