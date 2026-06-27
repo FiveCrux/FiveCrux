@@ -196,7 +196,9 @@ export function ScriptDetailClient({
     const fetchOtherScripts = async () => {
       try {
         setLoadingOtherScripts(true);
-        const response = await fetch(`/api/scripts?limit=8`, { cache: "no-store" });
+        // No `no-store` — the public scripts listing is CDN-cached (60s); a fresh
+        // hit on every script view was needless DB load.
+        const response = await fetch(`/api/scripts?limit=8`);
         if (!response.ok) throw new Error("Failed to fetch other scripts");
         const data = await response.json();
         const filteredScripts = (data.scripts || [])
@@ -392,7 +394,7 @@ export function ScriptDetailClient({
                   </ul>
                 )}
                 {script.description && (
-                  <p className="mt-4 whitespace-pre-line text-[15px] leading-relaxed text-white/55">{script.description}</p>
+                  <p className="mt-4 whitespace-pre-line break-words [overflow-wrap:anywhere] text-[15px] leading-relaxed text-white/55">{script.description}</p>
                 )}
               </section>
 
@@ -456,8 +458,8 @@ export function ScriptDetailClient({
               {/* Buy card — orange clip-path price header + CTA + perks */}
               <div className="overflow-hidden rounded-[18px] border border-white/[0.08] bg-white/[0.02]">
                 <div
-                  className="relative bg-gradient-to-br from-orange-500 to-orange-600 px-6 pb-9 pt-5"
-                  style={{ clipPath: "polygon(0 0,100% 0,100% 74%,0 100%)" }}
+                  className="relative bg-gradient-to-br from-orange-500 to-orange-600 px-6 pb-12 pt-5"
+                  style={{ clipPath: "polygon(0 0,100% 0,100% 82%,0 100%)" }}
                 >
                   {!script.hidePrice && !isFree && script.original_price && discount > 0 && (
                     <span className="absolute right-5 top-5 rounded-full bg-white px-3 py-1 text-xs font-extrabold text-orange-600">
@@ -486,7 +488,7 @@ export function ScriptDetailClient({
                     )}
                   </div>
                 </div>
-                <div className="-mt-3 flex flex-col gap-4 px-6 pb-6">
+                <div className="mt-1 flex flex-col gap-4 px-6 pb-6">
                   <div className="flex items-center gap-2.5">
                     <Button
                       onClick={handleBuy}

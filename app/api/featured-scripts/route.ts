@@ -19,10 +19,13 @@ export async function GET(request: NextRequest) {
 
     console.log('Featured Scripts API - Found:', featuredScripts.length);
 
-    return NextResponse.json({ 
-      featuredScripts,
-      total: featuredScripts.length
-    });
+    return NextResponse.json(
+      {
+        featuredScripts,
+        total: featuredScripts.length,
+      },
+      { headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300" } }
+    );
   } catch (error: any) {
     console.error('Error fetching featured scripts:', error);
     

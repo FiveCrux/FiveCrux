@@ -165,33 +165,36 @@ export default function ProfilePage() {
     new Set(["overview"])
   );
 
-  // Fetch data using React Query with lazy loading
+  // Fetch data using React Query. All queries still load once (the overview
+  // tab needs every count), but only the ACTIVE tab keeps the 30s status
+  // polling — so we don't run 5 background polls at once on every profile view.
   const {
     data: scriptsData,
     isLoading: scriptsLoading,
     refetch: refetchScripts,
   } = useUserScripts(
     100, // Get more items for now
-    0
+    0,
+    activeTab === "scripts"
   );
 
   const {
     data: giveawaysData,
     isLoading: giveawaysLoading,
     refetch: refetchGiveaways,
-  } = useUserGiveaways(100, 0);
+  } = useUserGiveaways(100, 0, activeTab === "giveaways");
 
   const {
     data: adsData,
     isLoading: adsLoading,
     refetch: refetchAds,
-  } = useUserAdvertisements(100, 0);
+  } = useUserAdvertisements(100, 0, activeTab === "ads");
 
   const {
     data: entriesData,
     isLoading: entriesLoading,
     refetch: refetchEntries,
-  } = useUserCreatorGiveawayEntries(100, 0);
+  } = useUserCreatorGiveawayEntries(100, 0, activeTab === "entries");
 
   // Featured Scripts
   const { data: featuredScriptSlotsData, refetch: refetchFeaturedScriptSlots } =
@@ -200,7 +203,7 @@ export default function ProfilePage() {
     data: featuredScriptsData,
     isLoading: featuredScriptsLoading,
     refetch: refetchFeaturedScripts,
-  } = useUserFeaturedScripts(100);
+  } = useUserFeaturedScripts(100, activeTab === "featured-scripts");
   const createFeaturedScriptMutation = useCreateFeaturedScript();
   const deleteFeaturedScriptMutation = useDeleteFeaturedScript();
 

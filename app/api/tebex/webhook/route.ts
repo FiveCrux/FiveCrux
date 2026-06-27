@@ -3,7 +3,8 @@ import { verifyTebexWebhook, type TebexWebhookPayload } from "@/lib/tebex";
 import { db } from "@/lib/db/client";
 import { tebexOrders, orders, orderItems, carts, cartItems, userAdSlots, userFeaturedScriptSlots, coupons, couponRedemptions } from "@/lib/db/schema";
 import { and, eq, sql } from "drizzle-orm";
-import { createAdSlots, createFeaturedScriptSlots } from "@/lib/database-new";
+import { createAdSlots, createFeaturedScriptSlots, activateSideBanner } from "@/lib/database-new";
+import { sideBannerBookings } from "@/lib/db/schema";
 
 function generateNumericId() {
   return Math.floor(Date.now() / 1000) + Math.floor(Math.random() * 10000);
@@ -204,6 +205,8 @@ async function revokeForOrder(order: { id: string; custom: unknown }): Promise<v
     // 1. Deactivate slots provisioned under this order reference.
     await db.update(userAdSlots).set({ status: "inactive" }).where(eq(userAdSlots.paypalOrderId, order.id));
     await db.update(userFeaturedScriptSlots).set({ featuredSlotStatus: "inactive" }).where(eq(userFeaturedScriptSlots.featuredPaypalOrderId, order.id));
+    // Side banner booked under this order → free the position.
+    await db.update(sideBannerBookings).set({ status: "cancelled", updatedAt: new Date() }).where(eq(sideBannerBookings.orderReference, order.id));
 
     // 2. Cart orders carry a fivecruxOrderId in custom → flip it + restore coupon.
     const meta = typeof order.custom === "string"
@@ -272,6 +275,16 @@ async function provisionPlatformFee(
     if (!userId) {
       console.warn("Tebex webhook: platform_fee order missing userId", order.id);
       return { provisioned: false, reason: "missing_user" };
+    }
+
+    // Side banner booking (from /api/side-banners/checkout): activate the
+    // reserved scarce slot. The overselling lock may reject it (rare) → flag refund.
+    if (meta.kind === "side_banner" && meta.bookingId != null) {
+      const res = await activateSideBanner(Number(meta.bookingId), fallbackOrderId);
+      if (res.needsRefund) {
+        console.error("Tebex webhook: side-banner slot was taken; REFUND needed for booking", meta.bookingId);
+      }
+      return { provisioned: res.activated };
     }
 
     // Whole-cart order (from /api/cart/tebex-checkout): provision every item +
