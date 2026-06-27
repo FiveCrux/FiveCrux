@@ -2,24 +2,24 @@
 
 import { motion } from "framer-motion"
 import Link from "next/link"
-import Image from "next/image"
 
 const footerLinks = [
   {
     title: "Categories",
+    accent: true,
     links: [
       { name: "Scripts", href: "/scripts?category=scripts" },
-      { name: "Maps", href: "/scripts?category=maps" },
-      { name: "Props", href: "/props" },
-      { name: "Clothing", href: "/scripts?category=clothing" },
-      { name: "Economy", href: "/scripts?category=economy" },
+      { name: "MLOs", href: "/scripts?category=mlo" },
       { name: "Vehicles", href: "/scripts?category=vehicles" },
+      { name: "Weapons", href: "/scripts?category=weapons" },
+      { name: "Clothing", href: "/scripts?category=clothing" },
     ],
   },
   {
     title: "Marketplace",
     links: [
       { name: "Browse All", href: "/scripts" },
+      { name: "Props", href: "/props" },
       { name: "Giveaways", href: "/giveaways" },
       { name: "Advertise", href: "/advertise" },
     ],
@@ -33,167 +33,88 @@ const footerLinks = [
   },
 ]
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.08,
-      delayChildren: 0.1,
-    },
-  },
-}
+const DISCORD = "https://discord.gg/EwGrUb7DW6"
 
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      type: "spring" as const,
-      bounce: 0,
-      duration: 0.6,
-    },
-  },
-}
+const DiscordIcon = ({ className = "" }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" className={className} fill="currentColor">
+    <path d="M20.317 4.37a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.74 19.74 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.1 13.1 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.3 12.3 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.84 19.84 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z" />
+  </svg>
+)
 
 export default function Footer() {
   return (
-    <motion.footer
-      className="w-full flex justify-center pb-8 px-4"
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-80px" }}
-      transition={{ type: "spring", bounce: 0, duration: 0.7 }}
-    >
-      {/* Floating pill container — mirrors the navbar */}
-      <div
-        className="w-full max-w-[min(1200px,96vw)] rounded-2xl overflow-hidden"
-        style={{
-          background: "rgba(26, 26, 26, 0.85)",
-          border: "1px solid rgba(249, 115, 22, 0.12)",
-          backdropFilter: "blur(16px)",
-          WebkitBackdropFilter: "blur(16px)",
-          boxShadow:
-            "0 0 0 1px rgba(255,255,255,0.04), 0 8px 40px rgba(0,0,0,0.5), 0 2px 8px rgba(249,115,22,0.06)",
-        }}
-      >
-        {/* Subtle orange radial glow in the top-left */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background:
-              "radial-gradient(ellipse 60% 40% at 10% 0%, rgba(249,115,22,0.06) 0%, transparent 70%)",
-          }}
-        />
-
-        <div className="relative z-10 py-10 px-8 sm:px-10 lg:px-12">
-          {/* Main grid */}
-          <motion.div
-            className="grid grid-cols-1 md:grid-cols-[1.6fr_1fr_1fr_1fr] gap-10"
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-60px" }}
-          >
-            {/* Brand column */}
-            <motion.div variants={itemVariants} className="flex flex-col gap-4">
-              <Link href="/" className="flex items-center gap-2 w-fit group">
-                <Image src="/CF.svg" alt="FiveCrux logo" width={44} height={44} />
-                <span className="text-2xl font-bold">
-                  <motion.span
-                    className="text-orange-500 inline-block"
-                    animate={{
-                      textShadow: [
-                        "0 0 8px rgba(249,115,22,0.4)",
-                        "0 0 16px rgba(249,115,22,0.7)",
-                        "0 0 8px rgba(249,115,22,0.4)",
-                      ],
-                    }}
-                    transition={{ duration: 2.5, repeat: Infinity }}
-                  >
-                    Five
-                  </motion.span>
-                  <motion.span
-                    className="text-yellow-400 inline-block"
-                    animate={{
-                      textShadow: [
-                        "0 0 8px rgba(234,179,8,0.4)",
-                        "0 0 16px rgba(234,179,8,0.7)",
-                        "0 0 8px rgba(234,179,8,0.4)",
-                      ],
-                    }}
-                    transition={{ duration: 2.5, repeat: Infinity, delay: 0.5 }}
-                  >
-                    Crux
-                  </motion.span>
-                </span>
-              </Link>
-              <p className="text-neutral-400 text-sm leading-relaxed max-w-[240px]">
-                Your trusted source for premium FiveM scripts and resources. Built by developers, for developers.
-              </p>
-              {/* Discord pill */}
-              <Link
-                href="https://discord.gg/EwGrUb7DW6"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 w-fit mt-1 px-3 py-1.5 rounded-full text-xs font-semibold text-neutral-200 transition-all duration-200 hover:-translate-y-0.5"
-                style={{
-                  background: "rgba(88, 101, 242, 0.15)",
-                  border: "1px solid rgba(88, 101, 242, 0.3)",
-                }}
-              >
-                <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 fill-[#5865F2]">
-                  <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057.101 18.08.114 18.102.132 18.116a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z" />
-                </svg>
-                Join our Discord
-              </Link>
-            </motion.div>
-
-            {/* Link columns */}
+    <footer className="relative w-full overflow-hidden border-t border-white/[0.08] bg-[#0a0a0a]">
+      <div className="mx-auto max-w-[1240px] px-6 sm:px-8">
+        {/* Top: link groups + Discord */}
+        <div className="flex flex-wrap items-start justify-between gap-x-10 gap-y-8 pt-12 pb-7">
+          <div className="flex flex-wrap gap-x-12 gap-y-8">
             {footerLinks.map((section) => (
-              <motion.div key={section.title} variants={itemVariants}>
-                <h4 className="text-white text-sm font-semibold mb-4 tracking-wide uppercase opacity-60">
+              <div key={section.title} className="flex flex-col gap-2.5">
+                <h4
+                  className={`mb-1 text-[11px] font-bold uppercase tracking-[0.16em] ${
+                    section.accent ? "text-orange-500" : "text-white/45"
+                  }`}
+                >
                   {section.title}
                 </h4>
-                <ul className="space-y-2.5">
-                  {section.links.map((link) => (
-                    <li key={link.name}>
-                      <Link
-                        href={link.href}
-                        target={(link as any).target}
-                        className="text-neutral-400 hover:text-orange-400 text-sm transition-colors duration-200 relative group inline-flex items-center gap-1"
-                      >
-                        <span className="absolute -left-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-orange-500 text-xs">›</span>
-                        {link.name}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </motion.div>
+                {section.links.map((link) => (
+                  <Link
+                    key={link.name}
+                    href={link.href}
+                    target={(link as any).target}
+                    rel={(link as any).target ? "noopener noreferrer" : undefined}
+                    className="text-sm text-white/[0.62] transition-colors hover:text-white"
+                  >
+                    {link.name}
+                  </Link>
+                ))}
+              </div>
             ))}
-          </motion.div>
+          </div>
 
-          {/* Bottom bar */}
-          <motion.div
-            className="mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3"
-            style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8, delay: 0.4 }}
+          <Link
+            href={DISCORD}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex h-10 items-center gap-2 rounded-full bg-[#5865F2] px-[18px] text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[#4752c4]"
           >
-            <p className="text-neutral-500 text-xs">
-              © 2026 FiveCrux. All rights reserved.
-            </p>
-            <p className="text-neutral-600 text-xs">
-              Made with{" "}
-              <span className="text-orange-500">♥</span>{" "}
-              for the FiveM community
-            </p>
-          </motion.div>
+            <DiscordIcon className="h-5 w-5" />
+            Join Discord
+          </Link>
+        </div>
+
+        {/* Type-flood wordmark — the brand is the hero */}
+        <motion.div
+          className="relative select-none"
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-60px" }}
+          transition={{ type: "spring", bounce: 0, duration: 0.7 }}
+        >
+          <h2
+            aria-label="FiveCrux"
+            className="font-black leading-[0.78] tracking-[-0.04em]"
+            style={{
+              fontSize: "clamp(58px,16vw,220px)",
+              backgroundImage: "linear-gradient(180deg,#ffffff 38%,rgba(255,255,255,0.06))",
+              WebkitBackgroundClip: "text",
+              backgroundClip: "text",
+              color: "transparent",
+            }}
+          >
+            FIVECRUX
+          </h2>
+          <span className="absolute bottom-[14px] left-[2px] h-[6px] w-[72px] rounded bg-orange-500 sm:h-[7px] sm:w-[84px]" />
+        </motion.div>
+
+        {/* Bottom bar */}
+        <div className="-mt-1 flex flex-col items-start justify-between gap-2 border-t border-white/[0.06] py-5 pb-8 text-[12.5px] text-white/45 sm:flex-row sm:items-center">
+          <span>© 2026 FiveCrux — premium FiveM scripts &amp; resources.</span>
+          <span>
+            Made with <span className="text-orange-500">♥</span> for the FiveM community
+          </span>
         </div>
       </div>
-    </motion.footer>
+    </footer>
   )
 }
