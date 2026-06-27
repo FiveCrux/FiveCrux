@@ -9,6 +9,12 @@ const nextConfig = {
       'cdn.discordapp.com',
       'media.discordapp.net',
     ],
+    // Tebex package images are served from its CloudFront CDN (hostname varies,
+    // e.g. dunb17ur4ymx4.cloudfront.net). Without this, next/image throws and
+    // the props page crashes.
+    remotePatterns: [
+      { protocol: 'https', hostname: '**.cloudfront.net' },
+    ],
   },
   // @electric-sql/pglite ships WASM + a .data filesystem image that must be
   // require()'d from node_modules at runtime — bundling it breaks asset
