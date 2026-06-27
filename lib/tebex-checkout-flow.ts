@@ -65,10 +65,10 @@ export async function prepareCartCheckout(userId: string, couponCode: string): P
   if (couponResult && "error" in couponResult) return { ok: false, error: String(couponResult.error || "Invalid coupon"), status: 400 };
   const appliedCoupon = couponResult?.coupon ?? null;
   const discountAmount = couponResult?.discountAmount ?? 0;
+  // Allow €0 (free packages / 100%-off coupons) — Tebex still processes a €0
+  // order through checkout and emails the file, so free goes through Tebex too
+  // (no separate library path).
   const payableAmount = Math.max(0, total - discountAmount);
-  if (payableAmount <= 0) {
-    return { ok: false, error: "Payable amount must be greater than 0 to start payment", status: 400 };
-  }
 
   const provItems: ProvItem[] = [];
   for (const item of cart.items) {
