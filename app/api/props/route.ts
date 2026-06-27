@@ -5,20 +5,22 @@ import { db } from "@/lib/db/client";
 import { approvedProps, users } from "@/lib/db/schema";
 import { desc, eq } from "drizzle-orm";
 import { createProp, hasRole } from "@/lib/database-new";
+import { listTebexProps } from "@/lib/tebex-props";
 
-export async function GET(request: NextRequest) {
+// Props are listed only by FiveCrux and managed entirely in Tebex (the "PROPS"
+// category). We auto-pull that category so adding a Tebex package shows it here.
+export const revalidate = 60;
+
+export async function GET() {
   try {
-    const rows = await db
-      .select({ prop: approvedProps, user: users })
-      .from(approvedProps)
-      .leftJoin(users, eq(approvedProps.createdBy, users.id))
-      .orderBy(desc(approvedProps.createdAt));
-    const allProps = rows.map(({ prop, user }) => ({ ...prop, user }));
-
-    return NextResponse.json({ props: allProps });
+    const props = await listTebexProps();
+    return NextResponse.json(
+      { props },
+      { headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300" } }
+    );
   } catch (error) {
     console.error("Error fetching props:", error);
-    return NextResponse.json({ error: "Failed to fetch props" }, { status: 500 });
+    return NextResponse.json({ props: [] }, { status: 200 });
   }
 }
 
