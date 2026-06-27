@@ -235,7 +235,7 @@ export function PropDetailClient({
 
               {/* Buy card — orange clip-path price header + CTA + perks */}
               <div className="overflow-hidden rounded-[18px] border border-white/[0.08] bg-white/[0.02]">
-                <div className="relative bg-gradient-to-br from-orange-500 to-orange-600 px-6 pb-9 pt-5" style={{ clipPath: "polygon(0 0,100% 0,100% 74%,0 100%)" }}>
+                <div className="relative bg-gradient-to-br from-orange-500 to-orange-600 px-6 pb-12 pt-5" style={{ clipPath: "polygon(0 0,100% 0,100% 82%,0 100%)" }}>
                   {!isFree && hasDiscount && discount > 0 && (
                     <span className="absolute right-5 top-5 rounded-full bg-white px-3 py-1 text-xs font-extrabold text-orange-600">−{discount}%</span>
                   )}
@@ -255,7 +255,7 @@ export function PropDetailClient({
                     )}
                   </div>
                 </div>
-                <div className="-mt-3 flex flex-col gap-4 px-6 pb-6">
+                <div className="mt-1 flex flex-col gap-4 px-6 pb-6">
                   {prop.hasPurchased ? (
                     <div className="flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 py-3.5 font-bold text-black">
                       <BadgeCheck className="h-[18px] w-[18px]" /> Purchased — sent to your email
