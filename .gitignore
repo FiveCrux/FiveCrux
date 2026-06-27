@@ -69,3 +69,5 @@ image*.png
 
 # allow the prod env template (no secrets)
 !.env.production.example
+
+.pglite-test-sb/

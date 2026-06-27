@@ -4,8 +4,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useSession } from 'next-auth/react'
 import { toast } from 'sonner'
 
-// Fetch user's advertisements
-export function useUserAdvertisements(limit: number = 3, offset: number = 0) {
+// Fetch user's advertisements.
+// `poll` (default true) keeps the 30s status polling; pass false to fetch once
+// without continuous background refetches (e.g. when the tab isn't active).
+export function useUserAdvertisements(limit: number = 3, offset: number = 0, poll: boolean = true) {
   const { data: session } = useSession()
 
   return useQuery({
@@ -19,8 +21,8 @@ export function useUserAdvertisements(limit: number = 3, offset: number = 0) {
     },
     enabled: !!session?.user,
     staleTime: 30000,
-    refetchInterval: 30000, // Refetch every 30 seconds for status updates
-    refetchOnWindowFocus: true,
+    refetchInterval: poll ? 30000 : false, // Refetch every 30 seconds for status updates
+    refetchOnWindowFocus: poll,
   })
 }
 
@@ -44,7 +46,7 @@ export function useUserFeaturedScriptSlots() {
 }
 
 // Fetch user's featured scripts
-export function useUserFeaturedScripts(limit: number = 100) {
+export function useUserFeaturedScripts(limit: number = 100, poll: boolean = true) {
   const { data: session } = useSession()
 
   return useQuery({
@@ -58,8 +60,8 @@ export function useUserFeaturedScripts(limit: number = 100) {
     },
     enabled: !!session?.user,
     staleTime: 30000,
-    refetchInterval: 30000,
-    refetchOnWindowFocus: true,
+    refetchInterval: poll ? 30000 : false,
+    refetchOnWindowFocus: poll,
   })
 }
 

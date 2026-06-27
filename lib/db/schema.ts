@@ -1,5 +1,5 @@
-import { pgTable, text, timestamp, boolean, integer, numeric, pgEnum, json } from 'drizzle-orm/pg-core';
-import { relations } from 'drizzle-orm';
+import { pgTable, text, timestamp, boolean, integer, numeric, pgEnum, json, uniqueIndex } from 'drizzle-orm/pg-core';
+import { relations, sql } from 'drizzle-orm';
 
 // Users table
 export const users = pgTable('users', {
@@ -461,6 +461,39 @@ export const userFeaturedScriptSlots = pgTable('user_featured_script_slots', {
   featuredPaypalOrderId: text('featured_paypal_order_id'), // order/payment reference id (matches prod column)
   featuredSlotStatus: text('featured_slot_status').default('active').notNull(), // 'active' | 'inactive'
 });
+
+// ── Side banner ad slots ───────────────────────────────────────────────
+// SCARCE inventory: exactly 2 positions ('left' + 'right') shown on every page.
+// Unlike userAdSlots (unlimited), only ONE live booking may exist per position
+// at a time — enforced by the partial unique index below (the hard overselling
+// lock: even with simultaneous purchases, the DB lets only one win).
+//
+// Lifecycle: reserved (15-min hold at checkout) → active (Tebex paid) → expired
+// (hold lapsed OR endDate passed) / cancelled. Stale 'reserved'/'active' rows are
+// swept to 'expired' before each availability check / reservation.
+export const sideBannerBookings = pgTable('side_banner_bookings', {
+  id: integer('id').primaryKey().notNull(),                 // app-generated (matches prod PK style)
+  position: text('position').notNull(),                     // 'left' | 'right'
+  status: text('status').notNull().default('reserved'),     // 'reserved' | 'active' | 'expired' | 'cancelled'
+  title: text('title'),                                     // banner title / alt text
+  imageUrl: text('image_url'),                              // banner image
+  linkUrl: text('link_url'),                                // click-through URL
+  createdBy: text('created_by').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  durationWeeks: integer('duration_weeks'),                 // 1 | 2 | 4
+  reservedUntil: timestamp('reserved_until'),               // hold expiry while 'reserved'
+  startDate: timestamp('start_date'),                       // when it went 'active'
+  endDate: timestamp('end_date'),                           // when 'active' expires
+  orderReference: text('order_reference'),                  // Tebex order/basket reference
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+}, (t) => ({
+  // THE overselling lock: at most one reserved/active booking per position.
+  oneLivePerPosition: uniqueIndex('side_banner_one_live_per_position')
+    .on(t.position)
+    .where(sql`status in ('reserved','active')`),
+}));
+export type SideBannerBooking = typeof sideBannerBookings.$inferSelect;
+export type NewSideBannerBooking = typeof sideBannerBookings.$inferInsert;
 
 // Tebex orders table.
 // Records every basket we create against a Tebex webstore (a seller's store for

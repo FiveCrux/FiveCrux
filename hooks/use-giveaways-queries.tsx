@@ -169,8 +169,9 @@ export function useCreateGiveaway() {
   })
 }
 
-// Fetch user's giveaways
-export function useUserGiveaways(limit: number = 3, offset: number = 0) {
+// Fetch user's giveaways.
+// `poll` (default true) keeps the 30s status polling; pass false to fetch once.
+export function useUserGiveaways(limit: number = 3, offset: number = 0, poll: boolean = true) {
   const { data: session } = useSession()
 
   return useQuery({
@@ -184,8 +185,8 @@ export function useUserGiveaways(limit: number = 3, offset: number = 0) {
     },
     enabled: !!session?.user,
     staleTime: 30000,
-    refetchInterval: 30000, // Refetch every 30 seconds for status updates
-    refetchOnWindowFocus: true,
+    refetchInterval: poll ? 30000 : false, // Refetch every 30 seconds for status updates
+    refetchOnWindowFocus: poll,
   })
 }
 
@@ -213,8 +214,9 @@ export function useDeleteUserGiveaway() {
   })
 }
 
-// Fetch user's creator giveaway entries (entries to giveaways they created)
-export function useUserCreatorGiveawayEntries(limit: number = 0, offset: number = 0) {
+// Fetch user's creator giveaway entries (entries to giveaways they created).
+// `poll` (default true) keeps the 30s status polling; pass false to fetch once.
+export function useUserCreatorGiveawayEntries(limit: number = 0, offset: number = 0, poll: boolean = true) {
   const { data: session } = useSession()
 
   return useQuery({
@@ -228,8 +230,8 @@ export function useUserCreatorGiveawayEntries(limit: number = 0, offset: number 
     },
     enabled: !!session?.user,
     staleTime: 30000,
-    refetchInterval: 30000, // Refetch every 30 seconds for status updates
-    refetchOnWindowFocus: true,
+    refetchInterval: poll ? 30000 : false, // Refetch every 30 seconds for status updates
+    refetchOnWindowFocus: poll,
   })
 }
 

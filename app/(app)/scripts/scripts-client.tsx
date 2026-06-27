@@ -75,7 +75,39 @@ function mapApiScript(s: any) {
   };
 }
 
-export function ScriptsClient({ initialScripts = [] }: { initialScripts: any[] }) {
+// Module-level so the SSR featured seed and the client fallback map identically.
+function mapFeatured(item: any) {
+  return {
+    id: item.scriptId,
+    featuredScriptId: item.id,
+    title: item.scriptTitle || "",
+    description: item.scriptDescription || "",
+    cover_image: item.scriptCoverImage || "/placeholder.jpg",
+    framework: Array.isArray(item.scriptFramework)
+      ? item.scriptFramework
+      : item.scriptFramework
+        ? [item.scriptFramework]
+        : [],
+    price: item.scriptPrice || 0,
+    original_price: item.scriptPrice || 0,
+    currency_symbol: item.scriptCurrencySymbol || "$",
+    free: item.scriptFree || false,
+    seller: item.scriptSellerName || "",
+    seller_name: item.scriptSellerName || "",
+    seller_image: item.scriptSellerImage || null,
+    seller_roles: item.scriptSellerRoles || null,
+  };
+}
+
+export function ScriptsClient({
+  initialScripts = [],
+  initialFeatured = [],
+  initialCategories = [],
+}: {
+  initialScripts?: any[];
+  initialFeatured?: any[];
+  initialCategories?: { slug: string; name: string }[];
+}) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const filtersRef = useRef(null);
@@ -166,8 +198,15 @@ export function ScriptsClient({ initialScripts = [] }: { initialScripts: any[] }
   const [loading, setLoading] = useState(
     !(Array.isArray(initialScripts) && initialScripts.length > 0)
   );
-  const [featuredScripts, setFeaturedScripts] = useState<any[]>([]);
-  const [scriptsLoading, setScriptsLoading] = useState(true);
+  // Seed featured from the server (SSR) — no shuffle in the initializer (would
+  // diverge between server/client renders). Shuffle once after mount below.
+  const [featuredScripts, setFeaturedScripts] = useState<any[]>(
+    () => (Array.isArray(initialFeatured) ? initialFeatured.map(mapFeatured) : [])
+  );
+  const featuredShuffled = useRef(false);
+  const [scriptsLoading, setScriptsLoading] = useState(
+    !(Array.isArray(initialFeatured) && initialFeatured.length > 0)
+  );
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12;
 
@@ -220,8 +259,17 @@ export function ScriptsClient({ initialScripts = [] }: { initialScripts: any[] }
     load();
   }, []);
 
-  // Fetch featured scripts
+  // Featured scripts: seeded from the server (SSR). If seeded, shuffle once
+  // after mount (client-only, avoids hydration drift); else fetch as fallback.
   useEffect(() => {
+    const hasSeed = Array.isArray(initialFeatured) && initialFeatured.length > 0;
+    if (hasSeed) {
+      if (!featuredShuffled.current) {
+        featuredShuffled.current = true;
+        setFeaturedScripts((prev) => (prev.length ? [...prev].sort(() => Math.random() - 0.5) : prev));
+      }
+      return;
+    }
     const fetchFeaturedScripts = async () => {
       try {
         setScriptsLoading(true);
@@ -229,31 +277,10 @@ export function ScriptsClient({ initialScripts = [] }: { initialScripts: any[] }
         const t = setTimeout(() => c.abort(), 15000);
         const response = await fetch("/api/featured-scripts?status=active", { cache: "no-store", signal: c.signal });
         clearTimeout(t);
-
         if (response.ok) {
           const data = await response.json();
-          const featuredScriptsData = data.featuredScripts || [];
-          // Map API response to match the expected format
-          const mappedScripts = featuredScriptsData.map((item: any) => ({
-            id: item.scriptId,
-            featuredScriptId: item.id, // Store the featured script ID for tracking
-            title: item.scriptTitle || "",
-            description: item.scriptDescription || "",
-            cover_image: item.scriptCoverImage || "/placeholder.jpg",
-            framework: Array.isArray(item.scriptFramework) ? item.scriptFramework : item.scriptFramework ? [item.scriptFramework] : [],
-            price: item.scriptPrice || 0,
-            original_price: item.scriptPrice || 0,
-            currency_symbol: item.scriptCurrencySymbol || "$",
-            free: item.scriptFree || false,
-            seller: item.scriptSellerName || "",
-            seller_name: item.scriptSellerName || "",
-            seller_image: item.scriptSellerImage || null,
-            seller_roles: item.scriptSellerRoles || null,
-          }));
-
-          // Shuffle the array to randomize starting position
-          const shuffledScripts = [...mappedScripts].sort(() => Math.random() - 0.5);
-          setFeaturedScripts(shuffledScripts);
+          const mappedScripts = (data.featuredScripts || []).map(mapFeatured);
+          setFeaturedScripts([...mappedScripts].sort(() => Math.random() - 0.5));
         }
       } catch (error) {
         if ((error as any)?.name !== "AbortError") console.error("Error fetching featured scripts:", error);
@@ -261,13 +288,19 @@ export function ScriptsClient({ initialScripts = [] }: { initialScripts: any[] }
         setScriptsLoading(false);
       }
     };
-
     fetchFeaturedScripts();
   }, []);
 
   // Dynamic categories (DB-managed). `id` is the slug used in filters + URL.
-  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+  // Seeded from the server; only fetch client-side if the seed was empty.
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>(
+    () =>
+      Array.isArray(initialCategories)
+        ? initialCategories.map((c) => ({ id: c.slug, name: c.name }))
+        : []
+  );
   useEffect(() => {
+    if (Array.isArray(initialCategories) && initialCategories.length > 0) return;
     fetch("/api/categories")
       .then((r) => (r.ok ? r.json() : null))
       .then(
@@ -613,7 +646,7 @@ export function ScriptsClient({ initialScripts = [] }: { initialScripts: any[] }
             <div className="absolute -top-12 right-1/4 h-72 w-72 rounded-full bg-yellow-400/10 blur-[120px]" />
           </div>
           <motion.div
-            className="relative mx-auto flex max-w-7xl flex-col gap-4 px-4 pb-8 pt-24 sm:px-6 sm:flex-row sm:items-end sm:justify-between lg:px-8"
+            className="relative mx-auto flex w-full flex-col gap-4 px-4 pb-8 pt-24 sm:px-6 sm:flex-row sm:items-end sm:justify-between lg:px-8"
             initial={{ opacity: 0, y: -16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
@@ -639,7 +672,7 @@ export function ScriptsClient({ initialScripts = [] }: { initialScripts: any[] }
         </section>
 
         {/* ── Catalog ──────────────────────────────────────────────────── */}
-        <section ref={scriptsRef} className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+        <section ref={scriptsRef} className="mx-auto w-full px-2.5 py-10">
           {/* Featured scripts — compact horizontal-scroll row */}
           {!scriptsLoading && featuredProducts.length > 0 && (
             <div className="mb-10">
@@ -647,9 +680,11 @@ export function ScriptsClient({ initialScripts = [] }: { initialScripts: any[] }
                 <Zap className="h-5 w-5 text-orange-500" />
                 <h2 className="text-lg font-bold text-white">Featured Scripts</h2>
               </div>
-              <div className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-2 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              <div className="-mx-2.5 flex gap-4 overflow-x-auto px-2.5 pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 {featuredProducts.map((product) => (
-                  <ProductCard key={`featured-${product.id}`} product={product} />
+                  <div key={`featured-${product.id}`} className="w-[280px] shrink-0">
+                    <ProductCard product={product} />
+                  </div>
                 ))}
               </div>
             </div>

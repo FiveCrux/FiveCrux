@@ -30,6 +30,7 @@ import {
 import { categoryIcon } from "@/lib/category-icons"
 import Navbar from "@/componentss/shared/navbar"
 import Footer from "@/componentss/shared/footer"
+import SideAdsFrame from "@/componentss/ads/side-banners"
 import { ProductCard, type MarketProduct } from "@/componentss/marketplace/product-card"
 
 // Fixed section shortcuts (these are pages, not categories). The actual browse
@@ -109,10 +110,12 @@ function Row({ title, icon, emoji, items, seeAllHref }: {
           See all <ArrowRight className="h-4 w-4" />
         </Link>
       </div>
-      <div className="-mx-3 overflow-x-auto px-3 [scrollbar-width:none] sm:-mx-6 sm:px-6 [&::-webkit-scrollbar]:hidden">
+      <div className="-mx-2.5 overflow-x-auto px-2.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <div className="flex w-max gap-4 pb-2">
           {items.map((p) => (
-            <ProductCard key={`${title}-${p.id}`} product={p} />
+            <div key={`${title}-${p.id}`} className="w-[280px] shrink-0">
+              <ProductCard product={p} />
+            </div>
           ))}
         </div>
       </div>
@@ -121,11 +124,8 @@ function Row({ title, icon, emoji, items, seeAllHref }: {
 }
 
 // ── Rotating featured spotlight hero ──
-function HeroSpotlight({ items, query, setQuery, onSearch }: {
+function HeroSpotlight({ items }: {
   items: MarketProduct[]
-  query: string
-  setQuery: (v: string) => void
-  onSearch: () => void
 }) {
   const [idx, setIdx] = useState(0)
   // Always append a "get featured here" promo slide — turns the hero into an
@@ -145,8 +145,8 @@ function HeroSpotlight({ items, query, setQuery, onSearch }: {
   if (!active) return null
 
   return (
-    <section className="mt-4 px-3 sm:px-6">
-      <div className="relative mx-auto max-w-7xl overflow-hidden rounded-2xl border border-white/[0.08]" style={{ minHeight: "70vh" }}>
+    <section className="mt-4 px-2.5">
+      <div className="relative mx-auto w-full overflow-hidden rounded-2xl border border-white/[0.08]" style={{ minHeight: "70vh" }}>
         {/* Background — promo slide gets a branded glow; products show their cover */}
         {isPromo ? (
           <>
@@ -161,24 +161,8 @@ function HeroSpotlight({ items, query, setQuery, onSearch }: {
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/55 to-[#0a0a0a]/20" />
 
-        {/* Search overlay */}
-        <div className="relative z-10 flex justify-center p-4 sm:p-8">
-          <div className="flex w-full max-w-2xl items-center gap-3 rounded-xl border border-white/10 bg-black/40 px-4 py-3 backdrop-blur-md focus-within:border-orange-500/50">
-            <Search className="h-5 w-5 text-white/60" />
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && onSearch()}
-              type="text"
-              placeholder="Search scripts, MLOs, vehicles, props…"
-              className="w-full bg-transparent text-sm outline-none placeholder:text-white/50"
-            />
-            <button onClick={onSearch} className="rounded-lg bg-orange-500 px-3 py-1.5 text-xs font-bold text-black">Search</button>
-          </div>
-        </div>
-
         {/* Content */}
-        <div className="relative z-10 flex flex-col justify-end px-5 pb-12 sm:px-10" style={{ minHeight: "calc(70vh - 90px)" }}>
+        <div className="relative z-10 flex flex-col justify-end px-5 pb-12 pt-8 sm:px-10" style={{ minHeight: "70vh" }}>
           {isPromo ? (
             <>
               <span className="mb-4 inline-flex items-center gap-1.5 self-start rounded-full border border-orange-400/40 bg-orange-500/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.15em] text-orange-300 backdrop-blur-sm">
@@ -282,7 +266,15 @@ function FaqItem({ q, a }: { q: string; a: string }) {
   )
 }
 
-export function HomeClient({ initialFeatured = [] }: { initialFeatured: any[] }) {
+export function HomeClient({
+  initialFeatured = [],
+  initialCategories = [],
+  initialScripts = [],
+}: {
+  initialFeatured: any[]
+  initialCategories?: { name: string; slug: string; icon: string | null }[]
+  initialScripts?: any[]
+}) {
   const router = useRouter()
   const [query, setQuery] = useState("")
   // Seed from server-fetched featured scripts so the hero/featured row renders
@@ -291,18 +283,23 @@ export function HomeClient({ initialFeatured = [] }: { initialFeatured: any[] })
     Array.isArray(initialFeatured) ? initialFeatured.map(mapFeatured) : []
   )
 
-  // Regular approved scripts — power the discovery rows (and fall back for the
-  // hero/featured when there are no active featured scripts yet).
-  const [liveScripts, setLiveScripts] = useState<MarketProduct[]>([])
+  // Regular approved scripts — power the discovery rows. Seeded from the server
+  // (SSR/ISR) so the rows are in the first paint; client fetch is a fallback.
+  const [liveScripts, setLiveScripts] = useState<MarketProduct[]>(() =>
+    Array.isArray(initialScripts) ? initialScripts.map(mapScript) : []
+  )
 
-  // Dynamic browse categories (DB-managed, admin-curated for the home page).
-  const [homeCats, setHomeCats] = useState<{ name: string; slug: string; icon: string | null }[]>([])
+  // Dynamic browse categories — seeded from the server so chips render instantly.
+  const [homeCats, setHomeCats] = useState<{ name: string; slug: string; icon: string | null }[]>(
+    Array.isArray(initialCategories) ? initialCategories : []
+  )
   useEffect(() => {
+    if (initialCategories && initialCategories.length) return // already seeded server-side
     fetch("/api/categories?home=true")
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => Array.isArray(d?.categories) && setHomeCats(d.categories))
       .catch(() => {})
-  }, [])
+  }, [initialCategories])
 
   // Fixed page shortcuts + dynamic category chips.
   const categoryChips = useMemo<{ name: string; icon: LucideIcon; href: string }[]>(
@@ -328,13 +325,15 @@ export function HomeClient({ initialFeatured = [] }: { initialFeatured: any[] })
         })
         .catch(() => {})
     }
-    // Regular catalog for the discovery rows.
-    fetch("/api/scripts", { cache: "no-store" })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => {
-        if (!cancelled && Array.isArray(d?.scripts)) setLiveScripts(d.scripts.map(mapScript))
-      })
-      .catch(() => {})
+    // Regular catalog for the discovery rows (only when SSR didn't seed it).
+    if (!(initialScripts && initialScripts.length)) {
+      fetch("/api/scripts", { cache: "no-store" })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => {
+          if (!cancelled && Array.isArray(d?.scripts)) setLiveScripts(d.scripts.map(mapScript))
+        })
+        .catch(() => {})
+    }
     return () => {
       cancelled = true
     }
@@ -380,11 +379,12 @@ export function HomeClient({ initialFeatured = [] }: { initialFeatured: any[] })
     <div className="min-h-screen overflow-x-clip bg-[#0a0a0a] text-white">
       <Navbar />
 
-      <HeroSpotlight items={rows.heroItems} query={query} setQuery={setQuery} onSearch={onSearch} />
+      <SideAdsFrame>
+      <HeroSpotlight items={rows.heroItems} />
 
       {/* Category chips */}
-      <section className="mt-5 px-3 sm:px-6">
-        <div className="mx-auto max-w-7xl overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <section className="mt-5 px-2.5">
+        <div className="mx-auto w-full overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <div className="flex w-max items-center gap-2.5 pb-1">
             {categoryChips.map((c, i) => {
               const Icon = c.icon
@@ -402,7 +402,7 @@ export function HomeClient({ initialFeatured = [] }: { initialFeatured: any[] })
       </section>
 
       {/* Discovery rows */}
-      <main className="mx-auto mt-8 max-w-7xl space-y-10 px-3 sm:px-6">
+      <main className="mx-auto mt-8 w-full space-y-10 px-2.5">
         <Row title="Featured" icon={<Sparkles className="h-5 w-5 text-yellow-400" />} items={rows.featured} seeAllHref="/scripts?featured=true" />
         <Row title="Trending This Week" emoji="🔥" items={rows.trending} seeAllHref="/scripts" />
         <Row title="New Releases" icon={<Zap className="h-5 w-5 text-orange-400" />} items={rows.newReleases} seeAllHref="/scripts" />
@@ -422,8 +422,8 @@ export function HomeClient({ initialFeatured = [] }: { initialFeatured: any[] })
       </main>
 
       {/* Start selling strip */}
-      <section className="mt-12 px-3 sm:px-6">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 rounded-2xl border border-white/[0.10] bg-white/[0.06] px-5 py-5 backdrop-blur-md sm:flex-row sm:px-8">
+      <section className="mt-12 px-2.5">
+        <div className="mx-auto flex w-full flex-col items-center justify-between gap-4 rounded-2xl border border-white/[0.10] bg-white/[0.06] px-5 py-5 backdrop-blur-md sm:flex-row sm:px-8">
           <p className="flex items-center gap-2.5 text-center text-sm font-semibold sm:text-left sm:text-base">
             <BadgeDollarSign className="h-5 w-5 shrink-0 text-yellow-400" />
             Got scripts to sell? List your product and get paid directly via Tebex.
@@ -436,8 +436,8 @@ export function HomeClient({ initialFeatured = [] }: { initialFeatured: any[] })
       </section>
 
       {/* Why Choose FiveCrux — bento (Variant 2) */}
-      <section className="mt-20 px-3 sm:px-6">
-        <div className="mx-auto max-w-7xl">
+      <section className="mt-20 px-2.5">
+        <div className="mx-auto w-full">
           <div className="mb-12 max-w-2xl">
             <p className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-orange-400">Why Choose Us</p>
             <h2 className="text-4xl font-extrabold tracking-tight sm:text-5xl">Why Choose <span className="text-orange-400">FiveCrux</span>?</h2>
@@ -477,8 +477,8 @@ export function HomeClient({ initialFeatured = [] }: { initialFeatured: any[] })
       </section>
 
       {/* Our Services / Crux Ecosystem — editorial banners (Variant 2) */}
-      <section className="mt-20 px-3 sm:px-6">
-        <div className="mx-auto max-w-7xl">
+      <section className="mt-20 px-2.5">
+        <div className="mx-auto w-full">
           <div className="mb-12">
             <p className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-orange-400">Our Services</p>
             <h2 className="max-w-2xl text-3xl font-extrabold tracking-tight sm:text-5xl">Powered by the <span className="text-orange-400">Crux</span> Ecosystem</h2>
@@ -517,8 +517,8 @@ export function HomeClient({ initialFeatured = [] }: { initialFeatured: any[] })
       </section>
 
       {/* FAQ — two column (Variant 2) */}
-      <section className="mt-20 px-3 sm:px-6">
-        <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-2 lg:gap-16">
+      <section className="mt-20 px-2.5">
+        <div className="mx-auto grid w-full gap-10 lg:grid-cols-2 lg:gap-16">
           {/* Left sticky intro */}
           <div className="lg:sticky lg:top-28 lg:self-start">
             <span className="text-xs font-bold uppercase tracking-[0.25em] text-orange-400">FAQ</span>
@@ -540,6 +540,7 @@ export function HomeClient({ initialFeatured = [] }: { initialFeatured: any[] })
           </div>
         </div>
       </section>
+      </SideAdsFrame>
 
       <div className="mt-20">
         <Footer />

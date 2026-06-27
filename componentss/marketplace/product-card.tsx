@@ -46,14 +46,23 @@ function slugText(title: string) {
 
 export function ProductCard({ product, className = "" }: { product: MarketProduct; className?: string }) {
   const grad = gradientFor(product.id)
-  const isFree = product.free || product.price === 0
-  const discounted = product.originalPrice && product.originalPrice > product.price
+  // Coerce to numbers — some callers pass API strings ("29.99") where the type
+  // claims number; `.toFixed` would otherwise throw at runtime.
+  const price = Number(product.price) || 0
+  const originalPrice =
+    product.originalPrice != null && product.originalPrice !== ("" as any)
+      ? Number(product.originalPrice)
+      : undefined
+  const isFree = product.free || price === 0
+  const discounted = originalPrice != null && !Number.isNaN(originalPrice) && originalPrice > price
 
   return (
     <Link
       href={product.href}
-      className={`group block flex-shrink-0 overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.04] backdrop-blur-md transition-all duration-200 hover:-translate-y-1.5 hover:border-orange-500/40 hover:shadow-[0_16px_48px_rgba(0,0,0,0.5)] ${className}`}
-      style={{ width: 280 }}
+      // Fluid by default: fills its container/grid column so wide screens show
+      // evenly-sized cards (no fixed-width gaps). Horizontal scroll rows wrap the
+      // card in a fixed-width container instead.
+      className={`group block w-full overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.04] backdrop-blur-md transition-all duration-200 hover:-translate-y-1.5 hover:border-orange-500/40 hover:shadow-[0_16px_48px_rgba(0,0,0,0.5)] ${className}`}
     >
       {/* Cover */}
       <div className={`relative flex h-36 items-center justify-center overflow-hidden bg-gradient-to-br ${grad}`}>
@@ -126,10 +135,10 @@ export function ProductCard({ product, className = "" }: { product: MarketProduc
               <span className="text-base font-extrabold text-white">
                 {discounted && (
                   <span className="mr-1 text-xs font-medium text-white/55 line-through">
-                    ${product.originalPrice!.toFixed(2)}
+                    ${originalPrice!.toFixed(2)}
                   </span>
                 )}
-                ${product.price.toFixed(2)}
+                ${price.toFixed(2)}
               </span>
             )}
           </div>

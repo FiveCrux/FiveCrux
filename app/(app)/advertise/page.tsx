@@ -259,6 +259,77 @@ export default function AdvertisePage() {
     }
   }
 
+  // ── Side banner slots (scarce: left + right, sold via Tebex) ──────────
+  const SB_WEEKS = [1, 2, 4]
+  const [sbAvail, setSbAvail] = useState<Record<string, { available: boolean; until?: string | null }>>({
+    left: { available: true },
+    right: { available: true },
+  })
+  const [sbPosition, setSbPosition] = useState<"left" | "right">("left")
+  const [sbWeeks, setSbWeeks] = useState(1)
+  const [sbTitle, setSbTitle] = useState("")
+  const [sbImage, setSbImage] = useState("")
+  const [sbLink, setSbLink] = useState("")
+  const [sbBusy, setSbBusy] = useState(false)
+
+  useEffect(() => {
+    let alive = true
+    fetch("/api/side-banners")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (alive && d?.availability) setSbAvail(d.availability)
+      })
+      .catch(() => {})
+    return () => {
+      alive = false
+    }
+  }, [])
+
+  const sbPrice = (w: number): number | null => {
+    const v = livePrices?.[`sidebanner:slot:${w}`]
+    return typeof v === "number" ? v : null
+  }
+
+  const handleSideBannerBuy = async () => {
+    if (!sbAvail[sbPosition]?.available) {
+      toast.error("That side is currently taken — pick the other one.")
+      return
+    }
+    if (!sbImage.trim()) {
+      toast.error("Add a banner image URL first.")
+      return
+    }
+    setSbBusy(true)
+    try {
+      const res = await fetch("/api/side-banners/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          position: sbPosition,
+          durationWeeks: sbWeeks,
+          title: sbTitle,
+          imageUrl: sbImage,
+          linkUrl: sbLink,
+        }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data.error || "Checkout failed")
+      if (data.authUrl) {
+        window.location.href = data.authUrl
+        return
+      }
+      if (data.checkoutUrl) {
+        window.location.href = data.checkoutUrl
+        return
+      }
+      toast.error("Could not start checkout")
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Checkout failed")
+    } finally {
+      setSbBusy(false)
+    }
+  }
+
   // Get current packages based on active tab
   const currentPackages = activeTab === "ads" ? pricingPackages : featuredScriptPackages
 
@@ -320,6 +391,127 @@ export default function AdvertisePage() {
                   <p className="mt-2 text-sm leading-relaxed text-white/55">{b.desc}</p>
                 </div>
               ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ===== SIDE BANNERS (scarce: left + right) ===== */}
+        <section id="side-banners" className="scroll-mt-24 border-y border-white/[0.07] bg-white/[0.015]">
+          <div className="mx-auto max-w-7xl px-5 py-16">
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-orange-500/30 bg-orange-500/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-orange-300">
+              <Sparkles className="h-3.5 w-3.5" /> Premium · only 2 slots
+            </div>
+            <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
+              Side banner <span className="text-orange-400">placement</span>
+            </h2>
+            <p className="mt-3 max-w-2xl text-white/55">
+              A sticky vertical banner pinned beside the catalogue on <span className="text-white">every page</span> (wide
+              screens). There are exactly <span className="text-white">two</span> — left and right — so each is exclusive
+              for your booking window.
+            </p>
+
+            <div className="mt-8 grid gap-6 lg:grid-cols-2">
+              {/* Availability */}
+              <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-6">
+                <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-white/50">Live availability</h3>
+                <div className="space-y-3">
+                  {(["left", "right"] as const).map((pos) => {
+                    const a = sbAvail[pos]
+                    const free = a?.available !== false
+                    return (
+                      <button
+                        key={pos}
+                        onClick={() => free && setSbPosition(pos)}
+                        disabled={!free}
+                        className={cn(
+                          "flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left transition",
+                          !free
+                            ? "cursor-not-allowed border-white/[0.06] bg-white/[0.02] opacity-60"
+                            : sbPosition === pos
+                              ? "border-orange-500/60 bg-orange-500/10"
+                              : "border-white/[0.08] bg-white/[0.03] hover:border-white/20"
+                        )}
+                      >
+                        <span className="font-semibold capitalize">{pos} slot</span>
+                        <span className={cn("text-sm font-bold", free ? "text-green-400" : "text-white/45")}>
+                          {free ? "Available" : "Sold"}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+                <p className="mt-4 text-xs text-white/40">
+                  When both are sold, check back after a booking window ends — they free up automatically.
+                </p>
+              </div>
+
+              {/* Reserve form */}
+              <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-6">
+                <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-white/50">Book your banner</h3>
+
+                <label className="mb-1.5 block text-xs font-semibold text-white/60">Duration</label>
+                <div className="mb-4 flex gap-2">
+                  {SB_WEEKS.map((w) => {
+                    const p = sbPrice(w)
+                    return (
+                      <button
+                        key={w}
+                        onClick={() => setSbWeeks(w)}
+                        className={cn(
+                          "flex-1 rounded-xl border px-3 py-2.5 text-center transition",
+                          sbWeeks === w ? "border-orange-500/60 bg-orange-500/10" : "border-white/[0.08] hover:border-white/20"
+                        )}
+                      >
+                        <div className="text-sm font-bold">
+                          {w} {w === 1 ? "week" : "weeks"}
+                        </div>
+                        <div className="font-mono text-xs text-white/55">{p != null ? `€${p}` : "—"}</div>
+                      </button>
+                    )
+                  })}
+                </div>
+
+                <label className="mb-1.5 block text-xs font-semibold text-white/60">Banner image URL</label>
+                <input
+                  value={sbImage}
+                  onChange={(e) => setSbImage(e.target.value)}
+                  placeholder="https://…/your-banner.png (tall / vertical)"
+                  className="mb-3 w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-3.5 py-2.5 text-sm outline-none focus:border-orange-500/50"
+                />
+                <label className="mb-1.5 block text-xs font-semibold text-white/60">Click-through link</label>
+                <input
+                  value={sbLink}
+                  onChange={(e) => setSbLink(e.target.value)}
+                  placeholder="https://your-store-or-discord"
+                  className="mb-3 w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-3.5 py-2.5 text-sm outline-none focus:border-orange-500/50"
+                />
+                <label className="mb-1.5 block text-xs font-semibold text-white/60">Title (optional)</label>
+                <input
+                  value={sbTitle}
+                  onChange={(e) => setSbTitle(e.target.value)}
+                  placeholder="Your script / brand"
+                  className="mb-5 w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-3.5 py-2.5 text-sm outline-none focus:border-orange-500/50"
+                />
+
+                <Button
+                  onClick={handleSideBannerBuy}
+                  disabled={sbBusy || !sbAvail[sbPosition]?.available}
+                  className="w-full bg-orange-500 py-3 text-base font-bold text-black hover:bg-orange-400 disabled:opacity-60"
+                >
+                  {sbBusy ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : (
+                    <>
+                      Reserve {sbPosition} slot
+                      {sbPrice(sbWeeks) != null ? ` · €${sbPrice(sbWeeks)}` : ""}
+                      <ArrowRight className="ml-1.5 h-4 w-4" />
+                    </>
+                  )}
+                </Button>
+                <p className="mt-3 text-center text-[11px] text-white/40">
+                  Secured via Tebex. The slot is held for you for 15 minutes while you pay.
+                </p>
+              </div>
             </div>
           </div>
         </section>
