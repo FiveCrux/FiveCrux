@@ -135,7 +135,7 @@ export default function NavbarComponent() {
         }`}
         onMouseLeave={closeMega}
       >
-        <div className="flex h-[68px] w-full items-center gap-7 px-2.5">
+        <div className="mx-auto flex h-[68px] w-full max-w-[1680px] items-center gap-7 px-2.5">
           <Logo />
 
           {/* desktop nav */}
@@ -265,7 +265,7 @@ export default function NavbarComponent() {
               onMouseEnter={openMega}
               onMouseLeave={closeMega}
             >
-              <div className="w-full px-2.5 py-6">
+              <div className="mx-auto w-full max-w-[1680px] px-2.5 py-6">
                 <div className="mb-4 flex items-center justify-between">
                   <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-white/40">
                     Browse by category

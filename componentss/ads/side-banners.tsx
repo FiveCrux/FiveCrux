@@ -1,8 +1,8 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, type ReactNode } from "react"
 import Link from "next/link"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion } from "framer-motion"
 import { Megaphone, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react"
 
 type Banner = {
@@ -14,11 +14,12 @@ type Banner = {
   endDate: string | null
 } | null
 
-// Two side-rail ad slots (left + right), shown on desktop (≥1280px). Each is a
-// fixed-size SKYSCRAPER anchored near the top, and is COLLAPSIBLE — a chevron
-// handle slides it out to the screen edge (and a tab slides it back in). The
-// choice is remembered (localStorage) so it persists while browsing.
-export default function SideBanners() {
+// Wraps the whole app: a centred website frame with the two side-banner ad slots
+// as part of the SAME frame (sticky columns beside the content) — not floating
+// divs pinned to the raw browser edges. On <xl the rails hide and content fills
+// the frame; the frame caps width on huge screens so the ads stay next to the
+// content, integrated.
+export default function SideBannerLayout({ children }: { children: ReactNode }) {
   const [active, setActive] = useState<{ left: Banner; right: Banner }>({ left: null, right: null })
 
   useEffect(() => {
@@ -35,10 +36,11 @@ export default function SideBanners() {
   }, [])
 
   return (
-    <>
+    <div className="mx-auto flex w-full max-w-[1680px] items-start gap-5 px-2.5">
       <Rail side="left" banner={active.left} />
+      <div className="min-w-0 flex-1">{children}</div>
       <Rail side="right" banner={active.right} />
-    </>
+    </div>
   )
 }
 
@@ -50,7 +52,6 @@ function Rail({ side, banner }: { side: "left" | "right"; banner: Banner }) {
     if (typeof window === "undefined") return false
     return window.localStorage.getItem(storageKey) === "1"
   })
-
   useEffect(() => {
     try {
       window.localStorage.setItem(storageKey, collapsed ? "1" : "0")
@@ -59,22 +60,18 @@ function Rail({ side, banner }: { side: "left" | "right"; banner: Banner }) {
     }
   }, [collapsed, storageKey])
 
-  // How far to push the card off-screen when collapsed (rail width + its edge gap).
-  const offset = isLeft ? -200 : 200
-
   return (
+    // A sticky column INSIDE the frame (not fixed to the viewport edge) → reads as
+    // part of the site. Width stays reserved so the content never shifts.
     <aside
       aria-label={`${side} sponsored banner`}
-      className={`fixed top-[96px] z-30 hidden h-[600px] max-h-[calc(100vh-128px)] w-[160px] xl:block ${
-        isLeft ? "left-6" : "right-6"
-      }`}
+      className="sticky top-[88px] hidden h-[600px] max-h-[calc(100vh-110px)] w-[160px] shrink-0 self-start xl:block"
     >
-      {/* The ad card — slides out to the edge when collapsed. */}
+      {/* The ad card — slides toward the edge + fades when collapsed. */}
       <motion.div
-        initial={{ x: isLeft ? -120 : 120, opacity: 0 }}
-        animate={{ x: collapsed ? offset : 0, opacity: collapsed ? 0 : 1 }}
-        transition={{ type: "spring", bounce: 0, duration: 0.6 }}
-        className="relative h-full"
+        animate={{ x: collapsed ? (isLeft ? -184 : 184) : 0, opacity: collapsed ? 0 : 1 }}
+        transition={{ type: "spring", bounce: 0, duration: 0.55 }}
+        className="h-full w-full"
         style={{ pointerEvents: collapsed ? "none" : "auto" }}
       >
         {banner && banner.imageUrl ? (
@@ -82,12 +79,11 @@ function Rail({ side, banner }: { side: "left" | "right"; banner: Banner }) {
             href={banner.linkUrl || "#"}
             target={banner.linkUrl ? "_blank" : undefined}
             rel="noopener noreferrer sponsored"
-            className="group relative block h-full overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0e0e0f] shadow-[0_18px_50px_rgba(0,0,0,0.45)] transition-all hover:-translate-y-0.5 hover:border-orange-500/40"
+            className="group relative block h-full overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0e0e0f] transition-all hover:-translate-y-0.5 hover:border-orange-500/40"
           >
             <span className="absolute left-2.5 top-2.5 z-10 rounded-full border border-white/10 bg-black/55 px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.12em] text-white/55 backdrop-blur-sm">
               Ad
             </span>
-            {/* advertiser image (any host) → plain img, no next/image domain config */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={banner.imageUrl} alt={banner.title || "Sponsored"} className="h-full w-full object-cover" />
             {banner.title && (
@@ -97,7 +93,6 @@ function Rail({ side, banner }: { side: "left" | "right"; banner: Banner }) {
             )}
           </Link>
         ) : (
-          // Quiet empty state — subtle, so two unsold slots don't look cluttered.
           <Link
             href="/advertise#side-banners"
             className="group flex h-full flex-col items-center justify-center gap-2.5 rounded-2xl border border-white/[0.07] bg-white/[0.015] px-3 text-center transition-colors hover:border-orange-500/40 hover:bg-orange-500/[0.04]"
@@ -114,37 +109,24 @@ function Rail({ side, banner }: { side: "left" | "right"; banner: Banner }) {
             </span>
           </Link>
         )}
-
-        {/* Collapse handle — on the inner edge (toward content). Slides the ad out. */}
-        <button
-          onClick={() => setCollapsed(true)}
-          aria-label="Hide banner"
-          className={`absolute top-2 grid h-7 w-7 place-items-center rounded-full border border-white/10 bg-[#111]/90 text-white/60 shadow-md backdrop-blur-sm transition hover:text-white ${
-            isLeft ? "-right-3" : "-left-3"
-          }`}
-        >
-          {isLeft ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-        </button>
       </motion.div>
 
-      {/* Re-open tab — pinned at the screen edge, only when collapsed. Slides the ad in. */}
-      <AnimatePresence>
-        {collapsed && (
-          <motion.button
-            key="tab"
-            onClick={() => setCollapsed(false)}
-            initial={{ opacity: 0, x: isLeft ? -8 : 8 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0 }}
-            aria-label="Show banner"
-            className={`absolute top-3 flex h-14 w-6 items-center justify-center border border-white/10 bg-[#111]/90 text-white/60 shadow-md backdrop-blur-sm transition hover:bg-orange-500 hover:text-black ${
-              isLeft ? "-left-6 rounded-r-lg border-l-0" : "-right-6 rounded-l-lg border-r-0"
-            }`}
-          >
-            {isLeft ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-          </motion.button>
-        )}
-      </AnimatePresence>
+      {/* Toggle handle — always visible on the inner edge; collapses / re-opens. */}
+      <button
+        onClick={() => setCollapsed((v) => !v)}
+        aria-label={collapsed ? "Show banner" : "Hide banner"}
+        className={`absolute top-2 z-10 grid h-7 w-7 place-items-center rounded-full border border-white/10 bg-[#111]/90 text-white/55 shadow-md backdrop-blur-sm transition hover:text-white ${
+          isLeft ? "-right-3" : "-left-3"
+        }`}
+      >
+        {collapsed
+          ? isLeft
+            ? <ChevronRight className="h-4 w-4" />
+            : <ChevronLeft className="h-4 w-4" />
+          : isLeft
+            ? <ChevronLeft className="h-4 w-4" />
+            : <ChevronRight className="h-4 w-4" />}
+      </button>
     </aside>
   )
 }
