@@ -5,6 +5,7 @@ import { db } from "@/lib/db/client";
 import { approvedProps, pendingProps, rejectedProps, users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { hasRole } from "@/lib/database-new";
+import { getTebexProp } from "@/lib/tebex-props";
 
 async function findPropById(id: string) {
   const approved = await db
@@ -43,21 +44,11 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const prop = await findPropById(id);
+    // Props live in Tebex's "PROPS" category (FiveCrux is the only lister).
+    const prop = await getTebexProp(id);
 
     if (!prop) {
       return NextResponse.json({ error: "Prop not found" }, { status: 404 });
-    }
-
-    if (prop.status !== "approved") {
-      const session = await getServerSession(authOptions);
-      const userRoles = (session?.user as any)?.roles || [];
-      const isAdmin = hasRole(userRoles, 'admin') || hasRole(userRoles, 'founder');
-      const isOwner = prop.createdBy === (session?.user as any)?.id;
-
-      if (!isAdmin && !isOwner) {
-        return NextResponse.json({ error: "Prop not found" }, { status: 404 });
-      }
     }
 
     const session = await getServerSession(authOptions);
@@ -66,7 +57,7 @@ export async function GET(
       const { hasPurchasedProp } = await import("@/lib/prop-utils");
       hasPurchased = await hasPurchasedProp((session.user as any).id, prop.id);
     }
-    return NextResponse.json({ ...prop, hasPurchased });
+    return NextResponse.json({ ...prop, status: "approved", hasPurchased });
   } catch (error) {
     console.error("Error fetching prop:", error);
     return NextResponse.json({ error: "Failed to fetch prop" }, { status: 500 });
