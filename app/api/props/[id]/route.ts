@@ -54,8 +54,14 @@ export async function GET(
     const session = await getServerSession(authOptions);
     let hasPurchased = false;
     if (session?.user) {
-      const { hasPurchasedProp } = await import("@/lib/prop-utils");
-      hasPurchased = await hasPurchasedProp((session.user as any).id, prop.id);
+      // A transient DB hiccup on the purchase check must not break the whole
+      // prop page (the prop data itself comes from Tebex) — default to false.
+      try {
+        const { hasPurchasedProp } = await import("@/lib/prop-utils");
+        hasPurchased = await hasPurchasedProp((session.user as any).id, prop.id);
+      } catch (e) {
+        console.warn("hasPurchasedProp check failed (defaulting false):", e);
+      }
     }
     return NextResponse.json({ ...prop, status: "approved", hasPurchased });
   } catch (error) {
