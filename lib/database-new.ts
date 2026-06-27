@@ -17,6 +17,7 @@ import {
   userFeaturedScriptSlots,
   categories,
   frameworks,
+  sideBannerBookings,
   type Script, type Giveaway, type NewCategory, type NewFramework
 } from './db/schema';
 import type { 
@@ -1554,38 +1555,37 @@ export async function getGiveaways(filters?: {
   const giveaways = await (offseted as any);
 
   const now = new Date().toISOString();
+  const nowTime = new Date(now).getTime();
 
-  // Fetch creator images and roles for each giveaway with priority: profile_picture first, then Discord image
-  // Include all giveaways (both active and upcoming)
-  const giveawaysWithImages = await Promise.all(
-    giveaways.map(async (giveaway: any) => {
-      let creatorImage = null;
-      let creatorRoles = null;
-      if (giveaway.creatorId) {
-        const creatorResult = await db.select().from(users).where(eq(users.id, giveaway.creatorId));
-        if (creatorResult.length > 0) {
-          creatorImage = getUserProfilePicture(creatorResult[0]);
-          creatorRoles = creatorResult[0].roles;
-        }
-      }
+  // Batch-fetch ALL creators in ONE query (was N+1: one users query per giveaway).
+  const creatorIds = Array.from(
+    new Set(giveaways.map((g: any) => g.creatorId).filter(Boolean))
+  ) as any[];
+  const creatorRows = creatorIds.length
+    ? await db.select().from(users).where(inArray(users.id, creatorIds))
+    : [];
+  const creatorMap = new Map(creatorRows.map((u: any) => [u.id, u]));
 
-      // Determine if giveaway is upcoming (scheduled for future)
-      let isUpcoming = false;
-      if (giveaway.startDate) {
-        const startDate = new Date(giveaway.startDate).getTime();
-        const nowTime = new Date(now).getTime();
-        isUpcoming = startDate > nowTime;
-      }
+  // Include all giveaways (both active and upcoming); creator image priority:
+  // profile_picture first, then Discord image (handled by getUserProfilePicture).
+  const giveawaysWithImages = giveaways.map((giveaway: any) => {
+    const creator = giveaway.creatorId ? creatorMap.get(giveaway.creatorId) : null;
+    const creatorImage = creator ? getUserProfilePicture(creator) : null;
+    const creatorRoles = creator ? creator.roles : null;
 
-      return {
-        ...giveaway,
-        creatorImage,
-        creatorRoles,
-        isUpcoming,
-      };
-    })
-  );
-  
+    // Determine if giveaway is upcoming (scheduled for future)
+    const isUpcoming = giveaway.startDate
+      ? new Date(giveaway.startDate).getTime() > nowTime
+      : false;
+
+    return {
+      ...giveaway,
+      creatorImage,
+      creatorRoles,
+      isUpcoming,
+    };
+  });
+
   return giveawaysWithImages;
 }
 
@@ -1598,18 +1598,20 @@ export async function getGiveawayById(id: number, session?: any) {
       const requirements = await db.select().from(giveawayRequirements).where(eq(giveawayRequirements.giveawayId, id));
       const prizes = await db.select().from(giveawayPrizes).where(eq(giveawayPrizes.giveawayId, id));
       
-      // Fetch winners for each prize
-      const prizesWithWinners = await Promise.all(prizes.map(async (prize) => {
-        const winners = await db.select().from(giveawayPrizeWinners).where(eq(giveawayPrizeWinners.prizeId, prize.id));
-        return {
-          ...prize,
-          winners: winners.map(w => ({
-            userId: w.userId,
-            userName: w.userName,
-            userEmail: w.userEmail,
-            claimed: w.claimed,
-          })),
-        };
+      // Fetch winners for ALL prizes in ONE query (was N+1: one query per prize).
+      const prizeIds = prizes.map((p) => p.id);
+      const allWinners = prizeIds.length
+        ? await db.select().from(giveawayPrizeWinners).where(inArray(giveawayPrizeWinners.prizeId, prizeIds))
+        : [];
+      const winnersByPrize = new Map<number, any[]>();
+      for (const w of allWinners) {
+        const arr = winnersByPrize.get(w.prizeId) || [];
+        arr.push({ userId: w.userId, userName: w.userName, userEmail: w.userEmail, claimed: w.claimed });
+        winnersByPrize.set(w.prizeId, arr);
+      }
+      const prizesWithWinners = prizes.map((prize) => ({
+        ...prize,
+        winners: winnersByPrize.get(prize.id) || [],
       }));
       
       // Count actual entries from giveaway_entries table
@@ -1659,18 +1661,20 @@ export async function getGiveawayById(id: number, session?: any) {
       const requirements = await db.select().from(giveawayRequirements).where(eq(giveawayRequirements.giveawayId, id));
       const prizes = await db.select().from(giveawayPrizes).where(eq(giveawayPrizes.giveawayId, id));
       
-      // Fetch winners for each prize
-      const prizesWithWinners = await Promise.all(prizes.map(async (prize) => {
-        const winners = await db.select().from(giveawayPrizeWinners).where(eq(giveawayPrizeWinners.prizeId, prize.id));
-        return {
-          ...prize,
-          winners: winners.map(w => ({
-            userId: w.userId,
-            userName: w.userName,
-            userEmail: w.userEmail,
-            claimed: w.claimed,
-          })),
-        };
+      // Fetch winners for ALL prizes in ONE query (was N+1: one query per prize).
+      const prizeIds = prizes.map((p) => p.id);
+      const allWinners = prizeIds.length
+        ? await db.select().from(giveawayPrizeWinners).where(inArray(giveawayPrizeWinners.prizeId, prizeIds))
+        : [];
+      const winnersByPrize = new Map<number, any[]>();
+      for (const w of allWinners) {
+        const arr = winnersByPrize.get(w.prizeId) || [];
+        arr.push({ userId: w.userId, userName: w.userName, userEmail: w.userEmail, claimed: w.claimed });
+        winnersByPrize.set(w.prizeId, arr);
+      }
+      const prizesWithWinners = prizes.map((prize) => ({
+        ...prize,
+        winners: winnersByPrize.get(prize.id) || [],
       }));
       
       // Count actual entries from giveaway_entries table
@@ -1707,18 +1711,20 @@ export async function getGiveawayById(id: number, session?: any) {
       const requirements = await db.select().from(giveawayRequirements).where(eq(giveawayRequirements.giveawayId, id));
       const prizes = await db.select().from(giveawayPrizes).where(eq(giveawayPrizes.giveawayId, id));
       
-      // Fetch winners for each prize
-      const prizesWithWinners = await Promise.all(prizes.map(async (prize) => {
-        const winners = await db.select().from(giveawayPrizeWinners).where(eq(giveawayPrizeWinners.prizeId, prize.id));
-        return {
-          ...prize,
-          winners: winners.map(w => ({
-            userId: w.userId,
-            userName: w.userName,
-            userEmail: w.userEmail,
-            claimed: w.claimed,
-          })),
-        };
+      // Fetch winners for ALL prizes in ONE query (was N+1: one query per prize).
+      const prizeIds = prizes.map((p) => p.id);
+      const allWinners = prizeIds.length
+        ? await db.select().from(giveawayPrizeWinners).where(inArray(giveawayPrizeWinners.prizeId, prizeIds))
+        : [];
+      const winnersByPrize = new Map<number, any[]>();
+      for (const w of allWinners) {
+        const arr = winnersByPrize.get(w.prizeId) || [];
+        arr.push({ userId: w.userId, userName: w.userName, userEmail: w.userEmail, claimed: w.claimed });
+        winnersByPrize.set(w.prizeId, arr);
+      }
+      const prizesWithWinners = prizes.map((prize) => ({
+        ...prize,
+        winners: winnersByPrize.get(prize.id) || [],
       }));
       
       // Count actual entries from giveaway_entries table
@@ -3503,4 +3509,153 @@ export async function updateFramework(id: number, data: Partial<NewFramework>) {
 export async function deleteFramework(id: number) {
   const [row] = await db.delete(frameworks).where(eq(frameworks.id, id)).returning();
   return row ?? null;
+}
+
+// ── Side banner bookings (2 scarce positions: 'left' + 'right') ──────────
+// Unlike userAdSlots (unlimited), only ONE live booking may exist per position
+// — enforced by the `side_banner_one_live_per_position` partial unique index.
+export const SIDE_BANNER_POSITIONS = ['left', 'right'] as const;
+export type SideBannerPosition = (typeof SIDE_BANNER_POSITIONS)[number];
+export const SIDE_BANNER_DURATIONS = [1, 2, 4] as const; // weeks
+const SIDE_BANNER_HOLD_MINUTES = 15;
+
+/**
+ * Sweep stale rows to 'expired' so the partial unique index reflects only LIVE
+ * holds/bookings: reserved holds past reservedUntil, and active bookings past
+ * endDate. Idempotent; call before any availability check / reservation.
+ */
+export async function sweepExpiredSideBanners(): Promise<void> {
+  const now = new Date();
+  await db
+    .update(sideBannerBookings)
+    .set({ status: 'expired', updatedAt: now })
+    .where(and(eq(sideBannerBookings.status, 'reserved'), lt(sideBannerBookings.reservedUntil, now)));
+  await db
+    .update(sideBannerBookings)
+    .set({ status: 'expired', updatedAt: now })
+    .where(and(eq(sideBannerBookings.status, 'active'), lt(sideBannerBookings.endDate, now)));
+}
+
+/** Active banners (status='active') keyed by position — for display. */
+export async function getActiveSideBanners(): Promise<Record<string, typeof sideBannerBookings.$inferSelect>> {
+  await sweepExpiredSideBanners();
+  const rows = await db
+    .select()
+    .from(sideBannerBookings)
+    .where(eq(sideBannerBookings.status, 'active'));
+  const byPos: Record<string, any> = {};
+  for (const r of rows) byPos[r.position] = r; // one per position (unique lock)
+  return byPos;
+}
+
+/** Per-position availability for the advertise UI. */
+export async function getSideBannerAvailability(): Promise<
+  Record<string, { available: boolean; status?: string; until?: Date | null }>
+> {
+  await sweepExpiredSideBanners();
+  const result: Record<string, { available: boolean; status?: string; until?: Date | null }> = {
+    left: { available: true },
+    right: { available: true },
+  };
+  const live = await db
+    .select()
+    .from(sideBannerBookings)
+    .where(inArray(sideBannerBookings.status, ['reserved', 'active']));
+  for (const r of live) {
+    result[r.position] = {
+      available: false,
+      status: r.status,
+      until: r.status === 'active' ? r.endDate : r.reservedUntil,
+    };
+  }
+  return result;
+}
+
+/**
+ * Reserve a position for checkout (15-min hold). The partial unique index makes
+ * this the overselling lock: a racing second reserve for the same position hits
+ * a unique violation and returns { ok:false, reason:'taken' }.
+ */
+export async function reserveSideBanner(input: {
+  position: SideBannerPosition;
+  userId: string;
+  durationWeeks: number;
+  title?: string | null;
+  imageUrl?: string | null;
+  linkUrl?: string | null;
+}): Promise<{ ok: true; bookingId: number } | { ok: false; reason: string }> {
+  if (!SIDE_BANNER_POSITIONS.includes(input.position)) return { ok: false, reason: 'bad_position' };
+  if (!SIDE_BANNER_DURATIONS.includes(input.durationWeeks as any)) return { ok: false, reason: 'bad_duration' };
+  await sweepExpiredSideBanners();
+  const now = new Date();
+  const reservedUntil = new Date(now.getTime() + SIDE_BANNER_HOLD_MINUTES * 60 * 1000);
+  try {
+    const [row] = await db
+      .insert(sideBannerBookings)
+      .values({
+        id: genId(),
+        position: input.position,
+        status: 'reserved',
+        title: input.title ?? null,
+        imageUrl: input.imageUrl ?? null,
+        linkUrl: input.linkUrl ?? null,
+        createdBy: input.userId,
+        durationWeeks: input.durationWeeks,
+        reservedUntil,
+        createdAt: now,
+        updatedAt: now,
+      })
+      .returning({ id: sideBannerBookings.id });
+    return { ok: true, bookingId: row.id };
+  } catch (e) {
+    // unique violation → position already reserved/active
+    return { ok: false, reason: 'taken' };
+  }
+}
+
+/** Look up a booking by id. */
+export async function getSideBannerBooking(bookingId: number) {
+  const [row] = await db.select().from(sideBannerBookings).where(eq(sideBannerBookings.id, bookingId));
+  return row ?? null;
+}
+
+/** Release a reservation (e.g. if basket creation fails) so the position frees up. */
+export async function releaseSideBannerReservation(bookingId: number): Promise<void> {
+  await db
+    .update(sideBannerBookings)
+    .set({ status: 'cancelled', updatedAt: new Date() })
+    .where(and(eq(sideBannerBookings.id, bookingId), eq(sideBannerBookings.status, 'reserved')));
+}
+
+/**
+ * Promote a reserved booking to active once Tebex payment is confirmed.
+ * Idempotent. If the position was meanwhile taken (rare: hold expired + someone
+ * else booked + late payment), the unique index blocks the update → we cancel
+ * the booking and flag it for refund instead of crashing.
+ */
+export async function activateSideBanner(
+  bookingId: number,
+  orderReference: string
+): Promise<{ activated: boolean; needsRefund?: boolean }> {
+  const booking = await getSideBannerBooking(bookingId);
+  if (!booking) return { activated: false };
+  if (booking.status === 'active') return { activated: true }; // idempotent
+  const weeks = booking.durationWeeks || 1;
+  const now = new Date();
+  const endDate = new Date(now.getTime() + weeks * 7 * 24 * 60 * 60 * 1000);
+  try {
+    await db
+      .update(sideBannerBookings)
+      .set({ status: 'active', startDate: now, endDate, orderReference, reservedUntil: null, updatedAt: now })
+      .where(eq(sideBannerBookings.id, bookingId));
+    return { activated: true };
+  } catch (e) {
+    // Position taken by another live booking → can't honor this purchase.
+    await db
+      .update(sideBannerBookings)
+      .set({ status: 'cancelled', orderReference, updatedAt: now })
+      .where(eq(sideBannerBookings.id, bookingId));
+    console.error('activateSideBanner: position taken, flagging refund for booking', bookingId);
+    return { activated: false, needsRefund: true };
+  }
 }

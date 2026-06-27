@@ -34,9 +34,13 @@ export function isTebexConfigured(): boolean {
 export function parsePackageName(name: string | null | undefined): string | null {
   if (!name) return null;
   const s = String(name).toLowerCase();
+  const dur = s.match(/(\d+)\s*(month|week)/);
+  // Side banner (scarce 2-slot side rails) — no tier; "Side Banner - 1 Week".
+  if (s.includes("side") && s.includes("banner")) {
+    return dur ? `sidebanner:slot:${Number(dur[1])}` : null;
+  }
   const type = s.includes("featured") ? "featured-scripts" : /\bads?\b/.test(s) ? "ads" : null;
   const tier = (["starter", "premium", "executive"] as const).find((t) => s.includes(t)) || null;
-  const dur = s.match(/(\d+)\s*(month|week)/);
   if (!type || !tier || !dur) return null;
   return `${type}:${tier}:${Number(dur[1])}`;
 }

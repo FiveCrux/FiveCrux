@@ -142,8 +142,9 @@ export function useUpdateScript(scriptId: string | null) {
   })
 }
 
-// Fetch user's scripts
-export function useUserScripts(limit: number = 3, offset: number = 0) {
+// Fetch user's scripts.
+// `poll` (default true) keeps the 30s status polling; pass false to fetch once.
+export function useUserScripts(limit: number = 3, offset: number = 0, poll: boolean = true) {
   const { data: session } = useSession()
 
   return useQuery({
@@ -157,8 +158,8 @@ export function useUserScripts(limit: number = 3, offset: number = 0) {
     },
     enabled: !!session?.user,
     staleTime: 30000,
-    refetchInterval: 30000, // Refetch every 30 seconds for status updates
-    refetchOnWindowFocus: true,
+    refetchInterval: poll ? 30000 : false, // Refetch every 30 seconds for status updates
+    refetchOnWindowFocus: poll,
   })
 }
 

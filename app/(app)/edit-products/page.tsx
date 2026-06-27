@@ -76,21 +76,21 @@ export default function EditProductsPage() {
       const c = new AbortController()
       const t = setTimeout(() => c.abort(), 15000)
       try {
+        // Use the user-scoped endpoints (only THIS user's items, any status)
+        // instead of pulling the whole public catalog and filtering by email.
         const [scriptsRes, giveawaysRes] = await Promise.all([
-          fetch('/api/scripts', { signal: c.signal }),
-          fetch('/api/giveaways', { signal: c.signal })
+          fetch('/api/users/scripts?limit=100', { credentials: 'include', signal: c.signal }),
+          fetch('/api/users/giveaways?limit=100', { credentials: 'include', signal: c.signal })
         ]);
 
         if (scriptsRes.ok) {
           const scriptsData = await scriptsRes.json();
-          const userEmail = getUserEmail();
-          setScripts(scriptsData.scripts?.filter((s: any) => s.seller_email === userEmail) || []);
+          setScripts(scriptsData.scripts || []);
         }
 
         if (giveawaysRes.ok) {
           const giveawaysData = await giveawaysRes.json();
-          const userEmail = getUserEmail();
-          setGiveaways(giveawaysData.giveaways?.filter((g: any) => g.creator_email === userEmail) || []);
+          setGiveaways(giveawaysData.giveaways || []);
         }
       } catch (error) {
         console.error('Error fetching data:', error);

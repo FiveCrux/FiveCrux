@@ -11,6 +11,7 @@ import { AutoCheckWrapper } from "@/components/auto-check-wrapper"
 import { Analytics } from "@vercel/analytics/next"
 import FirebaseAnalytics from "@/componentss/FirebaseAnalytics"
 import ImpersonationWidget from "@/componentss/dev/impersonation-widget"
+import SideBanners from "@/componentss/ads/side-banners"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
@@ -32,7 +33,11 @@ export default function RootLayout({
             <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
               <AutoCheckWrapper>
               <FirebaseAnalytics />
-                {children}
+                {/* Scarce side-banner ad rails (every page, wide screens only). */}
+                <SideBanners />
+                {/* Inset content on very wide screens so it clears the fixed rails;
+                    below the breakpoint there are no rails and content is full width. */}
+                <div className="min-[1700px]:px-[216px]">{children}</div>
               </AutoCheckWrapper>
               <Toaster />
               <Sonner />

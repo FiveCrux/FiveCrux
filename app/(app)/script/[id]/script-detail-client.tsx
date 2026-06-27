@@ -196,7 +196,9 @@ export function ScriptDetailClient({
     const fetchOtherScripts = async () => {
       try {
         setLoadingOtherScripts(true);
-        const response = await fetch(`/api/scripts?limit=8`, { cache: "no-store" });
+        // No `no-store` — the public scripts listing is CDN-cached (60s); a fresh
+        // hit on every script view was needless DB load.
+        const response = await fetch(`/api/scripts?limit=8`);
         if (!response.ok) throw new Error("Failed to fetch other scripts");
         const data = await response.json();
         const filteredScripts = (data.scripts || [])
