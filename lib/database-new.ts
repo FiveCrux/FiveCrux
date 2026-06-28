@@ -3516,7 +3516,7 @@ export async function deleteFramework(id: number) {
 // — enforced by the `side_banner_one_live_per_position` partial unique index.
 export const SIDE_BANNER_POSITIONS = ['left', 'right'] as const;
 export type SideBannerPosition = (typeof SIDE_BANNER_POSITIONS)[number];
-export const SIDE_BANNER_DURATIONS = [1, 2, 4] as const; // weeks
+export const SIDE_BANNER_DURATIONS = [1, 2, 3] as const; // weeks (match Tebex packages)
 const SIDE_BANNER_HOLD_MINUTES = 15;
 
 /**
@@ -3625,6 +3625,41 @@ export async function releaseSideBannerReservation(bookingId: number): Promise<v
     .update(sideBannerBookings)
     .set({ status: 'cancelled', updatedAt: new Date() })
     .where(and(eq(sideBannerBookings.id, bookingId), eq(sideBannerBookings.status, 'reserved')));
+}
+
+/** A user's own side-banner bookings (active + reserved), newest first — for the dashboard. */
+export async function getUserSideBanners(userId: string) {
+  await sweepExpiredSideBanners();
+  return db
+    .select()
+    .from(sideBannerBookings)
+    .where(and(eq(sideBannerBookings.createdBy, userId), inArray(sideBannerBookings.status, ['active', 'reserved'])))
+    .orderBy(desc(sideBannerBookings.createdAt));
+}
+
+/**
+ * Owner edits the banner creative (image / link / title) on their slot — like
+ * managing an ad after buying its slot. Only the owner, only an ACTIVE booking.
+ */
+export async function updateSideBannerCreative(
+  bookingId: number,
+  userId: string,
+  creative: { imageUrl?: string | null; linkUrl?: string | null; title?: string | null }
+): Promise<{ ok: boolean; reason?: string }> {
+  const booking = await getSideBannerBooking(bookingId);
+  if (!booking) return { ok: false, reason: 'not_found' };
+  if (booking.createdBy !== userId) return { ok: false, reason: 'forbidden' };
+  if (booking.status !== 'active') return { ok: false, reason: 'not_active' };
+  await db
+    .update(sideBannerBookings)
+    .set({
+      imageUrl: creative.imageUrl ?? null,
+      linkUrl: creative.linkUrl ?? null,
+      title: creative.title ?? null,
+      updatedAt: new Date(),
+    })
+    .where(eq(sideBannerBookings.id, bookingId));
+  return { ok: true };
 }
 
 /**
