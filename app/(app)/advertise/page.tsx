@@ -386,7 +386,7 @@ export default function AdvertisePage() {
           })}
         </div>
         <div className="mb-5 rounded-xl border border-white/[0.07] bg-white/[0.02] p-3 text-xs leading-relaxed text-white/50">
-          You're buying the <span className="text-white/80 capitalize">{sbPosition}</span> slot for {sbWeeks}{" "}
+          You&apos;re buying the <span className="text-white/80 capitalize">{sbPosition}</span> slot for {sbWeeks}{" "}
           {sbWeeks === 1 ? "week" : "weeks"}. After checkout, upload your banner image &amp; link from
           <span className="text-white/80"> Profile → Side Banners</span> (change it anytime during your window).
         </div>
