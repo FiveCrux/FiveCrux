@@ -154,7 +154,7 @@ export default function AdvertisePage() {
   const pricingRef = useRef<HTMLDivElement>(null)
 
   // State for selected tab (ad slots or featured script slots)
-  const [activeTab, setActiveTab] = useState<"ads" | "featured-scripts">("ads")
+  const [activeTab, setActiveTab] = useState<"ads" | "featured-scripts" | "side-banners">("ads")
 
   // State for selected duration index (shared across all packages)
   const [selectedDurationIndex, setSelectedDurationIndex] = useState<number>(0)
@@ -272,6 +272,13 @@ export default function AdvertisePage() {
   const [sbLink, setSbLink] = useState("")
   const [sbBusy, setSbBusy] = useState(false)
 
+  // Open the "Side banners" tab when arriving via /advertise#side-banners.
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.location.hash === "#side-banners") {
+      setActiveTab("side-banners")
+    }
+  }, [])
+
   useEffect(() => {
     let alive = true
     fetch("/api/side-banners")
@@ -329,6 +336,106 @@ export default function AdvertisePage() {
       setSbBusy(false)
     }
   }
+
+  // Side-banner booking panel — rendered inside the "Side banners" tab below.
+  const sideBannerPanel = (
+    <div className="mx-auto mt-12 grid max-w-4xl gap-6 lg:grid-cols-2">
+      {/* Availability */}
+      <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-6">
+        <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-white/50">Live availability</h3>
+        <div className="space-y-3">
+          {(["left", "right"] as const).map((pos) => {
+            const free = sbAvail[pos]?.available !== false
+            return (
+              <button
+                key={pos}
+                onClick={() => free && setSbPosition(pos)}
+                disabled={!free}
+                className={cn(
+                  "flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left transition",
+                  !free
+                    ? "cursor-not-allowed border-white/[0.06] bg-white/[0.02] opacity-60"
+                    : sbPosition === pos
+                      ? "border-orange-500/60 bg-orange-500/10"
+                      : "border-white/[0.08] bg-white/[0.03] hover:border-white/20"
+                )}
+              >
+                <span className="font-semibold capitalize">{pos} slot</span>
+                <span className={cn("text-sm font-bold", free ? "text-green-400" : "text-white/45")}>
+                  {free ? "Available" : "Sold"}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+        <p className="mt-4 text-xs text-white/40">
+          Exactly two slots exist site-wide. When both are sold, they free up automatically after a booking window ends.
+        </p>
+      </div>
+
+      {/* Reserve form */}
+      <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-6">
+        <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-white/50">Book your banner</h3>
+        <label className="mb-1.5 block text-xs font-semibold text-white/60">Duration</label>
+        <div className="mb-4 flex gap-2">
+          {SB_WEEKS.map((w) => {
+            const p = sbPrice(w)
+            return (
+              <button
+                key={w}
+                onClick={() => setSbWeeks(w)}
+                className={cn(
+                  "flex-1 rounded-xl border px-3 py-2.5 text-center transition",
+                  sbWeeks === w ? "border-orange-500/60 bg-orange-500/10" : "border-white/[0.08] hover:border-white/20"
+                )}
+              >
+                <div className="text-sm font-bold">{w} {w === 1 ? "week" : "weeks"}</div>
+                <div className="font-mono text-xs text-white/55">{p != null ? `€${p}` : "—"}</div>
+              </button>
+            )
+          })}
+        </div>
+        <label className="mb-1.5 block text-xs font-semibold text-white/60">Banner image URL</label>
+        <input
+          value={sbImage}
+          onChange={(e) => setSbImage(e.target.value)}
+          placeholder="https://…/your-banner.png (tall / vertical)"
+          className="mb-3 w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-3.5 py-2.5 text-sm outline-none focus:border-orange-500/50"
+        />
+        <label className="mb-1.5 block text-xs font-semibold text-white/60">Click-through link</label>
+        <input
+          value={sbLink}
+          onChange={(e) => setSbLink(e.target.value)}
+          placeholder="https://your-store-or-discord"
+          className="mb-3 w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-3.5 py-2.5 text-sm outline-none focus:border-orange-500/50"
+        />
+        <label className="mb-1.5 block text-xs font-semibold text-white/60">Title (optional)</label>
+        <input
+          value={sbTitle}
+          onChange={(e) => setSbTitle(e.target.value)}
+          placeholder="Your script / brand"
+          className="mb-5 w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-3.5 py-2.5 text-sm outline-none focus:border-orange-500/50"
+        />
+        <Button
+          onClick={handleSideBannerBuy}
+          disabled={sbBusy || !sbAvail[sbPosition]?.available}
+          className="w-full bg-orange-500 py-3 text-base font-bold text-black hover:bg-orange-400 disabled:opacity-60"
+        >
+          {sbBusy ? (
+            <Loader2 className="h-5 w-5 animate-spin" />
+          ) : (
+            <>
+              Reserve {sbPosition} slot{sbPrice(sbWeeks) != null ? ` · €${sbPrice(sbWeeks)}` : ""}
+              <ArrowRight className="ml-1.5 h-4 w-4" />
+            </>
+          )}
+        </Button>
+        <p className="mt-3 text-center text-[11px] text-white/40">
+          Secured via Tebex. The slot is held for you for 15 minutes while you pay.
+        </p>
+      </div>
+    </div>
+  )
 
   // Get current packages based on active tab
   const currentPackages = activeTab === "ads" ? pricingPackages : featuredScriptPackages
@@ -395,127 +502,6 @@ export default function AdvertisePage() {
           </div>
         </section>
 
-        {/* ===== SIDE BANNERS (scarce: left + right) ===== */}
-        <section id="side-banners" className="scroll-mt-24 border-y border-white/[0.07] bg-white/[0.015]">
-          <div className="mx-auto max-w-7xl px-5 py-16">
-            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-orange-500/30 bg-orange-500/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-orange-300">
-              <Sparkles className="h-3.5 w-3.5" /> Premium · only 2 slots
-            </div>
-            <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
-              Side banner <span className="text-orange-400">placement</span>
-            </h2>
-            <p className="mt-3 max-w-2xl text-white/55">
-              A sticky vertical banner pinned beside the catalogue on <span className="text-white">every page</span> (wide
-              screens). There are exactly <span className="text-white">two</span> — left and right — so each is exclusive
-              for your booking window.
-            </p>
-
-            <div className="mt-8 grid gap-6 lg:grid-cols-2">
-              {/* Availability */}
-              <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-6">
-                <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-white/50">Live availability</h3>
-                <div className="space-y-3">
-                  {(["left", "right"] as const).map((pos) => {
-                    const a = sbAvail[pos]
-                    const free = a?.available !== false
-                    return (
-                      <button
-                        key={pos}
-                        onClick={() => free && setSbPosition(pos)}
-                        disabled={!free}
-                        className={cn(
-                          "flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left transition",
-                          !free
-                            ? "cursor-not-allowed border-white/[0.06] bg-white/[0.02] opacity-60"
-                            : sbPosition === pos
-                              ? "border-orange-500/60 bg-orange-500/10"
-                              : "border-white/[0.08] bg-white/[0.03] hover:border-white/20"
-                        )}
-                      >
-                        <span className="font-semibold capitalize">{pos} slot</span>
-                        <span className={cn("text-sm font-bold", free ? "text-green-400" : "text-white/45")}>
-                          {free ? "Available" : "Sold"}
-                        </span>
-                      </button>
-                    )
-                  })}
-                </div>
-                <p className="mt-4 text-xs text-white/40">
-                  When both are sold, check back after a booking window ends — they free up automatically.
-                </p>
-              </div>
-
-              {/* Reserve form */}
-              <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-6">
-                <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-white/50">Book your banner</h3>
-
-                <label className="mb-1.5 block text-xs font-semibold text-white/60">Duration</label>
-                <div className="mb-4 flex gap-2">
-                  {SB_WEEKS.map((w) => {
-                    const p = sbPrice(w)
-                    return (
-                      <button
-                        key={w}
-                        onClick={() => setSbWeeks(w)}
-                        className={cn(
-                          "flex-1 rounded-xl border px-3 py-2.5 text-center transition",
-                          sbWeeks === w ? "border-orange-500/60 bg-orange-500/10" : "border-white/[0.08] hover:border-white/20"
-                        )}
-                      >
-                        <div className="text-sm font-bold">
-                          {w} {w === 1 ? "week" : "weeks"}
-                        </div>
-                        <div className="font-mono text-xs text-white/55">{p != null ? `€${p}` : "—"}</div>
-                      </button>
-                    )
-                  })}
-                </div>
-
-                <label className="mb-1.5 block text-xs font-semibold text-white/60">Banner image URL</label>
-                <input
-                  value={sbImage}
-                  onChange={(e) => setSbImage(e.target.value)}
-                  placeholder="https://…/your-banner.png (tall / vertical)"
-                  className="mb-3 w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-3.5 py-2.5 text-sm outline-none focus:border-orange-500/50"
-                />
-                <label className="mb-1.5 block text-xs font-semibold text-white/60">Click-through link</label>
-                <input
-                  value={sbLink}
-                  onChange={(e) => setSbLink(e.target.value)}
-                  placeholder="https://your-store-or-discord"
-                  className="mb-3 w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-3.5 py-2.5 text-sm outline-none focus:border-orange-500/50"
-                />
-                <label className="mb-1.5 block text-xs font-semibold text-white/60">Title (optional)</label>
-                <input
-                  value={sbTitle}
-                  onChange={(e) => setSbTitle(e.target.value)}
-                  placeholder="Your script / brand"
-                  className="mb-5 w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-3.5 py-2.5 text-sm outline-none focus:border-orange-500/50"
-                />
-
-                <Button
-                  onClick={handleSideBannerBuy}
-                  disabled={sbBusy || !sbAvail[sbPosition]?.available}
-                  className="w-full bg-orange-500 py-3 text-base font-bold text-black hover:bg-orange-400 disabled:opacity-60"
-                >
-                  {sbBusy ? (
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                  ) : (
-                    <>
-                      Reserve {sbPosition} slot
-                      {sbPrice(sbWeeks) != null ? ` · €${sbPrice(sbWeeks)}` : ""}
-                      <ArrowRight className="ml-1.5 h-4 w-4" />
-                    </>
-                  )}
-                </Button>
-                <p className="mt-3 text-center text-[11px] text-white/40">
-                  Secured via Tebex. The slot is held for you for 15 minutes while you pay.
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
         {/* ===== PACKAGES ===== */}
         <section
           ref={pricingRef}
@@ -567,9 +553,21 @@ export default function AdvertisePage() {
                 >
                   Featured script slots
                 </button>
+                <button
+                  onClick={() => setActiveTab("side-banners")}
+                  className={cn(
+                    "rounded-[7px] px-4 py-1.5 text-xs font-semibold transition-all duration-200",
+                    activeTab === "side-banners"
+                      ? "bg-[#f97316] text-black shadow-sm"
+                      : "text-white/55 hover:text-white/80"
+                  )}
+                >
+                  Side banners
+                </button>
               </div>
 
-              {/* Duration Selector */}
+              {/* Duration Selector (hidden for side banners — they use weeks in their own panel) */}
+              {activeTab !== "side-banners" && (
               <div className="flex flex-wrap items-center justify-center gap-2">
                 {currentPackages[0].durations.map((duration, durIndex) => {
                   const isActive = selectedDurationIndex === durIndex
@@ -597,9 +595,13 @@ export default function AdvertisePage() {
                   )
                 })}
               </div>
+              )}
             </div>
 
-            {/* Pricing Cards Grid */}
+            {/* Body: side-banner booking OR pricing cards */}
+            {activeTab === "side-banners" ? (
+              sideBannerPanel
+            ) : (
             <div className="mt-12 grid grid-cols-1 gap-5 md:grid-cols-3">
               {currentPackages.map((pkg, index) => {
                 const selectedDuration = pkg.durations[selectedDurationIndex]
@@ -607,7 +609,7 @@ export default function AdvertisePage() {
                   activeTab === "ads"
                     ? selectedDuration.months
                     : selectedDuration.weeks || Math.round(selectedDuration.months * 4)
-                const livePrice = livePriceFor(activeTab, pkg.packageId, durationAmount)
+                const livePrice = livePriceFor(activeTab as "ads" | "featured-scripts", pkg.packageId, durationAmount)
                 const priceLoading = livePrices === null
                 const discount =
                   livePrice != null && selectedDuration.originalPrice > 0
@@ -773,6 +775,7 @@ export default function AdvertisePage() {
                 )
               })}
             </div>
+            )}
           </div>
         </section>
 
