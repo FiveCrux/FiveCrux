@@ -3589,6 +3589,27 @@ export async function reserveSideBanner(input: {
   await sweepExpiredSideBanners();
   const now = new Date();
   const reservedUntil = new Date(now.getTime() + SIDE_BANNER_HOLD_MINUTES * 60 * 1000);
+
+  // If THIS user already holds a live reservation for this position (e.g. they
+  // abandoned a checkout), reuse + refresh it instead of blocking them as "taken".
+  const own = await db
+    .select()
+    .from(sideBannerBookings)
+    .where(
+      and(
+        eq(sideBannerBookings.position, input.position),
+        eq(sideBannerBookings.status, 'reserved'),
+        eq(sideBannerBookings.createdBy, input.userId)
+      )
+    );
+  if (own.length > 0) {
+    await db
+      .update(sideBannerBookings)
+      .set({ durationWeeks: input.durationWeeks, reservedUntil, updatedAt: now })
+      .where(eq(sideBannerBookings.id, own[0].id));
+    return { ok: true, bookingId: own[0].id };
+  }
+
   try {
     const [row] = await db
       .insert(sideBannerBookings)
