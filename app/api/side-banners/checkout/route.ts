@@ -7,6 +7,7 @@ import { resolveTebexPackageId, getLivePriceByKey } from "@/lib/tebex-pricing";
 import {
   reserveSideBanner,
   releaseSideBannerReservation,
+  ensureUserExists,
   SIDE_BANNER_POSITIONS,
   SIDE_BANNER_DURATIONS,
   type SideBannerPosition,
@@ -54,6 +55,9 @@ export async function POST(request: NextRequest) {
     }
     const price = await getLivePriceByKey("sidebanner", "slot", durationWeeks);
     const amount = price?.amount ?? 0;
+
+    // Ensure the buyer's user row exists (FK-safety for stale sessions / local resets).
+    await ensureUserExists(user);
 
     // RESERVE — the overselling lock. A racing buyer for the same position fails here.
     const reservation = await reserveSideBanner({

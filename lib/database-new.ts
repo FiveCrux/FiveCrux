@@ -3607,10 +3607,40 @@ export async function reserveSideBanner(input: {
       })
       .returning({ id: sideBannerBookings.id });
     return { ok: true, bookingId: row.id };
-  } catch (e) {
-    // unique violation → position already reserved/active
-    return { ok: false, reason: 'taken' };
+  } catch (e: any) {
+    const msg = String(e?.cause?.message || e?.message || e);
+    // Postgres unique_violation (23505) = the position is genuinely taken (the
+    // overselling lock). Anything else (e.g. the buyer's user row is missing →
+    // FK violation) is a real error — surface it instead of lying "taken".
+    const isUnique = msg.includes('23505') || /unique/i.test(msg);
+    if (!isUnique) console.error('reserveSideBanner insert failed (not the lock):', msg);
+    return { ok: false, reason: isUnique ? 'taken' : 'error' };
   }
+}
+
+/**
+ * FK-safety: make sure the buyer's user row exists before we insert a booking
+ * that references it (created_by). Normally login upserts the user, but a stale
+ * session (e.g. after a local DB reset) can leave a valid JWT with no row.
+ */
+export async function ensureUserExists(u: {
+  id: string;
+  name?: string | null;
+  email?: string | null;
+  image?: string | null;
+  username?: string | null;
+}): Promise<void> {
+  if (!u?.id) return;
+  await db
+    .insert(users)
+    .values({
+      id: u.id,
+      name: u.name ?? null,
+      email: u.email ?? null,
+      image: u.image ?? null,
+      username: u.username ?? null,
+    })
+    .onConflictDoNothing();
 }
 
 /** Look up a booking by id. */
