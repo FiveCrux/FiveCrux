@@ -14,6 +14,7 @@ import Footer from "@/componentss/shared/footer";
 import Link from "next/link";
 import AdCard, { useRandomAds } from "@/componentss/ads/ad-card";
 import { toast } from "sonner";
+import SideAdsFrame from "@/componentss/ads/side-banners";
 
 // Module-level so the SSR seed and the client fallback map identically.
 function mapApiGiveaway(g: any) {
@@ -408,6 +409,7 @@ export function GiveawaysClient({
           backgroundImage: `radial-gradient(circle at 50% 0%, rgba(249, 115, 22, 0.06) 0%, transparent 55%)`,
         }}
       >
+        <SideAdsFrame>
         <main className="mx-auto w-full px-6 pb-24 pt-28">
           {/* HEADER */}
           <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
@@ -597,6 +599,7 @@ export function GiveawaysClient({
             )}
           </motion.div>
         </main>
+        </SideAdsFrame>
       </div>
       <Footer />
     </>

@@ -24,6 +24,7 @@ import Navbar from "@/componentss/shared/navbar";
 import Footer from "@/componentss/shared/footer";
 import AdCard, { useRandomAds } from "@/componentss/ads/ad-card";
 import { ProductCard, type MarketProduct } from "@/componentss/marketplace/product-card";
+import SideAdsFrame from "@/componentss/ads/side-banners";
 
 // Map a raw /api/scripts item onto the UI script shape used throughout this page.
 // Shared by the server-seeded initial scripts and the client-side refetch so the
@@ -638,6 +639,7 @@ export function ScriptsClient({
   return (
     <>
       <Navbar />
+      <SideAdsFrame>
       <main className="min-h-screen bg-[#0a0a0a] text-white">
         {/* ── Page header ───────────────────────────────────────────────── */}
         <section className="relative overflow-hidden border-b border-white/[0.06]">
@@ -1092,6 +1094,7 @@ export function ScriptsClient({
           )}
         </section>
       </main>
+      </SideAdsFrame>
       <Footer />
     </>
   );
