@@ -3516,7 +3516,7 @@ export async function deleteFramework(id: number) {
 // — enforced by the `side_banner_one_live_per_position` partial unique index.
 export const SIDE_BANNER_POSITIONS = ['left', 'right'] as const;
 export type SideBannerPosition = (typeof SIDE_BANNER_POSITIONS)[number];
-export const SIDE_BANNER_DURATIONS = [1, 2, 4] as const; // weeks
+export const SIDE_BANNER_DURATIONS = [1, 2, 3] as const; // weeks (match Tebex packages)
 const SIDE_BANNER_HOLD_MINUTES = 15;
 
 /**
@@ -3589,6 +3589,27 @@ export async function reserveSideBanner(input: {
   await sweepExpiredSideBanners();
   const now = new Date();
   const reservedUntil = new Date(now.getTime() + SIDE_BANNER_HOLD_MINUTES * 60 * 1000);
+
+  // If THIS user already holds a live reservation for this position (e.g. they
+  // abandoned a checkout), reuse + refresh it instead of blocking them as "taken".
+  const own = await db
+    .select()
+    .from(sideBannerBookings)
+    .where(
+      and(
+        eq(sideBannerBookings.position, input.position),
+        eq(sideBannerBookings.status, 'reserved'),
+        eq(sideBannerBookings.createdBy, input.userId)
+      )
+    );
+  if (own.length > 0) {
+    await db
+      .update(sideBannerBookings)
+      .set({ durationWeeks: input.durationWeeks, reservedUntil, updatedAt: now })
+      .where(eq(sideBannerBookings.id, own[0].id));
+    return { ok: true, bookingId: own[0].id };
+  }
+
   try {
     const [row] = await db
       .insert(sideBannerBookings)
@@ -3607,10 +3628,40 @@ export async function reserveSideBanner(input: {
       })
       .returning({ id: sideBannerBookings.id });
     return { ok: true, bookingId: row.id };
-  } catch (e) {
-    // unique violation → position already reserved/active
-    return { ok: false, reason: 'taken' };
+  } catch (e: any) {
+    const msg = String(e?.cause?.message || e?.message || e);
+    // Postgres unique_violation (23505) = the position is genuinely taken (the
+    // overselling lock). Anything else (e.g. the buyer's user row is missing →
+    // FK violation) is a real error — surface it instead of lying "taken".
+    const isUnique = msg.includes('23505') || /unique/i.test(msg);
+    if (!isUnique) console.error('reserveSideBanner insert failed (not the lock):', msg);
+    return { ok: false, reason: isUnique ? 'taken' : 'error' };
   }
+}
+
+/**
+ * FK-safety: make sure the buyer's user row exists before we insert a booking
+ * that references it (created_by). Normally login upserts the user, but a stale
+ * session (e.g. after a local DB reset) can leave a valid JWT with no row.
+ */
+export async function ensureUserExists(u: {
+  id: string;
+  name?: string | null;
+  email?: string | null;
+  image?: string | null;
+  username?: string | null;
+}): Promise<void> {
+  if (!u?.id) return;
+  await db
+    .insert(users)
+    .values({
+      id: u.id,
+      name: u.name ?? null,
+      email: u.email ?? null,
+      image: u.image ?? null,
+      username: u.username ?? null,
+    })
+    .onConflictDoNothing();
 }
 
 /** Look up a booking by id. */
@@ -3625,6 +3676,41 @@ export async function releaseSideBannerReservation(bookingId: number): Promise<v
     .update(sideBannerBookings)
     .set({ status: 'cancelled', updatedAt: new Date() })
     .where(and(eq(sideBannerBookings.id, bookingId), eq(sideBannerBookings.status, 'reserved')));
+}
+
+/** A user's own side-banner bookings (active + reserved), newest first — for the dashboard. */
+export async function getUserSideBanners(userId: string) {
+  await sweepExpiredSideBanners();
+  return db
+    .select()
+    .from(sideBannerBookings)
+    .where(and(eq(sideBannerBookings.createdBy, userId), inArray(sideBannerBookings.status, ['active', 'reserved'])))
+    .orderBy(desc(sideBannerBookings.createdAt));
+}
+
+/**
+ * Owner edits the banner creative (image / link / title) on their slot — like
+ * managing an ad after buying its slot. Only the owner, only an ACTIVE booking.
+ */
+export async function updateSideBannerCreative(
+  bookingId: number,
+  userId: string,
+  creative: { imageUrl?: string | null; linkUrl?: string | null; title?: string | null }
+): Promise<{ ok: boolean; reason?: string }> {
+  const booking = await getSideBannerBooking(bookingId);
+  if (!booking) return { ok: false, reason: 'not_found' };
+  if (booking.createdBy !== userId) return { ok: false, reason: 'forbidden' };
+  if (booking.status !== 'active') return { ok: false, reason: 'not_active' };
+  await db
+    .update(sideBannerBookings)
+    .set({
+      imageUrl: creative.imageUrl ?? null,
+      linkUrl: creative.linkUrl ?? null,
+      title: creative.title ?? null,
+      updatedAt: new Date(),
+    })
+    .where(eq(sideBannerBookings.id, bookingId));
+  return { ok: true };
 }
 
 /**

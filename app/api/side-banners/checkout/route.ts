@@ -7,6 +7,7 @@ import { resolveTebexPackageId, getLivePriceByKey } from "@/lib/tebex-pricing";
 import {
   reserveSideBanner,
   releaseSideBannerReservation,
+  ensureUserExists,
   SIDE_BANNER_POSITIONS,
   SIDE_BANNER_DURATIONS,
   type SideBannerPosition,
@@ -36,9 +37,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json().catch(() => ({}));
     const position = String(body.position) as SideBannerPosition;
     const durationWeeks = Number(body.durationWeeks);
-    const title = typeof body.title === "string" ? body.title.slice(0, 120) : null;
-    const imageUrl = typeof body.imageUrl === "string" ? body.imageUrl.slice(0, 600) : null;
-    const linkUrl = typeof body.linkUrl === "string" ? body.linkUrl.slice(0, 600) : null;
+    // Creative (image/link/title) is NOT set here — like ad slots, the buyer
+    // sets/edits it afterwards from their dashboard.
 
     if (!SIDE_BANNER_POSITIONS.includes(position))
       return NextResponse.json({ error: "Invalid position" }, { status: 400 });
@@ -56,14 +56,14 @@ export async function POST(request: NextRequest) {
     const price = await getLivePriceByKey("sidebanner", "slot", durationWeeks);
     const amount = price?.amount ?? 0;
 
+    // Ensure the buyer's user row exists (FK-safety for stale sessions / local resets).
+    await ensureUserExists(user);
+
     // RESERVE — the overselling lock. A racing buyer for the same position fails here.
     const reservation = await reserveSideBanner({
       position,
       userId: user.id,
       durationWeeks,
-      title,
-      imageUrl,
-      linkUrl,
     });
     if (!reservation.ok) {
       const taken = reservation.reason === "taken";

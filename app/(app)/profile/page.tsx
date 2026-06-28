@@ -67,7 +67,8 @@ import {
 import { toast } from "sonner";
 import { getSessionUserProfilePicture } from "@/lib/user-utils";
 import { useSession as useNextAuthSession } from "next-auth/react";
-import { Camera, X } from "lucide-react";
+import { Camera, X, Megaphone } from "lucide-react";
+import SideBannersManager from "@/componentss/profile/side-banners-manager";
 import Link from "next/link";
 
 interface Script {
@@ -584,6 +585,7 @@ export default function ProfilePage() {
     { value: "props", label: "Props", icon: Package },
     { value: "giveaways", label: "Giveaways", icon: Gift },
     { value: "ads", label: "Ads", icon: Tag },
+    { value: "side-banners", label: "Side Banners", icon: Megaphone },
     { value: "featured-scripts", label: "Featured Scripts", icon: Star },
     { value: "entries", label: "Entries", icon: Sparkles },
     { value: "settings", label: "Settings", icon: Settings },
@@ -1632,6 +1634,11 @@ export default function ProfilePage() {
                     </>
                   )}
                 </motion.div>
+              </TabsContent>
+
+              {/* Side Banners Tab — manage the creative for bought side slots */}
+              <TabsContent value="side-banners" className="space-y-6 mt-0">
+                <SideBannersManager />
               </TabsContent>
 
               {/* Featured Scripts Tab */}
