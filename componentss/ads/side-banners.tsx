@@ -92,6 +92,14 @@ function Rail({ side, banner }: { side: "left" | "right"; banner: Banner }) {
               </span>
             )}
           </Link>
+        ) : banner ? (
+          // Slot is sold (active) but the owner hasn't uploaded a banner yet.
+          <div className="flex h-full flex-col items-center justify-center gap-2 rounded-2xl border border-white/[0.07] bg-white/[0.02] px-3 text-center">
+            <span className="rounded-full border border-white/10 bg-black/40 px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.12em] text-white/40">
+              Sponsored
+            </span>
+            <span className="text-[11px] text-white/30">Banner coming soon</span>
+          </div>
         ) : (
           <Link
             href="/advertise#side-banners"

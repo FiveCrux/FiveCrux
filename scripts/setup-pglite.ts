@@ -188,6 +188,25 @@ async function main() {
   }).onConflictDoNothing()
   console.log("✓ 1 pending ad")
 
+  // ---- Side banner (demo) ---------------------------------------------------
+  // LEFT slot = sold + live (owned by CruxDev) so the rail shows a real banner;
+  // RIGHT slot stays open so the buy flow is demoable. Log in as CruxDev (creator)
+  // to manage/edit the left banner from Profile → Side Banners.
+  await db.insert(schema.sideBannerBookings).values({
+    id: 10001,
+    position: "left",
+    status: "active",
+    title: "Advanced Banking — 20% off",
+    imageUrl: imgs[0],
+    linkUrl: "https://fivecrux.local",
+    createdBy: seller.id, // dev-creator (CruxDev)
+    durationWeeks: 2,
+    startDate: new Date(),
+    endDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+    orderReference: "demo-seed",
+  }).onConflictDoNothing()
+  console.log("✓ 1 active side banner (left, demo)")
+
   // ---- Coupon ---------------------------------------------------------------
   await db.insert(schema.coupons).values({
     id: 7001, code: "CRUX10", discountType: "percentage", discountValue: "10", scope: "all",
