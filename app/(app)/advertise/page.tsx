@@ -260,16 +260,13 @@ export default function AdvertisePage() {
   }
 
   // ── Side banner slots (scarce: left + right, sold via Tebex) ──────────
-  const SB_WEEKS = [1, 2, 4]
+  const SB_WEEKS = [1, 2, 3]
   const [sbAvail, setSbAvail] = useState<Record<string, { available: boolean; until?: string | null }>>({
     left: { available: true },
     right: { available: true },
   })
   const [sbPosition, setSbPosition] = useState<"left" | "right">("left")
   const [sbWeeks, setSbWeeks] = useState(1)
-  const [sbTitle, setSbTitle] = useState("")
-  const [sbImage, setSbImage] = useState("")
-  const [sbLink, setSbLink] = useState("")
   const [sbBusy, setSbBusy] = useState(false)
 
   // Open the "Side banners" tab when arriving via /advertise#side-banners.
@@ -302,10 +299,6 @@ export default function AdvertisePage() {
       toast.error("That side is currently taken — pick the other one.")
       return
     }
-    if (!sbImage.trim()) {
-      toast.error("Add a banner image URL first.")
-      return
-    }
     setSbBusy(true)
     try {
       const res = await fetch("/api/side-banners/checkout", {
@@ -314,9 +307,6 @@ export default function AdvertisePage() {
         body: JSON.stringify({
           position: sbPosition,
           durationWeeks: sbWeeks,
-          title: sbTitle,
-          imageUrl: sbImage,
-          linkUrl: sbLink,
         }),
       })
       const data = await res.json().catch(() => ({}))
@@ -375,7 +365,7 @@ export default function AdvertisePage() {
 
       {/* Reserve form */}
       <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-6">
-        <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-white/50">Book your banner</h3>
+        <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-white/50">Book a slot</h3>
         <label className="mb-1.5 block text-xs font-semibold text-white/60">Duration</label>
         <div className="mb-4 flex gap-2">
           {SB_WEEKS.map((w) => {
@@ -395,27 +385,11 @@ export default function AdvertisePage() {
             )
           })}
         </div>
-        <label className="mb-1.5 block text-xs font-semibold text-white/60">Banner image URL</label>
-        <input
-          value={sbImage}
-          onChange={(e) => setSbImage(e.target.value)}
-          placeholder="https://…/your-banner.png (tall / vertical)"
-          className="mb-3 w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-3.5 py-2.5 text-sm outline-none focus:border-orange-500/50"
-        />
-        <label className="mb-1.5 block text-xs font-semibold text-white/60">Click-through link</label>
-        <input
-          value={sbLink}
-          onChange={(e) => setSbLink(e.target.value)}
-          placeholder="https://your-store-or-discord"
-          className="mb-3 w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-3.5 py-2.5 text-sm outline-none focus:border-orange-500/50"
-        />
-        <label className="mb-1.5 block text-xs font-semibold text-white/60">Title (optional)</label>
-        <input
-          value={sbTitle}
-          onChange={(e) => setSbTitle(e.target.value)}
-          placeholder="Your script / brand"
-          className="mb-5 w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-3.5 py-2.5 text-sm outline-none focus:border-orange-500/50"
-        />
+        <div className="mb-5 rounded-xl border border-white/[0.07] bg-white/[0.02] p-3 text-xs leading-relaxed text-white/50">
+          You're buying the <span className="text-white/80 capitalize">{sbPosition}</span> slot for {sbWeeks}{" "}
+          {sbWeeks === 1 ? "week" : "weeks"}. After checkout, upload your banner image &amp; link from
+          <span className="text-white/80"> Profile → Side Banners</span> (change it anytime during your window).
+        </div>
         <Button
           onClick={handleSideBannerBuy}
           disabled={sbBusy || !sbAvail[sbPosition]?.available}
@@ -425,7 +399,7 @@ export default function AdvertisePage() {
             <Loader2 className="h-5 w-5 animate-spin" />
           ) : (
             <>
-              Reserve {sbPosition} slot{sbPrice(sbWeeks) != null ? ` · €${sbPrice(sbWeeks)}` : ""}
+              Buy {sbPosition} slot{sbPrice(sbWeeks) != null ? ` · €${sbPrice(sbWeeks)}` : ""}
               <ArrowRight className="ml-1.5 h-4 w-4" />
             </>
           )}

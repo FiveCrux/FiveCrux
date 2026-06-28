@@ -36,9 +36,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json().catch(() => ({}));
     const position = String(body.position) as SideBannerPosition;
     const durationWeeks = Number(body.durationWeeks);
-    const title = typeof body.title === "string" ? body.title.slice(0, 120) : null;
-    const imageUrl = typeof body.imageUrl === "string" ? body.imageUrl.slice(0, 600) : null;
-    const linkUrl = typeof body.linkUrl === "string" ? body.linkUrl.slice(0, 600) : null;
+    // Creative (image/link/title) is NOT set here — like ad slots, the buyer
+    // sets/edits it afterwards from their dashboard.
 
     if (!SIDE_BANNER_POSITIONS.includes(position))
       return NextResponse.json({ error: "Invalid position" }, { status: 400 });
@@ -61,9 +60,6 @@ export async function POST(request: NextRequest) {
       position,
       userId: user.id,
       durationWeeks,
-      title,
-      imageUrl,
-      linkUrl,
     });
     if (!reservation.ok) {
       const taken = reservation.reason === "taken";
