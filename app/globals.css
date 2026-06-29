@@ -72,6 +72,15 @@
   }
 }
 
+/* Scale the whole UI up on very large monitors (≥2560px — 1440p/4K/40-inch).
+   Everything sized in rem (Tailwind text/spacing/sizing) grows proportionally,
+   so the page feels right on big screens. Smaller screens are untouched. */
+@media (min-width: 2560px) {
+  html {
+    font-size: clamp(17px, 0.6vw, 22px);
+  }
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
