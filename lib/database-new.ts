@@ -18,6 +18,7 @@ import {
   categories,
   frameworks,
   sideBannerBookings,
+  verificationRequests,
   type Script, type Giveaway, type NewCategory, type NewFramework
 } from './db/schema';
 import type { 
@@ -3744,4 +3745,122 @@ export async function activateSideBanner(
     console.error('activateSideBanner: position taken, flagging refund for booking', bookingId);
     return { activated: false, needsRefund: true };
   }
+}
+
+// ── Verified-creator verification requests ─────────────────────────────
+/** A creator's latest verification request (to show their status). */
+export async function getUserVerificationRequest(userId: string) {
+  const [row] = await db
+    .select()
+    .from(verificationRequests)
+    .where(eq(verificationRequests.userId, userId))
+    .orderBy(desc(verificationRequests.createdAt))
+    .limit(1);
+  return row ?? null;
+}
+
+/** Submit a verification request. Blocks a second while one is already pending. */
+export async function createVerificationRequest(input: {
+  userId: string;
+  reason?: string | null;
+  links?: string | null;
+  discord?: string | null;
+}): Promise<{ ok: true; id: number } | { ok: false; reason: string }> {
+  const user = await getUserById(input.userId);
+  if (user && Array.isArray(user.roles) && user.roles.includes('verified_creator')) {
+    return { ok: false, reason: 'already_verified' };
+  }
+  const existing = await getUserVerificationRequest(input.userId);
+  if (existing && existing.status === 'pending') return { ok: false, reason: 'pending_exists' };
+  const [row] = await db
+    .insert(verificationRequests)
+    .values({
+      id: genId(),
+      userId: input.userId,
+      reason: input.reason ?? null,
+      links: input.links ?? null,
+      discord: input.discord ?? null,
+      status: 'pending',
+    })
+    .returning({ id: verificationRequests.id });
+  return { ok: true, id: row.id };
+}
+
+/** Pending requests for the admin queue, with the applicant's basic info. */
+export async function getPendingVerificationRequests() {
+  const rows = await db
+    .select()
+    .from(verificationRequests)
+    .where(eq(verificationRequests.status, 'pending'))
+    .orderBy(asc(verificationRequests.createdAt));
+  const ids = Array.from(new Set(rows.map((r) => r.userId)));
+  const usersRows = ids.length ? await db.select().from(users).where(inArray(users.id, ids)) : [];
+  const byId = new Map(usersRows.map((u) => [u.id, u]));
+  return rows.map((r) => {
+    const u = byId.get(r.userId);
+    return {
+      ...r,
+      userName: u?.name ?? null,
+      userUsername: u?.username ?? null,
+      userEmail: u?.email ?? null,
+      userImage: u ? getUserProfilePicture(u) : null,
+    };
+  });
+}
+
+/** Approve (grant verified_creator role) or reject (with reason) a request. */
+export async function reviewVerificationRequest(
+  id: number,
+  adminId: string,
+  action: 'approve' | 'reject',
+  adminReason?: string | null
+): Promise<{ ok: boolean; reason?: string }> {
+  const [reqRow] = await db.select().from(verificationRequests).where(eq(verificationRequests.id, id));
+  if (!reqRow) return { ok: false, reason: 'not_found' };
+  const now = new Date();
+
+  if (action === 'approve') {
+    const user = await getUserById(reqRow.userId);
+    const current = Array.isArray(user?.roles) ? (user!.roles as string[]) : ['user'];
+    if (!current.includes('verified_creator')) {
+      await updateUserRole(reqRow.userId, [...current, 'verified_creator']);
+    }
+    await db
+      .update(verificationRequests)
+      .set({ status: 'approved', reviewedBy: adminId, reviewedAt: now, adminReason: adminReason ?? null, updatedAt: now })
+      .where(eq(verificationRequests.id, id));
+    return { ok: true };
+  }
+
+  await db
+    .update(verificationRequests)
+    .set({ status: 'rejected', reviewedBy: adminId, reviewedAt: now, adminReason: adminReason ?? null, updatedAt: now })
+    .where(eq(verificationRequests.id, id));
+  return { ok: true };
+}
+
+// ── Per-seller Tebex store (connect + import) ──────────────────────────
+/** Save (or clear, with null) the seller's own Tebex webstore public token. */
+export async function setUserTebexStoreToken(userId: string, token: string | null) {
+  const [row] = await db
+    .update(users)
+    .set({ tebexStoreToken: token, updatedAt: new Date() })
+    .where(eq(users.id, userId))
+    .returning();
+  return row ?? null;
+}
+
+/**
+ * The Tebex package ids this seller has ALREADY imported (across pending /
+ * approved / rejected listings) — used to grey-out duplicates in the importer.
+ */
+export async function getUserImportedTebexPackageIds(userId: string): Promise<string[]> {
+  const [p, a, r] = await Promise.all([
+    db.select({ pkg: pendingScripts.tebexPackageId }).from(pendingScripts).where(eq(pendingScripts.sellerId, userId)),
+    db.select({ pkg: approvedScripts.tebexPackageId }).from(approvedScripts).where(eq(approvedScripts.sellerId, userId)),
+    db.select({ pkg: rejectedScripts.tebexPackageId }).from(rejectedScripts).where(eq(rejectedScripts.sellerId, userId)),
+  ]);
+  const set = new Set<string>();
+  for (const x of [...p, ...a, ...r]) if (x.pkg) set.add(String(x.pkg));
+  return Array.from(set);
 }

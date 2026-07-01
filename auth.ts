@@ -3,6 +3,7 @@ import Discord from "next-auth/providers/discord"
 import Credentials from "next-auth/providers/credentials"
 import { upsertUser, getUserById, getUserProfilePicture } from "@/lib/database-new"
 import { ensureDevUser } from "@/lib/dev-auth"
+import { formatDisplayName } from "@/lib/utils"
 
 // TODO: remove before production — local-only dev login. When ALLOW_DEV_LOGIN=true
 // the Impersonation widget can issue a REAL next-auth session (JWT cookie) for a
@@ -67,7 +68,9 @@ export const authOptions: NextAuthOptions = {
 				const username = (profile as any)?.username || user.name || null
 				await upsertUser({
 					id: String((user as any).id || (user as any).sub || (profile as any)?.id || ""),
-					name: user.name || null,
+					// Store the Discord name cleaned up (first letter of each word
+					// capitalized) — it's the display name shown across the site.
+					name: formatDisplayName(user.name) || null,
 					email: user.email || null,
 					image: user.image || null,
 					username: username ? String(username) : null,
@@ -118,10 +121,10 @@ export const authOptions: NextAuthOptions = {
 						console.log("Auth callback - User roles from DB:", dbUser.roles)
 						;(session.user as any).roles = dbUser.roles
 						;(session.user as any).username = dbUser.username
-						// Use name from database if available, otherwise use Discord name
-						if (dbUser.name) {
-							session.user.name = dbUser.name
-						}
+						// Use name from database if available, otherwise use Discord name.
+						// Capitalize on the way out so existing lowercase rows also
+						// display cleanly (no re-login needed).
+						session.user.name = formatDisplayName(dbUser.name || session.user.name)
 						// Set profile picture with priority: Profile_picture (database column) first, then image (Discord)
 						// Store both fields in session for flexibility
 						;(session.user as any).Profile_picture = dbUser.profilePicture || null

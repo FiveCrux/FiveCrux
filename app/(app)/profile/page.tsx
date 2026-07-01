@@ -67,8 +67,10 @@ import {
 import { toast } from "sonner";
 import { getSessionUserProfilePicture } from "@/lib/user-utils";
 import { useSession as useNextAuthSession } from "next-auth/react";
-import { Camera, X, Megaphone } from "lucide-react";
+import { Camera, X, Megaphone, ShieldCheck, Store } from "lucide-react";
 import SideBannersManager from "@/componentss/profile/side-banners-manager";
+import GetVerified from "@/componentss/profile/get-verified";
+import TebexStoreImporter from "@/componentss/profile/tebex-store-importer";
 import Link from "next/link";
 
 interface Script {
@@ -225,9 +227,6 @@ export default function ProfilePage() {
     selectedFeaturedScriptSlotUniqueId,
     setSelectedFeaturedScriptSlotUniqueId,
   ] = useState<string | null>(null);
-  const [editingName, setEditingName] = useState(false);
-  const [nameValue, setNameValue] = useState("");
-  const [savingName, setSavingName] = useState(false);
   // TODO: Fetch purchased slots from user data/API
   const [purchasedSlots, setPurchasedSlots] = useState(0); // This should come from user data
   const [availableSlotUniqueIds, setAvailableSlotUniqueIds] = useState<
@@ -287,12 +286,6 @@ export default function ProfilePage() {
     setVisitedTabs((prev) => new Set([...prev, activeTab]));
   }, [activeTab, status]);
 
-  // Initialize name value from session
-  useEffect(() => {
-    if (session?.user?.name) {
-      setNameValue(session.user.name);
-    }
-  }, [session?.user?.name]);
 
   // Fetch active ad slots on component mount
   useEffect(() => {
@@ -517,61 +510,6 @@ export default function ProfilePage() {
     }
   };
 
-  const handleSaveName = async () => {
-    if (!nameValue.trim()) {
-      toast.error("Name cannot be empty");
-      return;
-    }
-
-    if (nameValue.trim() === session?.user?.name) {
-      setEditingName(false);
-      return;
-    }
-
-    setSavingName(true);
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
-    try {
-      const response = await fetch("/api/user/name", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ name: nameValue.trim() }),
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to update name");
-      }
-
-      toast.success("Name updated successfully!");
-      setEditingName(false);
-
-      // Refresh session to get updated name
-      await updateSession();
-    } catch (error) {
-      clearTimeout(timeoutId);
-      console.error("Save name error:", error);
-      toast.error(
-        `Failed to update name: ${
-          error instanceof Error ? error.message : "Unknown error"
-        }`
-      );
-      // Reset to original name on error
-      setNameValue(session?.user?.name || "");
-    } finally {
-      setSavingName(false);
-    }
-  };
-
-  const handleCancelEditName = () => {
-    setNameValue(session?.user?.name || "");
-    setEditingName(false);
-  };
-
   const profilePictureUrl = getSessionUserProfilePicture(session);
   const canManageCoupons = (((session?.user as any)?.roles || []) as string[]).some(
     (role: string) => role === "founder" || role === "admin"
@@ -582,12 +520,14 @@ export default function ProfilePage() {
   const navItems: { value: string; label: string; icon: any }[] = [
     { value: "overview", label: "Overview", icon: LayoutDashboard },
     { value: "scripts", label: "Scripts", icon: Package },
+    { value: "tebex-store", label: "Tebex Store", icon: Store },
     { value: "props", label: "Props", icon: Package },
     { value: "giveaways", label: "Giveaways", icon: Gift },
     { value: "ads", label: "Ads", icon: Tag },
     { value: "side-banners", label: "Side Banners", icon: Megaphone },
     { value: "featured-scripts", label: "Featured Scripts", icon: Star },
     { value: "entries", label: "Entries", icon: Sparkles },
+    { value: "get-verified", label: "Get Verified", icon: ShieldCheck },
     { value: "settings", label: "Settings", icon: Settings },
     ...(canManageCoupons
       ? [{ value: "coupons", label: "Coupons", icon: Tag }]
@@ -1641,6 +1581,16 @@ export default function ProfilePage() {
                 <SideBannersManager />
               </TabsContent>
 
+              {/* Get Verified Tab — apply for the verified-creator badge */}
+              <TabsContent value="get-verified" className="space-y-6 mt-0">
+                <GetVerified />
+              </TabsContent>
+
+              {/* Tebex Store Tab — connect + import packages as listings */}
+              <TabsContent value="tebex-store" className="space-y-6 mt-0">
+                <TebexStoreImporter />
+              </TabsContent>
+
               {/* Featured Scripts Tab */}
               <TabsContent value="featured-scripts" className="space-y-6 mt-0">
                 <motion.div
@@ -2195,49 +2145,15 @@ export default function ProfilePage() {
                             <label className="block text-sm font-medium text-white/50 mb-2">
                               Name
                             </label>
-                            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                              <input
-                                type="text"
-                                value={nameValue}
-                                onChange={(e) => setNameValue(e.target.value)}
-                                onFocus={() => setEditingName(true)}
-                                disabled={savingName}
-                                className="w-full px-3 py-2 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white focus:border-orange-500 focus:outline-none disabled:opacity-50 min-w-0"
-                                placeholder="Enter your name"
-                              />
-                              {editingName && (
-                                <div className="flex items-center gap-2 flex-shrink-0">
-                                  <Button
-                                    size="sm"
-                                    onClick={handleSaveName}
-                                    disabled={
-                                      savingName ||
-                                      !nameValue.trim() ||
-                                      nameValue.trim() === session?.user?.name
-                                    }
-                                    className="bg-orange-500 hover:bg-orange-600 text-black font-semibold whitespace-nowrap"
-                                  >
-                                    {savingName ? (
-                                      <>
-                                        <Settings className="h-4 w-4 mr-1 animate-spin" />
-                                        <span className="hidden sm:inline">Saving...</span>
-                                      </>
-                                    ) : (
-                                      "Save"
-                                    )}
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={handleCancelEditName}
-                                    disabled={savingName}
-                                    className="border-white/[0.12] bg-transparent text-white/70 hover:text-white hover:bg-white/[0.06] whitespace-nowrap"
-                                  >
-                                    Cancel
-                                  </Button>
-                                </div>
-                              )}
-                            </div>
+                            <input
+                              type="text"
+                              value={session.user?.name || ""}
+                              disabled
+                              className="w-full px-3 py-2 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white disabled:opacity-50 min-w-0"
+                            />
+                            <p className="text-xs text-white/55 mt-1">
+                              Synced from your Discord account
+                            </p>
                           </div>
                           <div>
                             <label className="block text-sm font-medium text-white/50 mb-2">

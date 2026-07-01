@@ -11,6 +11,9 @@ export const users = pgTable('users', {
   username: text('username'),
   roles: text('roles').array().default(['user']),
   purchasedAdSlots: integer('purchased_ad_slots').default(0),
+  // The seller's OWN Tebex webstore public token, saved once so they can list &
+  // import their whole Tebex catalogue from their profile (Model B, per-seller).
+  tebexStoreToken: text('tebex_store_token'),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 });
@@ -494,6 +497,26 @@ export const sideBannerBookings = pgTable('side_banner_bookings', {
 }));
 export type SideBannerBooking = typeof sideBannerBookings.$inferSelect;
 export type NewSideBannerBooking = typeof sideBannerBookings.$inferInsert;
+
+// ── Verified-creator verification requests ─────────────────────────────
+// A creator applies for the "verified" badge; an admin approves (grants the
+// verified_creator role) or rejects with a reason. Mirrors the script/giveaway
+// pending→approved/rejected review pattern.
+export const verificationRequests = pgTable('verification_requests', {
+  id: integer('id').primaryKey().notNull(),                 // app-generated
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  reason: text('reason'),                                   // "why / about you"
+  links: text('links'),                                     // portfolio / store links
+  discord: text('discord'),                                 // contact handle
+  status: text('status').notNull().default('pending'),      // 'pending' | 'approved' | 'rejected'
+  adminReason: text('admin_reason'),                        // reject reason / review note
+  reviewedBy: text('reviewed_by'),                          // admin user id
+  reviewedAt: timestamp('reviewed_at'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+export type VerificationRequest = typeof verificationRequests.$inferSelect;
+export type NewVerificationRequest = typeof verificationRequests.$inferInsert;
 
 // Tebex orders table.
 // Records every basket we create against a Tebex webstore (a seller's store for
