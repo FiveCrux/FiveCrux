@@ -46,6 +46,7 @@ import {
   Menu,
   LogOut,
   CalendarDays,
+  ShieldCheck,
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/componentss/ui/button";
@@ -96,6 +97,7 @@ import { toast } from "sonner";
 import Navbar from "@/componentss/shared/navbar";
 import Footer from "@/componentss/shared/footer";
 import FileUpload from "@/componentss/shared/file-upload";
+import VerificationRequests from "@/componentss/admin/verification-requests";
 import { useRoleValidation } from "@/hooks/use-role-validation";
 import { getUserProfilePicture } from "@/lib/user-utils";
 import {
@@ -362,11 +364,28 @@ export default function AdminPage() {
 
   const [activeTab, setActiveTab] = useState("dashboard");
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [verificationCount, setVerificationCount] = useState(0);
 
   // Check if user has moderator role
   const userRoles = (session?.user as any)?.roles || [];
   const isModerator = userRoles.includes("moderator");
   const isFounder = userRoles.includes("founder");
+
+  // Seed the pending verification badge count (independent of opening the tab).
+  useEffect(() => {
+    if (!isModerator && !isFounder) return;
+    let alive = true;
+    fetch("/api/admin/verification")
+      .then((r) => (r.ok ? r.json() : { requests: [] }))
+      .then((d) => {
+        if (alive) setVerificationCount(Array.isArray(d.requests) ? d.requests.length : 0);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [isModerator, isFounder]);
+
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [editingRoles, setEditingRoles] = useState<string[]>([]);
   const [showAdDialog, setShowAdDialog] = useState(false);
@@ -640,6 +659,13 @@ export default function AdminPage() {
     { value: "giveaways", label: "Giveaways", icon: Gift },
     { value: "props", label: "Props", icon: Box },
     { value: "ads", label: "Ads", icon: Megaphone, gated: true },
+    {
+      value: "verification",
+      label: "Verification",
+      icon: ShieldCheck,
+      gated: true,
+      badge: verificationCount,
+    },
   ];
 
   // Filter scripts based on active filter
@@ -2451,6 +2477,13 @@ export default function AdminPage() {
                     </DialogContent>
                   </Dialog>
                 </div>
+              </TabsContent>
+            )}
+
+            {/* Verification requests (gated) */}
+            {(isModerator || isFounder) && (
+              <TabsContent value="verification" className="mt-6">
+                <VerificationRequests onCountChange={setVerificationCount} />
               </TabsContent>
             )}
             </main>

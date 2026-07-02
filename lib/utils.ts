@@ -13,3 +13,16 @@ export function cn(...inputs: ClassValue[]) {
 export function isVerifiedCreator(roles: string[] | null | undefined): boolean {
   return Array.isArray(roles) && roles.includes('verified_creator');
 }
+
+/**
+ * Clean up a display name that comes from Discord (usernames are often all
+ * lowercase, e.g. "sidakftw"). Capitalizes the first letter of each word so it
+ * reads cleaner ("sidakftw" → "Sidakftw", "john doe" → "John Doe") without
+ * mangling names that are already cased. Whitespace-trimmed; null-safe.
+ */
+export function formatDisplayName(name: string | null | undefined): string | null {
+  if (!name) return null;
+  const trimmed = name.trim();
+  if (!trimmed) return null;
+  return trimmed.replace(/(^|\s)([a-z])/g, (_m, sep, ch) => sep + ch.toUpperCase());
+}

@@ -16,7 +16,7 @@ import { finalizeSideBannerBasket, buildSideBannerCustom } from "@/lib/side-bann
 
 /**
  * POST /api/side-banners/checkout
- * Body: { position: 'left'|'right', durationWeeks: 1|2|4, title?, imageUrl?, linkUrl? }
+ * Body: { position: 'left-top'|'left-bottom'|'right-top'|'right-bottom', durationWeeks: 1|2|3, title?, imageUrl?, linkUrl? }
  *
  * Reserves the scarce position (DB lock), then starts the Tebex checkout for the
  * matching side-banner package. If the store requires login (FiveM), returns the

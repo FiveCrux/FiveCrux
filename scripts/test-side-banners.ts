@@ -5,6 +5,12 @@
 
 process.env.USE_PGLITE = "true";
 process.env.PGLITE_DIR = "./.pglite-test-sb";
+// Placeholders only to satisfy lib/env.ts validation — never used to connect
+// because USE_PGLITE routes every query to the in-process PGlite DB.
+process.env.DATABASE_URL ||= "postgres://placeholder/local";
+process.env.NEXTAUTH_SECRET ||= "test-secret";
+process.env.DISCORD_CLIENT_ID ||= "test";
+process.env.DISCORD_CLIENT_SECRET ||= "test";
 
 import { rmSync } from "node:fs";
 
@@ -27,45 +33,51 @@ async function main() {
     cond ? pass++ : fail++;
   };
 
-  // 1. Both positions free initially.
+  // 1. Both tested positions free initially (4 slots exist total; we exercise two).
   const avail0 = await sb.getSideBannerAvailability();
   log("availability (initial)", avail0);
-  check("left available initially", avail0.left.available === true);
-  check("right available initially", avail0.right.available === true);
+  check("left-top available initially", avail0["left-top"].available === true);
+  check("right-top available initially", avail0["right-top"].available === true);
 
-  // 2. Reserve LEFT → ok.
-  const r1 = await sb.reserveSideBanner({ position: "left", userId: "tester", durationWeeks: 1, imageUrl: "https://x/img.png", linkUrl: "https://x" });
-  log("reserve left #1", r1);
+  // 2. Reserve LEFT-TOP → ok.
+  const r1 = await sb.reserveSideBanner({ position: "left-top", userId: "tester", durationWeeks: 1, imageUrl: "https://x/img.png", linkUrl: "https://x" });
+  log("reserve left-top #1", r1);
   check("first reserve ok", r1.ok === true);
 
-  // 3. Reserve LEFT AGAIN (the race) → must be rejected by the lock.
-  const r2 = await sb.reserveSideBanner({ position: "left", userId: "tester", durationWeeks: 2 });
-  log("reserve left #2 (should be taken)", r2);
-  check("OVERSELLING LOCK: second reserve rejected", r2.ok === false && (r2 as any).reason === "taken");
+  // 3a. Same user re-reserves the SAME slot → reuse-own-hold returns their existing
+  //     booking (by design, so a buyer can resume their own abandoned hold).
+  const rSame = await sb.reserveSideBanner({ position: "left-top", userId: "tester", durationWeeks: 2 });
+  log("reserve left-top again (same user → reuse own hold)", rSame);
+  check("same user reuses own hold", rSame.ok === true && (rSame as any).bookingId === (r1 as any).bookingId);
 
-  // 4. Right still free (independent position).
+  // 3b. A DIFFERENT user reserving the SAME held slot → rejected by the oversell lock.
+  const r2 = await sb.reserveSideBanner({ position: "left-top", userId: "tester2", durationWeeks: 2 });
+  log("reserve left-top #2 (different user → should be taken)", r2);
+  check("OVERSELLING LOCK: different user rejected", r2.ok === false && (r2 as any).reason === "taken");
+
+  // 4. Right-top still free (independent position).
   const availMid = await sb.getSideBannerAvailability();
-  check("left now unavailable", availMid.left.available === false);
-  check("right still available", availMid.right.available === true);
+  check("left-top now unavailable", availMid["left-top"].available === false);
+  check("right-top still available", availMid["right-top"].available === true);
 
-  // 5. Activate the left reservation (simulates Tebex payment webhook).
+  // 5. Activate the left-top reservation (simulates Tebex payment webhook).
   const act = await sb.activateSideBanner((r1 as any).bookingId, "order-123");
-  log("activate left", act);
+  log("activate left-top", act);
   check("activate ok", act.activated === true);
 
   const active = await sb.getActiveSideBanners();
-  log("active banners", { left: !!active.left, right: !!active.right });
-  check("left now active (shown on pages)", !!active.left && active.left.status === "active");
-  check("left has order reference", active.left?.orderReference === "order-123");
+  log("active banners", { "left-top": !!active["left-top"], "right-top": !!active["right-top"] });
+  check("left-top now active (shown on pages)", !!active["left-top"] && active["left-top"].status === "active");
+  check("left-top has order reference", active["left-top"]?.orderReference === "order-123");
 
-  // 6. Reserve right → ok (still one free).
-  const r3 = await sb.reserveSideBanner({ position: "right", userId: "tester", durationWeeks: 1, imageUrl: "https://y/img.png" });
-  check("reserve right ok", r3.ok === true);
+  // 6. Reserve right-top → ok (independent position still free).
+  const r3 = await sb.reserveSideBanner({ position: "right-top", userId: "tester", durationWeeks: 1, imageUrl: "https://y/img.png" });
+  check("reserve right-top ok", r3.ok === true);
 
-  // 7. Both now taken.
+  // 7. Both tested positions now taken.
   const availFull = await sb.getSideBannerAvailability();
-  log("availability (both taken)", availFull);
-  check("both unavailable when full", availFull.left.available === false && availFull.right.available === false);
+  log("availability (both tested slots taken)", availFull);
+  check("both tested slots unavailable when full", availFull["left-top"].available === false && availFull["right-top"].available === false);
 
   console.log(`\n=== ${pass} passed, ${fail} failed ===`);
   process.exit(fail === 0 ? 0 : 1);
