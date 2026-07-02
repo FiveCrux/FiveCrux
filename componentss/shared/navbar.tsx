@@ -10,8 +10,8 @@ import { ShoppingCart, Menu, X } from "lucide-react"
 import { Avatar, AvatarImage, AvatarFallback } from "@/componentss/ui/avatar"
 import { getSessionUserProfilePicture } from "@/lib/user-utils"
 
-const NAV: { name: string; link: string }[] = [
-  { name: "Scripts", link: "/scripts" },
+// Product types that sit in the nav AFTER the (dynamic) script categories.
+const STATIC_NAV: { name: string; link: string }[] = [
   { name: "Props", link: "/props" },
   { name: "Giveaways", link: "/giveaways" },
 ]
@@ -23,6 +23,32 @@ export default function NavbarComponent() {
   const [cartCount, setCartCount] = useState<number>(0)
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
+
+  // ── browse categories, promoted to top-level nav links (no dropdown) ──
+  // Dynamic (admin-managed) — add/rename a category and it appears here.
+  const [cats, setCats] = useState<{ name: string; link: string }[]>([])
+  useEffect(() => {
+    let alive = true
+    fetch("/api/categories")
+      .then((r) => (r.ok ? r.json() : { categories: [] }))
+      .then((d) => {
+        if (!alive) return
+        const list = Array.isArray(d?.categories) ? d.categories : []
+        setCats(
+          list
+            .filter((c: any) => c.isActive)
+            .sort((a: any, b: any) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
+            .map((c: any) => ({ name: c.name, link: `/scripts?category=${encodeURIComponent(c.slug)}` }))
+        )
+      })
+      .catch(() => {})
+    return () => {
+      alive = false
+    }
+  }, [])
+
+  // Categories first, then the fixed product types.
+  const navItems = [...cats, ...STATIC_NAV]
 
   const userRoles = (session?.user as any)?.roles || []
   const hasAdminAccess = ["admin", "founder", "moderator"].some((r) => userRoles.includes(r))
@@ -95,8 +121,8 @@ export default function NavbarComponent() {
           <Logo />
 
           {/* desktop nav */}
-          <nav className="hidden items-center gap-6 lg:flex">
-            {NAV.map((item) => (
+          <nav className="hidden items-center gap-5 lg:flex">
+            {navItems.map((item) => (
               <Link
                 key={item.name}
                 href={item.link}
@@ -198,7 +224,7 @@ export default function NavbarComponent() {
               className="fixed inset-x-0 top-[68px] z-[60] border-b border-white/[0.08] bg-[#0a0a0a] px-5 pb-6 pt-2 lg:hidden"
             >
               <nav className="flex flex-col">
-                {NAV.map((item) => (
+                {navItems.map((item) => (
                   <Link
                     key={item.name}
                     href={item.link}
