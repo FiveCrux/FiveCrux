@@ -24,7 +24,7 @@ export default function Loading() {
           {Array.from({ length: 8 }).map((_, i) => (
             <div
               key={i}
-              className="w-full max-w-[280px] overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.04]"
+              className="w-full sm:max-w-[280px] overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.04]"
             >
               <div className="h-40 w-full animate-pulse bg-white/[0.04]" />
               <div className="space-y-3 p-4">
