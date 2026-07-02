@@ -440,7 +440,7 @@ export default function CategoryPage() {
               <ProductCard
                 key={product.id}
                 product={product}
-                className={viewMode === "grid" ? "w-full max-w-[280px]" : "w-full max-w-[280px] sm:max-w-none"}
+                className={viewMode === "grid" ? "w-full sm:max-w-[280px]" : "w-full sm:max-w-none"}
               />
             ))}
           </div>
