@@ -967,7 +967,7 @@ export function ScriptsClient({
               {Array.from({ length: 8 }).map((_, i) => (
                 <div
                   key={i}
-                  className="h-64 w-full max-w-[280px] animate-pulse rounded-2xl border border-white/[0.06] bg-white/[0.03]"
+                  className="h-64 w-full sm:max-w-[280px] animate-pulse rounded-2xl border border-white/[0.06] bg-white/[0.03]"
                 />
               ))}
             </div>
@@ -1041,7 +1041,7 @@ export function ScriptsClient({
                       initial={{ opacity: 0, y: 16 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: Math.min(index * 0.04, 0.4) }}
-                      className="w-full max-w-[280px]"
+                      className="w-full sm:max-w-[280px]"
                     >
                       <ProductCard product={toMarketProduct(script)} className="w-full" />
                     </motion.div>

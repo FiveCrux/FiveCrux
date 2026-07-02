@@ -791,7 +791,7 @@ export function PropsClient({
                 {Array.from({ length: 8 }).map((_, i) => (
                   <div
                     key={i}
-                    className="h-64 w-full max-w-[280px] animate-pulse rounded-2xl border border-white/[0.06] bg-white/[0.03]"
+                    className="h-64 w-full sm:max-w-[280px] animate-pulse rounded-2xl border border-white/[0.06] bg-white/[0.03]"
                   />
                 ))}
               </div>
@@ -858,7 +858,7 @@ export function PropsClient({
                       return (
                         <div
                           key={`ad-${item.id}`}
-                          className="w-full max-w-[280px]"
+                          className="w-full sm:max-w-[280px]"
                         >
                           <AdCard ad={item as any} variant="script" />
                         </div>
