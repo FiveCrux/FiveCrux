@@ -91,7 +91,7 @@ function Rail({ side, top, bottom }: { side: "left" | "right"; top: Banner; bott
     <aside
       aria-label={`${side} sponsored banners`}
       style={{ width: railW }}
-      className="sticky top-[88px] hidden h-[70vh] min-h-[460px] shrink-0 flex-col gap-4 self-start xl:flex"
+      className="sticky top-[88px] hidden h-[calc(100vh-104px)] min-h-[460px] shrink-0 flex-col gap-4 self-start xl:flex"
     >
       <BannerSlot banner={top} position={`${side}-top`} />
       <BannerSlot banner={bottom} position={`${side}-bottom`} />
@@ -104,7 +104,7 @@ function Rail({ side, top, bottom }: { side: "left" | "right"; top: Banner; bott
 // image yet, or an "Advertise here" CTA when the slot is open.
 function BannerSlot({ banner, position }: { banner: Banner; position: string }) {
   return (
-    <div className="h-1/2 min-h-0 w-full overflow-hidden rounded-2xl">
+    <div className="min-h-0 w-full flex-1 overflow-hidden rounded-2xl">
       {banner && banner.imageUrl ? (
         <Link
           href={banner.linkUrl || "#"}
