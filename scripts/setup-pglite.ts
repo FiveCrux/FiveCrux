@@ -189,12 +189,13 @@ async function main() {
   console.log("✓ 1 pending ad")
 
   // ---- Side banner (demo) ---------------------------------------------------
-  // LEFT slot = sold + live (owned by CruxDev) so the rail shows a real banner;
-  // RIGHT slot stays open so the buy flow is demoable. Log in as CruxDev (creator)
-  // to manage/edit the left banner from Profile → Side Banners.
+  // LEFT-TOP slot = sold + live (owned by CruxDev) so the rail shows a real
+  // banner; the other 3 slots (left-bottom, right-top, right-bottom) stay open so
+  // the buy flow is demoable. Log in as CruxDev (creator) to manage/edit the
+  // banner from Profile → Side Banners.
   await db.insert(schema.sideBannerBookings).values({
     id: 10001,
-    position: "left",
+    position: "left-top",
     status: "active",
     title: "Advanced Banking — 20% off",
     imageUrl: imgs[0],
@@ -205,7 +206,7 @@ async function main() {
     endDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
     orderReference: "demo-seed",
   }).onConflictDoNothing()
-  console.log("✓ 1 active side banner (left, demo)")
+  console.log("✓ 1 active side banner (left-top, demo)")
 
   // ---- Coupon ---------------------------------------------------------------
   await db.insert(schema.coupons).values({

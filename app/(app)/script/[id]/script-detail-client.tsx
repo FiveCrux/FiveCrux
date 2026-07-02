@@ -50,6 +50,7 @@ interface Script {
   features: string[];
   requirements: string[];
   link?: string;
+  discordLink?: string;
   youtube_video_link?: string;
   other_links?: string[];
   images: string[];
@@ -558,6 +559,18 @@ export function ScriptDetailClient({
                     <MessageSquare className="h-3.5 w-3.5" /> Contact the seller
                   </a>
                 </div>
+              )}
+
+              {/* Join Discord — shown only when the seller set a Discord link */}
+              {script.discordLink && (
+                <a
+                  href={script.discordLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex h-11 items-center justify-center gap-2 rounded-xl border border-[#5865F2]/30 bg-[#5865F2]/10 text-sm font-semibold text-[#c9cffb] transition hover:bg-[#5865F2]/20 hover:text-white"
+                >
+                  <MessageSquare className="h-4 w-4" /> Join Discord
+                </a>
               )}
 
               {/* External links */}

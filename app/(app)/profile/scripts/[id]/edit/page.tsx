@@ -25,6 +25,7 @@ import {
   ArrowLeft,
   Save,
   Loader2,
+  MessageSquare,
 } from "lucide-react"
 import { Button } from "@/componentss/ui/button"
 import { Input } from "@/componentss/ui/input"
@@ -55,6 +56,7 @@ interface Script {
   features: string[]
   requirements: string[]
   link?: string
+  discordLink?: string
   other_links?: string[]
   images: string[]
   videos: string[]
@@ -102,8 +104,6 @@ export default function EditScriptPage() {
     featured: false,
     currency: "",
     currencySymbol: "",
-    tebexStoreToken: "",
-    tebexPackageId: "",
   })
 
   const [selectedCurrency, setSelectedCurrency] = useState<Currency | null>(null)
@@ -112,6 +112,7 @@ export default function EditScriptPage() {
   const [requirements, setRequirements] = useState([{ id: 1, text: "" }])
   const [otherLinks, setOtherLinks] = useState([{ id: 1, text: "" }])
   const [link, setLink] = useState("")
+  const [discordLink, setDiscordLink] = useState("")
   const [media, setMedia] = useState<{
     images: string[]
     videos: string[]
@@ -165,9 +166,6 @@ export default function EditScriptPage() {
         featured: scriptData.featured,
         currency: scriptData.currency || "",
         currencySymbol: scriptData.currency_symbol || "",
-        // Tebex Headless integration (per-seller webstore). Optional; null until linked.
-        tebexStoreToken: scriptData.tebexStoreToken || scriptData.tebex_store_token || "",
-        tebexPackageId: scriptData.tebexPackageId || scriptData.tebex_package_id || "",
       })
       
       // Set selected currency if it exists
@@ -186,7 +184,8 @@ export default function EditScriptPage() {
       setFeatures(scriptData.features.map((feature: string, index: number) => ({ id: index + 1, text: feature })))
       setRequirements(scriptData.requirements.map((req: string, index: number) => ({ id: index + 1, text: req })))
       setLink(scriptData.link || "")
-      
+      setDiscordLink(scriptData.discordLink || "")
+
       // Set other links
       if (scriptData.other_links && scriptData.other_links.length > 0) {
         setOtherLinks(scriptData.other_links.map((link: string, index: number) => ({ id: index + 1, text: link })))
@@ -426,14 +425,12 @@ export default function EditScriptPage() {
         features: features.filter((f) => f.text.trim()).map((f) => f.text.trim()),
         requirements: requirements.filter((r) => r.text.trim()).map((r) => r.text.trim()),
         link: link.trim() || null,
+        discordLink: discordLink.trim() || null,
         other_links: otherLinks.filter((l) => l.text.trim()).map((l) => l.text.trim()),
         images: media.images,
         videos: media.videos,
         screenshots: media.screenshots,
         cover_image: media.coverImage,
-        // Tebex Headless integration (per-seller webstore). Optional; null until linked.
-        tebexStoreToken: formData.tebexStoreToken.trim() || null,
-        tebexPackageId: formData.tebexPackageId.trim() || null,
         last_updated: new Date().toISOString(),
       }
 
@@ -921,47 +918,25 @@ export default function EditScriptPage() {
                   <p className="text-sm text-gray-400 mt-2">
                     Add the link you want your customers to visit when they click <b className="text-orange-500">Buy Now</b>.
                   </p>
-                </CardContent>
-              </Card>
 
-              {/* Tebex Integration */}
-              <Card className="bg-white/[0.04] border-white/[0.08] backdrop-blur-xl rounded-2xl">
-                <CardHeader>
-                  <CardTitle className="text-white flex items-center gap-2">
-                    <Package className="h-5 w-5 text-orange-500" />
-                    Tebex Integration
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <p className="text-sm text-gray-400">
-                    Add these to sell this script directly via your Tebex store
-                  </p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="tebexStoreToken" className="text-white font-medium">
-                        Tebex Store Token (Optional)
-                      </Label>
+                  <div className="mt-6">
+                    <Label htmlFor="discordLink" className="text-white font-medium">
+                      Discord Link (Optional)
+                    </Label>
+                    <div className="relative mt-2">
+                      <MessageSquare className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                       <Input
-                        id="tebexStoreToken"
-                        value={formData.tebexStoreToken}
-                        onChange={(e) => setFormData({ ...formData, tebexStoreToken: e.target.value })}
-                        placeholder="e.g. abcd1234efgh5678"
-                        className="mt-2 bg-white/[0.03] border-white/[0.08] text-white placeholder-gray-500 focus:border-orange-500 focus-visible:ring-orange-500/40 focus-visible:ring-2"
+                        id="discordLink"
+                        value={discordLink}
+                        onChange={(e) => setDiscordLink(e.target.value)}
+                        placeholder="https://discord.gg/…"
+                        type="url"
+                        className="pl-10 bg-white/[0.03] border-white/[0.08] text-white placeholder-gray-500 focus:border-orange-500 focus-visible:ring-orange-500/40 focus-visible:ring-2"
                       />
                     </div>
-
-                    <div>
-                      <Label htmlFor="tebexPackageId" className="text-white font-medium">
-                        Tebex Package ID (Optional)
-                      </Label>
-                      <Input
-                        id="tebexPackageId"
-                        value={formData.tebexPackageId}
-                        onChange={(e) => setFormData({ ...formData, tebexPackageId: e.target.value })}
-                        placeholder="e.g. 1234567"
-                        className="mt-2 bg-white/[0.03] border-white/[0.08] text-white placeholder-gray-500 focus:border-orange-500 focus-visible:ring-orange-500/40 focus-visible:ring-2"
-                      />
-                    </div>
+                    <p className="text-sm text-gray-400 mt-2">
+                      Shown as a <b className="text-orange-500">Join Discord</b> button on your listing.
+                    </p>
                   </div>
                 </CardContent>
               </Card>

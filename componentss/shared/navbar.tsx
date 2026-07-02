@@ -1,30 +1,19 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { useSession, signIn, signOut } from "next-auth/react"
-import { ShoppingCart, ChevronDown, Menu, X, ArrowRight } from "lucide-react"
+import { ShoppingCart, Menu, X } from "lucide-react"
 import { Avatar, AvatarImage, AvatarFallback } from "@/componentss/ui/avatar"
 import { getSessionUserProfilePicture } from "@/lib/user-utils"
-import { categoryIcon } from "@/lib/category-icons"
 
-type Cat = {
-  id: number
-  name: string
-  slug: string
-  icon?: string | null
-  appliesTo?: string
-}
-
-const NAV: { name: string; link: string; mega?: boolean }[] = [
-  { name: "Home", link: "/" },
-  { name: "Scripts", link: "/scripts", mega: true },
+const NAV: { name: string; link: string }[] = [
+  { name: "Scripts", link: "/scripts" },
   { name: "Props", link: "/props" },
   { name: "Giveaways", link: "/giveaways" },
-  { name: "Advertise", link: "/advertise" },
 ]
 
 export default function NavbarComponent() {
@@ -33,10 +22,7 @@ export default function NavbarComponent() {
 
   const [cartCount, setCartCount] = useState<number>(0)
   const [scrolled, setScrolled] = useState(false)
-  const [megaOpen, setMegaOpen] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [cats, setCats] = useState<Cat[]>([])
-  const megaTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const userRoles = (session?.user as any)?.roles || []
   const hasAdminAccess = ["admin", "founder", "moderator"].some((r) => userRoles.includes(r))
@@ -77,35 +63,6 @@ export default function NavbarComponent() {
     return () => window.removeEventListener("scroll", onScroll)
   }, [])
 
-  // ── categories for the Scripts mega-menu (lazy + once) ─────────────
-  // Don't fetch on every page mount — only the first time the user actually
-  // opens the mega-menu or the mobile menu. The route is CDN-cached (60s) so
-  // repeat opens are free.
-  const catsLoaded = useRef(false)
-  const loadCats = () => {
-    if (catsLoaded.current) return
-    catsLoaded.current = true
-    fetch("/api/categories")
-      .then((r) => (r.ok ? r.json() : { categories: [] }))
-      .then((d) => setCats(Array.isArray(d?.categories) ? d.categories : []))
-      .catch(() => {
-        catsLoaded.current = false // allow a retry on next open
-      })
-  }
-
-  // categories usable from "Scripts" (scripts + both) — props has its own tab
-  const scriptCats = cats.filter((c) => c.appliesTo !== "props").slice(0, 8)
-
-  const openMega = () => {
-    if (megaTimer.current) clearTimeout(megaTimer.current)
-    loadCats()
-    setMegaOpen(true)
-  }
-  const closeMega = () => {
-    if (megaTimer.current) clearTimeout(megaTimer.current)
-    megaTimer.current = setTimeout(() => setMegaOpen(false), 120)
-  }
-
   const isActive = (link: string) =>
     link === "/" ? pathname === "/" : pathname.startsWith(link)
 
@@ -129,62 +86,33 @@ export default function NavbarComponent() {
 
       <header
         className={`fixed inset-x-0 top-0 z-[60] border-b transition-colors duration-300 ${
-          scrolled || megaOpen
+          scrolled
             ? "border-white/[0.08] bg-[#0a0a0a]/95 shadow-[0_8px_30px_rgba(0,0,0,0.45)] backdrop-blur-md"
             : "border-white/[0.05] bg-[#0a0a0a]/80 backdrop-blur"
         }`}
-        onMouseLeave={closeMega}
       >
         <div className="flex h-[68px] w-full items-center gap-7 px-2.5">
           <Logo />
 
           {/* desktop nav */}
           <nav className="hidden items-center gap-6 lg:flex">
-            {NAV.map((item) =>
-              item.mega ? (
-                <div
-                  key={item.name}
-                  className="flex h-[68px] items-center"
-                  onMouseEnter={openMega}
-                >
-                  <Link
-                    href={item.link}
-                    className={`group relative flex h-[68px] items-center gap-1 text-sm font-medium transition-colors ${
-                      isActive(item.link) || megaOpen ? "text-white" : "text-white/70 hover:text-white"
-                    }`}
-                  >
-                    {item.name}
-                    <ChevronDown
-                      className={`h-3.5 w-3.5 transition-transform duration-200 ${
-                        megaOpen ? "rotate-180 text-orange-400" : ""
-                      }`}
-                    />
-                    {(isActive(item.link) || megaOpen) && (
-                      <motion.span
-                        layoutId="nav-underline"
-                        className="absolute bottom-0 left-0 right-0 h-[2px] rounded-full bg-orange-500"
-                      />
-                    )}
-                  </Link>
-                </div>
-              ) : (
-                <Link
-                  key={item.name}
-                  href={item.link}
-                  className={`relative flex h-[68px] items-center text-sm font-medium transition-colors ${
-                    isActive(item.link) ? "text-white" : "text-white/70 hover:text-white"
-                  }`}
-                >
-                  {item.name}
-                  {isActive(item.link) && (
-                    <motion.span
-                      layoutId="nav-underline"
-                      className="absolute bottom-0 left-0 right-0 h-[2px] rounded-full bg-orange-500"
-                    />
-                  )}
-                </Link>
-              )
-            )}
+            {NAV.map((item) => (
+              <Link
+                key={item.name}
+                href={item.link}
+                className={`relative flex h-[68px] items-center text-sm font-medium transition-colors ${
+                  isActive(item.link) ? "text-white" : "text-white/70 hover:text-white"
+                }`}
+              >
+                {item.name}
+                {isActive(item.link) && (
+                  <motion.span
+                    layoutId="nav-underline"
+                    className="absolute bottom-0 left-0 right-0 h-[2px] rounded-full bg-orange-500"
+                  />
+                )}
+              </Link>
+            ))}
           </nav>
 
           {/* right cluster */}
@@ -242,77 +170,13 @@ export default function NavbarComponent() {
             {/* mobile toggle */}
             <button
               aria-label="Menu"
-              onClick={() => {
-                if (!mobileOpen) loadCats()
-                setMobileOpen((v) => !v)
-              }}
+              onClick={() => setMobileOpen((v) => !v)}
               className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.05] text-white lg:hidden"
             >
               {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
           </div>
         </div>
-
-        {/* ── MEGA-MENU: browse Scripts by category ───────────────────── */}
-        <AnimatePresence>
-          {megaOpen && (
-            <motion.div
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.16, ease: "easeOut" }}
-              className="absolute inset-x-0 top-full hidden border-b border-white/[0.08] bg-[#0c0c0d] shadow-[0_24px_50px_rgba(0,0,0,0.55)] lg:block"
-              onMouseEnter={openMega}
-              onMouseLeave={closeMega}
-            >
-              <div className="w-full px-2.5 py-6">
-                <div className="mb-4 flex items-center justify-between">
-                  <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-white/40">
-                    Browse by category
-                  </span>
-                  <Link
-                    href="/scripts"
-                    onClick={closeMega}
-                    className="inline-flex items-center gap-1.5 text-sm font-semibold text-orange-400 transition hover:text-orange-300"
-                  >
-                    All scripts <ArrowRight className="h-3.5 w-3.5" />
-                  </Link>
-                </div>
-
-                {scriptCats.length > 0 ? (
-                  <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-4">
-                    {scriptCats.map((c) => {
-                      const Icon = categoryIcon(c.icon)
-                      return (
-                        <Link
-                          key={c.id}
-                          href={`/scripts?category=${encodeURIComponent(c.slug)}`}
-                          onClick={closeMega}
-                          className="group flex items-center gap-3 rounded-xl border border-white/[0.07] bg-white/[0.02] px-3.5 py-3 transition-all hover:border-orange-500/40 hover:bg-white/[0.04]"
-                        >
-                          <span className="grid h-9 w-9 flex-shrink-0 place-items-center rounded-lg bg-orange-500/10 text-orange-400 transition group-hover:bg-orange-500/20">
-                            <Icon className="h-[18px] w-[18px]" />
-                          </span>
-                          <span className="truncate text-sm font-semibold text-white/90 group-hover:text-white">
-                            {c.name}
-                          </span>
-                        </Link>
-                      )
-                    })}
-                  </div>
-                ) : (
-                  <Link
-                    href="/scripts"
-                    onClick={closeMega}
-                    className="inline-flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.02] px-4 py-3 text-sm font-semibold text-white/85 transition hover:border-orange-500/40"
-                  >
-                    Browse all scripts <ArrowRight className="h-4 w-4 text-orange-400" />
-                  </Link>
-                )}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </header>
 
       {/* ── MOBILE menu ──────────────────────────────────────────────── */}
@@ -347,26 +211,6 @@ export default function NavbarComponent() {
                   </Link>
                 ))}
               </nav>
-
-              {scriptCats.length > 0 && (
-                <div className="mt-4">
-                  <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-white/35">
-                    Categories
-                  </span>
-                  <div className="mt-2.5 flex flex-wrap gap-2">
-                    {scriptCats.map((c) => (
-                      <Link
-                        key={c.id}
-                        href={`/scripts?category=${encodeURIComponent(c.slug)}`}
-                        onClick={() => setMobileOpen(false)}
-                        className="rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 text-sm text-white/80"
-                      >
-                        {c.name}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              )}
 
               <div className="mt-5 flex flex-col gap-2.5">
                 {status === "authenticated" ? (

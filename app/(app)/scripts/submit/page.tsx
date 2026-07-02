@@ -17,11 +17,10 @@ import {
   Package,
   Tag,
   ListChecks,
-  Store,
   Eye,
   Youtube,
   Link as LinkIcon,
-  Info,
+  MessageSquare,
   ShieldCheck,
   Users,
   BadgeCheck,
@@ -82,8 +81,6 @@ export default function SubmitScriptPage() {
     featured: false,
     currency: "",
     currencySymbol: "",
-    tebexStoreToken: "",
-    tebexPackageId: "",
   })
 
   const [selectedCurrency, setSelectedCurrency] = useState<Currency | null>(null)
@@ -108,6 +105,7 @@ export default function SubmitScriptPage() {
   const [requirements, setRequirements] = useState([{ id: 1, text: "" }])
   const [otherLinks, setOtherLinks] = useState([{ id: 1, text: "" }])
   const [link, setLink] = useState("")
+  const [discordLink, setDiscordLink] = useState("")
   const [youtubeVideoLink, setYoutubeVideoLink] = useState("")
   const [youtubeLinkError, setYoutubeLinkError] = useState("")
   const [media, setMedia] = useState<{
@@ -163,8 +161,6 @@ export default function SubmitScriptPage() {
               featured: script.featured || false,
               currency: script.currency || "",
               currencySymbol: script.currency_symbol || "",
-              tebexStoreToken: script.tebexStoreToken || script.tebex_store_token || "",
-              tebexPackageId: script.tebexPackageId || script.tebex_package_id || "",
             })
 
             // Set selected currency if it exists
@@ -192,6 +188,11 @@ export default function SubmitScriptPage() {
             // Set link
             if (script.link) {
               setLink(script.link)
+            }
+
+            // Set Discord link
+            if (script.discordLink) {
+              setDiscordLink(script.discordLink)
             }
 
             // Set other links
@@ -468,15 +469,13 @@ export default function SubmitScriptPage() {
         features: features.filter((f) => f.text.trim()).map((f) => f.text.trim()),
         requirements: requirements.filter((r) => r.text.trim()).map((r) => r.text.trim()),
         link: link.trim() || null,
+        discordLink: discordLink.trim() || null,
         other_links: otherLinks.filter((l) => l.text.trim()).map((l) => l.text.trim()),
         images: media.images,
         videos: media.videos,
         screenshots: media.screenshots,
         cover_image: media.coverImage,
         youtube_video_link: youtubeVideoLink.trim() || null,
-        // Tebex Headless integration (per-seller webstore). Optional; null until linked.
-        tebexStoreToken: formData.tebexStoreToken.trim() || null,
-        tebexPackageId: formData.tebexPackageId.trim() || null,
         status: "pending" as const,
       }
 
@@ -1170,6 +1169,26 @@ export default function SubmitScriptPage() {
                       </p>
                     </div>
 
+                    {/* Discord link */}
+                    <div>
+                      <Label className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/50">
+                        Discord link <span className="text-white/55">· optional</span>
+                      </Label>
+                      <div className="relative mt-2">
+                        <MessageSquare className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/55" />
+                        <Input
+                          value={discordLink}
+                          onChange={(e) => setDiscordLink(e.target.value)}
+                          placeholder="https://discord.gg/…"
+                          type="url"
+                          className={cn("w-full py-3 pl-11 pr-4 text-sm h-auto", fieldClass)}
+                        />
+                      </div>
+                      <p className="mt-2 text-xs text-white/55">
+                        Shown as a <b className="text-orange-500">Join Discord</b> button on your listing.
+                      </p>
+                    </div>
+
                     {/* Other links */}
                     <div>
                       <Label className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/50">
@@ -1207,44 +1226,6 @@ export default function SubmitScriptPage() {
                         <Plus className="h-3.5 w-3.5" /> Add link
                       </button>
                     </div>
-                  </div>
-                </section>
-
-                {/* ---------------- Tebex ---------------- */}
-                <section>
-                  <SectionHeader icon={Store} title="Tebex · Optional" />
-                  <div className="mt-5 space-y-5">
-                    <div className="grid gap-5 sm:grid-cols-2">
-                      <div>
-                        <Label htmlFor="tebexStoreToken" className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/50">
-                          Store token
-                        </Label>
-                        <Input
-                          id="tebexStoreToken"
-                          value={formData.tebexStoreToken}
-                          onChange={(e) => setFormData({ ...formData, tebexStoreToken: e.target.value })}
-                          placeholder="tbx_••••••••"
-                          className={cn("mt-2 w-full px-4 py-3 text-sm h-auto", fieldClass)}
-                        />
-                      </div>
-
-                      <div>
-                        <Label htmlFor="tebexPackageId" className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/50">
-                          Package ID
-                        </Label>
-                        <Input
-                          id="tebexPackageId"
-                          value={formData.tebexPackageId}
-                          onChange={(e) => setFormData({ ...formData, tebexPackageId: e.target.value })}
-                          placeholder="5829104"
-                          className={cn("mt-2 w-full px-4 py-3 text-sm tabular-nums h-auto", fieldClass)}
-                        />
-                      </div>
-                    </div>
-                    <p className="flex items-start gap-2 text-xs leading-relaxed text-white/55">
-                      <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-white/55" />
-                      Add these to sell this script directly via your Tebex store.
-                    </p>
                   </div>
                 </section>
 
