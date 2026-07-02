@@ -643,6 +643,8 @@ export async function createScript(scriptData: NewScript & { framework?: string 
     // Tebex Headless integration: seller's own store token + package id (nullable).
     tebexStoreToken: (scriptData as any).tebexStoreToken ?? null,
     tebexPackageId: (scriptData as any).tebexPackageId ?? null,
+    // Optional seller Discord link → renders a "Join Discord" button on detail page.
+    discordLink: (scriptData as any).discordLink ?? null,
     // Normalize framework as text[] for DB with validation
     framework: validatedFrameworks,
   };
@@ -1187,6 +1189,8 @@ export async function updateScriptForReapproval(id: number, updateData: any) {
     assignIfDefined('features', updateData.features);
     assignIfDefined('requirements', updateData.requirements);
     assignIfDefined('link', updateData.link);
+    // Optional Discord link (nullable, accept null to clear)
+    if (updateData.discordLink !== undefined) assignIfDefined('discordLink', updateData.discordLink);
     if (updateData.otherLinks !== undefined) assignIfDefined('otherLinks', updateData.otherLinks);
     if (updateData.other_links !== undefined) assignIfDefined('otherLinks', updateData.other_links);
     assignIfDefined('images', updateData.images);
@@ -1280,6 +1284,8 @@ export async function updatePendingScript(id: number, updateData: any) {
     assignIfDefined('features', updateData.features);
     assignIfDefined('requirements', updateData.requirements);
     assignIfDefined('link', updateData.link);
+    // Optional Discord link (nullable, accept null to clear)
+    if (updateData.discordLink !== undefined) assignIfDefined('discordLink', updateData.discordLink);
     if (updateData.otherLinks !== undefined) assignIfDefined('otherLinks', updateData.otherLinks);
     if (updateData.other_links !== undefined) assignIfDefined('otherLinks', updateData.other_links);
     assignIfDefined('images', updateData.images);
@@ -1345,6 +1351,8 @@ export async function updateRejectedScriptForReapproval(id: number, updateData: 
     assignIfDefined('features', updateData.features);
     assignIfDefined('requirements', updateData.requirements);
     assignIfDefined('link', updateData.link);
+    // Optional Discord link (nullable, accept null to clear)
+    if (updateData.discordLink !== undefined) assignIfDefined('discordLink', updateData.discordLink);
     if (updateData.otherLinks !== undefined) assignIfDefined('otherLinks', updateData.otherLinks);
     if (updateData.other_links !== undefined) assignIfDefined('otherLinks', updateData.other_links);
     assignIfDefined('images', updateData.images);
@@ -1416,6 +1424,8 @@ export async function updateScript(id: number, updateData: any) {
     assignIfDefined('features', updateData.features);
     assignIfDefined('requirements', updateData.requirements);
     assignIfDefined('link', updateData.link);
+    // Optional Discord link (nullable, accept null to clear)
+    if (updateData.discordLink !== undefined) assignIfDefined('discordLink', updateData.discordLink);
     if (updateData.otherLinks !== undefined) assignIfDefined('otherLinks', updateData.otherLinks);
     if (updateData.other_links !== undefined) assignIfDefined('otherLinks', updateData.other_links);
     assignIfDefined('images', updateData.images);
@@ -3512,10 +3522,12 @@ export async function deleteFramework(id: number) {
   return row ?? null;
 }
 
-// ── Side banner bookings (2 scarce positions: 'left' + 'right') ──────────
+// ── Side banner bookings (4 scarce positions: each rail split top + bottom) ──
 // Unlike userAdSlots (unlimited), only ONE live booking may exist per position
 // — enforced by the `side_banner_one_live_per_position` partial unique index.
-export const SIDE_BANNER_POSITIONS = ['left', 'right'] as const;
+// The index is on `position` (free text), so adding positions needs NO schema
+// change: 'left-top' | 'left-bottom' | 'right-top' | 'right-bottom' just work.
+export const SIDE_BANNER_POSITIONS = ['left-top', 'left-bottom', 'right-top', 'right-bottom'] as const;
 export type SideBannerPosition = (typeof SIDE_BANNER_POSITIONS)[number];
 export const SIDE_BANNER_DURATIONS = [1, 2, 3] as const; // weeks (match Tebex packages)
 const SIDE_BANNER_HOLD_MINUTES = 15;
@@ -3554,10 +3566,8 @@ export async function getSideBannerAvailability(): Promise<
   Record<string, { available: boolean; status?: string; until?: Date | null }>
 > {
   await sweepExpiredSideBanners();
-  const result: Record<string, { available: boolean; status?: string; until?: Date | null }> = {
-    left: { available: true },
-    right: { available: true },
-  };
+  const result: Record<string, { available: boolean; status?: string; until?: Date | null }> = {};
+  for (const pos of SIDE_BANNER_POSITIONS) result[pos] = { available: true };
   const live = await db
     .select()
     .from(sideBannerBookings)
@@ -3863,4 +3873,105 @@ export async function getUserImportedTebexPackageIds(userId: string): Promise<st
   const set = new Set<string>();
   for (const x of [...p, ...a, ...r]) if (x.pkg) set.add(String(x.pkg));
   return Array.from(set);
+}
+
+// ── Giveaway prize-delivery tracker (#5, creator-side, anti-scam) ──────────
+// Winners already exist in giveaway_prize_winners (created by
+// trigger-winner-selection). `claimed` doubles as the "Delivered" flag; a
+// creator marks who got what so nobody can double-claim.
+
+export type CreatorGiveawayWinner = {
+  id: number;
+  prizeId: number;
+  giveawayId: number;
+  giveawayTitle: string;
+  prizeName: string;
+  prizePosition: number;
+  userId: string;
+  userName: string | null;
+  userEmail: string | null;
+  delivered: boolean;
+  deliveredAt: string | null;
+  notes: string | null;
+  createdAt: string | null;
+};
+
+/**
+ * All winners across the creator's OWN giveaways, joined
+ * winner → prize → giveaway (approved_giveaways.creator_id === userId).
+ * Winners only exist on approved giveaways (created by trigger-winner-selection).
+ */
+export async function getCreatorGiveawayWinners(userId: string): Promise<CreatorGiveawayWinner[]> {
+  const rows = await db
+    .select({
+      id: giveawayPrizeWinners.id,
+      prizeId: giveawayPrizeWinners.prizeId,
+      userId: giveawayPrizeWinners.userId,
+      userName: giveawayPrizeWinners.userName,
+      userEmail: giveawayPrizeWinners.userEmail,
+      claimed: giveawayPrizeWinners.claimed,
+      deliveredAt: giveawayPrizeWinners.deliveredAt,
+      notes: giveawayPrizeWinners.notes,
+      createdAt: giveawayPrizeWinners.createdAt,
+      prizeName: giveawayPrizes.name,
+      prizePosition: giveawayPrizes.position,
+      giveawayId: approvedGiveaways.id,
+      giveawayTitle: approvedGiveaways.title,
+    })
+    .from(giveawayPrizeWinners)
+    .innerJoin(giveawayPrizes, eq(giveawayPrizeWinners.prizeId, giveawayPrizes.id))
+    .innerJoin(approvedGiveaways, eq(giveawayPrizes.giveawayId, approvedGiveaways.id))
+    .where(eq(approvedGiveaways.creatorId, userId))
+    .orderBy(desc(approvedGiveaways.id), asc(giveawayPrizes.position));
+
+  return rows.map((r) => ({
+    id: r.id,
+    prizeId: r.prizeId,
+    giveawayId: r.giveawayId,
+    giveawayTitle: r.giveawayTitle,
+    prizeName: r.prizeName,
+    prizePosition: r.prizePosition,
+    userId: r.userId,
+    userName: r.userName,
+    userEmail: r.userEmail,
+    delivered: !!r.claimed,
+    deliveredAt: r.deliveredAt ? new Date(r.deliveredAt).toISOString() : null,
+    notes: r.notes ?? null,
+    createdAt: r.createdAt ? new Date(r.createdAt).toISOString() : null,
+  }));
+}
+
+/**
+ * Mark a winner delivered (or not) + set notes. OWNERSHIP-CHECKED: the winner's
+ * prize must belong to a giveaway created by `creatorId`. Rejects otherwise so a
+ * creator can never touch another creator's winners.
+ */
+export async function setGiveawayWinnerDelivered(
+  winnerId: number,
+  creatorId: string,
+  delivered: boolean,
+  notes: string | null
+): Promise<{ ok: boolean; reason?: 'not_found' | 'forbidden' }> {
+  // Verify ownership: winner → prize → giveaway.creatorId === creatorId.
+  const [owned] = await db
+    .select({ winnerId: giveawayPrizeWinners.id, creatorId: approvedGiveaways.creatorId })
+    .from(giveawayPrizeWinners)
+    .innerJoin(giveawayPrizes, eq(giveawayPrizeWinners.prizeId, giveawayPrizes.id))
+    .innerJoin(approvedGiveaways, eq(giveawayPrizes.giveawayId, approvedGiveaways.id))
+    .where(eq(giveawayPrizeWinners.id, winnerId))
+    .limit(1);
+
+  if (!owned) return { ok: false, reason: 'not_found' };
+  if (owned.creatorId !== creatorId) return { ok: false, reason: 'forbidden' };
+
+  await db
+    .update(giveawayPrizeWinners)
+    .set({
+      claimed: delivered,
+      deliveredAt: delivered ? new Date() : null,
+      notes: notes ?? null,
+    })
+    .where(eq(giveawayPrizeWinners.id, winnerId));
+
+  return { ok: true };
 }

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/auth";
-import { getPackages } from "@/lib/tebex";
+import { getPackages, getPackage, type TebexPackage } from "@/lib/tebex";
 import { getUserById, createScript, getUserImportedTebexPackageIds } from "@/lib/database-new";
 
 // Import selected Tebex packages as FiveCrux script listings. Each becomes a
@@ -26,18 +26,45 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json().catch(() => ({}));
+
+    // Two modes:
+    //  - bulk: `packageIds` array (fetched from the paginated getPackages() list)
+    //  - single: `packageId` — may be a package NOT in the paginated list, so we
+    //    fall back to getPackage(token, id) to resolve it directly.
+    const singleId =
+      body.packageId != null && Number.isFinite(Number(body.packageId))
+        ? Number(body.packageId)
+        : null;
     const rawIds: unknown[] = Array.isArray(body.packageIds) ? body.packageIds : [];
     const wanted = new Set(rawIds.map((x) => Number(x)).filter((n) => Number.isFinite(n)));
+    if (singleId != null) wanted.add(singleId);
+
     if (wanted.size === 0) {
       return NextResponse.json({ error: "Select at least one package to import." }, { status: 400 });
     }
 
     // Re-fetch from Tebex so price/name/etc. are authoritative (not client-supplied).
-    let packages;
+    let packages: TebexPackage[];
     try {
       packages = await getPackages(token);
     } catch {
       return NextResponse.json({ error: "Couldn't reach your Tebex store." }, { status: 502 });
+    }
+
+    // If a specific package id was requested but isn't in the paginated list,
+    // resolve it directly (e.g. hidden/unlisted packages the seller pasted by id).
+    const found = new Set(packages.map((p) => p.id));
+    for (const id of wanted) {
+      if (found.has(id)) continue;
+      try {
+        const one = await getPackage(token, id);
+        if (one) {
+          packages.push(one);
+          found.add(one.id);
+        }
+      } catch {
+        // Unknown/inaccessible id — skipped below (never in `packages`).
+      }
     }
 
     const already = new Set(await getUserImportedTebexPackageIds(userId));
