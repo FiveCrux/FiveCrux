@@ -26,6 +26,7 @@ import {
   Clock,
   LayoutDashboard,
   BadgeCheck,
+  Trophy,
 } from "lucide-react";
 import { Button } from "@/componentss/ui/button";
 import {
@@ -70,7 +71,9 @@ import { useSession as useNextAuthSession } from "next-auth/react";
 import { Camera, X, Megaphone, ShieldCheck, Store } from "lucide-react";
 import SideBannersManager from "@/componentss/profile/side-banners-manager";
 import GetVerified from "@/componentss/profile/get-verified";
+import GiveawayWinners from "@/componentss/profile/giveaway-winners";
 import TebexStoreImporter from "@/componentss/profile/tebex-store-importer";
+import AdvertisePanel from "@/componentss/advertise/advertise-panel";
 import Link from "next/link";
 
 interface Script {
@@ -523,8 +526,10 @@ export default function ProfilePage() {
     { value: "tebex-store", label: "Tebex Store", icon: Store },
     { value: "props", label: "Props", icon: Package },
     { value: "giveaways", label: "Giveaways", icon: Gift },
+    { value: "winners", label: "Winners", icon: Trophy },
     { value: "ads", label: "Ads", icon: Tag },
     { value: "side-banners", label: "Side Banners", icon: Megaphone },
+    { value: "advertise", label: "Advertise", icon: Megaphone },
     { value: "featured-scripts", label: "Featured Scripts", icon: Star },
     { value: "entries", label: "Entries", icon: Sparkles },
     { value: "get-verified", label: "Get Verified", icon: ShieldCheck },
@@ -1221,6 +1226,17 @@ export default function ProfilePage() {
                 </motion.div>
               </TabsContent>
 
+              {/* Winners Tab — prize-delivery tracker for the creator's giveaways */}
+              <TabsContent value="winners" className="space-y-6 mt-0">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8 }}
+                >
+                  <GiveawayWinners />
+                </motion.div>
+              </TabsContent>
+
               {/* Ads Tab */}
               <TabsContent value="ads" className="space-y-6 mt-0">
                 <motion.div
@@ -1589,6 +1605,11 @@ export default function ProfilePage() {
               {/* Tebex Store Tab — connect + import packages as listings */}
               <TabsContent value="tebex-store" className="space-y-6 mt-0">
                 <TebexStoreImporter />
+              </TabsContent>
+
+              {/* Advertise Tab — packages + side-banner booking (moved from navbar) */}
+              <TabsContent value="advertise" className="space-y-6 mt-0">
+                <AdvertisePanel />
               </TabsContent>
 
               {/* Featured Scripts Tab */}

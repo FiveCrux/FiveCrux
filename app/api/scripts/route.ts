@@ -51,14 +51,17 @@ export async function POST(request: NextRequest) {
       screenshots: body.screenshots || [],
       coverImage: body.cover_image || null,
       youtubeVideoLink: body.youtube_video_link || null,
+      discordLink: body.discordLink || null,
       // SECURITY: "featured" is a paid placement (sold via featured-script slots).
       // Only founders/admins may set it directly; a normal seller's submission is
       // always featured:false regardless of what the request body claims.
       featured: isFounderOrAdmin ? (body.featured || false) : false,
       free: body.free || false,
-      // Tebex Headless integration: seller's own store token + package id (nullable)
-      tebexStoreToken: body.tebexStoreToken || null,
-      tebexPackageId: body.tebexPackageId || null,
+      // Tebex Headless linking is done in the profile "Tebex Store" tab (import),
+      // NOT via manual submit — so these are always null on a manual submission.
+      // The import route sets them directly when creating a listing from Tebex.
+      tebexStoreToken: null,
+      tebexPackageId: null,
       id: 0
     })
 

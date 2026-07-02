@@ -71,3 +71,4 @@ image*.png
 !.env.production.example
 
 .pglite-test-sb/
+.pglite-test-*/

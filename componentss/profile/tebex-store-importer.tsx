@@ -2,7 +2,19 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
-import { Loader2, Store, Check, PlugZap, Unplug, PackageCheck, ArrowRight } from "lucide-react"
+import {
+  Loader2,
+  Store,
+  Check,
+  PlugZap,
+  Unplug,
+  PackageCheck,
+  ArrowRight,
+  ShoppingBag,
+  ShieldCheck,
+  Hash,
+  Plus,
+} from "lucide-react"
 
 type TebexPackage = {
   id: number
@@ -95,31 +107,60 @@ function ConnectCard({ onConnected }: { onConnected: (s: StoreState) => void }) 
   }
 
   return (
-    <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-6">
-      <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-white/80">
-        <PlugZap className="h-4 w-4 text-orange-400" />
-        Connect your store
+    <div className="overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.03]">
+      {/* Header: shop icon + title + status pill */}
+      <div className="flex items-start gap-4 border-b border-white/[0.06] bg-white/[0.02] p-6">
+        <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-orange-500/10 ring-1 ring-orange-500/25">
+          <ShoppingBag className="h-6 w-6 text-orange-400" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="text-lg font-bold text-white">Tebex Store</h3>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.1] bg-white/[0.04] px-2.5 py-0.5 text-[11px] font-semibold text-white/55">
+              <span className="h-1.5 w-1.5 rounded-full bg-white/30" />
+              Not connected
+            </span>
+          </div>
+          <p className="mt-0.5 text-sm text-white/45">Professional storefront integration</p>
+        </div>
       </div>
-      <label className="mb-1.5 block text-xs font-medium text-white/50">Tebex store token</label>
-      <div className="flex flex-col gap-2 sm:flex-row">
+
+      <div className="p-6">
+        {/* Why connect */}
+        <div className="mb-5 flex items-start gap-2.5 rounded-xl border border-orange-500/20 bg-orange-500/[0.06] px-4 py-3">
+          <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-orange-400" />
+          <p className="text-xs leading-relaxed text-white/70">
+            Connecting your Tebex store is required to sell FiveM content on FiveCrux. It keeps your
+            listings, prices and Buy Now links in sync with your storefront automatically.
+          </p>
+        </div>
+
+        <label
+          htmlFor="tebex-public-token"
+          className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-white/50"
+        >
+          Tebex Public Token
+        </label>
         <input
+          id="tebex-public-token"
           value={token}
           onChange={(e) => setToken(e.target.value)}
           placeholder="tbx_••••••••"
-          className="min-w-0 flex-1 rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-sm outline-none focus:border-orange-500/50"
+          className="w-full rounded-lg border border-white/[0.08] bg-white/[0.04] px-3.5 py-2.5 text-sm text-white outline-none transition focus:border-orange-500/50"
         />
+        <p className="mt-2 text-xs text-white/40">
+          You can find this in your Tebex Dashboard → Integrations → API Keys → Public Token.
+        </p>
+
         <button
           onClick={connect}
           disabled={busy}
-          className="inline-flex items-center justify-center gap-2 rounded-lg bg-orange-500 px-5 py-2.5 text-sm font-bold text-black transition hover:bg-orange-400 disabled:opacity-60"
+          className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-orange-500 px-5 py-3 text-sm font-bold text-black transition hover:bg-orange-400 disabled:opacity-60 sm:w-auto"
         >
           {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlugZap className="h-4 w-4" />}
-          Connect
+          Save &amp; Connect Store
         </button>
       </div>
-      <p className="mt-3 text-xs text-white/40">
-        Find it in your Tebex Creator Panel → your webstore → Headless / public token.
-      </p>
     </div>
   )
 }
@@ -141,6 +182,8 @@ function ConnectedView({
   const [selected, setSelected] = useState<Set<number>>(new Set())
   const [importing, setImporting] = useState(false)
   const [disconnecting, setDisconnecting] = useState(false)
+  const [packageIdInput, setPackageIdInput] = useState("")
+  const [importingOne, setImportingOne] = useState(false)
 
   const toggle = (id: number) =>
     setSelected((prev) => {
@@ -173,6 +216,37 @@ function ConnectedView({
       toast.error(e instanceof Error ? e.message : "Import failed")
     } finally {
       setImporting(false)
+    }
+  }
+
+  // Import ONE specific package by id — works even for packages that aren't in
+  // the paginated list above (the API falls back to getPackage(token, id)).
+  const runImportOne = async () => {
+    const id = Number(packageIdInput.trim())
+    if (!packageIdInput.trim() || !Number.isFinite(id)) {
+      toast.error("Enter a valid Tebex package id.")
+      return
+    }
+    setImportingOne(true)
+    try {
+      const res = await fetch("/api/tebex/store/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ packageId: id }),
+      })
+      const d = await res.json()
+      if (!res.ok) throw new Error(d.error || "Import failed")
+      if (d.created > 0) {
+        toast.success("Package imported — pending review.")
+        setPackageIdInput("")
+        onChanged()
+      } else {
+        toast.error("Nothing imported — the id may be invalid or already imported.")
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Import failed")
+    } finally {
+      setImportingOne(false)
     }
   }
 
@@ -223,6 +297,38 @@ function ConnectedView({
             Disconnect
           </button>
         </div>
+      </div>
+
+      {/* Import by package ID */}
+      <div className="mb-5 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4">
+        <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-white/80">
+          <Hash className="h-4 w-4 text-orange-400" />
+          Import by package ID
+        </div>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <input
+            value={packageIdInput}
+            onChange={(e) => setPackageIdInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !importingOne) runImportOne()
+            }}
+            inputMode="numeric"
+            placeholder="e.g. 5829104"
+            className="min-w-0 flex-1 rounded-lg border border-white/[0.08] bg-white/[0.04] px-3.5 py-2.5 text-sm tabular-nums text-white outline-none transition focus:border-orange-500/50"
+          />
+          <button
+            onClick={runImportOne}
+            disabled={importingOne}
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-orange-500 px-5 py-2.5 text-sm font-bold text-black transition hover:bg-orange-400 disabled:opacity-60"
+          >
+            {importingOne ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+            Import
+          </button>
+        </div>
+        <p className="mt-2 text-xs text-white/40">
+          Paste a single Tebex package id to import it as a listing — even if it isn&apos;t shown in
+          the list below.
+        </p>
       </div>
 
       {state.error && (

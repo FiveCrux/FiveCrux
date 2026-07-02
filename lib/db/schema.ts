@@ -225,6 +225,9 @@ const baseScriptFields = {
   requirements: text('requirements').array().default([]),
   link: text('link'),
   otherLinks: text('other_links').array().default([]),
+  // Optional Discord invite/community link shown as a "Join Discord" button on
+  // the script detail page. Nullable until the seller sets it.
+  discordLink: text('discord_link'),
   images: text('images').array().default([]),
   videos: text('videos').array().default([]),
   youtubeVideoLink: text('youtube_video_link'),
@@ -356,7 +359,12 @@ export const giveawayPrizeWinners = pgTable('giveaway_prize_winners', {
   userId: text('user_id').notNull(),
   userName: text('user_name'),
   userEmail: text('user_email'),
+  // `claimed` doubles as the creator's "Delivered" flag (delivery tracker,
+  // anti-double-claim). `deliveredAt` records WHEN it was marked delivered and
+  // `notes` is the creator's free-text note (what/how the prize was handed over).
   claimed: boolean('claimed').default(false),
+  deliveredAt: timestamp('delivered_at'),
+  notes: text('notes'),
   createdAt: timestamp('created_at').defaultNow(),
 });
 
@@ -476,7 +484,7 @@ export const userFeaturedScriptSlots = pgTable('user_featured_script_slots', {
 // swept to 'expired' before each availability check / reservation.
 export const sideBannerBookings = pgTable('side_banner_bookings', {
   id: integer('id').primaryKey().notNull(),                 // app-generated (matches prod PK style)
-  position: text('position').notNull(),                     // 'left' | 'right'
+  position: text('position').notNull(),                     // 'left-top' | 'left-bottom' | 'right-top' | 'right-bottom'
   status: text('status').notNull().default('reserved'),     // 'reserved' | 'active' | 'expired' | 'cancelled'
   title: text('title'),                                     // banner title / alt text
   imageUrl: text('image_url'),                              // banner image
