@@ -5,8 +5,41 @@ import { db } from "@/lib/db/client";
 import { coupons, couponRedemptions } from "@/lib/db/schema";
 import { and, eq } from "drizzle-orm";
 import { validateCouponSchedule } from "@/lib/coupon-utils";
+import { getPropOwnersByIds, getUserById } from "@/lib/database-new";
+import { isCouponAdmin } from "@/lib/coupon-access";
 
 type Coupon = typeof coupons.$inferSelect;
+
+/**
+ * MONEY-SAFETY: confine a plain creator's coupon to their OWN products.
+ *
+ * A `verified_creator` (who is NOT also an admin/founder) may create coupons,
+ * but such a coupon must only ever discount props the creator themselves
+ * listed (prop.createdBy === coupon.createdBy). It must NOT discount other
+ * sellers' props, nor platform ad/featured slots (those are subscription line
+ * items, not props). Admin/founder coupons are unaffected — they keep the full
+ * scope behavior.
+ *
+ * Given the already scope-matched items, this returns only the subset the
+ * coupon is actually allowed to discount. For admin/founder coupons it returns
+ * the input unchanged.
+ */
+async function filterItemsToCouponOwner(matchingItems: any[], coupon: Coupon): Promise<any[]> {
+  // No creator recorded → treat as unrestricted (legacy/admin-seeded coupons).
+  if (!coupon.createdBy) return matchingItems;
+
+  const creator = await getUserById(coupon.createdBy);
+  // Admins/founders keep unrestricted reach.
+  if (isCouponAdmin(creator?.roles)) return matchingItems;
+
+  // Plain creator: only their own props are eligible. Ad/featured slots are
+  // subscription items and are never a creator's own product → excluded here.
+  const propItems = matchingItems.filter((item) => item.itemType === "prop");
+  if (propItems.length === 0) return [];
+
+  const owners = await getPropOwnersByIds(propItems.map((item) => String(item.itemId)));
+  return propItems.filter((item) => owners.get(String(item.itemId)) === coupon.createdBy);
+}
 
 export function getMatchingItemsTotal(items: any[], scope: string) {
   const isTargetedScope = ["Ad Slots", "Featured Script Slots", "Props"].includes(scope);
@@ -89,14 +122,26 @@ export async function validateCoupon(couponCode: string, userId: string, total: 
     return { error: "This coupon cannot be used again" };
   }
 
-  const { items: matchingItems, total: matchingTotal } = getMatchingItemsTotal(items, coupon.scope);
+  const { items: matchingItems } = getMatchingItemsTotal(items, coupon.scope);
 
   if (matchingItems.length === 0 && ["Ad Slots", "Featured Script Slots", "Props"].includes(coupon.scope)) {
     return { error: `This coupon is only valid for items of type "${coupon.scope}"` };
   }
 
+  // MONEY-SAFETY: a plain creator's coupon only discounts their own props.
+  const eligibleItems = await filterItemsToCouponOwner(matchingItems, coupon);
+
+  if (eligibleItems.length === 0) {
+    return { error: "This coupon does not apply to any items in your cart" };
+  }
+
+  const eligibleTotal = eligibleItems.reduce(
+    (sum, item) => sum + Number(item.price) * item.quantity,
+    0
+  );
+
   return {
     coupon,
-    discountAmount: calculateDiscount(matchingTotal, coupon),
+    discountAmount: calculateDiscount(eligibleTotal, coupon),
   };
 }

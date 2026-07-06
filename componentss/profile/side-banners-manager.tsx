@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { toast } from "sonner"
-import { Megaphone, Loader2, ExternalLink } from "lucide-react"
+import { Megaphone, Loader2, ExternalLink, Clock } from "lucide-react"
 
 type SideBanner = {
   id: number
@@ -73,13 +73,55 @@ export default function SideBannersManager() {
   )
 }
 
+// Live "expires in Xd Yh Zm" label. Re-computes from endDate and ticks every
+// minute so it counts down on its own; cleans up its interval on unmount.
+function ExpiryPill({ endDate }: { endDate: string | null }) {
+  const [now, setNow] = useState(() => Date.now())
+
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 60 * 1000)
+    return () => clearInterval(interval)
+  }, [])
+
+  if (!endDate) {
+    return <span className="text-[11px] text-white/40">no end date</span>
+  }
+
+  const end = new Date(endDate).getTime()
+  if (Number.isNaN(end)) {
+    return <span className="text-[11px] text-white/40">no end date</span>
+  }
+
+  const diff = end - now
+  const expired = diff <= 0
+
+  let label = "Expired"
+  if (!expired) {
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+    label = `Expires in ${days}d ${hours}h ${minutes}m`
+  }
+
+  return (
+    <span
+      className={
+        expired
+          ? "inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.04] px-2 py-1 text-[11px] font-semibold text-white/40"
+          : "inline-flex items-center gap-1 rounded-full border border-orange-500/25 bg-orange-500/10 px-2 py-1 text-[11px] font-semibold tabular-nums text-orange-300"
+      }
+    >
+      <Clock className="h-3 w-3" />
+      {label}
+    </span>
+  )
+}
+
 function SlotCard({ booking, onSaved }: { booking: SideBanner; onSaved: () => void }) {
   const [imageUrl, setImageUrl] = useState(booking.imageUrl || "")
   const [linkUrl, setLinkUrl] = useState(booking.linkUrl || "")
   const [title, setTitle] = useState(booking.title || "")
   const [saving, setSaving] = useState(false)
-
-  const ends = booking.endDate ? new Date(booking.endDate).toLocaleDateString() : "—"
 
   const save = async () => {
     if (!imageUrl.trim()) {
@@ -123,7 +165,7 @@ function SlotCard({ booking, onSaved }: { booking: SideBanner; onSaved: () => vo
           <span className="rounded-full border border-orange-500/30 bg-orange-500/10 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-orange-300">
             {booking.position} slot
           </span>
-          <span className="text-[11px] text-white/40">ends {ends}</span>
+          <ExpiryPill endDate={booking.endDate} />
         </div>
 
         <input
