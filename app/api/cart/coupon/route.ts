@@ -3,20 +3,9 @@ import { getServerSession } from "next-auth"
 import { and, eq } from "drizzle-orm"
 
 import { authOptions } from "@/auth"
-import { validateCouponSchedule } from "@/lib/coupon-utils"
 import { db } from "@/lib/db/client"
-import { carts, couponRedemptions, coupons } from "@/lib/db/schema"
-
-function calculateDiscount(total: number, coupon: typeof coupons.$inferSelect) {
-  const value = Number(coupon.discountValue)
-
-  // Case-insensitive: enum allows both "percentage" and "Percentage" (I3).
-  if (String(coupon.discountType).toLowerCase() === "percentage") {
-    return Math.min(total, (total * value) / 100)
-  }
-
-  return Math.min(total, value)
-}
+import { carts } from "@/lib/db/schema"
+import { validateCoupon } from "@/lib/cart-checkout-utils"
 
 async function getActiveCart(userId: string) {
   const cart = await db.query.carts.findFirst({
@@ -35,37 +24,6 @@ async function getActiveCart(userId: string) {
       0
     ),
   }
-}
-
-function getMatchingItemsTotal(items: any[], scope: string) {
-  const isTargetedScope = ["Ad Slots", "Featured Script Slots", "Props"].includes(scope);
-
-  const matchingItems = items.filter((item) => {
-    if (!isTargetedScope) return true;
-
-    const metadata = typeof item.metadata === "string"
-      ? (() => { try { return JSON.parse(item.metadata) } catch { return null } })()
-      : item.metadata;
-
-    if (scope === "Props") {
-      return item.itemType === "prop";
-    }
-    if (scope === "Ad Slots") {
-      return metadata?.couponScope === "Ad Slots" || metadata?.category === "Ad Slots" || metadata?.packageType === "ads";
-    }
-    if (scope === "Featured Script Slots") {
-      return metadata?.couponScope === "Featured Script Slots" || metadata?.category === "Featured Script Slots" || metadata?.packageType === "featured-scripts";
-    }
-    return false;
-  });
-
-  return {
-    items: matchingItems,
-    total: matchingItems.reduce(
-      (sum, item) => sum + Number(item.price) * item.quantity,
-      0
-    ),
-  };
 }
 
 export async function POST(request: NextRequest) {
@@ -90,61 +48,28 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: cart.error }, { status: 400 })
     }
 
-    const coupon = await db.query.coupons.findFirst({
-      where: eq(coupons.code, code),
-    })
+    // Preview uses the SAME validation + creator-scoping as checkout so the
+    // discount shown here matches exactly what checkout applies (money-safety).
+    const result = await validateCoupon(code, userId, cart.total, cart.items)
 
-    if (!coupon || coupon.isActive === false) {
-      return NextResponse.json({ error: "Invalid coupon code" }, { status: 404 })
+    if (!result) {
+      return NextResponse.json({ error: "Coupon code is required" }, { status: 400 })
     }
 
-    const scheduleError = validateCouponSchedule(coupon.startDate, coupon.expiryDate)
-    if (scheduleError) {
-      return NextResponse.json({ error: scheduleError.error }, { status: 400 })
+    if ("error" in result) {
+      // Preserve the previous status codes: "Invalid coupon code" → 404, rest → 400.
+      const status = result.error === "Invalid coupon code" ? 404 : 400
+      return NextResponse.json({ error: result.error }, { status })
     }
 
-    if (Number(coupon.minCartValue) > cart.total) {
-      return NextResponse.json(
-        { error: `Minimum cart value for this coupon is ${Number(coupon.minCartValue).toFixed(2)}` },
-        { status: 400 }
-      )
-    }
-
-    if (coupon.maxUses && coupon.usedCount >= coupon.maxUses) {
-      return NextResponse.json({ error: "Coupon usage limit has been reached" }, { status: 400 })
-    }
-
-    const existingRedemption = await db.query.couponRedemptions.findFirst({
-      where: and(
-        eq(couponRedemptions.couponId, coupon.id),
-        eq(couponRedemptions.userId, userId)
-      ),
-    })
-
-    if (existingRedemption) {
-      return NextResponse.json(
-        { error: "This coupon cannot be used again" },
-        { status: 400 }
-      )
-    }
-
-    const { items: matchingItems, total: matchingTotal } = getMatchingItemsTotal(cart.items, coupon.scope)
-
-    if (matchingItems.length === 0 && ["Ad Slots", "Featured Script Slots", "Props"].includes(coupon.scope)) {
-      return NextResponse.json(
-        { error: `This coupon is only valid for items of type "${coupon.scope}"` },
-        { status: 400 }
-      )
-    }
-
-    const discountAmount = calculateDiscount(matchingTotal, coupon)
+    const discountAmount = result.discountAmount
     const payableAmount = Math.max(0, cart.total - discountAmount)
 
     return NextResponse.json({
       success: true,
       coupon: {
-        id: coupon.id,
-        code: coupon.code,
+        id: result.coupon.id,
+        code: result.coupon.code,
         discountAmount,
       },
       totalAmount: cart.total,

@@ -188,7 +188,7 @@ export default function CouponsTab() {
           <h2 className="text-2xl font-bold text-white">Coupons</h2>
           <p className="text-sm text-gray-400">
             Manage discount codes for checkout.
-          </p>ef
+          </p>
         </div>
         <Button onClick={openCreateDialog} className="bg-orange-500 hover:bg-orange-600">
           <Plus className="mr-2 h-4 w-4" />

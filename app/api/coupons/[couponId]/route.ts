@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
-import { eq } from "drizzle-orm"
+import { and, eq } from "drizzle-orm"
 
 import { authOptions } from "@/auth"
 import { parseCouponDate } from "@/lib/coupon-utils"
 import { db } from "@/lib/db/client"
 import { coupons } from "@/lib/db/schema"
-import { hasAnyRole } from "@/lib/database-new"
+import { canManageCoupons, isCouponAdmin } from "@/lib/coupon-access"
 
 const validScopes = ["Ad Slots", "Featured Script Slots", "Props", "all"] as const
 const validDiscountTypes = ["Percentage", "Amount"] as const
@@ -14,7 +14,16 @@ const validApplicationRules = ["individual", "basket_before_sales", "basket_afte
 
 function hasCouponAccess(session: any) {
   const user = session?.user as any
-  return Boolean(user?.roles && hasAnyRole(user.roles, ["founder", "admin"]))
+  return canManageCoupons(user?.roles)
+}
+
+// Isolation: admins/founders may target any coupon; a verified_creator is
+// confined to coupons they created. Returns the WHERE predicate to use so a
+// creator touching someone else's coupon simply matches no row (→ 404).
+function couponScopeWhere(user: any, id: number) {
+  return isCouponAdmin(user?.roles)
+    ? eq(coupons.id, id)
+    : and(eq(coupons.id, id), eq(coupons.createdBy, user.id))
 }
 
 function parseCouponId(couponId: string) {
@@ -101,9 +110,10 @@ export async function PUT(
     }
 
     if (!hasCouponAccess(session)) {
-      return NextResponse.json({ error: "Founder or admin access required" }, { status: 403 })
+      return NextResponse.json({ error: "Coupon management access required" }, { status: 403 })
     }
 
+    const user = session.user as any
     const { couponId } = await params
     const id = parseCouponId(couponId)
 
@@ -119,7 +129,7 @@ export async function PUT(
 
     const [updatedCoupon] = await db.update(coupons)
       .set(parsed.values)
-      .where(eq(coupons.id, id))
+      .where(couponScopeWhere(user, id))
       .returning()
 
     if (!updatedCoupon) {
@@ -151,9 +161,10 @@ export async function DELETE(
     }
 
     if (!hasCouponAccess(session)) {
-      return NextResponse.json({ error: "Founder or admin access required" }, { status: 403 })
+      return NextResponse.json({ error: "Coupon management access required" }, { status: 403 })
     }
 
+    const user = session.user as any
     const { couponId } = await params
     const id = parseCouponId(couponId)
 
@@ -162,7 +173,7 @@ export async function DELETE(
     }
 
     const [deletedCoupon] = await db.delete(coupons)
-      .where(eq(coupons.id, id))
+      .where(couponScopeWhere(user, id))
       .returning({ id: coupons.id })
 
     if (!deletedCoupon) {
