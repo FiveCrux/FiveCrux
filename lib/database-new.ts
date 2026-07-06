@@ -893,6 +893,33 @@ export async function createProp(propData: Omit<NewPendingProp, 'id'> & { id?: s
   return result[0]?.id ?? id;
 }
 
+// Resolve prop ownership (createdBy) for a set of prop ids. A prop's id is its
+// text PK and is what the platform cart stores as `itemId` for prop line items.
+// Checks approved → pending → rejected so ownership resolves regardless of the
+// prop's approval state. Returns a Map of propId → createdBy (owner user id).
+// Used by coupon validation to confine a creator's coupon to their OWN props.
+export async function getPropOwnersByIds(propIds: string[]): Promise<Map<string, string>> {
+  const owners = new Map<string, string>();
+  const uniqueIds = [...new Set(propIds.filter((id) => typeof id === 'string' && id.length > 0))];
+  if (uniqueIds.length === 0) return owners;
+
+  const tables = [approvedProps, pendingProps, rejectedProps] as const;
+  for (const table of tables) {
+    const rows = await db
+      .select({ id: table.id, createdBy: table.createdBy })
+      .from(table)
+      .where(inArray(table.id, uniqueIds));
+    for (const row of rows) {
+      // First match wins (approved has priority); don't overwrite once set.
+      if (row.id && row.createdBy && !owners.has(row.id)) {
+        owners.set(row.id, row.createdBy);
+      }
+    }
+  }
+
+  return owners;
+}
+
 export async function getApprovedProps(limit?: number) {
   const base = db
     .select()

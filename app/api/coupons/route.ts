@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
-import { desc } from "drizzle-orm"
+import { desc, eq } from "drizzle-orm"
 
 import { authOptions } from "@/auth"
 import { parseCouponDate } from "@/lib/coupon-utils"
 import { db } from "@/lib/db/client"
 import { coupons } from "@/lib/db/schema"
-import { hasAnyRole } from "@/lib/database-new"
+import { canManageCoupons, isCouponAdmin } from "@/lib/coupon-access"
 
 const validScopes = ["Ad Slots", "Featured Script Slots", "Props", "all"] as const
 const validDiscountTypes = ["Percentage", "Amount"] as const
@@ -18,7 +18,7 @@ function generateNumericId() {
 
 function hasCouponAccess(session: any) {
   const user = session?.user as any
-  return Boolean(user?.roles && hasAnyRole(user.roles, ["founder", "admin"]))
+  return canManageCoupons(user?.roles)
 }
 
 export async function GET() {
@@ -30,10 +30,15 @@ export async function GET() {
     }
 
     if (!hasCouponAccess(session)) {
-      return NextResponse.json({ error: "Founder or admin access required" }, { status: 403 })
+      return NextResponse.json({ error: "Coupon management access required" }, { status: 403 })
     }
 
+    const user = session.user as any
+
+    // Isolation: admins/founders see every coupon; a verified_creator only sees
+    // the coupons they created.
     const rows = await db.query.coupons.findMany({
+      where: isCouponAdmin(user?.roles) ? undefined : eq(coupons.createdBy, user.id),
       orderBy: [desc(coupons.createdAt)],
     })
 
@@ -53,7 +58,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (!hasCouponAccess(session)) {
-      return NextResponse.json({ error: "Founder or admin access required" }, { status: 403 })
+      return NextResponse.json({ error: "Coupon management access required" }, { status: 403 })
     }
 
     const user = session.user as any
