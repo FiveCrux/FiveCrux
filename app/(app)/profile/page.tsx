@@ -514,8 +514,11 @@ export default function ProfilePage() {
   };
 
   const profilePictureUrl = getSessionUserProfilePicture(session);
+  // Coupons are managed by founders/admins AND verified creators. Creators'
+  // coupons are self-scoped server-side (their own products only) — see
+  // lib/coupon-access.ts + validateCoupon.
   const canManageCoupons = (((session?.user as any)?.roles || []) as string[]).some(
-    (role: string) => role === "founder" || role === "admin"
+    (role: string) => role === "founder" || role === "admin" || role === "verified_creator"
   );
 
   // Sidebar navigation items (drive the same activeTab state as the tabs).
