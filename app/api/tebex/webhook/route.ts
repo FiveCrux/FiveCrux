@@ -3,7 +3,7 @@ import { verifyTebexWebhook, type TebexWebhookPayload } from "@/lib/tebex";
 import { db } from "@/lib/db/client";
 import { tebexOrders, orders, orderItems, carts, cartItems, userAdSlots, userFeaturedScriptSlots, coupons, couponRedemptions } from "@/lib/db/schema";
 import { and, eq, sql } from "drizzle-orm";
-import { createAdSlots, createFeaturedScriptSlots, activateSideBanner } from "@/lib/database-new";
+import { createAdSlots, createFeaturedScriptSlots, activateSideBanner, extendSlotsForRecurring, endRecurringSlots } from "@/lib/database-new";
 import { sideBannerBookings } from "@/lib/db/schema";
 
 function generateNumericId() {
@@ -411,6 +411,52 @@ export async function POST(request: NextRequest) {
         }
         return NextResponse.json({ ok: true });
       }
+
+      // ── Recurring (subscription) events. Fully dynamic: any package the
+      // seller marks recurring in Tebex arrives here; we keep its slot(s) alive
+      // until the next payment, and stop them when the subscription ends. The
+      // slot(s) are matched by the ORIGINAL order reference carried on the
+      // recurring payment's initial_payment (basket ident / transaction id).
+      case "recurring-payment.started":
+      case "recurring-payment.renewed": {
+        const subj = payload.subject as any;
+        const ids = extractIdentifiers(subj?.initial_payment ?? subj?.last_payment ?? subj);
+        const existing = await findOrderByIdents(ids);
+        if (!existing) {
+          // Original order row may not be committed yet → force a Tebex retry.
+          console.warn("Tebex webhook: recurring event with no matching order yet (will retry)", payload.type, ids);
+          return NextResponse.json({ error: "order_not_found_yet" }, { status: 500 });
+        }
+
+        // First charge: provision exactly once. Idempotent via the order status,
+        // so this is safe even if a payment.completed for the same charge also fires.
+        if (payload.type === "recurring-payment.started" && existing.status !== "completed") {
+          if (existing.kind === "platform_fee") {
+            await provisionPlatformFee(existing, (subj?.initial_payment as any)?.custom, existing.id);
+          }
+          await updateOrderStatus("completed", ids);
+        }
+
+        // Keep the slot(s) live until Tebex's next scheduled payment.
+        const nextAt = subj?.next_payment_at ? new Date(subj.next_payment_at) : null;
+        if (nextAt && !isNaN(nextAt.getTime())) {
+          await extendSlotsForRecurring(existing.id, nextAt);
+        }
+        return NextResponse.json({ ok: true, type: payload.type });
+      }
+
+      case "recurring-payment.ended": {
+        const subj = payload.subject as any;
+        const existing = await findOrderByIdents(extractIdentifiers(subj?.initial_payment ?? subj));
+        if (existing) await endRecurringSlots(existing.id);
+        return NextResponse.json({ ok: true });
+      }
+
+      case "recurring-payment.cancellation.requested":
+      case "recurring-payment.cancellation.aborted":
+        // Slot stays live until the period ends (a recurring-payment.ended will
+        // follow). Nothing to change now — just acknowledge.
+        return NextResponse.json({ ok: true, noted: payload.type });
 
       default:
         // Acknowledge unknown but signature-valid events so Tebex stops retrying.
