@@ -280,7 +280,7 @@ export default function AdvertisePanel() {
   type SbSlot = "left-top" | "left-bottom" | "right-top" | "right-bottom"
 
   // Duration packages live from the Tebex "SIDE ADVERTISEMENT" category.
-  type SbPackage = { id: number; name: string; price: number; currency: string; durationWeeks: number | null }
+  type SbPackage = { id: number; name: string; price: number; currency: string; durationWeeks: number | null; recurring?: boolean }
   const [sbPackages, setSbPackages] = useState<SbPackage[] | null>(null) // null = still loading
   const [sbAvail, setSbAvail] = useState<Record<string, { available: boolean; until?: string | null }>>({
     "left-top": { available: true },
@@ -458,6 +458,9 @@ export default function AdvertisePanel() {
                 >
                   <div className="text-sm font-bold">{w} {w === 1 ? "week" : "weeks"}</div>
                   <div className="font-mono text-xs text-white/55">€{pkg.price}</div>
+                  {pkg.recurring && (
+                    <div className="mt-0.5 text-[9px] font-semibold uppercase tracking-wide text-orange-400/80">Auto-renews</div>
+                  )}
                 </button>
               )
             })}

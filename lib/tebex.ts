@@ -576,6 +576,11 @@ export type TebexWebhookType =
   | "payment.declined"
   | "payment.refunded"
   | "payment.chargeback"
+  | "recurring-payment.started"
+  | "recurring-payment.renewed"
+  | "recurring-payment.ended"
+  | "recurring-payment.cancellation.requested"
+  | "recurring-payment.cancellation.aborted"
   | (string & {});
 
 /** Minimal shape of a Tebex webhook payload. */
