@@ -68,7 +68,8 @@ import {
 import { toast } from "sonner";
 import { getSessionUserProfilePicture } from "@/lib/user-utils";
 import { useSession as useNextAuthSession } from "next-auth/react";
-import { Camera, X, Megaphone, ShieldCheck, Store } from "lucide-react";
+import { Camera, X, Megaphone, ShieldCheck, Store, BarChart3 } from "lucide-react";
+import CreatorAnalytics from "@/componentss/profile/creator-analytics";
 import SideBannersManager from "@/componentss/profile/side-banners-manager";
 import GetVerified from "@/componentss/profile/get-verified";
 import GiveawayWinners from "@/componentss/profile/giveaway-winners";
@@ -525,6 +526,7 @@ export default function ProfilePage() {
   // Coupons is only shown when the user can manage coupons.
   const navItems: { value: string; label: string; icon: any }[] = [
     { value: "overview", label: "Overview", icon: LayoutDashboard },
+    { value: "analytics", label: "Analytics", icon: BarChart3 },
     { value: "scripts", label: "Scripts", icon: Package },
     { value: "tebex-store", label: "Tebex Store", icon: Store },
     { value: "props", label: "Props", icon: Package },
@@ -1603,6 +1605,11 @@ export default function ProfilePage() {
               {/* Get Verified Tab — apply for the verified-creator badge */}
               <TabsContent value="get-verified" className="space-y-6 mt-0">
                 <GetVerified />
+              </TabsContent>
+
+              {/* Analytics Tab — creator's real recorded performance */}
+              <TabsContent value="analytics" className="space-y-6 mt-0">
+                <CreatorAnalytics />
               </TabsContent>
 
               {/* Tebex Store Tab — connect + import packages as listings */}
