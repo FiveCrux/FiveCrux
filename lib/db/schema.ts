@@ -170,6 +170,7 @@ const basePropFields = {
   discountedPrice: numeric('discounted_price', { precision: 10, scale: 2 }),
   images: text('images').array().default([]),
   zipFile: text('zip_file').notNull(),
+  viewCount: integer('view_count').default(0).notNull(), // detail-page views (creator analytics)
   createdBy: text('created_by').notNull().references(() => users.id),
   // Tebex Headless integration: prop owner's OWN webstore public token and the
   // Tebex package id that backs this prop. Nullable until the lister has linked
@@ -233,6 +234,7 @@ const baseScriptFields = {
   youtubeVideoLink: text('youtube_video_link'),
   screenshots: text('screenshots').array().default([]),
   coverImage: text('cover_image'),
+  viewCount: integer('view_count').default(0).notNull(), // detail-page views (creator analytics)
   featured: boolean('featured').default(false),
   free: boolean('free').default(false),
   // When true, the price is hidden everywhere (hero, cards, detail) — the seller
