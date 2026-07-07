@@ -60,7 +60,7 @@ const socials = [
 
 export default function Footer() {
   return (
-    <footer className="w-full border-t border-white/[0.07] bg-[#0a0a0a]">
+    <footer className="mt-16 w-full border-t border-white/[0.07] bg-[#0a0a0a]">
       <div className="mx-auto max-w-[1240px] px-6 sm:px-8">
         {/* Top: brand (left) + link columns (right) */}
         <div className="flex flex-wrap justify-between gap-x-16 gap-y-10 pt-16">
