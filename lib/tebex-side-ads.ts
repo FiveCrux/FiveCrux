@@ -30,6 +30,9 @@ export interface SideAdPackage {
   currency: string;
   /** Duration in weeks parsed from the name (null if not encoded). */
   durationWeeks: number | null;
+  /** True when the Tebex package is a subscription (auto-renews). Dynamic — set
+   *  "Recurring Payment" on the package in Tebex and this flips automatically. */
+  recurring: boolean;
 }
 
 /** Map a Tebex package into the side-ad duration shape. */
@@ -41,6 +44,7 @@ export function mapPackageToSideAd(pkg: TebexPackage): SideAdPackage {
     price: typeof price === "number" ? price : 0,
     currency: pkg.currency,
     durationWeeks: parseDurationWeeks(pkg.name),
+    recurring: (pkg as any).type === "subscription",
   };
 }
 

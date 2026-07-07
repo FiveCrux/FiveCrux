@@ -4002,3 +4002,57 @@ export async function setGiveawayWinnerDelivered(
 
   return { ok: true };
 }
+
+// ── Recurring (Tebex subscription) slot lifecycle ──────────────────────
+/**
+ * A recurring payment started/renewed: keep every slot provisioned under this
+ * Tebex order reference alive until `endDate` (Tebex's next_payment_at). Generic
+ * across side banners / ad slots / featured slots — whichever match `orderRef`.
+ */
+export async function extendSlotsForRecurring(orderRef: string, endDate: Date) {
+  const now = new Date();
+  const sb = await db
+    .update(sideBannerBookings)
+    .set({ endDate, status: 'active', updatedAt: now })
+    .where(and(
+      eq(sideBannerBookings.orderReference, orderRef),
+      inArray(sideBannerBookings.status, ['active', 'reserved', 'expired'])
+    ))
+    .returning({ id: sideBannerBookings.id });
+  const ad = await db
+    .update(userAdSlots)
+    .set({ endDate, status: 'active' })
+    .where(eq(userAdSlots.paypalOrderId, orderRef))
+    .returning({ id: userAdSlots.id });
+  const feat = await db
+    .update(userFeaturedScriptSlots)
+    .set({ featuredSlotEndDate: endDate, featuredSlotStatus: 'active' })
+    .where(eq(userFeaturedScriptSlots.featuredPaypalOrderId, orderRef))
+    .returning({ id: userFeaturedScriptSlots.id });
+  return { sideBanners: sb.length, adSlots: ad.length, featuredSlots: feat.length };
+}
+
+/**
+ * A subscription ended (Tebex `recurring-payment.ended`): stop the slot(s) under
+ * this order reference. Unlike a refund it does NOT touch orders/coupons — the
+ * customer just stopped renewing. Side-banner positions are freed ('expired')
+ * so they can be re-sold.
+ */
+export async function endRecurringSlots(orderRef: string) {
+  const now = new Date();
+  const sb = await db
+    .update(sideBannerBookings)
+    .set({ status: 'expired', updatedAt: now })
+    .where(and(
+      eq(sideBannerBookings.orderReference, orderRef),
+      inArray(sideBannerBookings.status, ['active', 'reserved'])
+    ))
+    .returning({ id: sideBannerBookings.id });
+  await db.update(userAdSlots)
+    .set({ status: 'inactive' })
+    .where(eq(userAdSlots.paypalOrderId, orderRef));
+  await db.update(userFeaturedScriptSlots)
+    .set({ featuredSlotStatus: 'inactive' })
+    .where(eq(userFeaturedScriptSlots.featuredPaypalOrderId, orderRef));
+  return { sideBanners: sb.length };
+}
