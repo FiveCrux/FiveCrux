@@ -35,6 +35,9 @@ const EMPTY_ACTIVE: ActiveMap = {
 // fills the frame.
 export default function SideAdsFrame({ children }: { children: ReactNode }) {
   const [active, setActive] = useState<ActiveMap>(EMPTY_ACTIVE)
+  // Until the first fetch resolves we show a neutral skeleton — NOT the
+  // "Advertise here" CTA — so a booked slot never flashes as available.
+  const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
     let alive = true
@@ -50,6 +53,9 @@ export default function SideAdsFrame({ children }: { children: ReactNode }) {
           })
       })
       .catch(() => {})
+      .finally(() => {
+        if (alive) setLoaded(true)
+      })
     return () => {
       alive = false
     }
@@ -57,9 +63,9 @@ export default function SideAdsFrame({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex w-full items-start gap-4 px-2.5">
-      <Rail side="left" top={active["left-top"]} bottom={active["left-bottom"]} />
+      <Rail side="left" top={active["left-top"]} bottom={active["left-bottom"]} loaded={loaded} />
       <div className="min-w-0 flex-1">{children}</div>
-      <Rail side="right" top={active["right-top"]} bottom={active["right-bottom"]} />
+      <Rail side="right" top={active["right-top"]} bottom={active["right-bottom"]} loaded={loaded} />
     </div>
   )
 }
@@ -84,7 +90,7 @@ function useRailWidth() {
 
 // A single sticky rail now holds TWO stacked slots (top + bottom), each roughly
 // half the rail height, so there are 4 sellable slots total.
-function Rail({ side, top, bottom }: { side: "left" | "right"; top: Banner; bottom: Banner }) {
+function Rail({ side, top, bottom, loaded }: { side: "left" | "right"; top: Banner; bottom: Banner; loaded: boolean }) {
   const railW = useRailWidth()
 
   return (
@@ -93,8 +99,8 @@ function Rail({ side, top, bottom }: { side: "left" | "right"; top: Banner; bott
       style={{ width: railW }}
       className="sticky top-[88px] hidden h-[calc(100vh-104px)] min-h-[460px] shrink-0 flex-col gap-4 self-start xl:flex"
     >
-      <BannerSlot banner={top} position={`${side}-top`} />
-      <BannerSlot banner={bottom} position={`${side}-bottom`} />
+      <BannerSlot banner={top} position={`${side}-top`} loaded={loaded} />
+      <BannerSlot banner={bottom} position={`${side}-bottom`} loaded={loaded} />
     </aside>
   )
 }
@@ -102,10 +108,12 @@ function Rail({ side, top, bottom }: { side: "left" | "right"; top: Banner; bott
 // One banner slot (top or bottom of a rail). Renders the sponsored creative when
 // booked, a "Sponsored — coming soon" placeholder while a booked slot has no
 // image yet, or an "Advertise here" CTA when the slot is open.
-function BannerSlot({ banner, position }: { banner: Banner; position: string }) {
+function BannerSlot({ banner, position, loaded }: { banner: Banner; position: string; loaded: boolean }) {
   return (
     <div className="min-h-0 w-full flex-1 overflow-hidden rounded-2xl">
-      {banner && banner.imageUrl ? (
+      {!loaded ? (
+        <div className="h-full w-full animate-pulse rounded-2xl border border-white/[0.06] bg-white/[0.03]" />
+      ) : banner && banner.imageUrl ? (
         <Link
           href={banner.linkUrl || "#"}
           target={banner.linkUrl ? "_blank" : undefined}
