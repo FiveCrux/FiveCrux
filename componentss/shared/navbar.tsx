@@ -97,11 +97,10 @@ export default function NavbarComponent() {
     <Link
       href="/"
       onClick={onClick}
-      className="relative z-20 flex items-center gap-1 text-sm font-normal"
+      aria-label="FiveCrux home"
+      className="relative z-20 flex items-center"
     >
-      <Image src="/CF.svg" alt="FiveCrux" width={42} height={42} priority />
-      <span className="text-2xl font-extrabold tracking-tight text-orange-500">Five</span>
-      <span className="text-2xl font-extrabold tracking-tight text-yellow-400">Crux</span>
+      <Image src="/fivecrux-logo.png" alt="FiveCrux" width={142} height={34} priority />
     </Link>
   )
 
