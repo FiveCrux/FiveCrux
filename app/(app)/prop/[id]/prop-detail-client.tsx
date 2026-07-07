@@ -40,6 +40,12 @@ export function PropDetailClient({
   const [activeImage, setActiveImage] = useState(0)
   const [isFullscreen, setIsFullscreen] = useState(false)
 
+  // Count a detail-page view once per mount (creator analytics).
+  useEffect(() => {
+    if (!id) return
+    fetch(`/api/props/${id}/view`, { method: "POST" }).catch(() => {})
+  }, [id])
+
   useEffect(() => {
     const fetchProp = async () => {
       try {

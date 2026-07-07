@@ -19,6 +19,7 @@ import {
   frameworks,
   sideBannerBookings,
   verificationRequests,
+  orders, orderItems,
   type Script, type Giveaway, type NewCategory, type NewFramework
 } from './db/schema';
 import type { 
@@ -4055,4 +4056,140 @@ export async function endRecurringSlots(orderRef: string) {
     .set({ featuredSlotStatus: 'inactive' })
     .where(eq(userFeaturedScriptSlots.featuredPaypalOrderId, orderRef));
   return { sideBanners: sb.length };
+}
+
+// ── Listing view counters (creator analytics) ──────────────────────────
+/** +1 on an approved script's detail-page view. Silent on error/missing. */
+export async function incrementScriptViewCount(scriptId: number): Promise<void> {
+  try {
+    if (!Number.isFinite(scriptId)) return;
+    await db.update(approvedScripts)
+      .set({ viewCount: sql`${approvedScripts.viewCount} + 1` })
+      .where(eq(approvedScripts.id, scriptId));
+  } catch (e) {
+    console.error('incrementScriptViewCount error:', e);
+  }
+}
+
+/** +1 on an approved prop's detail-page view. Silent on error/missing. */
+export async function incrementPropViewCount(propId: string): Promise<void> {
+  try {
+    if (!propId) return;
+    await db.update(approvedProps)
+      .set({ viewCount: sql`${approvedProps.viewCount} + 1` })
+      .where(eq(approvedProps.id, propId));
+  } catch (e) {
+    console.error('incrementPropViewCount error:', e);
+  }
+}
+
+// ── Creator analytics (only real, recorded data) ───────────────────────
+/**
+ * A creator's own analytics. Uses ONLY data FiveCrux actually records:
+ *  - Sales/revenue + buyers: platform-cart prop sales (order_items → paid orders).
+ *    (Scripts sell on the seller's OWN Tebex store, which FiveCrux can't see.)
+ *  - Traffic: detail-page views on their scripts/props + ad & featured views/clicks.
+ *  - Top performers: their listings by views + their props by sales.
+ *  - Giveaways: entries · participants · winners · delivered.
+ *  - Subscriptions: active side-banner / ad / featured slots + soonest renewal.
+ *  - Listings: approved + pending counts.
+ */
+export async function getCreatorAnalytics(userId: string) {
+  const num = (v: any) => Number(v ?? 0) || 0;
+
+  // ── Listings (approved) ──
+  const [myScripts, myProps] = await Promise.all([
+    db.select({ id: approvedScripts.id, title: approvedScripts.title, views: approvedScripts.viewCount, price: approvedScripts.price })
+      .from(approvedScripts).where(eq(approvedScripts.sellerId, userId)),
+    db.select({ id: approvedProps.id, name: approvedProps.name, views: approvedProps.viewCount, price: approvedProps.price })
+      .from(approvedProps).where(eq(approvedProps.createdBy, userId)),
+  ]);
+  const [pendScriptRows, pendPropRows] = await Promise.all([
+    db.select({ id: pendingScripts.id }).from(pendingScripts).where(eq(pendingScripts.sellerId, userId)),
+    db.select({ id: pendingProps.id }).from(pendingProps).where(eq(pendingProps.createdBy, userId)),
+  ]);
+
+  // ── Prop sales (platform cart, paid orders) ──
+  const propIds = myProps.map((p) => p.id);
+  const salesRows = propIds.length
+    ? await db.select({ itemId: orderItems.itemId, title: orderItems.title, price: orderItems.price, qty: orderItems.quantity, buyer: orders.userId, at: orders.createdAt })
+        .from(orderItems)
+        .innerJoin(orders, eq(orderItems.orderId, orders.id))
+        .where(and(inArray(orderItems.itemId, propIds), eq(orderItems.itemType, 'prop'), eq(orders.status, 'paid')))
+    : [];
+  let salesCount = 0, revenue = 0;
+  const buyerSet = new Set<string>();
+  const byItem = new Map<string, { title: string; count: number; revenue: number }>();
+  for (const r of salesRows) {
+    const q = num(r.qty), line = num(r.price) * q;
+    salesCount += q; revenue += line;
+    if (r.buyer) buyerSet.add(r.buyer);
+    const e = byItem.get(r.itemId) ?? { title: r.title, count: 0, revenue: 0 };
+    e.count += q; e.revenue += line; byItem.set(r.itemId, e);
+  }
+
+  // ── Traffic ──
+  const scriptViews = myScripts.reduce((s, r) => s + num(r.views), 0);
+  const propViews = myProps.reduce((s, r) => s + num(r.views), 0);
+  const ads = await db.select({ v: approvedAds.viewCount, c: approvedAds.clickCount })
+    .from(approvedAds).where(eq(approvedAds.createdBy, userId));
+  const adViews = ads.reduce((s, a) => s + num(a.v), 0);
+  const adClicks = ads.reduce((s, a) => s + num(a.c), 0);
+  const feat = await db.select({ v: featuredScripts.featuredViewCount, c: featuredScripts.featuredClickCount })
+    .from(featuredScripts)
+    .innerJoin(approvedScripts, eq(featuredScripts.scriptId, approvedScripts.id))
+    .where(eq(approvedScripts.sellerId, userId));
+  const featuredViews = feat.reduce((s, f) => s + num(f.v), 0);
+  const featuredClicks = feat.reduce((s, f) => s + num(f.c), 0);
+
+  // ── Top performers ──
+  const topByViews = [
+    ...myScripts.map((s) => ({ type: 'script', id: String(s.id), name: s.title, views: num(s.views) })),
+    ...myProps.map((p) => ({ type: 'prop', id: String(p.id), name: p.name, views: num(p.views) })),
+  ].sort((a, b) => b.views - a.views).slice(0, 5);
+  const topBySales = Array.from(byItem.entries())
+    .map(([id, v]) => ({ id, name: v.title, count: v.count, revenue: v.revenue }))
+    .sort((a, b) => b.revenue - a.revenue).slice(0, 5);
+
+  // ── Giveaways ──
+  const myGiveaways = await db.select({ id: approvedGiveaways.id }).from(approvedGiveaways).where(eq(approvedGiveaways.creatorId, userId));
+  const gIds = myGiveaways.map((g) => g.id);
+  let totalEntries = 0; const participantSet = new Set<string>();
+  let winners = 0, delivered = 0;
+  if (gIds.length) {
+    const entries = await db.select({ userId: giveawayEntries.userId }).from(giveawayEntries).where(inArray(giveawayEntries.giveawayId, gIds));
+    totalEntries = entries.length;
+    for (const e of entries) if (e.userId) participantSet.add(e.userId);
+    const winRows = await db.select({ claimed: giveawayPrizeWinners.claimed })
+      .from(giveawayPrizeWinners)
+      .innerJoin(giveawayPrizes, eq(giveawayPrizeWinners.prizeId, giveawayPrizes.id))
+      .where(inArray(giveawayPrizes.giveawayId, gIds));
+    winners = winRows.length;
+    delivered = winRows.filter((w) => w.claimed).length;
+  }
+
+  // ── Active subscriptions / slots + soonest renewal ──
+  const [sbActive, adSlotsActive, featSlotsActive] = await Promise.all([
+    db.select({ endDate: sideBannerBookings.endDate }).from(sideBannerBookings).where(and(eq(sideBannerBookings.createdBy, userId), eq(sideBannerBookings.status, 'active'))),
+    db.select({ endDate: userAdSlots.endDate }).from(userAdSlots).where(and(eq(userAdSlots.userId, userId), eq(userAdSlots.status, 'active'))),
+    db.select({ endDate: userFeaturedScriptSlots.featuredSlotEndDate }).from(userFeaturedScriptSlots).where(and(eq(userFeaturedScriptSlots.featuredUserId, userId), eq(userFeaturedScriptSlots.featuredSlotStatus, 'active'))),
+  ]);
+  const renewalDates = [...sbActive, ...adSlotsActive, ...featSlotsActive]
+    .map((r) => r.endDate).filter(Boolean).map((d) => new Date(d as any).getTime()).filter((t) => !isNaN(t)).sort((a, b) => a - b);
+  const nextRenewal = renewalDates.length ? new Date(renewalDates[0]).toISOString() : null;
+
+  return {
+    sales: { count: salesCount, revenue: Number(revenue.toFixed(2)), buyers: buyerSet.size, currency: 'EUR' },
+    traffic: {
+      total: scriptViews + propViews + adViews + featuredViews,
+      scriptViews, propViews,
+      ads: { views: adViews, clicks: adClicks },
+      featured: { views: featuredViews, clicks: featuredClicks },
+    },
+    topByViews,
+    topBySales,
+    giveaways: { count: gIds.length, entries: totalEntries, participants: participantSet.size, winners, delivered },
+    subscriptions: { sideBanners: sbActive.length, adSlots: adSlotsActive.length, featuredSlots: featSlotsActive.length, active: sbActive.length + adSlotsActive.length + featSlotsActive.length, nextRenewal },
+    listings: { scripts: myScripts.length, props: myProps.length, pendingScripts: pendScriptRows.length, pendingProps: pendPropRows.length },
+  };
 }

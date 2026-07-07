@@ -162,6 +162,12 @@ export function ScriptDetailClient({
   const [activeMedia, setActiveMedia] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
+  // Count a detail-page view once per mount (creator analytics).
+  useEffect(() => {
+    if (!scriptId) return;
+    fetch(`/api/scripts/${scriptId}/view`, { method: "POST" }).catch(() => {});
+  }, [scriptId]);
+
   useEffect(() => {
     if (initialData) return;
     const fetchScript = async () => {
