@@ -196,6 +196,28 @@ async function findOrderByIdents(ids: { basketIdent?: string; transactionId?: st
 }
 
 /**
+ * Fallback matcher. Tebex's `payment.completed` subject carries NO basket ident,
+ * and our order's transaction id is null until this very event — so basket/txn
+ * matching can't link the payment to its order. Instead match on the stable id
+ * inside the `custom` we set on the basket (Tebex echoes it back on the subject
+ * as `subject.custom`): bookingId for side banners, fivecruxOrderId for carts.
+ */
+async function findOrderByCustom(custom: any) {
+  if (!custom || typeof custom !== "object") return null;
+  if (custom.bookingId != null) {
+    const rows = await db.select().from(tebexOrders)
+      .where(sql`${tebexOrders.custom}->>'bookingId' = ${String(custom.bookingId)}`).limit(1);
+    if (rows[0]) return rows[0];
+  }
+  if (custom.fivecruxOrderId != null) {
+    const rows = await db.select().from(tebexOrders)
+      .where(sql`${tebexOrders.custom}->>'fivecruxOrderId' = ${String(custom.fivecruxOrderId)}`).limit(1);
+    if (rows[0]) return rows[0];
+  }
+  return null;
+}
+
+/**
  * Revoke a refunded/charged-back platform order: deactivate the ad/featured slots
  * it provisioned, flip the FiveCrux order to 'refunded', and restore any coupon
  * usage. Keyed on the Tebex order id (= the order-reference stored on each slot).
@@ -364,7 +386,12 @@ export async function POST(request: NextRequest) {
     switch (payload.type) {
       case "payment.completed": {
         const ids = extractIdentifiers(payload.subject);
-        const existing = await findOrderByIdents(ids);
+        const payloadCustom = (payload.subject as any)?.custom;
+        // Tebex payment.completed has no basket ident + our order's txn is still
+        // null → basket/txn matching fails. Fall back to the custom we set on the
+        // basket (echoed back as subject.custom).
+        let existing = await findOrderByIdents(ids);
+        if (!existing) existing = await findOrderByCustom(payloadCustom);
 
         // C3: webhook may arrive before our tebex_orders row is committed (the
         // basket round-trip is slow). Returning 200 here would make Tebex stop
@@ -383,14 +410,14 @@ export async function POST(request: NextRequest) {
         // Provision BEFORE marking completed, so a duplicate that arrives after
         // is short-circuited by the check above (not re-provisioned).
         if (existing.kind === "platform_fee") {
-          const payloadCustom = (payload.subject as any)?.custom;
           const result = await provisionPlatformFee(existing, payloadCustom, existing.id);
           if (!result.provisioned) {
             console.warn("Tebex webhook: platform_fee completed but NOT provisioned:", { orderId: existing.id, reason: result.reason });
           }
         }
         // For kind === 'seller_product' the seller's store fulfills; we only track status.
-        await updateOrderStatus("completed", ids);
+        // Match by the KNOWN basket ident of the found order (+ record the txn id).
+        await updateOrderStatus("completed", { basketIdent: existing.basketIdent, transactionId: ids.transactionId, amount: ids.amount });
         return NextResponse.json({ ok: true });
       }
 
@@ -402,12 +429,13 @@ export async function POST(request: NextRequest) {
       case "payment.refunded":
       case "payment.chargeback": {
         const ids = extractIdentifiers(payload.subject);
-        const existing = await findOrderByIdents(ids);
+        let existing = await findOrderByIdents(ids);
+        if (!existing) existing = await findOrderByCustom((payload.subject as any)?.custom);
         // C1: revoke entitlements + restore coupon, then mark refunded. Idempotent
         // (skip if already refunded).
         if (existing && existing.status !== "refunded") {
           await revokeForOrder(existing);
-          await updateOrderStatus("refunded", ids);
+          await updateOrderStatus("refunded", { basketIdent: existing.basketIdent, transactionId: ids.transactionId, amount: ids.amount });
         }
         return NextResponse.json({ ok: true });
       }
@@ -420,8 +448,10 @@ export async function POST(request: NextRequest) {
       case "recurring-payment.started":
       case "recurring-payment.renewed": {
         const subj = payload.subject as any;
+        const recCustom = (subj?.initial_payment as any)?.custom ?? (subj?.last_payment as any)?.custom ?? subj?.custom;
         const ids = extractIdentifiers(subj?.initial_payment ?? subj?.last_payment ?? subj);
-        const existing = await findOrderByIdents(ids);
+        let existing = await findOrderByIdents(ids);
+        if (!existing) existing = await findOrderByCustom(recCustom);
         if (!existing) {
           // Original order row may not be committed yet → force a Tebex retry.
           console.warn("Tebex webhook: recurring event with no matching order yet (will retry)", payload.type, ids);
@@ -432,9 +462,9 @@ export async function POST(request: NextRequest) {
         // so this is safe even if a payment.completed for the same charge also fires.
         if (payload.type === "recurring-payment.started" && existing.status !== "completed") {
           if (existing.kind === "platform_fee") {
-            await provisionPlatformFee(existing, (subj?.initial_payment as any)?.custom, existing.id);
+            await provisionPlatformFee(existing, recCustom, existing.id);
           }
-          await updateOrderStatus("completed", ids);
+          await updateOrderStatus("completed", { basketIdent: existing.basketIdent, transactionId: ids.transactionId, amount: ids.amount });
         }
 
         // Keep the slot(s) live until Tebex's next scheduled payment.
@@ -447,7 +477,9 @@ export async function POST(request: NextRequest) {
 
       case "recurring-payment.ended": {
         const subj = payload.subject as any;
-        const existing = await findOrderByIdents(extractIdentifiers(subj?.initial_payment ?? subj));
+        const endCustom = (subj?.initial_payment as any)?.custom ?? subj?.custom;
+        let existing = await findOrderByIdents(extractIdentifiers(subj?.initial_payment ?? subj));
+        if (!existing) existing = await findOrderByCustom(endCustom);
         if (existing) await endRecurringSlots(existing.id);
         return NextResponse.json({ ok: true });
       }
