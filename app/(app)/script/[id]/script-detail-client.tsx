@@ -29,6 +29,7 @@ import {
 import { Button } from "@/componentss/ui/button";
 import Navbar from "@/componentss/shared/navbar";
 import Footer from "@/componentss/shared/footer";
+import SideAdsFrame from "@/componentss/ads/side-banners";
 import { isVerifiedCreator } from "@/lib/utils";
 import Link from "next/link";
 
@@ -320,6 +321,7 @@ export function ScriptDetailClient({
   return (
     <>
       <Navbar />
+      <SideAdsFrame>
       <main className="min-h-screen bg-[#0a0a0a] text-white antialiased [font-variant-numeric:tabular-nums]">
         <div className="mx-auto max-w-[1200px] px-5 pb-24 pt-20">
           {/* Breadcrumb */}
@@ -674,6 +676,7 @@ export function ScriptDetailClient({
           </section>
         </div>
       </main>
+      </SideAdsFrame>
 
       {/* Fullscreen media lightbox */}
       {isFullscreen && active && (
