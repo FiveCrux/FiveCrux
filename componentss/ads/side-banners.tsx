@@ -132,7 +132,7 @@ function BannerSlot({ banner, position, loaded }: { banner: Banner; position: st
           )}
         </Link>
       ) : banner ? (
-        <div className="flex h-full flex-col items-center justify-center gap-2 rounded-2xl border border-white/[0.07] bg-white/[0.02] px-3 text-center">
+        <div className="flex h-full flex-col items-center justify-center gap-2 px-3 text-center">
           <span className="rounded-full border border-white/10 bg-black/40 px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.12em] text-white/40">
             Sponsored
           </span>
@@ -142,7 +142,7 @@ function BannerSlot({ banner, position, loaded }: { banner: Banner; position: st
         <Link
           href={`/advertise#side-banners`}
           data-position={position}
-          className="group flex h-full flex-col items-center justify-center gap-2.5 rounded-2xl border border-white/[0.07] bg-white/[0.015] px-3 text-center transition-colors hover:border-orange-500/40 hover:bg-orange-500/[0.04]"
+          className="group flex h-full flex-col items-center justify-center gap-2.5 rounded-2xl border border-white/[0.06] px-3 text-center transition-colors hover:border-orange-500/40"
         >
           <span className="grid h-10 w-10 place-items-center rounded-xl bg-white/[0.04] text-white/40 transition-colors group-hover:bg-orange-500/12 group-hover:text-orange-400">
             <Megaphone className="h-5 w-5" />
