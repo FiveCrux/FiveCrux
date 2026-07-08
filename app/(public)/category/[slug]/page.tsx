@@ -13,6 +13,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { useParams } from "next/navigation"
 import Navbar from "@/componentss/shared/navbar"
 import Footer from "@/componentss/shared/footer"
+import SideAdsFrame from "@/componentss/ads/side-banners"
 import { ProductCard, type MarketProduct } from "@/componentss/marketplace/product-card"
 
 interface Script {
@@ -265,6 +266,7 @@ export default function CategoryPage() {
   return (
     <div className="min-h-screen overflow-x-clip bg-[#0a0a0a] text-white">
       <Navbar />
+      <SideAdsFrame>
 
       {/* Header */}
       <section className="px-3 pt-8 sm:px-6">
@@ -446,6 +448,7 @@ export default function CategoryPage() {
           </div>
         )}
       </main>
+      </SideAdsFrame>
 
       <Footer />
     </div>

@@ -42,6 +42,7 @@ import Image from "next/image"
 import { useParams } from "next/navigation"
 import Navbar from "@/componentss/shared/navbar"
 import Footer from "@/componentss/shared/footer"
+import SideAdsFrame from "@/componentss/ads/side-banners"
 import { VerifiedIcon } from "@/componentss/shared/verified-icon"
 import { isVerifiedCreator } from "@/lib/utils"
 import { toast } from "sonner"
@@ -766,6 +767,7 @@ export function GiveawayDetailClient({
       </div>
 
       <main className="min-h-screen bg-[#0a0a0a] text-white">
+        <SideAdsFrame>
         {/* Breadcrumb + back link (above the hero) */}
         <div className="mx-auto max-w-[1240px] px-4 pt-6 sm:px-6 lg:px-8">
           <nav className="flex flex-wrap items-center gap-2 text-sm text-white/55">
@@ -1432,6 +1434,7 @@ export function GiveawayDetailClient({
             </div>
           </div>
         </div>
+        </SideAdsFrame>
       </main>
       <Footer />
     </>
