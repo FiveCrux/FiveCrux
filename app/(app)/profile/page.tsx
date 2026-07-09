@@ -71,6 +71,7 @@ import { useSession as useNextAuthSession } from "next-auth/react";
 import { Camera, X, Megaphone, ShieldCheck, Store, BarChart3 } from "lucide-react";
 import CreatorAnalytics from "@/componentss/profile/creator-analytics";
 import SideBannersManager from "@/componentss/profile/side-banners-manager";
+import AdDetailedAnalyticsModal from "@/componentss/profile/ad-detailed-analytics-modal";
 import GetVerified from "@/componentss/profile/get-verified";
 import GiveawayWinners from "@/componentss/profile/giveaway-winners";
 import TebexStoreImporter from "@/componentss/profile/tebex-store-importer";
@@ -166,6 +167,21 @@ export default function ProfilePage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("overview");
   const [uploadingProfilePicture, setUploadingProfilePicture] = useState(false);
+  // Coupon access now also opens to any seller with an approved listing (not
+  // just verified_creator/admin/founder) — that requires a DB check, so we
+  // ask the coupons API itself rather than only inspecting the JWT roles.
+  const [hasListingCouponAccess, setHasListingCouponAccess] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    fetch("/api/coupons")
+      .then((r) => {
+        if (alive && r.ok) setHasListingCouponAccess(true);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   // Track which tabs have been visited for lazy loading
   const [visitedTabs, setVisitedTabs] = useState<Set<string>>(
@@ -220,6 +236,7 @@ export default function ProfilePage() {
 
   const [showAdsForm, setShowAdsForm] = useState(false);
   const [editingAd, setEditingAd] = useState<any>(null);
+  const [analyticsTarget, setAnalyticsTarget] = useState<{ adType: "ad" | "featured_script" | "side_banner"; adId: string | number; title: string } | null>(null);
   const [selectedSlotUniqueId, setSelectedSlotUniqueId] = useState<
     string | null
   >(null);
@@ -515,12 +532,13 @@ export default function ProfilePage() {
   };
 
   const profilePictureUrl = getSessionUserProfilePicture(session);
-  // Coupons are managed by founders/admins AND verified creators. Creators'
-  // coupons are self-scoped server-side (their own products only) — see
-  // lib/coupon-access.ts + validateCoupon.
-  const canManageCoupons = (((session?.user as any)?.roles || []) as string[]).some(
-    (role: string) => role === "founder" || role === "admin" || role === "verified_creator"
-  );
+  // Coupons are managed by founders/admins, verified creators, and any seller
+  // with an approved listing. Creators' coupons are self-scoped server-side
+  // (their own products only) — see lib/coupon-access.ts + validateCoupon.
+  const canManageCoupons =
+    (((session?.user as any)?.roles || []) as string[]).some(
+      (role: string) => role === "founder" || role === "admin" || role === "verified_creator"
+    ) || hasListingCouponAccess;
 
   // Sidebar navigation items (drive the same activeTab state as the tabs).
   // Coupons is only shown when the user can manage coupons.
@@ -1333,6 +1351,18 @@ export default function ProfilePage() {
                                   )}
                                 </div>
                                 <div className="flex gap-2">
+                                  {ad.status === "approved" && (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      type="button"
+                                      onClick={() => setAnalyticsTarget({ adType: "ad", adId: ad.id, title: ad.title })}
+                                      className="text-orange-400 hover:text-orange-300"
+                                    >
+                                      <BarChart3 className="h-4 w-4 mr-1" />
+                                      Analytics
+                                    </Button>
+                                  )}
                                   <Button
                                     size="sm"
                                     variant="outline"
@@ -1719,6 +1749,24 @@ export default function ProfilePage() {
                                   )}
                                 </div>
                                 <div className="flex gap-2">
+                                  {featuredScript.featuredStatus === "active" && (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      type="button"
+                                      onClick={() =>
+                                        setAnalyticsTarget({
+                                          adType: "featured_script",
+                                          adId: featuredScript.id,
+                                          title: featuredScript.scriptTitle || `Script ID: ${featuredScript.scriptId}`,
+                                        })
+                                      }
+                                      className="text-orange-400 hover:text-orange-300"
+                                    >
+                                      <BarChart3 className="h-4 w-4 mr-1" />
+                                      Analytics
+                                    </Button>
+                                  )}
                                   <Button
                                     size="sm"
                                     variant="outline"
@@ -2251,6 +2299,16 @@ export default function ProfilePage() {
         editData={editingAd}
         slotUniqueId={selectedSlotUniqueId}
       />
+
+      {/* Detailed Analytics Modal */}
+      {analyticsTarget && (
+        <AdDetailedAnalyticsModal
+          adType={analyticsTarget.adType}
+          adId={analyticsTarget.adId}
+          title={analyticsTarget.title}
+          onClose={() => setAnalyticsTarget(null)}
+        />
+      )}
 
       {/* Script Selection Popup */}
       <ScriptSelectionPopup

@@ -1,8 +1,9 @@
 "use client"
 
-import { useEffect, useState, type ReactNode } from "react"
+import { useEffect, useRef, useState, type ReactNode } from "react"
 import Link from "next/link"
 import { Megaphone, ArrowRight } from "lucide-react"
+import { useNavData } from "@/componentss/shared/nav-data-context"
 
 type Banner = {
   id: number
@@ -33,24 +34,36 @@ const EMPTY_ACTIVE: ActiveMap = {
 // sit INSIDE the same content frame, as sticky columns beside the content. Place
 // between the page's <Navbar/> and <Footer/>. Below xl the rails hide and content
 // fills the frame.
+function normalizeActive(raw: Record<string, any>): ActiveMap {
+  return {
+    "left-top": raw["left-top"] ?? null,
+    "left-bottom": raw["left-bottom"] ?? null,
+    "right-top": raw["right-top"] ?? null,
+    "right-bottom": raw["right-bottom"] ?? null,
+  }
+}
+
 export default function SideAdsFrame({ children }: { children: ReactNode }) {
-  const [active, setActive] = useState<ActiveMap>(EMPTY_ACTIVE)
+  // Server-fetched once per route-group layout — the rails paint with real
+  // data on first render instead of a skeleton, on every page, every refresh.
+  const { sideBannersActive: serverActive } = useNavData()
+
+  const [active, setActive] = useState<ActiveMap>(() =>
+    serverActive ? normalizeActive(serverActive) : EMPTY_ACTIVE
+  )
   // Until the first fetch resolves we show a neutral skeleton — NOT the
   // "Advertise here" CTA — so a booked slot never flashes as available.
-  const [loaded, setLoaded] = useState(false)
+  const [loaded, setLoaded] = useState(Boolean(serverActive))
 
   useEffect(() => {
     let alive = true
+    // Still refresh in the background even with server data — a slot can be
+    // booked/expire while this tab is open — just without re-showing the
+    // skeleton (loaded only ever goes false -> true, never back).
     fetch("/api/side-banners")
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
-        if (alive && d?.active)
-          setActive({
-            "left-top": d.active["left-top"] ?? null,
-            "left-bottom": d.active["left-bottom"] ?? null,
-            "right-top": d.active["right-top"] ?? null,
-            "right-bottom": d.active["right-bottom"] ?? null,
-          })
+        if (alive && d?.active) setActive(normalizeActive(d.active))
       })
       .catch(() => {})
       .finally(() => {
@@ -109,15 +122,47 @@ function Rail({ side, top, bottom, loaded }: { side: "left" | "right"; top: Bann
 // booked, a "Sponsored — coming soon" placeholder while a booked slot has no
 // image yet, or an "Advertise here" CTA when the slot is open.
 function BannerSlot({ banner, position, loaded }: { banner: Banner; position: string; loaded: boolean }) {
+  const cardRef = useRef<HTMLAnchorElement>(null)
+  const trackedRef = useRef(false)
+  const bannerId = banner?.id
+
+  // Real "seen" impression tracking — same 50%-visible-once pattern as the
+  // regular ad cards — fired only for a booked slot with a real creative.
+  useEffect(() => {
+    if (!bannerId || !cardRef.current) return
+    trackedRef.current = false
+    const el = cardRef.current
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && !trackedRef.current) {
+            trackedRef.current = true
+            fetch(`/api/side-banners/${bannerId}/view`, { method: "POST" }).catch(() => {})
+            observer.disconnect()
+          }
+        })
+      },
+      { threshold: 0.5 }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [bannerId])
+
+  const trackClick = () => {
+    if (bannerId) fetch(`/api/side-banners/${bannerId}/click`, { method: "POST" }).catch(() => {})
+  }
+
   return (
     <div className="min-h-0 w-full flex-1 overflow-hidden rounded-2xl">
       {!loaded ? (
         <div className="h-full w-full animate-pulse rounded-2xl border border-white/[0.06] bg-white/[0.03]" />
       ) : banner && banner.imageUrl ? (
         <Link
+          ref={cardRef}
           href={banner.linkUrl || "#"}
           target={banner.linkUrl ? "_blank" : undefined}
           rel="noopener noreferrer sponsored"
+          onClick={trackClick}
           className="group relative block h-full overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0e0e0f] transition-all hover:-translate-y-0.5 hover:border-orange-500/40"
         >
           <span className="absolute left-2.5 top-2.5 z-10 rounded-full border border-white/10 bg-black/55 px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.12em] text-white/55 backdrop-blur-sm">
@@ -132,7 +177,7 @@ function BannerSlot({ banner, position, loaded }: { banner: Banner; position: st
           )}
         </Link>
       ) : banner ? (
-        <div className="flex h-full flex-col items-center justify-center gap-2 rounded-2xl border border-white/[0.07] bg-white/[0.02] px-3 text-center">
+        <div className="flex h-full flex-col items-center justify-center gap-2 px-3 text-center">
           <span className="rounded-full border border-white/10 bg-black/40 px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.12em] text-white/40">
             Sponsored
           </span>
@@ -142,7 +187,7 @@ function BannerSlot({ banner, position, loaded }: { banner: Banner; position: st
         <Link
           href={`/advertise#side-banners`}
           data-position={position}
-          className="group flex h-full flex-col items-center justify-center gap-2.5 rounded-2xl border border-white/[0.07] bg-white/[0.015] px-3 text-center transition-colors hover:border-orange-500/40 hover:bg-orange-500/[0.04]"
+          className="group flex h-full flex-col items-center justify-center gap-2.5 rounded-2xl border border-white/[0.06] px-3 text-center transition-colors hover:border-orange-500/40"
         >
           <span className="grid h-10 w-10 place-items-center rounded-xl bg-white/[0.04] text-white/40 transition-colors group-hover:bg-orange-500/12 group-hover:text-orange-400">
             <Megaphone className="h-5 w-5" />
