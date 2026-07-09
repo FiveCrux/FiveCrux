@@ -624,7 +624,7 @@ export default function ProfilePage() {
                     </span>
                     {/* hover upload overlay */}
                     <div className="absolute inset-0 bg-black/55 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl flex items-center justify-center">
-                      <label className="cursor-pointer">
+                      <label className="cursor-pointer" title="Square image recommended, min 200×200px, up to 5MB">
                         <input
                           type="file"
                           accept="image/jpeg,image/jpg,image/png,image/webp"
