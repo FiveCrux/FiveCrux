@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, boolean, integer, numeric, pgEnum, json, uniqueIndex } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, boolean, integer, numeric, pgEnum, json, uniqueIndex, index } from 'drizzle-orm/pg-core';
 import { relations, sql } from 'drizzle-orm';
 
 // Users table
@@ -507,6 +507,32 @@ export const sideBannerBookings = pgTable('side_banner_bookings', {
 }));
 export type SideBannerBooking = typeof sideBannerBookings.$inferSelect;
 export type NewSideBannerBooking = typeof sideBannerBookings.$inferInsert;
+
+// ── Ad event log (impressions/clicks) ──────────────────────────────────
+// Backs the per-ad "Detailed Analytics" view: daily trend, traffic sources,
+// geography. One row per real event — the existing view_count/click_count
+// columns on approved_ads/featured_scripts stay as-is (cheap running totals);
+// this table is the detailed, queryable layer on top. `adId` is text so it
+// can hold either an integer ad/featured-script id or a side-banner booking
+// id without needing separate tables per ad type. `country` comes from
+// Vercel's edge geo header at request time — no raw IP is ever stored.
+export const adEvents = pgTable('ad_events', {
+  id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
+  adType: text('ad_type').notNull(),       // 'ad' | 'featured_script' | 'side_banner'
+  adId: text('ad_id').notNull(),
+  eventType: text('event_type').notNull(), // 'impression' | 'click'
+  source: text('source'),                  // 'direct' | 'search' | 'fivecrux' | 'external'
+  country: text('country'),                // ISO country code, nullable (unknown in local dev)
+  // withTimezone: this table does real UTC date-range queries (unlike most
+  // other createdAt columns here, which are only ever sorted/displayed) — a
+  // plain `timestamp` stores the DB session's local wall-clock time as a
+  // naive value, which then reads back shifted by the session's UTC offset.
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+}, (t) => ({
+  lookupIdx: index('ad_events_lookup_idx').on(t.adType, t.adId, t.createdAt),
+}));
+export type AdEvent = typeof adEvents.$inferSelect;
+export type NewAdEvent = typeof adEvents.$inferInsert;
 
 // ── Verified-creator verification requests ─────────────────────────────
 // A creator applies for the "verified" badge; an admin approves (grants the
