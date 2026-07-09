@@ -17,6 +17,7 @@ import {
 
 import Navbar from "@/componentss/shared/navbar"
 import Footer from "@/componentss/shared/footer"
+import SideAdsFrame from "@/componentss/ads/side-banners"
 import CartCheckoutPanel from "@/componentss/cart/cart-checkout-panel"
 import CartItemRow from "@/componentss/cart/cart-item-row"
 import CartPaymentSuccess from "@/componentss/cart/cart-payment-success"
@@ -108,7 +109,7 @@ export default function CartPage() {
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white antialiased">
       <Navbar />
-
+      <SideAdsFrame>
       <main className="mx-auto max-w-6xl px-5 py-8 md:py-12">
         {payment === "success" ? (
           <CartPaymentSuccess />
@@ -233,6 +234,7 @@ export default function CartPage() {
           </div>
         )}
       </main>
+      </SideAdsFrame>
 
       <Footer />
     </div>
