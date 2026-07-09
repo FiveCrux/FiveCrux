@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, type ReactNode } from "react"
+import { useEffect, useRef, useState, type ReactNode } from "react"
 import Link from "next/link"
 import { Megaphone, ArrowRight } from "lucide-react"
 import { useNavData } from "@/componentss/shared/nav-data-context"
@@ -122,15 +122,47 @@ function Rail({ side, top, bottom, loaded }: { side: "left" | "right"; top: Bann
 // booked, a "Sponsored — coming soon" placeholder while a booked slot has no
 // image yet, or an "Advertise here" CTA when the slot is open.
 function BannerSlot({ banner, position, loaded }: { banner: Banner; position: string; loaded: boolean }) {
+  const cardRef = useRef<HTMLAnchorElement>(null)
+  const trackedRef = useRef(false)
+  const bannerId = banner?.id
+
+  // Real "seen" impression tracking — same 50%-visible-once pattern as the
+  // regular ad cards — fired only for a booked slot with a real creative.
+  useEffect(() => {
+    if (!bannerId || !cardRef.current) return
+    trackedRef.current = false
+    const el = cardRef.current
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && !trackedRef.current) {
+            trackedRef.current = true
+            fetch(`/api/side-banners/${bannerId}/view`, { method: "POST" }).catch(() => {})
+            observer.disconnect()
+          }
+        })
+      },
+      { threshold: 0.5 }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [bannerId])
+
+  const trackClick = () => {
+    if (bannerId) fetch(`/api/side-banners/${bannerId}/click`, { method: "POST" }).catch(() => {})
+  }
+
   return (
     <div className="min-h-0 w-full flex-1 overflow-hidden rounded-2xl">
       {!loaded ? (
         <div className="h-full w-full animate-pulse rounded-2xl border border-white/[0.06] bg-white/[0.03]" />
       ) : banner && banner.imageUrl ? (
         <Link
+          ref={cardRef}
           href={banner.linkUrl || "#"}
           target={banner.linkUrl ? "_blank" : undefined}
           rel="noopener noreferrer sponsored"
+          onClick={trackClick}
           className="group relative block h-full overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0e0e0f] transition-all hover:-translate-y-0.5 hover:border-orange-500/40"
         >
           <span className="absolute left-2.5 top-2.5 z-10 rounded-full border border-white/10 bg-black/55 px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.12em] text-white/55 backdrop-blur-sm">
