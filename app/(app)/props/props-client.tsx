@@ -787,7 +787,7 @@ export function PropsClient({
             transition={{ duration: 0.4 }}
           >
             {loading ? (
-              <div className="grid justify-center gap-4 [grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr))] justify-items-center">
+              <div className="grid justify-center gap-4 [grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),300px))] justify-items-center">
                 {Array.from({ length: 8 }).map((_, i) => (
                   <div
                     key={i}
@@ -811,7 +811,7 @@ export function PropsClient({
                 </button>
               </div>
             ) : (
-              <div className="grid justify-center gap-4 [grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr))] justify-items-center">
+              <div className="grid justify-center gap-4 [grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),300px))] justify-items-center">
                 {(() => {
                   const items: GridItem[] = [...paginatedProps];
                   // Insert ads at memoized positions (only if they fall within current page)
