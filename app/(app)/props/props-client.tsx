@@ -473,8 +473,8 @@ export function PropsClient({
   return (
     <>
       <Navbar />
-      <SideAdsFrame>
       <main className="min-h-screen bg-[#0a0a0a] text-white">
+      <SideAdsFrame>
         {/* ── Header ───────────────────────────────────────────────────── */}
         <section className="relative overflow-hidden border-b border-white/[0.06]">
           <div className="pointer-events-none absolute inset-0">
@@ -923,8 +923,8 @@ export function PropsClient({
             </motion.div>
           )}
         </section>
-      </main>
       </SideAdsFrame>
+      </main>
       <Footer />
     </>
   );
