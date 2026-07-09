@@ -430,8 +430,12 @@ export function ScriptDetailClient({
               {/* Seller + rating line */}
               <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-white/55">
                 <span className="flex items-center gap-2">
-                  <span className="grid h-6 w-6 place-items-center rounded-full bg-gradient-to-br from-orange-500 to-amber-400 text-[10px] font-black text-black">
-                    {sellerInitial}
+                  <span className="relative grid h-6 w-6 place-items-center overflow-hidden rounded-full bg-gradient-to-br from-orange-500 to-amber-400 text-[10px] font-black text-black">
+                    {script.seller_image ? (
+                      <Image src={script.seller_image} alt={script.seller_name} fill sizes="24px" className="object-cover" />
+                    ) : (
+                      sellerInitial
+                    )}
                   </span>
                   {script.seller_name}
                   {verified && <BadgeCheck className="h-4 w-4 text-orange-500" />}
