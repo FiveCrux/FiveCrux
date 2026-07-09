@@ -6,8 +6,9 @@ import { randomUUID } from "crypto";
 import { and, eq, sql } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
-import { carts, coupons, couponRedemptions, orders, tebexOrders } from "@/lib/db/schema";
+import { carts, coupons, couponRedemptions, creatorCodes, creatorCodeRedemptions, orders, tebexOrders } from "@/lib/db/schema";
 import { validateCoupon } from "@/lib/cart-checkout-utils";
+import { validateCreatorCode } from "@/lib/creator-code-utils";
 import {
   addPackageToBasket,
   getBasket,
@@ -42,16 +43,20 @@ type PrepResult =
       cart: any;
       provItems: ProvItem[];
       appliedCoupon: any;
+      appliedCreatorCode: any;
+      creatorCommissionAmount: number;
       discountAmount: number;
       payableAmount: number;
       total: number;
     };
 
 /**
- * Validate the user's cart + coupon and resolve every item to a Tebex package id
- * in FiveCrux's store. Pure read/compute — nothing is created or persisted here.
+ * Validate the user's cart + coupon/creator-code and resolve every item to a
+ * Tebex package id in FiveCrux's store. Pure read/compute — nothing is
+ * created or persisted here. Coupon and creator code are mutually exclusive
+ * (checkout only ever sends one) — couponCode wins if somehow both arrive.
  */
-export async function prepareCartCheckout(userId: string, couponCode: string): Promise<PrepResult> {
+export async function prepareCartCheckout(userId: string, couponCode: string, creatorCodeStr: string = ""): Promise<PrepResult> {
   const cart = await db.query.carts.findFirst({
     where: and(eq(carts.userId, userId), eq(carts.status, "active")),
     with: { items: true },
@@ -61,11 +66,25 @@ export async function prepareCartCheckout(userId: string, couponCode: string): P
   let total = 0;
   for (const item of cart.items) total += Number(item.price) * item.quantity;
 
-  const couponResult = await validateCoupon(couponCode, userId, total, cart.items);
-  if (couponResult && "error" in couponResult) return { ok: false, error: String(couponResult.error || "Invalid coupon"), status: 400 };
-  const appliedCoupon = couponResult?.coupon ?? null;
-  const discountAmount = couponResult?.discountAmount ?? 0;
-  // Allow €0 (free packages / 100%-off coupons) — Tebex still processes a €0
+  let appliedCoupon: any = null;
+  let appliedCreatorCode: any = null;
+  let discountAmount = 0;
+  let creatorCommissionAmount = 0;
+
+  if (couponCode) {
+    const couponResult = await validateCoupon(couponCode, userId, total, cart.items);
+    if (couponResult && "error" in couponResult) return { ok: false, error: String(couponResult.error || "Invalid coupon"), status: 400 };
+    appliedCoupon = couponResult?.coupon ?? null;
+    discountAmount = couponResult?.discountAmount ?? 0;
+  } else if (creatorCodeStr) {
+    const creatorResult = await validateCreatorCode(creatorCodeStr, userId, total);
+    if (creatorResult && "error" in creatorResult) return { ok: false, error: String(creatorResult.error || "Invalid creator code"), status: 400 };
+    appliedCreatorCode = creatorResult?.creatorCode ?? null;
+    discountAmount = creatorResult?.discountAmount ?? 0;
+    creatorCommissionAmount = creatorResult?.commissionAmount ?? 0;
+  }
+
+  // Allow €0 (free packages / 100%-off codes) — Tebex still processes a €0
   // order through checkout and emails the file, so free goes through Tebex too
   // (no separate library path).
   const payableAmount = Math.max(0, total - discountAmount);
@@ -108,7 +127,7 @@ export async function prepareCartCheckout(userId: string, couponCode: string): P
     };
   }
 
-  return { ok: true, cart, provItems, appliedCoupon, discountAmount, payableAmount, total };
+  return { ok: true, cart, provItems, appliedCoupon, appliedCreatorCode, creatorCommissionAmount, discountAmount, payableAmount, total };
 }
 
 /** The webhook-facing custom payload set on the Tebex basket. */
@@ -141,19 +160,26 @@ export async function finalizeBasket(args: {
   basketIdent: string;
   provItems: ProvItem[];
   appliedCoupon: any;
+  appliedCreatorCode?: any;
+  creatorCommissionAmount?: number;
   discountAmount: number;
   payableAmount: number;
   total: number;
   orderId: number;
   custom: any;
 }): Promise<{ checkoutUrl: string; order: any }> {
-  const { userId, cartId, storeToken, basketIdent, provItems, appliedCoupon, discountAmount, payableAmount, total, orderId, custom } = args;
+  const {
+    userId, cartId, storeToken, basketIdent, provItems,
+    appliedCoupon, appliedCreatorCode, creatorCommissionAmount = 0,
+    discountAmount, payableAmount, total, orderId, custom,
+  } = args;
 
   for (const i of provItems) {
     await addPackageToBasket(storeToken, basketIdent, i.tebexPackageId as number, i.quantity);
   }
-  if (appliedCoupon) {
-    try { await applyCoupon(storeToken, basketIdent, appliedCoupon.code); } catch { /* non-fatal */ }
+  const codeForTebex = appliedCoupon?.code ?? appliedCreatorCode?.code;
+  if (codeForTebex) {
+    try { await applyCoupon(storeToken, basketIdent, codeForTebex); } catch { /* non-fatal */ }
   }
   const basket = await getBasket(storeToken, basketIdent);
   const checkoutUrl = getCheckoutUrl(basket);
@@ -164,6 +190,7 @@ export async function finalizeBasket(args: {
       userId,
       cartId,
       couponId: appliedCoupon?.id ?? null,
+      creatorCodeId: appliedCreatorCode?.id ?? null,
       totalAmount: total.toString(),
       discountAmount: discountAmount.toFixed(2),
       payableAmount: payableAmount.toFixed(2),
@@ -180,6 +207,19 @@ export async function finalizeBasket(args: {
       await tx.update(coupons)
         .set({ usedCount: sql`${coupons.usedCount} + 1`, updatedAt: new Date() })
         .where(eq(coupons.id, appliedCoupon.id));
+    }
+
+    if (appliedCreatorCode) {
+      await tx.insert(creatorCodeRedemptions).values({
+        creatorCodeId: appliedCreatorCode.id,
+        userId,
+        orderId,
+        discountAmount: discountAmount.toFixed(2),
+        commissionAmount: creatorCommissionAmount.toFixed(2),
+      });
+      await tx.update(creatorCodes)
+        .set({ usedCount: sql`${creatorCodes.usedCount} + 1`, updatedAt: new Date() })
+        .where(eq(creatorCodes.id, appliedCreatorCode.id));
     }
 
     await tx.insert(tebexOrders).values({

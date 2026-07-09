@@ -37,8 +37,9 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json().catch(() => ({}));
     const couponCode = typeof body.couponCode === "string" ? body.couponCode : "";
+    const creatorCode = typeof body.creatorCode === "string" ? body.creatorCode : "";
 
-    const prep = await prepareCartCheckout(user.id, couponCode);
+    const prep = await prepareCartCheckout(user.id, couponCode, creatorCode);
     if (!prep.ok) {
       return NextResponse.json(
         { error: prep.error, ...(prep.unmapped ? { unmapped: prep.unmapped } : {}) },
@@ -66,7 +67,7 @@ export async function POST(request: NextRequest) {
     // Does the store require the buyer to authenticate before adding packages?
     const continueUrl =
       `${siteUrl}/api/cart/tebex-continue?ident=${encodeURIComponent(basketIdent)}` +
-      `&order=${orderId}&coupon=${encodeURIComponent(couponCode)}`;
+      `&order=${orderId}&coupon=${encodeURIComponent(couponCode)}&creator=${encodeURIComponent(creatorCode)}`;
     let authUrl: string | null = null;
     try {
       const authOpts = await getBasketAuthUrl(storeToken, basketIdent, continueUrl);
@@ -92,6 +93,8 @@ export async function POST(request: NextRequest) {
         basketIdent,
         provItems: prep.provItems,
         appliedCoupon: prep.appliedCoupon,
+        appliedCreatorCode: prep.appliedCreatorCode,
+        creatorCommissionAmount: prep.creatorCommissionAmount,
         discountAmount: prep.discountAmount,
         payableAmount: prep.payableAmount,
         total: prep.total,
