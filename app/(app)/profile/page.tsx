@@ -48,6 +48,7 @@ import Footer from "@/componentss/shared/footer";
 import AdsForm from "@/componentss/ads/ads-form";
 import ScriptSelectionPopup from "@/componentss/featured-scripts/script-selection-popup";
 import CouponsTab from "@/componentss/profile/coupons-tab";
+import CreatorCodesTab from "@/componentss/profile/creator-codes-tab";
 import PropsTab from "@/componentss/profile/props-tab";
 import {
   useUserScripts,
@@ -558,7 +559,10 @@ export default function ProfilePage() {
     { value: "get-verified", label: "Get Verified", icon: ShieldCheck },
     { value: "settings", label: "Settings", icon: Settings },
     ...(canManageCoupons
-      ? [{ value: "coupons", label: "Coupons", icon: Tag }]
+      ? [
+          { value: "coupons", label: "Coupons", icon: Tag },
+          { value: "creator-codes", label: "Creator Codes", icon: Megaphone },
+        ]
       : []),
   ];
 
@@ -2185,6 +2189,18 @@ export default function ProfilePage() {
                     transition={{ duration: 0.8 }}
                   >
                     <CouponsTab />
+                  </motion.div>
+                </TabsContent>
+              )}
+
+              {canManageCoupons && (
+                <TabsContent value="creator-codes" className="space-y-6 mt-0">
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.8 }}
+                  >
+                    <CreatorCodesTab />
                   </motion.div>
                 </TabsContent>
               )}
