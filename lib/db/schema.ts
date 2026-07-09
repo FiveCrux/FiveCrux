@@ -122,6 +122,9 @@ export const orders = pgTable('orders', {
   userId: text('user_id').references(() => users.id),
   cartId: integer('cart_id').references(() => carts.id),
   couponId: integer('coupon_id').references(() => coupons.id),
+  // Mutually exclusive with couponId — checkout lets the buyer pick ONE
+  // (Coupon or Creator), never both. See creatorCodes below.
+  creatorCodeId: integer('creator_code_id').references(() => creatorCodes.id),
   status: orderStatusEnum('status').default('pending'),
   totalAmount: numeric('total_amount').notNull(),
   discountAmount: numeric('discount_amount').default('0'),
@@ -129,6 +132,44 @@ export const orders = pgTable('orders', {
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 });
+
+// ── Creator codes (affiliate/referral — distinct from coupons) ─────────
+// A coupon self-discounts the CREATOR'S OWN listing. A creator code is
+// storewide affiliate marketing: any buyer, on ANY cart, can use a
+// creator's code to get a discount, and that creator earns a commission
+// on the sale — same shape Tebex's own "Creator" checkout mode has,
+// rebuilt here for FiveCrux's own cart (props/side-banner slots), which
+// doesn't go through a per-creator Tebex store.
+export const creatorCodes = pgTable('creator_codes', {
+  id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
+  code: text('code').notNull().unique(),
+  createdBy: text('created_by').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  discountType: discountTypeEnum('discount_type').notNull(),   // buyer's discount
+  discountValue: numeric('discount_value', { precision: 10, scale: 2 }).notNull(),
+  commissionType: discountTypeEnum('commission_type').notNull(), // creator's cut
+  commissionValue: numeric('commission_value', { precision: 10, scale: 2 }).notNull(),
+  isActive: boolean('is_active').notNull().default(true),
+  usedCount: integer('used_count').notNull().default(0),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+export type CreatorCode = typeof creatorCodes.$inferSelect;
+export type NewCreatorCode = typeof creatorCodes.$inferInsert;
+
+// One row per redemption — the creator's own "earnings" dashboard sums
+// commissionAmount from here rather than trusting a running counter, so it
+// can never drift from what actually got recorded per order.
+export const creatorCodeRedemptions = pgTable('creator_code_redemptions', {
+  id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
+  creatorCodeId: integer('creator_code_id').notNull().references(() => creatorCodes.id, { onDelete: 'cascade' }),
+  userId: text('user_id').references(() => users.id),
+  orderId: integer('order_id').references(() => orders.id),
+  discountAmount: numeric('discount_amount', { precision: 10, scale: 2 }).notNull(),
+  commissionAmount: numeric('commission_amount', { precision: 10, scale: 2 }).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+export type CreatorCodeRedemption = typeof creatorCodeRedemptions.$inferSelect;
+export type NewCreatorCodeRedemption = typeof creatorCodeRedemptions.$inferInsert;
 
 export const couponRedemptions = pgTable('coupon_redemptions', {
   id: integer('id').primaryKey().notNull(),

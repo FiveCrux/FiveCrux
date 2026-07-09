@@ -1,55 +1,77 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { Receipt, BadgeCheck, Lock, CreditCard, ShieldCheck } from "lucide-react"
+import { Receipt, BadgeCheck, Lock, CreditCard, ShieldCheck, Ticket } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/componentss/ui/select"
 
-type AppliedCoupon = {
+type AppliedCode = {
   id: number
   code: string
   discountAmount: number
 }
+
+type CodeMode = "coupon" | "creator"
 
 type CartCheckoutPanelProps = {
   total: number
 }
 
 export default function CartCheckoutPanel({ total }: CartCheckoutPanelProps) {
-  const [couponCode, setCouponCode] = useState("")
-  const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null)
+  const [mode, setMode] = useState<CodeMode>("coupon")
+  const [codeInput, setCodeInput] = useState("")
+  const [appliedCode, setAppliedCode] = useState<AppliedCode | null>(null)
+  const [appliedMode, setAppliedMode] = useState<CodeMode | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isApplying, setIsApplying] = useState(false)
   const [isCheckingOut, setIsCheckingOut] = useState(false)
 
   const payableAmount = useMemo(() => {
-    return Math.max(0, total - (appliedCoupon?.discountAmount ?? 0))
-  }, [appliedCoupon, total])
+    return Math.max(0, total - (appliedCode?.discountAmount ?? 0))
+  }, [appliedCode, total])
 
-  const applyCoupon = async () => {
+  const resetInput = (value: string) => {
+    setCodeInput(value.toUpperCase())
+    setAppliedCode(null)
+    setAppliedMode(null)
+    setMessage(null)
+    setError(null)
+  }
+
+  const switchMode = (next: CodeMode) => {
+    setMode(next)
+    resetInput("")
+  }
+
+  const applyCode = async () => {
     setIsApplying(true)
     setError(null)
     setMessage(null)
 
+    const endpoint = mode === "coupon" ? "/api/cart/coupon" : "/api/cart/creator-code"
+    const payloadKey = mode === "coupon" ? "couponCode" : "creatorCode"
+    const responseKey = mode === "coupon" ? "coupon" : "creatorCode"
+
     try {
-      const response = await fetch("/api/cart/coupon", {
+      const response = await fetch(endpoint, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ couponCode }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ [payloadKey]: codeInput }),
       })
 
       const data = await response.json()
 
       if (!response.ok) {
-        setAppliedCoupon(null)
-        throw new Error(data.error || "Failed to apply coupon")
+        setAppliedCode(null)
+        setAppliedMode(null)
+        throw new Error(data.error || `Failed to apply ${mode === "coupon" ? "coupon" : "creator code"}`)
       }
 
-      setAppliedCoupon(data.coupon)
-      setMessage(`Coupon ${data.coupon.code} applied`)
+      setAppliedCode(data[responseKey])
+      setAppliedMode(mode)
+      setMessage(`${data[responseKey].code} applied`)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to apply coupon")
+      setError(err instanceof Error ? err.message : "Failed to apply code")
     } finally {
       setIsApplying(false)
     }
@@ -61,12 +83,17 @@ export default function CartCheckoutPanel({ total }: CartCheckoutPanelProps) {
     setMessage(null)
 
     try {
+      const body =
+        appliedMode === "creator"
+          ? { creatorCode: appliedCode?.code ?? "" }
+          : { couponCode: appliedCode?.code ?? "" }
+
       const response = await fetch("/api/cart/tebex-checkout", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ couponCode: appliedCoupon?.code ?? "" }),
+        body: JSON.stringify(body),
       })
 
       const data = await response.json()
@@ -98,7 +125,10 @@ export default function CartCheckoutPanel({ total }: CartCheckoutPanelProps) {
       {/* Receipt header */}
       <div className="flex items-center justify-between border-b border-dashed border-white/[0.12] px-6 py-5">
         <div>
-          <div className="text-base font-extrabold tracking-tight text-white">Receipt</div>
+          <div className="flex items-center gap-2 text-base font-extrabold tracking-tight text-white">
+            <Ticket className="h-4 w-4 text-orange-500" />
+            Apply Coupon
+          </div>
           <div className="mt-0.5 text-[11px] uppercase tracking-[0.16em] tabular-nums text-white/55">
             Order summary
           </div>
@@ -109,41 +139,45 @@ export default function CartCheckoutPanel({ total }: CartCheckoutPanelProps) {
       </div>
 
       <div className="px-6 py-5">
-        {/* Coupon */}
+        {/* Coupon / Creator toggle + code input */}
         <div className="flex gap-2">
+          <Select value={mode} onValueChange={(v) => switchMode(v as CodeMode)}>
+            <SelectTrigger className="w-[130px] flex-none rounded-xl border-white/10 bg-white/[0.03] text-sm font-semibold text-white">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="border-white/[0.08] bg-[#0d0d0f] text-white">
+              <SelectItem value="coupon">Coupon</SelectItem>
+              <SelectItem value="creator">Creator</SelectItem>
+            </SelectContent>
+          </Select>
           <input
             type="text"
-            value={couponCode}
-            onChange={(event) => {
-              setCouponCode(event.target.value.toUpperCase())
-              setAppliedCoupon(null)
-              setMessage(null)
-              setError(null)
-            }}
-            placeholder="Coupon code"
+            value={codeInput}
+            onChange={(event) => resetInput(event.target.value)}
+            placeholder={mode === "coupon" ? "Enter coupon code" : "Enter creator code"}
             className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3.5 py-2.5 text-sm font-semibold tracking-wide tabular-nums text-white outline-none transition focus:border-orange-500/50"
           />
           <button
             type="button"
-            onClick={applyCoupon}
-            disabled={isApplying || !couponCode.trim()}
-            className="rounded-xl bg-white/[0.08] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/[0.14] disabled:cursor-not-allowed disabled:text-white/55"
+            onClick={applyCode}
+            disabled={isApplying || !codeInput.trim()}
+            className="flex-none rounded-xl bg-orange-500 px-4 py-2.5 text-sm font-bold text-black transition hover:bg-orange-400 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isApplying ? "Applying..." : "Apply"}
           </button>
         </div>
 
-        {appliedCoupon && (
+        {appliedCode && (
           <div className="mt-2.5 inline-flex items-center gap-2 rounded-full bg-emerald-500/12 px-3 py-1 text-xs font-bold text-emerald-400 ring-1 ring-emerald-500/25">
             <BadgeCheck className="h-3.5 w-3.5" />
-            {appliedCoupon.code} applied
+            {appliedCode.code} applied
             <span className="tabular-nums text-emerald-300">
-              −€{appliedCoupon.discountAmount.toFixed(2)}
+              −€{appliedCode.discountAmount.toFixed(2)}
             </span>
           </div>
         )}
 
-        {message && !appliedCoupon && <p className="mt-2.5 text-sm text-emerald-400">{message}</p>}
+        {message && !appliedCode && <p className="mt-2.5 text-sm text-emerald-400">{message}</p>}
         {error && <p className="mt-2.5 text-sm text-red-400">{error}</p>}
 
         <div className="my-4 border-t border-dashed border-white/[0.12]"></div>
@@ -154,11 +188,11 @@ export default function CartCheckoutPanel({ total }: CartCheckoutPanelProps) {
             <dt className="text-white/50">Subtotal</dt>
             <dd className="font-semibold tabular-nums text-white">€{total.toFixed(2)}</dd>
           </div>
-          {appliedCoupon && (
+          {appliedCode && (
             <div className="flex items-center justify-between">
               <dt className="text-white/50">Discount</dt>
               <dd className="font-semibold tabular-nums text-emerald-400">
-                −€{appliedCoupon.discountAmount.toFixed(2)}
+                −€{appliedCode.discountAmount.toFixed(2)}
               </dd>
             </div>
           )}

@@ -31,9 +31,10 @@ export async function GET(request: NextRequest) {
     const basketIdent = searchParams.get("ident") || "";
     const orderId = Number(searchParams.get("order")) || 0;
     const couponCode = searchParams.get("coupon") || "";
+    const creatorCode = searchParams.get("creator") || "";
     if (!basketIdent || !orderId) return fail("missing-basket");
 
-    const prep = await prepareCartCheckout(user.id, couponCode);
+    const prep = await prepareCartCheckout(user.id, couponCode, creatorCode);
     if (!prep.ok) return fail(prep.error);
 
     const custom = buildCustom(user.id, orderId, prep.cart.id, prep.provItems);
@@ -45,6 +46,8 @@ export async function GET(request: NextRequest) {
       basketIdent,
       provItems: prep.provItems,
       appliedCoupon: prep.appliedCoupon,
+      appliedCreatorCode: prep.appliedCreatorCode,
+      creatorCommissionAmount: prep.creatorCommissionAmount,
       discountAmount: prep.discountAmount,
       payableAmount: prep.payableAmount,
       total: prep.total,
