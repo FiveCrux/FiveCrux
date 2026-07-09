@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { incrementAdViewCount, getAdById } from "@/lib/database-new"
+import { recordAdEvent, getCountryFromHeaders } from "@/lib/ad-analytics"
 
 export async function POST(
   request: NextRequest,
@@ -41,6 +42,16 @@ export async function POST(
     }
 
     console.log(`[POST /api/ads/${id}/view] Successfully tracked view for ad ${adId}`)
+
+    recordAdEvent({
+      adType: "ad",
+      adId,
+      eventType: "impression",
+      referrer: request.headers.get("referer"),
+      requestHost: request.headers.get("host"),
+      country: getCountryFromHeaders(request.headers),
+    })
+
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error(`[POST /api/ads/[id]/view] Error tracking ad view:`, error)

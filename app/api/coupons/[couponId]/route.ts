@@ -6,15 +6,15 @@ import { authOptions } from "@/auth"
 import { parseCouponDate } from "@/lib/coupon-utils"
 import { db } from "@/lib/db/client"
 import { coupons } from "@/lib/db/schema"
-import { canManageCoupons, isCouponAdmin } from "@/lib/coupon-access"
+import { canManageCouponsAsync, isCouponAdmin } from "@/lib/coupon-access"
 
 const validScopes = ["Ad Slots", "Featured Script Slots", "Props", "all"] as const
 const validDiscountTypes = ["Percentage", "Amount"] as const
 const validApplicationRules = ["individual", "basket_before_sales", "basket_after_sales"] as const
 
-function hasCouponAccess(session: any) {
+async function hasCouponAccess(session: any) {
   const user = session?.user as any
-  return canManageCoupons(user?.roles)
+  return canManageCouponsAsync(user?.id, user?.roles)
 }
 
 // Isolation: admins/founders may target any coupon; a verified_creator is
@@ -109,7 +109,7 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    if (!hasCouponAccess(session)) {
+    if (!(await hasCouponAccess(session))) {
       return NextResponse.json({ error: "Coupon management access required" }, { status: 403 })
     }
 
@@ -160,7 +160,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    if (!hasCouponAccess(session)) {
+    if (!(await hasCouponAccess(session))) {
       return NextResponse.json({ error: "Coupon management access required" }, { status: 403 })
     }
 

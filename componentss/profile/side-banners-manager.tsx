@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { toast } from "sonner"
-import { Megaphone, Loader2, ExternalLink, Clock } from "lucide-react"
+import { Megaphone, Loader2, ExternalLink, Clock, BarChart3 } from "lucide-react"
+import AdDetailedAnalyticsModal from "@/componentss/profile/ad-detailed-analytics-modal"
 
 type SideBanner = {
   id: number
@@ -122,6 +123,7 @@ function SlotCard({ booking, onSaved }: { booking: SideBanner; onSaved: () => vo
   const [linkUrl, setLinkUrl] = useState(booking.linkUrl || "")
   const [title, setTitle] = useState(booking.title || "")
   const [saving, setSaving] = useState(false)
+  const [showAnalytics, setShowAnalytics] = useState(false)
 
   const save = async () => {
     if (!imageUrl.trim()) {
@@ -194,6 +196,14 @@ function SlotCard({ booking, onSaved }: { booking: SideBanner; onSaved: () => vo
           >
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : booking.imageUrl ? "Update banner" : "Publish banner"}
           </button>
+          {booking.imageUrl && (
+            <button
+              onClick={() => setShowAnalytics(true)}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-white/[0.1] px-3 py-2 text-xs font-semibold text-orange-400 transition hover:bg-white/[0.06]"
+            >
+              <BarChart3 className="h-3.5 w-3.5" /> Analytics
+            </button>
+          )}
           {booking.imageUrl && booking.linkUrl && (
             <a href={booking.linkUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-white/50 hover:text-white">
               <ExternalLink className="h-3.5 w-3.5" /> Visit link
@@ -201,6 +211,15 @@ function SlotCard({ booking, onSaved }: { booking: SideBanner; onSaved: () => vo
           )}
         </div>
       </div>
+
+      {showAnalytics && (
+        <AdDetailedAnalyticsModal
+          adType="side_banner"
+          adId={booking.id}
+          title={`${booking.position} slot`}
+          onClose={() => setShowAnalytics(false)}
+        />
+      )}
     </div>
   )
 }

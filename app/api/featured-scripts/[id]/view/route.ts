@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { incrementFeaturedScriptViewCount } from "@/lib/database-new"
+import { recordAdEvent, getCountryFromHeaders } from "@/lib/ad-analytics"
 
 export async function POST(
   request: NextRequest,
@@ -23,6 +24,16 @@ export async function POST(
     }
 
     console.log(`[POST /api/featured-scripts/${id}/view] Successfully tracked view`)
+
+    recordAdEvent({
+      adType: "featured_script",
+      adId: featuredScriptId,
+      eventType: "impression",
+      referrer: request.headers.get("referer"),
+      requestHost: request.headers.get("host"),
+      country: getCountryFromHeaders(request.headers),
+    })
+
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error(`[POST /api/featured-scripts/[id]/view] Error tracking view:`, error)
