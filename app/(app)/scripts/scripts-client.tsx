@@ -351,11 +351,17 @@ export function ScriptsClient({
         return false;
       }
 
-      if (
-        selectedCategories.length > 0 &&
-        !selectedCategories.includes(script.category)
-      ) {
-        return false;
+      if (selectedCategories.length > 0) {
+        // "other" is a catch-all: it matches any script whose category isn't
+        // one of the DB's known active categories (deleted/legacy category),
+        // in addition to scripts literally tagged "other".
+        const knownSlugs = categories.map((c) => c.id.toLowerCase());
+        const matchesSelected = selectedCategories.some((sel) =>
+          sel.toLowerCase() === "other"
+            ? !knownSlugs.includes(script.category?.toLowerCase())
+            : sel === script.category
+        );
+        if (!matchesSelected) return false;
       }
 
       if (
@@ -403,6 +409,7 @@ export function ScriptsClient({
     allScripts,
     searchQuery,
     selectedCategories,
+    categories,
     selectedFrameworks,
     priceRange,
     priceBounds,
@@ -684,7 +691,7 @@ export function ScriptsClient({
               </div>
               <div className="-mx-2.5 flex gap-4 overflow-x-auto px-2.5 pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 {featuredProducts.map((product) => (
-                  <div key={`featured-${product.id}`} className="w-[280px] shrink-0">
+                  <div key={`featured-${product.id}`} className="w-[300px] shrink-0">
                     <ProductCard product={product} />
                   </div>
                 ))}
@@ -787,6 +794,17 @@ export function ScriptsClient({
                 </button>
               );
             })}
+            {/* Catch-all for scripts whose category isn't one of the active DB categories. */}
+            <button
+              onClick={() => handleCategoryChange("other", !selectedCategories.includes("other"))}
+              className={`rounded-full px-4 py-1.5 text-sm font-semibold transition ${
+                selectedCategories.includes("other")
+                  ? "bg-gradient-to-r from-orange-500 to-yellow-400 text-black"
+                  : "border border-white/[0.08] bg-white/[0.04] text-white/70 hover:border-orange-500/40 hover:text-white"
+              }`}
+            >
+              Other
+            </button>
           </div>
 
           {/* Collapsible filter panel: frameworks + price + free/on-sale */}
@@ -963,11 +981,11 @@ export function ScriptsClient({
 
           {/* Grid / states */}
           {loading ? (
-            <div className="grid justify-center gap-4 [grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),1fr))] justify-items-center">
+            <div className="grid justify-center gap-4 [grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr))] justify-items-center">
               {Array.from({ length: 8 }).map((_, i) => (
                 <div
                   key={i}
-                  className="h-64 w-full sm:max-w-[280px] animate-pulse rounded-2xl border border-white/[0.06] bg-white/[0.03]"
+                  className="h-64 w-full sm:max-w-[300px] animate-pulse rounded-2xl border border-white/[0.06] bg-white/[0.03]"
                 />
               ))}
             </div>
@@ -988,9 +1006,9 @@ export function ScriptsClient({
               initial={{ opacity: 0 }}
               animate={scriptsInView ? { opacity: 1 } : { opacity: 1 }}
               transition={{ duration: 0.4 }}
-              // auto-fill at the card's native 280px width so columns only form when
+              // auto-fill at the card's native 300px width so columns only form when
               // there is room — keeps the fixed-width ProductCard responsive without overflow.
-              className="grid justify-center gap-4 [grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),1fr))] justify-items-center"
+              className="grid justify-center gap-4 [grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr))] justify-items-center"
             >
               {(() => {
                 const items: GridItem[] = [...paginatedScripts];
@@ -1041,7 +1059,7 @@ export function ScriptsClient({
                       initial={{ opacity: 0, y: 16 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: Math.min(index * 0.04, 0.4) }}
-                      className="w-full sm:max-w-[280px]"
+                      className="w-full sm:max-w-[300px]"
                     >
                       <ProductCard product={toMarketProduct(script)} className="w-full" />
                     </motion.div>
