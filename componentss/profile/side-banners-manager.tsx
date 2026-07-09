@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { toast } from "sonner"
-import { Megaphone, Loader2, ExternalLink, Clock, BarChart3 } from "lucide-react"
+import { Megaphone, Loader2, ExternalLink, Clock, BarChart3, Upload } from "lucide-react"
 import AdDetailedAnalyticsModal from "@/componentss/profile/ad-detailed-analytics-modal"
 
 type SideBanner = {
@@ -123,7 +123,33 @@ function SlotCard({ booking, onSaved }: { booking: SideBanner; onSaved: () => vo
   const [linkUrl, setLinkUrl] = useState(booking.linkUrl || "")
   const [title, setTitle] = useState(booking.title || "")
   const [saving, setSaving] = useState(false)
+  const [uploading, setUploading] = useState(false)
   const [showAnalytics, setShowAnalytics] = useState(false)
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    event.target.value = ""
+    if (!file) return
+
+    setUploading(true)
+    try {
+      const formData = new FormData()
+      formData.append("file", file)
+      formData.append("type", "image")
+      formData.append("purpose", "side_banner")
+
+      const res = await fetch("/api/upload", { method: "POST", body: formData })
+      if (!res.ok) throw new Error("Upload failed")
+      const data = await res.json()
+      if (!data.url) throw new Error("Upload failed")
+      setImageUrl(data.url)
+      toast.success("Image uploaded — click Publish/Update to make it live.")
+    } catch {
+      toast.error("Failed to upload image")
+    } finally {
+      setUploading(false)
+    }
+  }
 
   const save = async () => {
     if (!imageUrl.trim()) {
@@ -170,12 +196,19 @@ function SlotCard({ booking, onSaved }: { booking: SideBanner; onSaved: () => vo
           <ExpiryPill endDate={booking.endDate} />
         </div>
 
-        <input
-          value={imageUrl}
-          onChange={(e) => setImageUrl(e.target.value)}
-          placeholder="Banner image URL (tall / vertical)"
-          className="mb-2 w-full rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-sm outline-none focus:border-orange-500/50"
-        />
+        <div className="mb-2 flex gap-2">
+          <input
+            value={imageUrl}
+            onChange={(e) => setImageUrl(e.target.value)}
+            placeholder="Banner image URL (tall / vertical)"
+            className="w-full rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-sm outline-none focus:border-orange-500/50"
+          />
+          <label className="flex flex-none cursor-pointer items-center gap-1.5 rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-sm font-semibold text-white/70 transition hover:border-orange-500/40 hover:text-white">
+            <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={uploading} />
+            {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+            Upload
+          </label>
+        </div>
         <input
           value={linkUrl}
           onChange={(e) => setLinkUrl(e.target.value)}
