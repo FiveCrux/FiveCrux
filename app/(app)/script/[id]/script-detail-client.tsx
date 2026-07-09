@@ -348,7 +348,7 @@ export function ScriptDetailClient({
                     >
                       <MediaView item={active} title={script.title} sizes="(max-width:1024px) 100vw, 760px" className="transition duration-700 group-hover:scale-[1.03]" />
                       <span className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
-                      <span className="absolute left-4 top-4 rounded-full bg-black/45 px-2.5 py-1 text-[11px] font-semibold tracking-wide text-white/85 ring-1 ring-white/10 backdrop-blur-md">
+                      <span className="absolute left-4 top-4 rounded-full bg-black/45 px-2.5 py-1 text-[11px] font-semibold capitalize tracking-wide text-white/85 ring-1 ring-white/10 backdrop-blur-md">
                         {categoryLabel}
                       </span>
                     </button>
@@ -457,7 +457,7 @@ export function ScriptDetailClient({
               {/* Tags */}
               <div className="flex flex-wrap gap-1.5">
                 {script.framework?.map((fw, idx) => (
-                  <span key={idx} className="rounded-full border border-white/[0.1] bg-white/[0.06] px-3.5 py-1 text-[11px] font-bold text-white/55">
+                  <span key={idx} className="rounded-full border border-white/[0.1] bg-white/[0.06] px-3.5 py-1 text-[11px] font-bold capitalize text-white/55">
                     {fw}
                   </span>
                 ))}
