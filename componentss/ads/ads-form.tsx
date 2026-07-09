@@ -187,8 +187,9 @@ export default function AdsForm({ isOpen, onClose, onSuccess, editData, slotUniq
       if (selectedImage) {
         const formData = new FormData()
         formData.append('file', selectedImage)
-        formData.append('folder', 'ads')
-        
+        formData.append('type', 'image')
+        formData.append('purpose', 'ad_creative')
+
         const uploadResponse = await fetch('/api/upload', {
           method: 'POST',
           body: formData
@@ -447,6 +448,9 @@ export default function AdsForm({ isOpen, onClose, onSuccess, editData, slotUniq
                     className="w-full"
                     purpose="ad"
                   />
+                  <p className="mt-1.5 text-xs text-white/45">
+                    Recommended 1200×800px (landscape), PNG/JPG/WebP up to 5MB
+                  </p>
                   {selectedImage && (
                     <div className="mt-2 flex items-center gap-2">
                       <Badge variant="secondary" className="bg-green-900/20 text-green-400">

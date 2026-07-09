@@ -977,7 +977,7 @@ export default function EditScriptPage() {
                         <>
                           <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                           <p className="text-gray-400">Upload cover image</p>
-                          <p className="text-sm text-gray-500 mt-2">PNG, JPG up to 5MB (will be displayed on scripts listing)</p>
+                          <p className="text-sm text-gray-500 mt-2">1280×720 · PNG, JPG up to 5MB (will be displayed on scripts listing)</p>
                         </>
                       )}
                     </label>
