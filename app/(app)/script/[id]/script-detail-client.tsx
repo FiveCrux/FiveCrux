@@ -321,8 +321,8 @@ export function ScriptDetailClient({
   return (
     <>
       <Navbar />
-      <SideAdsFrame>
       <main className="min-h-screen bg-[#0a0a0a] text-white antialiased [font-variant-numeric:tabular-nums]">
+      <SideAdsFrame>
         <div className="mx-auto max-w-[1200px] px-5 pb-24 pt-20">
           {/* Breadcrumb */}
           <nav className="flex items-center gap-2 py-5 text-[13px] text-white/55">
@@ -679,8 +679,8 @@ export function ScriptDetailClient({
             </div>
           </section>
         </div>
-      </main>
       </SideAdsFrame>
+      </main>
 
       {/* Fullscreen media lightbox */}
       {isFullscreen && active && (

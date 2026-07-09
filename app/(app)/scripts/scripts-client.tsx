@@ -646,8 +646,8 @@ export function ScriptsClient({
   return (
     <>
       <Navbar />
-      <SideAdsFrame>
       <main className="min-h-screen bg-[#0a0a0a] text-white">
+      <SideAdsFrame>
         {/* ── Page header ───────────────────────────────────────────────── */}
         <section className="relative overflow-hidden border-b border-white/[0.06]">
           <div className="pointer-events-none absolute inset-0">
@@ -1111,8 +1111,8 @@ export function ScriptsClient({
             </motion.div>
           )}
         </section>
-      </main>
       </SideAdsFrame>
+      </main>
       <Footer />
     </>
   );
