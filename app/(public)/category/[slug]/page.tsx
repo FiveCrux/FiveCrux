@@ -81,14 +81,17 @@ export default function CategoryPage() {
   const [loading, setLoading] = useState(true)
   // Dynamic category name from the DB (falls back to the static map / slug).
   const [dbCategoryName, setDbCategoryName] = useState<string | null>(null)
+  // Every active category slug — used so "other" can catch scripts whose
+  // category isn't one of these (deleted/legacy category).
+  const [knownSlugs, setKnownSlugs] = useState<string[]>([])
   useEffect(() => {
     fetch("/api/categories")
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
-        const m = Array.isArray(d?.categories)
-          ? d.categories.find((c: any) => c.slug?.toLowerCase() === categorySlug?.toLowerCase())
-          : null
+        const list = Array.isArray(d?.categories) ? d.categories : []
+        const m = list.find((c: any) => c.slug?.toLowerCase() === categorySlug?.toLowerCase())
         if (m) setDbCategoryName(m.name)
+        setKnownSlugs(list.map((c: any) => String(c.slug).toLowerCase()))
       })
       .catch(() => {})
   }, [categorySlug])
@@ -152,8 +155,11 @@ export default function CategoryPage() {
         }
 
         const data = await response.json()
+        const isOther = categorySlug.toLowerCase() === "other"
         const categoryScripts = (data.scripts || []).filter((script: Script) =>
-          script.category.toLowerCase() === categorySlug.toLowerCase()
+          isOther
+            ? !knownSlugs.includes(script.category.toLowerCase())
+            : script.category.toLowerCase() === categorySlug.toLowerCase()
         )
         setScripts(categoryScripts)
       } catch (error) {
@@ -164,8 +170,12 @@ export default function CategoryPage() {
       }
     }
 
-    fetchScripts()
-  }, [categorySlug])
+    // For "other" wait until we know the active category slugs, otherwise
+    // every script would briefly look uncategorized.
+    if (categorySlug.toLowerCase() !== "other" || knownSlugs.length > 0) {
+      fetchScripts()
+    }
+  }, [categorySlug, knownSlugs])
 
   const frameworks = [{ value: "All Frameworks", label: "All Frameworks" }, ...useFrameworks()]
   const priceCategories = PRICE_TIERS
@@ -442,7 +452,7 @@ export default function CategoryPage() {
               <ProductCard
                 key={product.id}
                 product={product}
-                className={viewMode === "grid" ? "w-full sm:max-w-[280px]" : "w-full sm:max-w-none"}
+                className={viewMode === "grid" ? "w-full sm:max-w-[300px]" : "w-full sm:max-w-none"}
               />
             ))}
           </div>
