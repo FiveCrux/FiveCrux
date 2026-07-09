@@ -1,4 +1,5 @@
 import Link from "next/link"
+import Image from "next/image"
 
 const DISCORD = "https://discord.gg/EwGrUb7DW6"
 
@@ -49,9 +50,8 @@ export default function Footer() {
         {/* Top: brand (left) + link columns (right) */}
         <div className="flex flex-wrap justify-between gap-x-16 gap-y-10 pt-16">
           <div className="max-w-[300px]">
-            <Link href="/" className="inline-flex items-center gap-2.5 text-[17px] font-bold tracking-tight text-white">
-              <span className="grid h-7 w-7 place-items-center rounded-lg bg-orange-500 text-sm font-black text-black">F</span>
-              FiveCrux
+            <Link href="/" aria-label="FiveCrux home" className="inline-flex items-center">
+              <Image src="/fivecrux-logo.png" alt="FiveCrux" width={142} height={34} />
             </Link>
             <p className="mt-5 text-sm leading-relaxed text-white/55">
               Premium FiveM scripts, MLOs &amp; resources — discover, buy and run them on your server.
