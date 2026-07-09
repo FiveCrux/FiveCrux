@@ -694,7 +694,10 @@ export default function ProfilePage() {
                 </p>
                 <div className="mt-3 flex items-center gap-1.5 text-[11px] text-white/55">
                   <Calendar className="h-3.5 w-3.5" />
-                  Member since {new Date().toLocaleDateString()}
+                  Member since{" "}
+                  {(session.user as any)?.createdAt
+                    ? new Date((session.user as any).createdAt).toLocaleDateString()
+                    : "—"}
                 </div>
 
                 {/* mini stat list */}

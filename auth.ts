@@ -121,6 +121,7 @@ export const authOptions: NextAuthOptions = {
 						console.log("Auth callback - User roles from DB:", dbUser.roles)
 						;(session.user as any).roles = dbUser.roles
 						;(session.user as any).username = dbUser.username
+						;(session.user as any).createdAt = dbUser.createdAt
 						// Use name from database if available, otherwise use Discord name.
 						// Capitalize on the way out so existing lowercase rows also
 						// display cleanly (no re-login needed).
