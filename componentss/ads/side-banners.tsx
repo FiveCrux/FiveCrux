@@ -110,7 +110,7 @@ function Rail({ side, top, bottom, loaded }: { side: "left" | "right"; top: Bann
     <aside
       aria-label={`${side} sponsored banners`}
       style={{ width: railW }}
-      className="sticky top-[88px] hidden h-[calc(100vh-104px)] min-h-[460px] shrink-0 flex-col gap-4 self-start xl:flex"
+      className="sticky top-[88px] hidden h-[calc(100vh-104px)] min-h-[460px] shrink-0 flex-col gap-4 self-start bg-[#0a0a0a] xl:flex"
     >
       <BannerSlot banner={top} position={`${side}-top`} loaded={loaded} />
       <BannerSlot banner={bottom} position={`${side}-bottom`} loaded={loaded} />
