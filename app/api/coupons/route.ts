@@ -6,7 +6,7 @@ import { authOptions } from "@/auth"
 import { parseCouponDate } from "@/lib/coupon-utils"
 import { db } from "@/lib/db/client"
 import { coupons } from "@/lib/db/schema"
-import { canManageCoupons, isCouponAdmin } from "@/lib/coupon-access"
+import { canManageCouponsAsync, isCouponAdmin } from "@/lib/coupon-access"
 
 const validScopes = ["Ad Slots", "Featured Script Slots", "Props", "all"] as const
 const validDiscountTypes = ["Percentage", "Amount"] as const
@@ -16,9 +16,9 @@ function generateNumericId() {
   return Math.floor(Date.now() / 1000) + Math.floor(Math.random() * 10000)
 }
 
-function hasCouponAccess(session: any) {
+async function hasCouponAccess(session: any) {
   const user = session?.user as any
-  return canManageCoupons(user?.roles)
+  return canManageCouponsAsync(user?.id, user?.roles)
 }
 
 export async function GET() {
@@ -29,7 +29,7 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    if (!hasCouponAccess(session)) {
+    if (!(await hasCouponAccess(session))) {
       return NextResponse.json({ error: "Coupon management access required" }, { status: 403 })
     }
 
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    if (!hasCouponAccess(session)) {
+    if (!(await hasCouponAccess(session))) {
       return NextResponse.json({ error: "Coupon management access required" }, { status: 403 })
     }
 

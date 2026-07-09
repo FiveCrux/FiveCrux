@@ -166,6 +166,21 @@ export default function ProfilePage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("overview");
   const [uploadingProfilePicture, setUploadingProfilePicture] = useState(false);
+  // Coupon access now also opens to any seller with an approved listing (not
+  // just verified_creator/admin/founder) — that requires a DB check, so we
+  // ask the coupons API itself rather than only inspecting the JWT roles.
+  const [hasListingCouponAccess, setHasListingCouponAccess] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    fetch("/api/coupons")
+      .then((r) => {
+        if (alive && r.ok) setHasListingCouponAccess(true);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   // Track which tabs have been visited for lazy loading
   const [visitedTabs, setVisitedTabs] = useState<Set<string>>(
@@ -515,12 +530,13 @@ export default function ProfilePage() {
   };
 
   const profilePictureUrl = getSessionUserProfilePicture(session);
-  // Coupons are managed by founders/admins AND verified creators. Creators'
-  // coupons are self-scoped server-side (their own products only) — see
-  // lib/coupon-access.ts + validateCoupon.
-  const canManageCoupons = (((session?.user as any)?.roles || []) as string[]).some(
-    (role: string) => role === "founder" || role === "admin" || role === "verified_creator"
-  );
+  // Coupons are managed by founders/admins, verified creators, and any seller
+  // with an approved listing. Creators' coupons are self-scoped server-side
+  // (their own products only) — see lib/coupon-access.ts + validateCoupon.
+  const canManageCoupons =
+    (((session?.user as any)?.roles || []) as string[]).some(
+      (role: string) => role === "founder" || role === "admin" || role === "verified_creator"
+    ) || hasListingCouponAccess;
 
   // Sidebar navigation items (drive the same activeTab state as the tabs).
   // Coupons is only shown when the user can manage coupons.
