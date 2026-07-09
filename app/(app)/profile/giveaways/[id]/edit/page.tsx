@@ -1228,7 +1228,7 @@ export default function EditGiveawayPage() {
                           <>
                             <Upload className="h-12 w-12 text-white/55 mx-auto mb-4" />
                             <p className="text-white/60">Click to upload cover image</p>
-                            <p className="text-sm text-white/55 mt-2">PNG, JPG up to 5MB</p>
+                            <p className="text-sm text-white/55 mt-2">1280×720 · PNG, JPG up to 5MB</p>
                           </>
                         )}
                       </label>

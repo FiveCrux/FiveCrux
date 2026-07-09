@@ -471,6 +471,8 @@ export default function AdminPage() {
       if (selectedImage) {
         const formData = new FormData();
         formData.append("file", selectedImage);
+        formData.append("type", "image");
+        formData.append("purpose", "ad_creative");
 
         // Abort the upload after 8s so the dialog never hangs indefinitely.
         const c = new AbortController();
@@ -2190,6 +2192,9 @@ export default function AdminPage() {
                                   accept="image/*"
                                   maxSize={5}
                                 />
+                                <p className="mt-1.5 text-xs text-gray-400">
+                                  Recommended 1200×800px (landscape), PNG/JPG/WebP up to 5MB
+                                </p>
                               </div>
                               <div>
                                 <label className="text-sm text-gray-300">
