@@ -47,8 +47,9 @@ export default function NavbarComponent() {
     }
   }, [])
 
-  // Categories first, then the fixed product types.
-  const navItems = [...cats, ...STATIC_NAV]
+  // Categories first, then a catch-all "Other" for scripts whose category
+  // isn't one of the active DB categories, then the fixed product types.
+  const navItems = [...cats, { name: "Other", link: "/scripts?category=other" }, ...STATIC_NAV]
 
   const userRoles = (session?.user as any)?.roles || []
   const hasAdminAccess = ["admin", "founder", "moderator"].some((r) => userRoles.includes(r))
