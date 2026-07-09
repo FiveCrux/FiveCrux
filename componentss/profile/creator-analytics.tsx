@@ -57,14 +57,16 @@ export default function CreatorAnalytics() {
       </div>
 
       {/* Traffic breakdown */}
-      <Section title="Traffic">
-        <div className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4">
-          <Metric label="Script views" value={fmt(a.traffic.scriptViews)} />
-          <Metric label="Prop views" value={fmt(a.traffic.propViews)} />
-          <Metric label="Ad views" value={fmt(a.traffic.ads.views)} extra={`${fmt(a.traffic.ads.clicks)} clicks`} />
-          <Metric label="Featured views" value={fmt(a.traffic.featured.views)} extra={`${fmt(a.traffic.featured.clicks)} clicks`} />
-        </div>
-      </Section>
+      <div className="mt-4">
+        <Section title="Traffic">
+          <div className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4">
+            <Metric label="Script views" value={fmt(a.traffic.scriptViews)} />
+            <Metric label="Prop views" value={fmt(a.traffic.propViews)} />
+            <Metric label="Ad views" value={fmt(a.traffic.ads.views)} extra={`${fmt(a.traffic.ads.clicks)} clicks`} />
+            <Metric label="Featured views" value={fmt(a.traffic.featured.views)} extra={`${fmt(a.traffic.featured.clicks)} clicks`} />
+          </div>
+        </Section>
+      </div>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
         {/* Top by views */}
