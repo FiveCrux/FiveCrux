@@ -299,7 +299,7 @@ export function MarketplaceClient({ initialScripts = [] }: { initialScripts?: an
               transition={{ duration: 0.4 }}
               // auto-fill at the card's native 300px width so columns only form when
               // there is room — keeps the fixed-width ProductCard responsive without overflow.
-              className="grid justify-center gap-4 [grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr))] justify-items-center"
+              className="grid justify-center gap-4 [grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),300px))] justify-items-center"
             >
               {filtered.map((product) => (
                 <ProductCard key={product.id} product={product} />
