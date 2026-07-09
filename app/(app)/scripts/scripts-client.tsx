@@ -981,7 +981,7 @@ export function ScriptsClient({
 
           {/* Grid / states */}
           {loading ? (
-            <div className="grid justify-center gap-4 [grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr))] justify-items-center">
+            <div className="grid justify-center gap-4 [grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),300px))] justify-items-center">
               {Array.from({ length: 8 }).map((_, i) => (
                 <div
                   key={i}
@@ -1008,7 +1008,7 @@ export function ScriptsClient({
               transition={{ duration: 0.4 }}
               // auto-fill at the card's native 300px width so columns only form when
               // there is room — keeps the fixed-width ProductCard responsive without overflow.
-              className="grid justify-center gap-4 [grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr))] justify-items-center"
+              className="grid justify-center gap-4 [grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),300px))] justify-items-center"
             >
               {(() => {
                 const items: GridItem[] = [...paginatedScripts];
