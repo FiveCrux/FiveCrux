@@ -3,6 +3,7 @@
 import { useEffect, useState, type ReactNode } from "react"
 import Link from "next/link"
 import { Megaphone, ArrowRight } from "lucide-react"
+import { useNavData } from "@/componentss/shared/nav-data-context"
 
 type Banner = {
   id: number
@@ -33,24 +34,36 @@ const EMPTY_ACTIVE: ActiveMap = {
 // sit INSIDE the same content frame, as sticky columns beside the content. Place
 // between the page's <Navbar/> and <Footer/>. Below xl the rails hide and content
 // fills the frame.
+function normalizeActive(raw: Record<string, any>): ActiveMap {
+  return {
+    "left-top": raw["left-top"] ?? null,
+    "left-bottom": raw["left-bottom"] ?? null,
+    "right-top": raw["right-top"] ?? null,
+    "right-bottom": raw["right-bottom"] ?? null,
+  }
+}
+
 export default function SideAdsFrame({ children }: { children: ReactNode }) {
-  const [active, setActive] = useState<ActiveMap>(EMPTY_ACTIVE)
+  // Server-fetched once per route-group layout — the rails paint with real
+  // data on first render instead of a skeleton, on every page, every refresh.
+  const { sideBannersActive: serverActive } = useNavData()
+
+  const [active, setActive] = useState<ActiveMap>(() =>
+    serverActive ? normalizeActive(serverActive) : EMPTY_ACTIVE
+  )
   // Until the first fetch resolves we show a neutral skeleton — NOT the
   // "Advertise here" CTA — so a booked slot never flashes as available.
-  const [loaded, setLoaded] = useState(false)
+  const [loaded, setLoaded] = useState(Boolean(serverActive))
 
   useEffect(() => {
     let alive = true
+    // Still refresh in the background even with server data — a slot can be
+    // booked/expire while this tab is open — just without re-showing the
+    // skeleton (loaded only ever goes false -> true, never back).
     fetch("/api/side-banners")
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
-        if (alive && d?.active)
-          setActive({
-            "left-top": d.active["left-top"] ?? null,
-            "left-bottom": d.active["left-bottom"] ?? null,
-            "right-top": d.active["right-top"] ?? null,
-            "right-bottom": d.active["right-bottom"] ?? null,
-          })
+        if (alive && d?.active) setActive(normalizeActive(d.active))
       })
       .catch(() => {})
       .finally(() => {

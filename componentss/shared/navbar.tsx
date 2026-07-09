@@ -9,6 +9,7 @@ import { useSession, signIn, signOut } from "next-auth/react"
 import { ShoppingCart, Menu, X } from "lucide-react"
 import { Avatar, AvatarImage, AvatarFallback } from "@/componentss/ui/avatar"
 import { getSessionUserProfilePicture } from "@/lib/user-utils"
+import { useNavData } from "@/componentss/shared/nav-data-context"
 
 // Product types that sit in the nav AFTER the (dynamic) script categories.
 const STATIC_NAV: { name: string; link: string }[] = [
@@ -16,9 +17,19 @@ const STATIC_NAV: { name: string; link: string }[] = [
   { name: "Giveaways", link: "/giveaways" },
 ]
 
+function mapCategories(list: any[]) {
+  return list
+    .filter((c: any) => c.isActive)
+    .sort((a: any, b: any) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
+    .map((c: any) => ({ name: c.name, link: `/scripts?category=${encodeURIComponent(c.slug)}` }))
+}
+
 export default function NavbarComponent() {
   const { data: session, status } = useSession()
   const pathname = usePathname()
+  // Server-fetched once per route-group layout — skips the client round-trip
+  // (and the visible "categories pop in late" flash) on every page load.
+  const { categories: serverCategories } = useNavData()
 
   const [cartCount, setCartCount] = useState<number>(0)
   const [scrolled, setScrolled] = useState(false)
@@ -26,26 +37,25 @@ export default function NavbarComponent() {
 
   // ── browse categories, promoted to top-level nav links (no dropdown) ──
   // Dynamic (admin-managed) — add/rename a category and it appears here.
-  const [cats, setCats] = useState<{ name: string; link: string }[]>([])
+  const [cats, setCats] = useState<{ name: string; link: string }[]>(() =>
+    Array.isArray(serverCategories) ? mapCategories(serverCategories) : []
+  )
   useEffect(() => {
+    // Layout already server-fetched these — no client round-trip needed.
+    if (Array.isArray(serverCategories)) return
     let alive = true
     fetch("/api/categories")
       .then((r) => (r.ok ? r.json() : { categories: [] }))
       .then((d) => {
         if (!alive) return
         const list = Array.isArray(d?.categories) ? d.categories : []
-        setCats(
-          list
-            .filter((c: any) => c.isActive)
-            .sort((a: any, b: any) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
-            .map((c: any) => ({ name: c.name, link: `/scripts?category=${encodeURIComponent(c.slug)}` }))
-        )
+        setCats(mapCategories(list))
       })
       .catch(() => {})
     return () => {
       alive = false
     }
-  }, [])
+  }, [serverCategories])
 
   // Categories first, then a catch-all "Other" for scripts whose category
   // isn't one of the active DB categories, then the fixed product types.
