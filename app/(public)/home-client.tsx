@@ -110,8 +110,8 @@ function Row({ title, icon, emoji, items, seeAllHref }: {
           See all <ArrowRight className="h-4 w-4" />
         </Link>
       </div>
-      <div className="-mx-2.5 overflow-x-auto px-2.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <div className="flex w-max gap-3 pb-2">
+      <div className="-mx-2.5 -mt-2 overflow-x-auto px-2.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex w-max gap-3 pt-2 pb-2">
           {items.map((p) => (
             <div key={`${title}-${p.id}`} className="w-[300px] shrink-0">
               <ProductCard product={p} />
