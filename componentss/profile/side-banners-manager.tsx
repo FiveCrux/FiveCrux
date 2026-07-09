@@ -209,6 +209,9 @@ function SlotCard({ booking, onSaved }: { booking: SideBanner; onSaved: () => vo
             Upload
           </label>
         </div>
+        <p className="mb-2 text-xs text-white/40">
+          Recommended 300×600px (portrait/skyscraper), PNG/JPG up to 5MB
+        </p>
         <input
           value={linkUrl}
           onChange={(e) => setLinkUrl(e.target.value)}
