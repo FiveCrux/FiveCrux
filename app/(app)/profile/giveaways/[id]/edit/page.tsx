@@ -84,6 +84,7 @@ export default function EditGiveawayPage() {
     autoAnnounce: true,
     creatorName: session?.user?.name || "",
     creatorEmail: session?.user?.email || "",
+    creatorDiscordId: "",
   })
 
   // Entry mode: OFF = must join ALL requirements (equal single entry);
@@ -189,6 +190,7 @@ export default function EditGiveawayPage() {
             autoAnnounce: giveaway.auto_announce || giveaway.autoAnnounce || true,
             creatorName: giveaway.creator_name || giveaway.creatorName || session?.user?.name || "",
             creatorEmail: giveaway.creator_email || giveaway.creatorEmail || session?.user?.email || "",
+            creatorDiscordId: giveaway.creator_discord_id || giveaway.creatorDiscordId || "",
           })
 
           // Prefill point-system mode
@@ -496,6 +498,7 @@ export default function EditGiveawayPage() {
           use_points: usePoints,
           creator_name: formData.creatorName,
           creator_email: formData.creatorEmail,
+          creator_discord_id: formData.creatorDiscordId.trim() || null,
           images: finalImages,
           videos: finalVideos,
           cover_image: finalCoverImage,
@@ -810,6 +813,22 @@ export default function EditGiveawayPage() {
                       {errors.description && (
                         <p className="text-red-400 text-xs mt-1">{errors.description}</p>
                       )}
+                    </div>
+
+                    <div>
+                      <Label htmlFor="creatorDiscordId" className="text-white font-medium">
+                        Your Discord ID
+                      </Label>
+                      <Input
+                        id="creatorDiscordId"
+                        value={formData.creatorDiscordId}
+                        onChange={(e) => setFormData({ ...formData, creatorDiscordId: e.target.value })}
+                        placeholder="e.g. 699612552073838642"
+                        className="mt-2 bg-white/[0.04] border-white/[0.08] text-white placeholder-white/30 focus:border-orange-500 focus-visible:ring-orange-500/40"
+                      />
+                      <p className="text-xs text-white/55 mt-1">
+                        Optional — shown on the giveaway page so entrants and winners can reach you directly.
+                      </p>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

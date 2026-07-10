@@ -1519,6 +1519,7 @@ export async function createGiveaway(giveawayData: NewGiveaway) {
     creatorName: giveawayData.creatorName || (giveawayData as any).creator_name || 'Unknown Creator',
     creatorEmail: giveawayData.creatorEmail || (giveawayData as any).creator_email || 'unknown@example.com',
     creatorId: giveawayData.creatorId || (giveawayData as any).creator_id || 'unknown',
+    creatorDiscordId: giveawayData.creatorDiscordId || (giveawayData as any).creator_discord_id || null,
     status: giveawayData.status || 'active',
     featured: giveawayData.featured ?? false,
     autoAnnounce: giveawayData.autoAnnounce ?? (giveawayData as any).auto_announce ?? true,
@@ -1843,6 +1844,8 @@ export async function updateGiveawayForReapproval(id: number, updateData: any) {
     assignIfDefined('creator_name', updateData.creator_name);
     assignIfDefined('creator_email', updateData.creator_email);
     assignIfDefined('creator_id', updateData.creator_id);
+    if (updateData.creator_discord_id !== undefined) assignIfDefined('creatorDiscordId', updateData.creator_discord_id);
+    if (updateData.creatorDiscordId !== undefined) assignIfDefined('creatorDiscordId', updateData.creatorDiscordId);
     assignIfDefined('images', updateData.images);
     assignIfDefined('videos', updateData.videos);
     if (updateData.cover_image !== undefined) assignIfDefined('coverImage', updateData.cover_image);
@@ -1926,6 +1929,7 @@ export async function updateGiveaway(id: number, updateData: Partial<NewGiveaway
       creatorName: giveaway.creatorName,
       creatorEmail: giveaway.creatorEmail,
       creatorId: giveaway.creatorId,
+      creatorDiscordId: giveaway.creatorDiscordId,
       images: giveaway.images,
       videos: giveaway.videos,
       coverImage: giveaway.coverImage,
@@ -1970,6 +1974,8 @@ export async function updateGiveaway(id: number, updateData: Partial<NewGiveaway
     if (data.creatorEmail !== undefined) updateObject.creatorEmail = data.creatorEmail;
     if (data.creator_id !== undefined) updateObject.creatorId = data.creator_id;
     if (data.creatorId !== undefined) updateObject.creatorId = data.creatorId;
+    if (data.creator_discord_id !== undefined) updateObject.creatorDiscordId = data.creator_discord_id;
+    if (data.creatorDiscordId !== undefined) updateObject.creatorDiscordId = data.creatorDiscordId;
     if (data.images !== undefined) updateObject.images = data.images;
     if (data.videos !== undefined) updateObject.videos = data.videos;
     if (data.cover_image !== undefined) updateObject.coverImage = data.cover_image;

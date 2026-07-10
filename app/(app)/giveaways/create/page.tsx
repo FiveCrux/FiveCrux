@@ -54,6 +54,7 @@ export default function CreateGiveawayPage() {
     autoAnnounce: true,
     creatorName: session?.user?.name || "",
     creatorEmail: session?.user?.email || "",
+    creatorDiscordId: "",
   })
 
   // Entry mode: OFF = must join ALL requirements (equal single entry);
@@ -323,6 +324,7 @@ export default function CreateGiveawayPage() {
           use_points: usePoints,
           creator_name: formData.creatorName,
           creator_email: formData.creatorEmail,
+          creator_discord_id: formData.creatorDiscordId.trim() || null,
           images: media.images,
           videos: media.videos,
           cover_image: media.coverImage,
@@ -368,6 +370,7 @@ export default function CreateGiveawayPage() {
           autoAnnounce: true,
           creatorName: session?.user?.name || "",
           creatorEmail: session?.user?.email || "",
+          creatorDiscordId: "",
         })
         setUsePoints(false)
         setMedia({
@@ -682,6 +685,22 @@ export default function CreateGiveawayPage() {
                       {errors.description && (
                         <p className="text-red-400 text-xs mt-1">{errors.description}</p>
                       )}
+                    </div>
+
+                    <div>
+                      <Label htmlFor="creatorDiscordId" className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/50">
+                        Your Discord ID
+                      </Label>
+                      <Input
+                        id="creatorDiscordId"
+                        value={formData.creatorDiscordId}
+                        onChange={(e) => setFormData({ ...formData, creatorDiscordId: e.target.value })}
+                        placeholder="e.g. 699612552073838642"
+                        className={`mt-2 px-4 py-3 text-sm ${fieldClass}`}
+                      />
+                      <p className="mt-1.5 text-xs text-white/40">
+                        Optional — shown on the giveaway page so entrants and winners can reach you directly.
+                      </p>
                     </div>
 
                     {/* ---------- Schedule (moved right after Description) ---------- */}
