@@ -195,7 +195,6 @@ function BannerSlot({ banner, position, loaded }: { banner: Banner; position: st
           <span className="text-sm font-semibold text-white/55 transition-colors group-hover:text-white">
             Advertise here
           </span>
-          <span className="text-[11px] text-white/30">from €30/wk</span>
           <span className="mt-0.5 inline-flex items-center gap-1 text-xs font-semibold text-orange-400/80 transition-colors group-hover:text-orange-400">
             Book <ArrowRight className="h-3.5 w-3.5" />
           </span>
