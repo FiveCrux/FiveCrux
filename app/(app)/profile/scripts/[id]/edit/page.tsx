@@ -410,6 +410,14 @@ export default function EditScriptPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    // Cover image is labeled required ("Cover Image *") but was never actually
+    // enforced — enforce it here too, matching the submit form.
+    if (!media.coverImage) {
+      toast.error("Please upload a cover image before saving")
+      return
+    }
+
     setSaving(true)
 
     try {

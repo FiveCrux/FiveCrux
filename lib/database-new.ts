@@ -3288,6 +3288,8 @@ export async function getFeaturedScriptsWithDetails(filters?: {
         scriptTitle: approvedScripts.title,
         scriptDescription: approvedScripts.description,
         scriptCoverImage: approvedScripts.coverImage,
+        scriptImages: approvedScripts.images,
+        scriptScreenshots: approvedScripts.screenshots,
         scriptPrice: approvedScripts.price,
         scriptCategory: approvedScripts.category,
         scriptFramework: approvedScripts.framework,

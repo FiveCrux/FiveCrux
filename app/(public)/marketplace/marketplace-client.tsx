@@ -20,11 +20,25 @@ interface ApiScript {
   category?: string
   framework?: string[]
   seller_name?: string
+  seller_image?: string
   coverImage?: string
+  cover_image?: string
+  images?: string[]
+  screenshots?: string[]
   rating?: number
   featured?: boolean
   free?: boolean
   currency_symbol?: string
+}
+
+// A seller can submit without picking an explicit cover image — fall back to
+// their first screenshot rather than showing no image at all.
+function resolveCoverImage(...candidates: any[]): string | undefined {
+  for (const c of candidates) {
+    if (typeof c === "string" && c) return c
+    if (Array.isArray(c) && c.length > 0 && c[0]) return c[0]
+  }
+  return undefined
 }
 
 // Map an API script onto the shared MarketProduct shape consumed by ProductCard.
@@ -39,7 +53,8 @@ function toMarketProduct(s: ApiScript): MarketProduct {
     free: isFree,
     rating: typeof s.rating === "number" ? s.rating : undefined,
     seller: s.seller_name,
-    coverImage: s.coverImage,
+    sellerImage: s.seller_image,
+    coverImage: resolveCoverImage(s.coverImage, s.cover_image, s.images, s.screenshots),
     currencySymbol: s.currency_symbol || (s as any).currencySymbol,
     tag: s.featured ? "FEATURED" : isFree ? "FREE" : null,
     href: `/script/${s.id}`,

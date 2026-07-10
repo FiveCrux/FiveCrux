@@ -446,6 +446,14 @@ export default function SubmitScriptPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
+    // Cover image is labeled required ("Cover image *") but was never actually
+    // enforced — some listings ended up with no cover_image at all (cards then
+    // fell back to a plain gradient, even when screenshots existed).
+    if (!media.coverImage) {
+      toast.error("Please upload a cover image before submitting")
+      return
+    }
+
     // Validate YouTube link if provided
     if (youtubeVideoLink.trim() && !validateYouTubeUrl(youtubeVideoLink)) {
       setYoutubeLinkError("Please enter a valid YouTube URL (youtube.com or youtu.be)")
