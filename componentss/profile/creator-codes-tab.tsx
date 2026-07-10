@@ -12,6 +12,7 @@ import { Label } from "@/componentss/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/componentss/ui/select"
 import { Switch } from "@/componentss/ui/switch"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/componentss/ui/table"
+import { CurrencySelect } from "@/componentss/currency-select"
 
 type DiscountType = "Percentage" | "Amount"
 
@@ -22,6 +23,7 @@ type CreatorCode = {
   discountValue: string
   commissionType: DiscountType
   commissionValue: string
+  currencySymbol: string | null
   isActive: boolean
   usedCount: number
   totalCommission: number
@@ -35,6 +37,8 @@ type FormState = {
   discountValue: string
   commissionType: DiscountType
   commissionValue: string
+  currency: string
+  currencySymbol: string
   isActive: boolean
 }
 
@@ -44,6 +48,8 @@ const emptyForm: FormState = {
   discountValue: "",
   commissionType: "Percentage",
   commissionValue: "",
+  currency: "USD",
+  currencySymbol: "$",
   isActive: true,
 }
 
@@ -54,6 +60,8 @@ function codeToForm(c: CreatorCode): FormState {
     discountValue: String(c.discountValue),
     commissionType: c.commissionType,
     commissionValue: String(c.commissionValue),
+    currency: "",
+    currencySymbol: c.currencySymbol || "$",
     isActive: c.isActive,
   }
 }
@@ -113,12 +121,14 @@ export default function CreatorCodesTab() {
     event.preventDefault()
     setSaving(true)
     try {
+      const needsCurrency = form.discountType === "Amount" || form.commissionType === "Amount"
       const payload = {
         code: form.code.trim(),
         discountType: form.discountType,
         discountValue: Number(form.discountValue),
         commissionType: form.commissionType,
         commissionValue: Number(form.commissionValue),
+        currencySymbol: needsCurrency ? (form.currencySymbol || "$") : null,
         isActive: form.isActive,
       }
 
@@ -161,8 +171,8 @@ export default function CreatorCodesTab() {
     }
   }
 
-  const fmtValue = (type: DiscountType, value: string) =>
-    type === "Percentage" ? `${Number(value)}%` : `€${Number(value).toFixed(2)}`
+  const fmtValue = (type: DiscountType, value: string, currencySymbol?: string | null) =>
+    type === "Percentage" ? `${Number(value)}%` : `${currencySymbol || "$"}${Number(value).toFixed(2)}`
 
   return (
     <div className="space-y-6">
@@ -195,7 +205,7 @@ export default function CreatorCodesTab() {
         <Card className="border-orange-500/25 bg-orange-500/[0.06]">
           <CardContent className="p-5">
             <p className="text-sm text-orange-300/80">Commission earned</p>
-            <p className="mt-1 font-mono text-2xl font-semibold text-white">€{totals.totalCommission.toFixed(2)}</p>
+            <p className="mt-1 font-mono text-2xl font-semibold text-white">${totals.totalCommission.toFixed(2)}</p>
           </CardContent>
         </Card>
       </div>
@@ -229,10 +239,10 @@ export default function CreatorCodesTab() {
                 {codes.map((c) => (
                   <TableRow key={c.id}>
                     <TableCell className="font-medium text-white">{c.code}</TableCell>
-                    <TableCell>{fmtValue(c.discountType, c.discountValue)}</TableCell>
-                    <TableCell>{fmtValue(c.commissionType, c.commissionValue)}</TableCell>
+                    <TableCell>{fmtValue(c.discountType, c.discountValue, c.currencySymbol)}</TableCell>
+                    <TableCell>{fmtValue(c.commissionType, c.commissionValue, c.currencySymbol)}</TableCell>
                     <TableCell>{c.redemptionCount}</TableCell>
-                    <TableCell className="font-mono">€{c.totalCommission.toFixed(2)}</TableCell>
+                    <TableCell className="font-mono">{c.currencySymbol || "$"}{c.totalCommission.toFixed(2)}</TableCell>
                     <TableCell>
                       <Badge
                         className={
@@ -280,6 +290,22 @@ export default function CreatorCodesTab() {
                 required
               />
             </div>
+
+            {(form.discountType === "Amount" || form.commissionType === "Amount") && (
+              <div className="space-y-2">
+                <Label>Currency</Label>
+                <CurrencySelect
+                  value={form.currency}
+                  onValueChange={(value) => setForm({ ...form, currency: value })}
+                  onCurrencySelect={(currency) =>
+                    setForm({ ...form, currency: currency.code, currencySymbol: currency.symbol })
+                  }
+                  placeholder={form.currencySymbol || "Currency"}
+                  currencies="all"
+                  variant="default"
+                />
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">

@@ -107,11 +107,11 @@ export default function PropsTab() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className="font-bold">
-                        <span className="text-orange-500">€</span> {prop.discountedPrice || prop.price}
+                        <span className="text-orange-500">{prop.currencySymbol || prop.currency_symbol || "€"}</span> {prop.discountedPrice || prop.price}
                       </span>
                       {prop.discountedPrice && (
                         <span className="text-sm text-gray-500 line-through">
-                          €{prop.price}
+                          {prop.currencySymbol || prop.currency_symbol || "€"}{prop.price}
                         </span>
                       )}
                     </div>

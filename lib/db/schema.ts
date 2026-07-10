@@ -77,6 +77,8 @@ export const coupons = pgTable('coupons', {
   code: text('code').notNull().unique(),
   discountType: discountTypeEnum('discount_type').notNull(),
   discountValue: numeric('discount_value', { precision: 10, scale: 2 }).notNull(),
+  // Only meaningful when discountType is a flat amount (not percentage).
+  currencySymbol: text('currency_symbol'),
   scope: couponScopeEnum('scope').notNull(),
   scopeIds: json('scope_ids'),
   minCartValue: numeric('min_cart_value', { precision: 10, scale: 2 }).default('0').notNull(),
@@ -146,6 +148,8 @@ export const creatorCodes = pgTable('creator_codes', {
   createdBy: text('created_by').notNull().references(() => users.id, { onDelete: 'cascade' }),
   discountType: discountTypeEnum('discount_type').notNull(),   // buyer's discount
   discountValue: numeric('discount_value', { precision: 10, scale: 2 }).notNull(),
+  // Only meaningful when discountType/commissionType is a flat amount.
+  currencySymbol: text('currency_symbol'),
   commissionType: discountTypeEnum('commission_type').notNull(), // creator's cut
   commissionValue: numeric('commission_value', { precision: 10, scale: 2 }).notNull(),
   isActive: boolean('is_active').notNull().default(true),
@@ -207,6 +211,8 @@ const basePropFields = {
   name: text('name').notNull(),
   description: text('description').notNull(),
   price: numeric('price', { precision: 10, scale: 2 }).notNull(),
+  currency: text('currency'),
+  currencySymbol: text('currency_symbol'),
   discountPercentage: numeric('discount_percentage', { precision: 5, scale: 2 }).default('0'),
   discountedPrice: numeric('discounted_price', { precision: 10, scale: 2 }),
   images: text('images').array().default([]),

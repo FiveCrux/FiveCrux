@@ -33,6 +33,7 @@ import {
 } from "@/componentss/ui/select";
 import { Switch } from "@/componentss/ui/switch";
 import { Textarea } from "@/componentss/ui/textarea";
+import { CurrencySelect } from "@/componentss/currency-select";
 import type {
   Coupon,
   CouponApplicationRule,
@@ -46,6 +47,8 @@ type CouponFormState = {
   effectiveOn: CouponScope;
   discountType: CouponDiscountType;
   discountValue: string;
+  currency: string;
+  currencySymbol: string;
   redeemLimit: string;
   minimumBasketValue: string;
   redeemLimitPerCustomer: string;
@@ -61,6 +64,8 @@ const emptyForm: CouponFormState = {
   effectiveOn: "Ad Slots",
   discountType: "Percentage",
   discountValue: "",
+  currency: "USD",
+  currencySymbol: "$",
   redeemLimit: "",
   minimumBasketValue: "0",
   redeemLimitPerCustomer: "0",
@@ -96,6 +101,8 @@ function couponToForm(coupon: Coupon): CouponFormState {
     effectiveOn: coupon.scope,
     discountType: coupon.discountType,
     discountValue: String(coupon.discountValue ?? ""),
+    currency: "",
+    currencySymbol: coupon.currencySymbol || "$",
     redeemLimit: coupon.maxUses === null ? "" : String(coupon.maxUses),
     minimumBasketValue: String(coupon.minCartValue ?? "0"),
     redeemLimitPerCustomer: String(coupon.perUserLimit ?? 0),
@@ -113,6 +120,7 @@ function buildPayload(form: CouponFormState): CouponPayload {
     effectiveOn: form.effectiveOn,
     discountType: form.discountType,
     discountValue: numberValue(form.discountValue),
+    currencySymbol: form.discountType === "Amount" ? form.currencySymbol || "$" : null,
     redeemLimit: form.redeemLimit.trim() ? numberValue(form.redeemLimit) : null,
     minimumBasketValue: numberValue(form.minimumBasketValue),
     redeemLimitPerCustomer: numberValue(form.redeemLimitPerCustomer),
@@ -402,7 +410,7 @@ export default function ProfileCouponsPage() {
                           <td className="px-5 py-4 text-white/70">
                             {coupon.discountType === "Percentage"
                               ? `${Number(coupon.discountValue)}%`
-                              : `$${Number(coupon.discountValue).toFixed(2)}`}
+                              : `${coupon.currencySymbol || "$"}${Number(coupon.discountValue).toFixed(2)}`}
                           </td>
                           <td className="px-5 py-4 text-white/70">
                             {coupon.scope}
@@ -470,7 +478,7 @@ export default function ProfileCouponsPage() {
                           <p className="mt-0.5 text-sm text-orange-400">
                             {coupon.discountType === "Percentage"
                               ? `${Number(coupon.discountValue)}%`
-                              : `$${Number(coupon.discountValue).toFixed(2)}`}{" "}
+                              : `${coupon.currencySymbol || "$"}${Number(coupon.discountValue).toFixed(2)}`}{" "}
                             off
                           </p>
                         </div>
@@ -605,18 +613,33 @@ export default function ProfileCouponsPage() {
                 <Label htmlFor="discountValue" className="text-white/70">
                   Discount Value
                 </Label>
-                <Input
-                  id="discountValue"
-                  type="number"
-                  min="0"
-                  step={form.discountType === "Percentage" ? "1" : "0.01"}
-                  value={form.discountValue}
-                  onChange={(event) =>
-                    setForm({ ...form, discountValue: event.target.value })
-                  }
-                  required
-                  className={inputClass}
-                />
+                <div className="flex gap-2">
+                  {form.discountType === "Amount" && (
+                    <CurrencySelect
+                      value={form.currency}
+                      onValueChange={(value) => setForm({ ...form, currency: value })}
+                      onCurrencySelect={(currency) =>
+                        setForm({ ...form, currency: currency.code, currencySymbol: currency.symbol })
+                      }
+                      placeholder={form.currencySymbol || "Currency"}
+                      currencies="all"
+                      variant="default"
+                      className={`w-28 shrink-0 ${inputClass}`}
+                    />
+                  )}
+                  <Input
+                    id="discountValue"
+                    type="number"
+                    min="0"
+                    step={form.discountType === "Percentage" ? "1" : "0.01"}
+                    value={form.discountValue}
+                    onChange={(event) =>
+                      setForm({ ...form, discountValue: event.target.value })
+                    }
+                    required
+                    className={inputClass}
+                  />
+                </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="redeemLimit" className="text-white/70">

@@ -139,6 +139,7 @@ export async function POST(request: NextRequest) {
         code,
         discountType,
         discountValue: discountValue.toString(),
+        currencySymbol: discountType === "Amount" ? (body.currencySymbol || "$") : null,
         scope,
         minCartValue: minCartValue.toString(),
         maxUses,

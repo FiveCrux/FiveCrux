@@ -84,6 +84,7 @@ function buildCouponValues(body: any) {
       code,
       discountType,
       discountValue: discountValue.toString(),
+      currencySymbol: discountType === "Amount" ? (body.currencySymbol || "$") : null,
       scope,
       minCartValue: minCartValue.toString(),
       maxUses,
