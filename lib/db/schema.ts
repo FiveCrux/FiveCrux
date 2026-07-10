@@ -434,6 +434,9 @@ export const giveawayEntries = pgTable('giveaway_entries', {
   userId: text('user_id').notNull(),
   userName: text('user_name'),
   userEmail: text('user_email'),
+  // Entrant-typed Discord ID, captured at entry time (separate from their
+  // login identity) so the creator always has it on hand for winners.
+  discordId: text('discord_id'),
   entryDate: timestamp('entry_date').defaultNow(),
   status: text('status').default('active'),
   pointsEarned: integer('points_earned').default(0),

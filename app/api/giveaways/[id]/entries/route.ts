@@ -60,9 +60,13 @@ export async function POST(
       return NextResponse.json({ error: "Giveaway has reached maximum entries" }, { status: 400 })
     }
 
-    // Get completed requirements from request body
-    const { completedRequirements = [] } = await request.json().catch(() => ({}))
-    
+    // Get completed requirements + the entrant's typed Discord ID from the body
+    const { completedRequirements = [], discordId } = await request.json().catch(() => ({}))
+
+    if (!discordId || typeof discordId !== "string" || !discordId.trim()) {
+      return NextResponse.json({ error: "Please enter your Discord ID to enter this giveaway" }, { status: 400 })
+    }
+
     console.log('Entry creation - completedRequirements:', completedRequirements)
     
     // Calculate points — server-verified (C5). The client's claim is NOT trusted
@@ -112,6 +116,7 @@ export async function POST(
       userId: (session.user as any).id,
       userName: session.user.name || null,
       userEmail: session.user.email || null,
+      discordId: discordId.trim(),
       status: 'active' as const,
       pointsEarned: initialPoints,
       requirementsCompleted: initialCompletedRequirements

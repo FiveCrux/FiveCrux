@@ -30,6 +30,7 @@ import {
   Twitter,
   ShieldCheck,
   Check,
+  Copy,
 } from "lucide-react"
 import { Button } from "@/componentss/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/componentss/ui/card"
@@ -97,6 +98,7 @@ export function GiveawayDetailClient({
   const detailsInView = useInView(detailsRef, { once: true })
 
   const [isEntered, setIsEntered] = useState(false)
+  const [discordId, setDiscordId] = useState("")
   const [isWishlisted, setIsWishlisted] = useState(false)
   const [completedTasks, setCompletedTasks] = useState<number[]>([])
   // Seed from the server-fetched item for instant first paint + SEO.
@@ -602,6 +604,11 @@ export function GiveawayDetailClient({
       return
     }
 
+    if (!discordId.trim()) {
+      toast.warning("Please enter your Discord ID to enter this giveaway")
+      return
+    }
+
     try {
       setIsEnteringGiveaway(true)
       const response = await fetch(`/api/giveaways/${giveawayId}/entries`, {
@@ -610,7 +617,8 @@ export function GiveawayDetailClient({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          completedRequirements: completedTasks
+          completedRequirements: completedTasks,
+          discordId: discordId.trim(),
         })
       })
 
@@ -1197,6 +1205,22 @@ export function GiveawayDetailClient({
                   </div>
                 </div>
 
+                {/* Entrant's own Discord ID — captured at entry time */}
+                {!isEntered && !isGiveawayEnded && (
+                  <div className="mt-4">
+                    <label className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/50">
+                      Your Discord ID
+                    </label>
+                    <input
+                      type="text"
+                      value={discordId}
+                      onChange={(e) => setDiscordId(e.target.value)}
+                      placeholder="e.g. 699612552073838642"
+                      className="mt-2 w-full rounded-xl border border-white/[0.08] bg-white/[0.03] px-3.5 py-2.5 text-sm text-white placeholder:text-white/30 focus:border-orange-500/50 focus:outline-none"
+                    />
+                  </div>
+                )}
+
                 {/* Enter button (mirrors hero CTA, useful when scrolled past the hero) */}
                 <motion.div
                   whileHover={{ scale: isGiveawayEnded || isGiveawayUpcoming ? 1 : 1.02 }}
@@ -1296,92 +1320,125 @@ export function GiveawayDetailClient({
             </aside>
           </div>
 
-          {/* WINNERS (when ended) */}
-          {isGiveawayEnded && (
-            <div className="mt-12 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-6">
-              <div className="mb-4 flex items-center gap-2">
-                <Trophy className="h-5 w-5 text-orange-500" />
-                <h2 className="text-lg font-bold">Winners</h2>
-              </div>
+          {/* PRIZES — always visible; each prize's own box becomes a
+              click-to-reveal-winner accordion once the giveaway has ended
+              (no separate "Winners" section duplicating the same list). */}
+          <div className="mt-12 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-6">
+            <div className="mb-4 flex items-center gap-2">
+              <Trophy className="h-5 w-5 text-orange-500" />
+              <h2 className="text-lg font-bold">Prizes</h2>
+            </div>
+            {isGiveawayEnded && (
               <p className="mb-4 -mt-2 text-xs text-white/45">
                 Click a prize to reveal its winner{transformedGiveaway.prizes.length === 1 ? "" : "s"}.
               </p>
-              <div className="space-y-2.5">
-                {transformedGiveaway.prizes.length > 0 ? (
-                  transformedGiveaway.prizes.map((prize: any, idx: number) => {
-                    const isOpen = openWinnerIdx === idx
-                    const placeLabel =
-                      prize.position === 1 ? "1st" :
-                      prize.position === 2 ? "2nd" :
-                      prize.position === 3 ? "3rd" : `${prize.position || idx + 1}th`
-                    const winnerList: any[] =
-                      prize.winners && prize.winners.length > 0
-                        ? prize.winners
-                        : prize.winnerName
-                        ? [{ userName: prize.winnerName }]
-                        : []
-                    return (
-                      <div
-                        key={prize.position ?? idx}
-                        className={`overflow-hidden rounded-xl border transition-colors ${
-                          isOpen ? "border-orange-500/30 bg-orange-500/[0.04]" : "border-white/[0.06] bg-white/[0.02]"
-                        }`}
-                      >
-                        {/* Header — click to expand */}
+            )}
+            <div className="space-y-2.5">
+              {transformedGiveaway.prizes.length > 0 ? (
+                transformedGiveaway.prizes.map((prize: any, idx: number) => {
+                  const isOpen = isGiveawayEnded && openWinnerIdx === idx
+                  const placeLabel =
+                    prize.position === 1 ? "1st" :
+                    prize.position === 2 ? "2nd" :
+                    prize.position === 3 ? "3rd" : `${prize.position || idx + 1}th`
+                  const winnerList: any[] =
+                    prize.winners && prize.winners.length > 0
+                      ? prize.winners
+                      : prize.winnerName
+                      ? [{ userName: prize.winnerName }]
+                      : []
+                  const winnerCount = Number(prize.numberOfWinners ?? prize.number_of_winners ?? 1) || 1
+                  const hasPrizeValue =
+                    prize.value && prize.value !== "0" && prize.value !== "$" && prize.value !== "0.00"
+                  const rowContent = (
+                    <>
+                      {isGiveawayEnded && (
+                        <ChevronRight
+                          className={`h-4 w-4 flex-shrink-0 text-orange-400 transition-transform duration-300 ${
+                            isOpen ? "rotate-90" : ""
+                          }`}
+                        />
+                      )}
+                      <span className="grid h-7 w-7 flex-shrink-0 place-items-center rounded-lg bg-orange-500/10 text-[11px] font-bold text-orange-400">
+                        {placeLabel}
+                      </span>
+                      <span className="min-w-0 flex-1 truncate text-sm font-bold">{prize.name}</span>
+                      {hasPrizeValue && (
+                        <span className="flex-shrink-0 text-sm font-bold text-orange-400">{prize.value}</span>
+                      )}
+                      <span className="flex-shrink-0 text-xs font-semibold text-white/45">
+                        {!isGiveawayEnded
+                          ? `${winnerCount} ${winnerCount === 1 ? "winner" : "winners"}`
+                          : winnerList.length > 0
+                          ? `${winnerList.length} ${winnerList.length === 1 ? "winner" : "winners"}`
+                          : "Pending"}
+                      </span>
+                    </>
+                  )
+                  return (
+                    <div
+                      key={prize.position ?? idx}
+                      className={`overflow-hidden rounded-xl border transition-colors ${
+                        isOpen ? "border-orange-500/30 bg-orange-500/[0.04]" : "border-white/[0.06] bg-white/[0.02]"
+                      }`}
+                    >
+                      {isGiveawayEnded ? (
                         <button
                           type="button"
                           onClick={() => setOpenWinnerIdx(isOpen ? -1 : idx)}
                           className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-white/[0.03]"
                         >
-                          <ChevronRight
-                            className={`h-4 w-4 flex-shrink-0 text-orange-400 transition-transform duration-300 ${
-                              isOpen ? "rotate-90" : ""
-                            }`}
-                          />
-                          <span className="grid h-7 w-7 flex-shrink-0 place-items-center rounded-lg bg-orange-500/10 text-[11px] font-bold text-orange-400">
-                            {placeLabel}
-                          </span>
-                          <span className="min-w-0 flex-1 truncate text-sm font-bold">{prize.name}</span>
-                          <span className="flex-shrink-0 text-xs font-semibold text-white/45">
-                            {winnerList.length > 0
-                              ? `${winnerList.length} ${winnerList.length === 1 ? "winner" : "winners"}`
-                              : "Pending"}
-                          </span>
+                          {rowContent}
                         </button>
+                      ) : (
+                        <div className="flex w-full items-center gap-3 px-4 py-3.5">{rowContent}</div>
+                      )}
 
-                        {/* Body — winners revealed on expand */}
-                        {isOpen && (
-                          <div className="space-y-2 px-4 pb-4 pt-1">
-                            {winnerList.length > 0 ? (
-                              winnerList.map((winner: any, wi: number) => (
-                                <div
-                                  key={wi}
-                                  className="flex items-center gap-2.5 rounded-lg border border-green-500/20 bg-green-500/[0.06] px-3 py-2.5"
-                                >
-                                  <Award className="h-4 w-4 flex-shrink-0 text-green-400" />
-                                  <span className="text-sm font-semibold text-white">
-                                    {winner.userName || "Unknown"}
-                                  </span>
-                                </div>
-                              ))
-                            ) : (
-                              <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2.5 text-center text-xs text-white/55">
-                                Winner will be announced soon
+                      {/* Body — winners revealed on expand (ended only) */}
+                      {isOpen && (
+                        <div className="space-y-2 px-4 pb-4 pt-1">
+                          {winnerList.length > 0 ? (
+                            winnerList.map((winner: any, wi: number) => (
+                              <div
+                                key={wi}
+                                className="flex items-center gap-2.5 rounded-lg border border-green-500/20 bg-green-500/[0.06] px-3 py-2.5"
+                              >
+                                <Award className="h-4 w-4 flex-shrink-0 text-green-400" />
+                                <span className="min-w-0 flex-1 truncate text-sm font-semibold text-white">
+                                  {winner.userName || "Unknown"}
+                                </span>
+                                {winner.userId && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(String(winner.userId))
+                                      toast.success("Discord ID copied")
+                                    }}
+                                    title="Copy Discord ID"
+                                    className="flex flex-shrink-0 items-center gap-1 rounded-md border border-white/10 bg-white/[0.04] px-2 py-1 text-[11px] font-semibold text-white/60 transition hover:bg-white/10 hover:text-white"
+                                  >
+                                    <Copy className="h-3 w-3" /> Copy ID
+                                  </button>
+                                )}
                               </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    )
-                  })
-                ) : (
-                  <p className="py-6 text-center text-sm text-white/55">
-                    No prizes configured for this giveaway
-                  </p>
-                )}
-              </div>
+                            ))
+                          ) : (
+                            <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2.5 text-center text-xs text-white/55">
+                              Winner will be announced soon
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })
+              ) : (
+                <p className="py-6 text-center text-sm text-white/55">
+                  No prizes configured for this giveaway
+                </p>
+              )}
             </div>
-          )}
+          </div>
 
           {/* MORE giveaways */}
           <div className="mt-16">

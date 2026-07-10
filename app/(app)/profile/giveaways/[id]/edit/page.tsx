@@ -129,7 +129,7 @@ export default function EditGiveawayPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [requirements])
 
-  const [prizes, setPrizes] = useState([{ id: 1, name: "", numberOfWinners: 1 }])
+  const [prizes, setPrizes] = useState([{ id: 1, name: "", numberOfWinners: 1, value: "" }])
 
   const [media, setMedia] = useState({
     images: [] as (File | string)[],
@@ -209,6 +209,7 @@ export default function EditGiveawayPage() {
               id: index + 1,
               name: prize.name || "",
               numberOfWinners: prize.numberOfWinners || prize.number_of_winners || 1,
+              value: (prize.value && prize.value !== "0" ? prize.value : "") || "",
             })))
           }
 
@@ -304,7 +305,7 @@ export default function EditGiveawayPage() {
 
   const addPrize = () => {
     const newId = Math.max(...prizes.map((p) => p.id)) + 1
-    setPrizes([...prizes, { id: newId, name: "", numberOfWinners: 1 }])
+    setPrizes([...prizes, { id: newId, name: "", numberOfWinners: 1, value: "" }])
   }
 
   const removePrize = (id: number) => {
@@ -516,7 +517,7 @@ export default function EditGiveawayPage() {
           name: p.name,
           number_of_winners: p.numberOfWinners || 1,
           position: i + 1,
-          value: "0",
+          value: p.value?.trim() || "0",
         })),
       };
 
@@ -933,7 +934,17 @@ export default function EditGiveawayPage() {
                             )}
                           </div>
 
-                          <div className="grid grid-cols-1 md:grid-cols-[1fr_140px] gap-4">
+                          <div className="grid grid-cols-1 md:grid-cols-[140px_1fr_120px] gap-4">
+                            <div>
+                              <Label className="text-white text-sm">Amount</Label>
+                              <Input
+                                value={prize.value}
+                                onChange={(e) => updatePrize(prize.id, "value", e.target.value)}
+                                placeholder="$50"
+                                className="mt-1 bg-white/[0.04] border-white/[0.08] text-white placeholder-white/30 focus:border-orange-500 focus-visible:ring-orange-500/40"
+                              />
+                            </div>
+
                             <div>
                               <Label className="text-white text-sm">Prize Name</Label>
                               <Input

@@ -17,7 +17,6 @@ import {
   Clock,
   Target,
   Image as ImageLucide,
-  CalendarClock,
   AlertCircle,
   Loader2,
   Eye,
@@ -100,7 +99,7 @@ export default function CreateGiveawayPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [requirements])
 
-  const [prizes, setPrizes] = useState([{ id: 1, name: "", numberOfWinners: 1 }])
+  const [prizes, setPrizes] = useState([{ id: 1, name: "", numberOfWinners: 1, value: "" }])
 
   const [media, setMedia] = useState({
     images: [] as string[],
@@ -188,7 +187,7 @@ export default function CreateGiveawayPage() {
 
   const addPrize = () => {
     const newId = Math.max(...prizes.map((p) => p.id)) + 1
-    setPrizes([...prizes, { id: newId, name: "", numberOfWinners: 1 }])
+    setPrizes([...prizes, { id: newId, name: "", numberOfWinners: 1, value: "" }])
   }
 
   const removePrize = (id: number) => {
@@ -345,7 +344,7 @@ export default function CreateGiveawayPage() {
           name: p.name,
           number_of_winners: p.numberOfWinners || 1,
           position: i + 1,
-          value: "0",
+          value: p.value?.trim() || "0",
         })),
       };
 
@@ -384,7 +383,7 @@ export default function CreateGiveawayPage() {
         setYoutubeVideoLink("")
         setYoutubeLinkError("")
         setRequirements([{ id: 1, type: "discord", description: "" }])
-        setPrizes([{ id: 1, name: "", numberOfWinners: 1 }])
+        setPrizes([{ id: 1, name: "", numberOfWinners: 1, value: "" }])
         setErrors({})
         setIsScheduled(false) // Reset scheduling toggle
         // Route to giveaways page
@@ -685,6 +684,63 @@ export default function CreateGiveawayPage() {
                       )}
                     </div>
 
+                    {/* ---------- Schedule (moved right after Description) ---------- */}
+                    <div className="flex items-center justify-between rounded-2xl border border-white/[0.07] bg-white/[0.02] px-4 py-3">
+                      <div>
+                        <div className="text-sm font-semibold">Schedule this giveaway?</div>
+                        <div className="text-xs text-white/55">Set a future start date instead of going live now</div>
+                      </div>
+                      <Switch
+                        checked={isScheduled}
+                        onCheckedChange={(checked) => setIsScheduled(checked)}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className={`${isScheduled ? 'block' : 'hidden'}`}>
+                        <DateTimePicker
+                          date={formData.startDate}
+                          onDateChange={(date) => {
+                            setFormData({ ...formData, startDate: date })
+                            if (errors.startDate) {
+                              setErrors(prev => {
+                                const newErrors = { ...prev }
+                                delete newErrors.startDate
+                                return newErrors
+                              })
+                            }
+                          }}
+                          label="Start Date*(UTC)"
+                          id="startDate"
+                          disablePastDates={true}
+                        />
+                        {errors.startDate && (
+                          <p className="text-red-400 text-xs mt-1">{errors.startDate}</p>
+                        )}
+                      </div>
+                      <div>
+                        <DateTimePicker
+                          date={formData.endDate}
+                          onDateChange={(date) => {
+                            setFormData({ ...formData, endDate: date })
+                            if (errors.endDate) {
+                              setErrors(prev => {
+                                const newErrors = { ...prev }
+                                delete newErrors.endDate
+                                return newErrors
+                              })
+                            }
+                          }}
+                          label="End Date*(UTC)"
+                          id="endDate"
+                          disablePastDates={true}
+                        />
+                        {errors.endDate && (
+                          <p className="text-red-400 text-xs mt-1">{errors.endDate}</p>
+                        )}
+                      </div>
+                    </div>
+
                     {/* Creator name/email (kept; hidden on layout per original) */}
                     <div className=" grid-cols-1 hidden md:grid-cols-2 gap-4">
                       <div>
@@ -755,7 +811,17 @@ export default function CreateGiveawayPage() {
                             )}
                           </div>
 
-                          <div className="grid grid-cols-1 md:grid-cols-[1fr_140px] gap-4">
+                          <div className="grid grid-cols-1 md:grid-cols-[140px_1fr_120px] gap-4">
+                            <div>
+                              <Label className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/50">Amount</Label>
+                              <Input
+                                value={prize.value}
+                                onChange={(e) => updatePrize(prize.id, "value", e.target.value)}
+                                placeholder="$50"
+                                className={`mt-2 px-4 py-2.5 text-sm tabular-nums ${fieldClass}`}
+                              />
+                            </div>
+
                             <div>
                               <Label className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/50">Prize Name</Label>
                               <Input
@@ -1150,68 +1216,6 @@ export default function CreateGiveawayPage() {
                       <p className="text-xs text-white/55 mt-2">
                         Provide a direct link to a YouTube video showcasing your giveaway.
                       </p>
-                    </div>
-                  </div>
-                </section>
-
-                {/* ---------- Schedule ---------- */}
-                <section>
-                  <SectionHeader icon={<CalendarClock className="h-4 w-4" />} title="Schedule" />
-                  <div className="mt-5 space-y-5">
-                    <div className="flex items-center justify-between rounded-2xl border border-white/[0.07] bg-white/[0.02] px-4 py-3">
-                      <div>
-                        <div className="text-sm font-semibold">Schedule this giveaway?</div>
-                        <div className="text-xs text-white/55">Set a future start date instead of going live now</div>
-                      </div>
-                      <Switch
-                        checked={isScheduled}
-                        onCheckedChange={(checked) => setIsScheduled(checked)}
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className={`${isScheduled ? 'block' : 'hidden'}`}>
-                        <DateTimePicker
-                          date={formData.startDate}
-                          onDateChange={(date) => {
-                            setFormData({ ...formData, startDate: date })
-                            if (errors.startDate) {
-                              setErrors(prev => {
-                                const newErrors = { ...prev }
-                                delete newErrors.startDate
-                                return newErrors
-                              })
-                            }
-                          }}
-                          label="Start Date*(UTC)"
-                          id="startDate"
-                          disablePastDates={true}
-                        />
-                        {errors.startDate && (
-                          <p className="text-red-400 text-xs mt-1">{errors.startDate}</p>
-                        )}
-                      </div>
-                      <div>
-                        <DateTimePicker
-                          date={formData.endDate}
-                          onDateChange={(date) => {
-                            setFormData({ ...formData, endDate: date })
-                            if (errors.endDate) {
-                              setErrors(prev => {
-                                const newErrors = { ...prev }
-                                delete newErrors.endDate
-                                return newErrors
-                              })
-                            }
-                          }}
-                          label="End Date*(UTC)"
-                          id="endDate"
-                          disablePastDates={true}
-                        />
-                        {errors.endDate && (
-                          <p className="text-red-400 text-xs mt-1">{errors.endDate}</p>
-                        )}
-                      </div>
                     </div>
                   </div>
                 </section>
