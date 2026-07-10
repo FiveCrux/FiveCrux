@@ -18,8 +18,6 @@ import {
   Code2,
   Package,
   Car,
-  Upload,
-  BadgeDollarSign,
   Users,
   Shield,
   Megaphone,
@@ -345,7 +343,9 @@ export function HomeClient({
     const featuredOrFallback = liveFeatured.length ? liveFeatured : liveScripts
     return {
       heroItems: featuredOrFallback.slice(0, 5),
-      featured: featuredOrFallback.slice(0, 10),
+      // Skip whatever's already shown in the hero spotlight above — no
+      // point showing the exact same 5 items again immediately below it.
+      featured: featuredOrFallback.slice(5, 15),
       trending: liveScripts.slice(0, 12),
       newReleases: liveScripts.slice(0, 12), // /api/scripts is ordered newest-first
       free: liveScripts.filter((s) => s.free).slice(0, 12),
@@ -406,7 +406,7 @@ export function HomeClient({
         <Row title="Featured" icon={<Sparkles className="h-5 w-5 text-yellow-400" />} items={rows.featured} seeAllHref="/scripts?featured=true" />
         <Row title="Trending This Week" emoji="🔥" items={rows.trending} seeAllHref="/scripts" />
         <Row title="New Releases" icon={<Zap className="h-5 w-5 text-orange-400" />} items={rows.newReleases} seeAllHref="/scripts" />
-        <Row title="Free Scripts" icon={<Gift className="h-5 w-5 text-green-400" />} items={rows.free} seeAllHref="/scripts?free=true" />
+        <Row title="Free Assets" icon={<Gift className="h-5 w-5 text-green-400" />} items={rows.free} seeAllHref="/scripts?free=true" />
         {categoryRows.map(({ cat, items }) => {
           const Icon = categoryIcon(cat.icon)
           return (
@@ -420,20 +420,6 @@ export function HomeClient({
           )
         })}
       </main>
-
-      {/* Start selling strip */}
-      <section className="mt-12 px-2.5">
-        <div className="mx-auto flex w-full flex-col items-center justify-between gap-4 rounded-2xl border border-white/[0.10] bg-white/[0.06] px-5 py-5 backdrop-blur-md sm:flex-row sm:px-8">
-          <p className="flex items-center gap-2.5 text-center text-sm font-semibold sm:text-left sm:text-base">
-            <BadgeDollarSign className="h-5 w-5 shrink-0 text-yellow-400" />
-            Got scripts to sell? List your product and get paid directly via Tebex.
-          </p>
-          <Link href="/scripts/submit"
-            className="flex shrink-0 items-center gap-2 whitespace-nowrap rounded-xl bg-orange-500 px-5 py-3 text-sm font-bold text-black transition hover:bg-orange-400 shadow-[0_0_0_1px_rgba(249,115,22,0.5),0_8px_32px_rgba(249,115,22,0.35)]">
-            <Upload className="h-4 w-4" /> Start Selling
-          </Link>
-        </div>
-      </section>
 
       {/* Why Choose FiveCrux — bento (Variant 2) */}
       <section className="mt-20 px-2.5">
