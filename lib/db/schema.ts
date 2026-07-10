@@ -338,9 +338,10 @@ const baseGiveawayFields = {
   creatorName: text('creator_name').notNull(),
   creatorEmail: text('creator_email').notNull(),
   creatorId: text('creator_id'),
-  // Host's own Discord ID, typed at create time — shown on the detail page so
-  // entrants/winners can actually reach the creator (separate from login).
-  creatorDiscordId: text('creator_discord_id'),
+  // Host's own Discord ID(s), typed at create time — shown on the detail page
+  // so entrants/winners can actually reach the creator (separate from login).
+  // A creator can run giveaways for more than one server/account, hence a list.
+  creatorDiscordIds: text('creator_discord_ids').array().default([]),
   images: text('images').array().default([]),
   videos: text('videos').array().default([]),
   youtubeVideoLink: text('youtube_video_link'),

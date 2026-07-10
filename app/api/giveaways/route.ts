@@ -132,7 +132,7 @@ export async function GET(request: NextRequest) {
       creator_name: giveaway.creatorName,
       creator_email: giveaway.creatorEmail,
       creator_id: giveaway.creatorId,
-      creator_discord_id: giveaway.creatorDiscordId,
+      creator_discord_ids: giveaway.creatorDiscordIds,
       creator_image: giveaway.creatorImage,
       creator_roles: giveaway.creatorRoles,
       total_value: giveaway.totalValue,
