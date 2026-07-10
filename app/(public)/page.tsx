@@ -1,4 +1,5 @@
 import { HomeClient } from "./home-client";
+import { getHomeContent } from "@/lib/site-content";
 
 // ISR: regenerate the server-rendered shell at most once per minute. Because the
 // home data (featured + categories + discovery scripts) is fetched HERE on the
@@ -22,10 +23,11 @@ async function getJson(path: string, key: string): Promise<any[]> {
 
 export default async function Page() {
   // Fetch everything the home page needs in parallel, server-side.
-  const [initialFeatured, initialCategories, initialScripts] = await Promise.all([
+  const [initialFeatured, initialCategories, initialScripts, content] = await Promise.all([
     getJson("/api/featured-scripts?status=active", "featuredScripts"),
     getJson("/api/categories?home=true", "categories"),
     getJson("/api/scripts", "scripts"),
+    getHomeContent(),
   ]);
 
   return (
@@ -33,6 +35,7 @@ export default async function Page() {
       initialFeatured={initialFeatured}
       initialCategories={initialCategories}
       initialScripts={initialScripts}
+      content={content}
     />
   );
 }

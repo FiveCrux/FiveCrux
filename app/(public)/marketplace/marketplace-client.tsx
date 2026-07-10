@@ -24,6 +24,7 @@ interface ApiScript {
   rating?: number
   featured?: boolean
   free?: boolean
+  currency_symbol?: string
 }
 
 // Map an API script onto the shared MarketProduct shape consumed by ProductCard.
@@ -39,6 +40,7 @@ function toMarketProduct(s: ApiScript): MarketProduct {
     rating: typeof s.rating === "number" ? s.rating : undefined,
     seller: s.seller_name,
     coverImage: s.coverImage,
+    currencySymbol: s.currency_symbol || (s as any).currencySymbol,
     tag: s.featured ? "FEATURED" : isFree ? "FREE" : null,
     href: `/script/${s.id}`,
   }

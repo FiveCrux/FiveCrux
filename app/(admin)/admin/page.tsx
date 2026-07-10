@@ -98,6 +98,7 @@ import Navbar from "@/componentss/shared/navbar";
 import Footer from "@/componentss/shared/footer";
 import FileUpload from "@/componentss/shared/file-upload";
 import VerificationRequests from "@/componentss/admin/verification-requests";
+import HomeContentManager from "@/componentss/admin/home-content-manager";
 import { useRoleValidation } from "@/hooks/use-role-validation";
 import { getUserProfilePicture } from "@/lib/user-utils";
 import {
@@ -668,6 +669,7 @@ export default function AdminPage() {
       gated: true,
       badge: verificationCount,
     },
+    { value: "home-content", label: "Home Content", icon: FileText, gated: true },
   ];
 
   // Filter scripts based on active filter
@@ -2489,6 +2491,13 @@ export default function AdminPage() {
             {(isModerator || isFounder) && (
               <TabsContent value="verification" className="mt-6">
                 <VerificationRequests onCountChange={setVerificationCount} />
+              </TabsContent>
+            )}
+
+            {/* Home page content editor (gated) */}
+            {(isModerator || isFounder) && (
+              <TabsContent value="home-content" className="mt-6">
+                <HomeContentManager />
               </TabsContent>
             )}
             </main>

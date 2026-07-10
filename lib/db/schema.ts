@@ -338,6 +338,10 @@ const baseGiveawayFields = {
   coverImage: text('cover_image'),
   tags: text('tags').array().default([]),
   rules: text('rules').array().default([]),
+  // Entry mode (Fivegift-style): false = must complete ALL requirements to enter
+  // (one equal entry); true = each requirement completed earns 1 point and more
+  // points = higher weighted win chance.
+  usePoints: boolean('use_points').default(false),
   status: text('status').default('active'),
   entriesCount: integer('entries_count').default(0),
   createdAt: timestamp('created_at').defaultNow(),
@@ -379,6 +383,12 @@ export const giveawayRequirements = pgTable('giveaway_requirements', {
   points: integer('points').notNull(),
   required: boolean('required').default(true),
   link: text('link'),
+  // For Discord requirements: cached from the invite link at create time so the
+  // detail page can show the server icon + name without re-hitting Discord.
+  guildId: text('guild_id'),
+  serverName: text('server_name'),
+  serverIcon: text('server_icon'),
+  inviteCode: text('invite_code'),
 });
 
 // Giveaway prizes table
@@ -574,6 +584,19 @@ export const adEvents = pgTable('ad_events', {
 }));
 export type AdEvent = typeof adEvents.$inferSelect;
 export type NewAdEvent = typeof adEvents.$inferInsert;
+
+// ── Site content (admin-editable marketing copy) ────────────────────────
+// One row per named section ('home' today); `value` holds that section's
+// whole JSON shape so new fields never need a migration — only the admin
+// editor and the reader on the page need to agree on the shape.
+export const siteContent = pgTable('site_content', {
+  id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
+  key: text('key').notNull().unique(),
+  value: json('value').notNull(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+export type SiteContent = typeof siteContent.$inferSelect;
+export type NewSiteContent = typeof siteContent.$inferInsert;
 
 // ── Verified-creator verification requests ─────────────────────────────
 // A creator applies for the "verified" badge; an admin approves (grants the

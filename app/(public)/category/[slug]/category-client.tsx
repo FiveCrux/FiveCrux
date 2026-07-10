@@ -62,6 +62,7 @@ function scriptToProduct(script: Script): MarketProduct {
     rating: typeof script.rating === "number" ? script.rating : Number(script.rating) || undefined,
     seller: script.seller_name,
     coverImage: script.coverImage,
+    currencySymbol: script.currency_symbol,
     tag: script.featured ? "FEATURED" : Number(script.price) === 0 ? "FREE" : null,
     href: `/script/${script.id}`,
   }

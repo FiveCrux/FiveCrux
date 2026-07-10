@@ -1533,7 +1533,9 @@ export async function createGiveaway(giveawayData: NewGiveaway) {
     coverImage: giveawayData.coverImage || (giveawayData as any).cover_image || null,
     youtubeVideoLink: giveawayData.youtubeVideoLink || (giveawayData as any).youtube_video_link || null,
     tags: giveawayData.tags || (giveawayData as any).tags || [],
-    rules: giveawayData.rules || (giveawayData as any).rules || []
+    rules: giveawayData.rules || (giveawayData as any).rules || [],
+    // Entry mode toggle (weighted-odds points vs. must-complete-all)
+    usePoints: giveawayData.usePoints ?? (giveawayData as any).use_points ?? false,
   };
   
   console.log('giveawayWithDefaults:', giveawayWithDefaults);
@@ -1550,11 +1552,16 @@ export async function createGiveawayRequirement(requirementData: NewGiveawayRequ
   const mappedData = {
     ...requirementData,
     id: genId(), // app-generated integer PK (prod has manual PKs)
-    giveawayId: requirementData.giveawayId || (requirementData as any).giveaway_id
+    giveawayId: requirementData.giveawayId || (requirementData as any).giveaway_id,
+    // Cached Discord server info (Fivegift-style chip on the detail page)
+    guildId: (requirementData as any).guildId ?? (requirementData as any).guild_id ?? null,
+    serverName: (requirementData as any).serverName ?? (requirementData as any).server_name ?? null,
+    serverIcon: (requirementData as any).serverIcon ?? (requirementData as any).server_icon ?? null,
+    inviteCode: (requirementData as any).inviteCode ?? (requirementData as any).invite_code ?? null,
   };
-  
+
   console.log('mappedData:', mappedData);
-  
+
   const result = await db.insert(giveawayRequirements).values(mappedData).returning({ id: giveawayRequirements.id });
   return result[0]?.id;
 }
@@ -1845,6 +1852,8 @@ export async function updateGiveawayForReapproval(id: number, updateData: any) {
     assignIfDefined('rules', updateData.rules);
     if (updateData.featured !== undefined) assignIfDefined('featured', Boolean(updateData.featured));
     if (updateData.auto_announce !== undefined) assignIfDefined('autoAnnounce', Boolean(updateData.auto_announce));
+    if (updateData.use_points !== undefined) assignIfDefined('usePoints', Boolean(updateData.use_points));
+    if (updateData.usePoints !== undefined) assignIfDefined('usePoints', Boolean(updateData.usePoints));
 
     console.log('Mapped update object for re-approval:', mappedUpdate);
 
@@ -1925,6 +1934,7 @@ export async function updateGiveaway(id: number, updateData: Partial<NewGiveaway
       rules: giveaway.rules,
       featured: giveaway.featured,
       autoAnnounce: giveaway.autoAnnounce,
+      usePoints: giveaway.usePoints ?? false,
       createdAt: giveaway.createdAt,
       updatedAt: new Date(),
       submittedAt: new Date(),
@@ -1973,7 +1983,9 @@ export async function updateGiveaway(id: number, updateData: Partial<NewGiveaway
     if (data.autoAnnounce !== undefined) updateObject.autoAnnounce = Boolean(data.autoAnnounce);
     if (data.maxEntries !== undefined) updateObject.maxEntries = data.maxEntries;
     if (data.max_entries !== undefined) updateObject.maxEntries = data.max_entries;
-    
+    if (data.use_points !== undefined) updateObject.usePoints = Boolean(data.use_points);
+    if (data.usePoints !== undefined) updateObject.usePoints = Boolean(data.usePoints);
+
     // Always move to pending_giveaways for any edit
     const result = await db.transaction(async (tx) => {
       // Delete from current table

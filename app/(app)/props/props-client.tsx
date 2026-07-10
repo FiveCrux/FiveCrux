@@ -465,6 +465,7 @@ export function PropsClient({
       seller: prop.seller,
       sellerImage: prop.seller_image || undefined,
       coverImage: prop.image,
+      currencySymbol: prop.currency_symbol,
       tag: prop.featured ? "FEATURED" : isFree ? "FREE" : null,
       href: `/prop/${prop.id}`,
     };

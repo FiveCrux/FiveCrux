@@ -61,6 +61,13 @@ export function GiveawaysClient({
   const [ads, setAds] = useState<any[]>(Array.isArray(initialAds) ? initialAds : []);
   const [activeTab, setActiveTab] = useState<"active" | "ended">("active");
 
+  // Live countdown — re-render every second so the "ends in" timers tick.
+  const [now, setNow] = useState<number>(() => Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
+
   type UIGiveaway = {
     id: number;
     title: string;
@@ -184,7 +191,7 @@ export function GiveawaysClient({
 
   // Returns a friendly "ends in X" string from an end date.
   const getTimeLeft = (endDate: string) => {
-    const diff = new Date(endDate).getTime() - new Date().getTime();
+    const diff = new Date(endDate).getTime() - now;
     if (diff <= 0) return "Ended";
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
     if (days >= 1) return `Ends in ${days} day${days === 1 ? "" : "s"}`;
@@ -194,19 +201,18 @@ export function GiveawaysClient({
     return `Ends in ${mins} min${mins === 1 ? "" : "s"}`;
   };
 
-  // Compact "Xd Yh left" form used on the grid cards (matches the mockup).
+  // Compact live "Xd Yh left" form used on the grid cards; ticks down to
+  // seconds in the final hour so the countdown feels alive (Fivegift-style).
   const getTimeLeftShort = (endDate: string) => {
-    const diff = new Date(endDate).getTime() - new Date().getTime();
+    const diff = new Date(endDate).getTime() - now;
     if (diff <= 0) return "Ended";
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
     const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
     if (days >= 1) return `${days}d ${hours}h left`;
-    if (hours >= 1) {
-      const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      return `${hours}h ${mins}m left`;
-    }
-    const mins = Math.max(1, Math.floor(diff / (1000 * 60)));
-    return `${mins}m left`;
+    const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    if (hours >= 1) return `${hours}h ${mins}m left`;
+    const secs = Math.floor((diff % (1000 * 60)) / 1000);
+    return `${mins}m ${secs}s left`;
   };
 
   const filteredGiveaways = activeGiveaways.filter((giveaway) => {
@@ -283,11 +289,15 @@ export function GiveawaysClient({
               sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
-            {/* Value chip (top-left) */}
-            <span className="absolute left-3 top-3 rounded-md bg-black/60 px-2 py-1 text-xs font-bold text-white backdrop-blur-sm">
-              {`${giveaway.currency_symbol || "$"}${giveaway.totalValue}`}{" "}
-              <span className="font-medium text-white/55">value</span>
-            </span>
+            {/* Value chip (top-left) — only when a real value is set */}
+            {giveaway.totalValue &&
+              giveaway.totalValue !== "0" &&
+              giveaway.totalValue !== "0.00" && (
+                <span className="absolute left-3 top-3 rounded-md bg-black/60 px-2 py-1 text-xs font-bold text-white backdrop-blur-sm">
+                  {`${giveaway.currency_symbol || "$"}${giveaway.totalValue}`}{" "}
+                  <span className="font-medium text-white/55">value</span>
+                </span>
+              )}
             {/* Live / Ended chip (top-right) */}
             {ended ? (
               <span className="absolute right-3 top-3 flex items-center gap-1 rounded-md bg-black/50 px-2 py-1 text-[11px] font-medium text-white/70 backdrop-blur-sm">
@@ -478,13 +488,19 @@ export function GiveawaysClient({
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm">
-                  <div>
-                    <span className="text-2xl font-extrabold text-white">
-                      {`${featuredGiveaway.currency_symbol || "$"}${featuredGiveaway.totalValue}`}
-                    </span>{" "}
-                    <span className="text-white/55">prize value</span>
-                  </div>
-                  <span className="h-4 w-px bg-white/10" />
+                  {featuredGiveaway.totalValue &&
+                    featuredGiveaway.totalValue !== "0" &&
+                    featuredGiveaway.totalValue !== "0.00" && (
+                      <>
+                        <div>
+                          <span className="text-2xl font-extrabold text-white">
+                            {`${featuredGiveaway.currency_symbol || "$"}${featuredGiveaway.totalValue}`}
+                          </span>{" "}
+                          <span className="text-white/55">prize value</span>
+                        </div>
+                        <span className="h-4 w-px bg-white/10" />
+                      </>
+                    )}
                   <span className="flex items-center gap-1.5 text-white/60">
                     <Users className="h-4 w-4" /> {fmt(featuredGiveaway.entries)} entries
                   </span>
