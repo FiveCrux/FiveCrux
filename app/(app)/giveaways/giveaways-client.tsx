@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import Image from "next/image";
 import { motion, useInView } from "framer-motion";
 import {
@@ -215,46 +215,77 @@ export function GiveawaysClient({
     return `${mins}m ${secs}s left`;
   };
 
-  const filteredGiveaways = activeGiveaways.filter((giveaway) => {
-    if (
-      searchQuery &&
-      !giveaway.title.toLowerCase().includes(searchQuery.toLowerCase())
-    ) {
-      return false;
+  // Everything below is derived from the giveaway data + filters/tab — NOT
+  // from the live `now` tick. Memoized so the 1-second countdown re-render
+  // doesn't re-run the random ad placement below (that was reshuffling the
+  // whole grid's order every second — the "cards keep changing" bug).
+  const { featuredGiveaway, gridActiveGiveaways, endedFilteredGiveaways, liveCount, gridList } = useMemo(() => {
+    const filteredGiveaways = activeGiveaways.filter((giveaway) => {
+      if (
+        searchQuery &&
+        !giveaway.title.toLowerCase().includes(searchQuery.toLowerCase())
+      ) {
+        return false;
+      }
+      if (filterBy === "featured" && !giveaway.featured) {
+        return false;
+      }
+      if (filterBy === "trending" && !giveaway.trending) {
+        return false;
+      }
+      return true;
+    });
+
+    // Filter active giveaways (not ended)
+    const activeFilteredGiveaways = filteredGiveaways.filter((giveaway) => {
+      const isEnded =
+        new Date(giveaway.endDate).getTime() <= new Date().getTime();
+      return !isEnded;
+    });
+
+    // Filter ended giveaways
+    const endedFilteredGiveaways = filteredGiveaways.filter((giveaway) => {
+      const isEnded =
+        new Date(giveaway.endDate).getTime() <= new Date().getTime();
+      return isEnded;
+    });
+
+    // FEATURED = a giveaway flagged featured (first one), else the first active.
+    const featuredGiveaway =
+      activeFilteredGiveaways.find((g) => g.featured) ||
+      activeFilteredGiveaways[0] ||
+      null;
+
+    // Grid shows the remaining active giveaways (featured pulled out).
+    const gridActiveGiveaways = featuredGiveaway
+      ? activeFilteredGiveaways.filter((g) => g.id !== featuredGiveaway.id)
+      : activeFilteredGiveaways;
+
+    const gridList: GridItem[] =
+      activeTab === "active" ? [...gridActiveGiveaways] : [...endedFilteredGiveaways];
+
+    // Insert ads at random positions (preserved logic) — computed once per
+    // data/tab/ads change, not on every render.
+    if (!loading && randomAds.length > 0 && gridList.length > 0) {
+      const adPositions: { ad: any; position: number }[] = [];
+      for (let i = 0; i < randomAds.length; i++) {
+        const position = Math.floor(Math.random() * (gridList.length + 1));
+        adPositions.push({ ad: randomAds[i], position });
+      }
+      adPositions.sort((a, b) => b.position - a.position);
+      adPositions.forEach(({ ad, position }) => {
+        gridList.splice(position, 0, { ...ad, isAd: true });
+      });
     }
-    if (filterBy === "featured" && !giveaway.featured) {
-      return false;
-    }
-    if (filterBy === "trending" && !giveaway.trending) {
-      return false;
-    }
-    return true;
-  });
 
-  // Filter active giveaways (not ended)
-  const activeFilteredGiveaways = filteredGiveaways.filter((giveaway) => {
-    const isEnded =
-      new Date(giveaway.endDate).getTime() <= new Date().getTime();
-    return !isEnded;
-  });
-
-  // Filter ended giveaways
-  const endedFilteredGiveaways = filteredGiveaways.filter((giveaway) => {
-    const isEnded =
-      new Date(giveaway.endDate).getTime() <= new Date().getTime();
-    return isEnded;
-  });
-
-  // FEATURED = a giveaway flagged featured (first one), else the first active.
-  const featuredGiveaway =
-    activeFilteredGiveaways.find((g) => g.featured) ||
-    activeFilteredGiveaways[0] ||
-    null;
-
-  // Grid shows the remaining active giveaways (featured pulled out).
-  const gridActiveGiveaways = featuredGiveaway
-    ? activeFilteredGiveaways.filter((g) => g.id !== featuredGiveaway.id)
-    : activeFilteredGiveaways;
+    return {
+      featuredGiveaway,
+      gridActiveGiveaways,
+      endedFilteredGiveaways,
+      liveCount: activeFilteredGiveaways.length,
+      gridList,
+    };
+  }, [activeGiveaways, searchQuery, filterBy, activeTab, randomAds, loading]);
 
   // Format an entries count like "3,400".
   const fmt = (n: number) => (n || 0).toLocaleString();
@@ -391,23 +422,6 @@ export function GiveawaysClient({
       </div>
     </div>
   );
-
-  const liveCount = activeFilteredGiveaways.length;
-  const gridList: GridItem[] =
-    activeTab === "active" ? [...gridActiveGiveaways] : [...endedFilteredGiveaways];
-
-  // Insert ads at random positions (preserved logic).
-  if (!loading && randomAds.length > 0 && gridList.length > 0) {
-    const adPositions: { ad: any; position: number }[] = [];
-    for (let i = 0; i < randomAds.length; i++) {
-      const position = Math.floor(Math.random() * (gridList.length + 1));
-      adPositions.push({ ad: randomAds[i], position });
-    }
-    adPositions.sort((a, b) => b.position - a.position);
-    adPositions.forEach(({ ad, position }) => {
-      gridList.splice(position, 0, { ...ad, isAd: true });
-    });
-  }
 
   return (
     <>
