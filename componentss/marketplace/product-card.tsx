@@ -118,10 +118,20 @@ export function ProductCard({ product, className = "" }: { product: MarketProduc
         )}
         <h3 className="mb-2 truncate text-sm font-bold leading-snug text-white">{product.title}</h3>
         <div className="mb-3 flex items-center gap-2">
-          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-yellow-400 text-[9px] font-black text-black">
-            {product.seller ? product.seller.charAt(0).toUpperCase() : "?"}
-          </span>
-          <span className="truncate text-xs text-white/60">{product.seller || "Unknown"}</span>
+          {product.sellerImage ? (
+            <Image
+              src={product.sellerImage}
+              alt={product.seller || "Seller"}
+              width={20}
+              height={20}
+              className="h-5 w-5 flex-shrink-0 rounded-full object-cover"
+            />
+          ) : (
+            <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-yellow-400 text-[9px] font-black text-black">
+              {product.seller ? product.seller.charAt(0).toUpperCase() : "?"}
+            </span>
+          )}
+          <span className="truncate text-xs capitalize text-white/60">{product.seller || "Unknown"}</span>
           {typeof product.rating === "number" && (
             <span className="ml-auto flex items-center gap-0.5 text-xs font-semibold text-yellow-400">
               <Star className="h-3.5 w-3.5 fill-yellow-400" /> {product.rating.toFixed(1)}

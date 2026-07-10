@@ -28,6 +28,7 @@ interface Script {
   framework?: string[]
   seller_name: string
   seller_email: string
+  seller_image?: string
   sellerId?: string
   tags: string[]
   features: string[]
@@ -50,6 +51,16 @@ interface Script {
   updatedAt: string
 }
 
+// A seller can submit without picking an explicit cover image — fall back to
+// their first screenshot rather than showing no image at all.
+function resolveCoverImage(...candidates: any[]): string | undefined {
+  for (const c of candidates) {
+    if (typeof c === "string" && c) return c
+    if (Array.isArray(c) && c.length > 0 && c[0]) return c[0]
+  }
+  return undefined
+}
+
 // Normalize a Script (live API shape) into the shared ProductCard MarketProduct shape.
 function scriptToProduct(script: Script): MarketProduct {
   return {
@@ -61,7 +72,8 @@ function scriptToProduct(script: Script): MarketProduct {
     free: Number(script.price) === 0,
     rating: typeof script.rating === "number" ? script.rating : Number(script.rating) || undefined,
     seller: script.seller_name,
-    coverImage: script.coverImage,
+    sellerImage: script.seller_image,
+    coverImage: resolveCoverImage(script.coverImage, script.images, script.screenshots),
     currencySymbol: script.currency_symbol,
     tag: script.featured ? "FEATURED" : Number(script.price) === 0 ? "FREE" : null,
     href: `/script/${script.id}`,

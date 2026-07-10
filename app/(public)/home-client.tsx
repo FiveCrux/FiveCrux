@@ -42,6 +42,17 @@ const SHORTCUTS: { name: string; icon: LucideIcon; href: string }[] = [
 ]
 
 
+// A seller can submit without ever picking an explicit cover image — fall
+// back to their first screenshot rather than showing no image at all. Mirrors
+// the fallback already used on /scripts (scripts-client.tsx's mapApiScript).
+function resolveCoverImage(...candidates: any[]): string | undefined {
+  for (const c of candidates) {
+    if (typeof c === "string" && c) return c
+    if (Array.isArray(c) && c.length > 0 && c[0]) return c[0]
+  }
+  return undefined
+}
+
 function mapFeatured(item: any): MarketProduct {
   return {
     id: item.scriptId ?? item.id,
@@ -52,7 +63,7 @@ function mapFeatured(item: any): MarketProduct {
     hidePrice: item.scriptHidePrice ?? item.hidePrice ?? item.hide_price ?? false,
     seller: item.scriptSellerName || item.seller_name || item.seller,
     sellerImage: item.scriptSellerImage || item.seller_image,
-    coverImage: item.scriptCoverImage || item.cover_image,
+    coverImage: resolveCoverImage(item.scriptCoverImage, item.cover_image, item.scriptImages, item.images, item.scriptScreenshots, item.screenshots),
     currencySymbol: item.scriptCurrencySymbol || item.currency_symbol || item.currencySymbol,
     tag: "FEATURED",
     href: `/script/${item.scriptId ?? item.id}`,
@@ -72,7 +83,7 @@ function mapScript(item: any): MarketProduct {
     hidePrice: item.hidePrice ?? item.hide_price ?? false,
     seller: item.seller_name || item.sellerName || item.seller,
     sellerImage: item.seller_image || item.sellerImage,
-    coverImage: item.cover_image || item.coverImage,
+    coverImage: resolveCoverImage(item.cover_image, item.coverImage, item.images, item.screenshots),
     currencySymbol: item.currency_symbol || item.currencySymbol,
     category: item.category,
     href: `/script/${item.id}`,
