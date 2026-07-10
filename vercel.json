@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/giveaways/check-and-trigger-ended",
+      "schedule": "*/10 * * * *"
+    }
+  ]
+}

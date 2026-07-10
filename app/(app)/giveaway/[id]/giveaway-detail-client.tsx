@@ -362,6 +362,8 @@ export function GiveawayDetailClient({
 
   const [openedDiscordTasks, setOpenedDiscordTasks] = useState<number[]>([])
   const [openedYoutubeTasks, setOpenedYoutubeTasks] = useState<number[]>([])
+  // Winners accordion: which prize row is expanded (first open by default).
+  const [openWinnerIdx, setOpenWinnerIdx] = useState<number>(0)
   const [serverNames, setServerNames] = useState<{[key: number]: string}>({})
   const [loadingStates, setLoadingStates] = useState<{[key: number]: boolean}>({})
   const [autoVerifying, setAutoVerifying] = useState(false)
@@ -664,9 +666,28 @@ export function GiveawayDetailClient({
     .filter((req: any) => completedTasks.includes(req.id))
     .reduce((sum: any, req: any) => sum + req.points, 0)
 
+  // Fivegift-style entry mode + progress. Each requirement counts as 1 toward
+  // the meter; in points mode more completed = higher win chance, otherwise the
+  // entrant must complete every requirement to enter.
+  const usePoints = giveaway?.usePoints ?? giveaway?.use_points ?? false
+  const reqTotalCount = transformedGiveaway.requirements.length
+  const reqDoneCount = transformedGiveaway.requirements.filter((r: any) => completedTasks.includes(r.id)).length
+  const reqProgressPct = reqTotalCount > 0 ? Math.round((reqDoneCount / reqTotalCount) * 100) : 0
+
   // ---- Presentation helpers (Design A) ----
   const currencySymbol = giveaway?.currencySymbol || giveaway?.currency_symbol || "$"
   const prizeValueDisplay = `${currencySymbol}${transformedGiveaway.value}`
+  // New (Fivegift-style) giveaways carry no total value — hide the value chips
+  // instead of showing a bare "0" / symbol.
+  const hasValue =
+    !!transformedGiveaway.value &&
+    transformedGiveaway.value !== "0" &&
+    transformedGiveaway.value !== "$" &&
+    transformedGiveaway.value !== "0.00"
+  const totalWinners = (transformedGiveaway.prizes || []).reduce(
+    (s: any, p: any) => s + (Number(p.numberOfWinners ?? p.number_of_winners ?? p.count) || 0),
+    0
+  )
   // Recompute the countdown breakdown on each tick (`now` triggers re-render).
   const timeParts = useMemo(
     () => getTimeParts(transformedGiveaway.endDate),
@@ -684,9 +705,12 @@ export function GiveawayDetailClient({
   // Icon + human label for an entry task based on its type.
   const taskMeta = (task: any): { icon: any; label: string } => {
     if (task.type === "discord" && task.description) {
+      // Prefer the server name cached at create time (Phase 1); fall back to the
+      // live client-side lookup.
+      const name = task.serverName || task.server_name || serverNames[task.id]
       return {
         icon: MessageCircle,
-        label: serverNames[task.id] ? `Join ${serverNames[task.id]} on Discord` : "Join our Discord server",
+        label: name ? `Join ${name}` : "Join our Discord server",
       }
     }
     if (task.type === "youtube" && task.description) {
@@ -836,12 +860,16 @@ export function GiveawayDetailClient({
 
             {/* Meta row: prize value · entries · ends in */}
             <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
-              <span className="inline-flex items-center gap-1.5">
-                <Gift className="h-4 w-4 text-orange-500" />
-                <span className="tabular-nums font-semibold">{prizeValueDisplay}</span>
-                <span className="text-white/55">value</span>
-              </span>
-              <span className="text-white/25">|</span>
+              {hasValue && (
+                <>
+                  <span className="inline-flex items-center gap-1.5">
+                    <Gift className="h-4 w-4 text-orange-500" />
+                    <span className="tabular-nums font-semibold">{prizeValueDisplay}</span>
+                    <span className="text-white/55">value</span>
+                  </span>
+                  <span className="text-white/25">|</span>
+                </>
+              )}
               <span className="inline-flex items-center gap-1.5 text-white/70">
                 <Users className="h-4 w-4" />
                 <span className="tabular-nums font-semibold text-white">
@@ -964,8 +992,12 @@ export function GiveawayDetailClient({
         <div className="border-y border-white/[0.06] bg-[#0d0d0d]">
           <div className="mx-auto grid max-w-[1240px] grid-cols-2 divide-x divide-white/[0.06] px-4 sm:grid-cols-4 sm:px-6 lg:px-8">
             <div className="py-5 pr-4">
-              <div className="text-[11px] uppercase tracking-[0.16em] text-white/55">Prize value</div>
-              <div className="mt-1 tabular-nums text-lg font-bold">{prizeValueDisplay}</div>
+              <div className="text-[11px] uppercase tracking-[0.16em] text-white/55">
+                {hasValue ? "Prize value" : "Winners"}
+              </div>
+              <div className="mt-1 tabular-nums text-lg font-bold">
+                {hasValue ? prizeValueDisplay : totalWinners}
+              </div>
             </div>
             <div className="py-5 pl-4 pr-4">
               <div className="text-[11px] uppercase tracking-[0.16em] text-white/55">Entries</div>
@@ -1014,6 +1046,29 @@ export function GiveawayDetailClient({
                   )}
                 </div>
 
+                {/* Progress meter (Fivegift-style) */}
+                {reqTotalCount > 0 && (
+                  <div className="mb-5">
+                    <div className="mb-1.5 flex items-center justify-between text-xs">
+                      <span className="font-semibold text-white/70">
+                        Collected points ({reqDoneCount}/{reqTotalCount})
+                      </span>
+                      <span className="tabular-nums font-bold text-orange-400">{reqProgressPct}%</span>
+                    </div>
+                    <div className="h-2 w-full overflow-hidden rounded-full bg-white/[0.06]">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-orange-500 to-amber-400 transition-all duration-500"
+                        style={{ width: `${reqProgressPct}%` }}
+                      />
+                    </div>
+                    <p className="mt-2 text-[12px] leading-relaxed text-white/45">
+                      {usePoints
+                        ? "Each task you complete earns 1 point — the more points you collect, the higher your chance to win."
+                        : "Complete every task below to enter. Everyone who enters has an equal chance to win."}
+                    </p>
+                  </div>
+                )}
+
                 <div className="space-y-3">
                   {transformedGiveaway.requirements.map((task: any) => {
                     const { icon: TaskIcon, label } = taskMeta(task)
@@ -1021,6 +1076,7 @@ export function GiveawayDetailClient({
                     const isBusy = loadingStates[task.id]
                     const isDiscord = task.type === "discord" && task.description
                     const isYoutube = task.type === "youtube" && task.description
+                    const serverIcon = task.serverIcon || task.server_icon || null
                     const showDiscordVerify =
                       isDiscord && !isDone && openedDiscordTasks.includes(task.id)
                     const showYoutubeVerify =
@@ -1037,12 +1093,15 @@ export function GiveawayDetailClient({
                       >
                         <span className="flex min-w-0 items-center gap-3">
                           <span
-                            className={`grid h-8 w-8 flex-shrink-0 place-items-center rounded-lg ${
+                            className={`grid h-8 w-8 flex-shrink-0 place-items-center overflow-hidden rounded-lg ${
                               isDone ? "bg-green-500/15" : "bg-white/[0.06]"
                             }`}
                           >
                             {isDone ? (
                               <Check className="h-4 w-4 text-green-400" />
+                            ) : serverIcon ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={serverIcon} alt="" className="h-8 w-8 object-cover" />
                             ) : (
                               <TaskIcon className="h-4 w-4 text-white/70" />
                             )}
@@ -1120,7 +1179,9 @@ export function GiveawayDetailClient({
                                 {(isDiscord && openedDiscordTasks.includes(task.id)) ||
                                 (isYoutube && openedYoutubeTasks.includes(task.id))
                                   ? "Reopen"
-                                  : "Complete"}
+                                  : isDiscord
+                                    ? "Join"
+                                    : "Subscribe"}
                               </>
                             ) : (
                               "+1 entry"
@@ -1273,57 +1334,77 @@ export function GiveawayDetailClient({
                 <Trophy className="h-5 w-5 text-orange-500" />
                 <h2 className="text-lg font-bold">Winners</h2>
               </div>
-              <div className="space-y-3">
+              <p className="mb-4 -mt-2 text-xs text-white/45">
+                Click a prize to reveal its winner{transformedGiveaway.prizes.length === 1 ? "" : "s"}.
+              </p>
+              <div className="space-y-2.5">
                 {transformedGiveaway.prizes.length > 0 ? (
-                  transformedGiveaway.prizes.map((prize: any) => (
-                    <div
-                      key={prize.position}
-                      className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4"
-                    >
-                      <div className="mb-2 flex items-center justify-between">
-                        <div>
-                          <div className="text-sm font-bold">
-                            {prize.position === 1
-                              ? "1st"
-                              : prize.position === 2
-                              ? "2nd"
-                              : prize.position === 3
-                              ? "3rd"
-                              : `${prize.position}th`}{" "}
-                            — {prize.name}
+                  transformedGiveaway.prizes.map((prize: any, idx: number) => {
+                    const isOpen = openWinnerIdx === idx
+                    const placeLabel =
+                      prize.position === 1 ? "1st" :
+                      prize.position === 2 ? "2nd" :
+                      prize.position === 3 ? "3rd" : `${prize.position || idx + 1}th`
+                    const winnerList: any[] =
+                      prize.winners && prize.winners.length > 0
+                        ? prize.winners
+                        : prize.winnerName
+                        ? [{ userName: prize.winnerName }]
+                        : []
+                    return (
+                      <div
+                        key={prize.position ?? idx}
+                        className={`overflow-hidden rounded-xl border transition-colors ${
+                          isOpen ? "border-orange-500/30 bg-orange-500/[0.04]" : "border-white/[0.06] bg-white/[0.02]"
+                        }`}
+                      >
+                        {/* Header — click to expand */}
+                        <button
+                          type="button"
+                          onClick={() => setOpenWinnerIdx(isOpen ? -1 : idx)}
+                          className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-white/[0.03]"
+                        >
+                          <ChevronRight
+                            className={`h-4 w-4 flex-shrink-0 text-orange-400 transition-transform duration-300 ${
+                              isOpen ? "rotate-90" : ""
+                            }`}
+                          />
+                          <span className="grid h-7 w-7 flex-shrink-0 place-items-center rounded-lg bg-orange-500/10 text-[11px] font-bold text-orange-400">
+                            {placeLabel}
+                          </span>
+                          <span className="min-w-0 flex-1 truncate text-sm font-bold">{prize.name}</span>
+                          <span className="flex-shrink-0 text-xs font-semibold text-white/45">
+                            {winnerList.length > 0
+                              ? `${winnerList.length} ${winnerList.length === 1 ? "winner" : "winners"}`
+                              : "Pending"}
+                          </span>
+                        </button>
+
+                        {/* Body — winners revealed on expand */}
+                        {isOpen && (
+                          <div className="space-y-2 px-4 pb-4 pt-1">
+                            {winnerList.length > 0 ? (
+                              winnerList.map((winner: any, wi: number) => (
+                                <div
+                                  key={wi}
+                                  className="flex items-center gap-2.5 rounded-lg border border-green-500/20 bg-green-500/[0.06] px-3 py-2.5"
+                                >
+                                  <Award className="h-4 w-4 flex-shrink-0 text-green-400" />
+                                  <span className="text-sm font-semibold text-white">
+                                    {winner.userName || "Unknown"}
+                                  </span>
+                                </div>
+                              ))
+                            ) : (
+                              <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2.5 text-center text-xs text-white/55">
+                                Winner will be announced soon
+                              </div>
+                            )}
                           </div>
-                          {prize.description && (
-                            <div className="text-xs text-white/55">{prize.description}</div>
-                          )}
-                        </div>
-                        <div className="text-lg font-extrabold text-orange-500">{prize.value}</div>
+                        )}
                       </div>
-                      {prize.winners && prize.winners.length > 0 ? (
-                        <div className="space-y-2">
-                          {prize.winners.map((winner: any, wi: number) => (
-                            <div
-                              key={wi}
-                              className="flex items-center gap-2 rounded-lg border border-green-500/20 bg-green-500/[0.06] px-3 py-2"
-                            >
-                              <Award className="h-4 w-4 text-green-400" />
-                              <span className="text-sm font-semibold text-white">
-                                {winner.userName || "Unknown"}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      ) : prize.winnerName ? (
-                        <div className="flex items-center gap-2 rounded-lg border border-green-500/20 bg-green-500/[0.06] px-3 py-2">
-                          <Award className="h-4 w-4 text-green-400" />
-                          <span className="text-sm font-semibold text-white">{prize.winnerName}</span>
-                        </div>
-                      ) : (
-                        <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2 text-center text-xs text-white/55">
-                          Winner will be announced soon
-                        </div>
-                      )}
-                    </div>
-                  ))
+                    )
+                  })
                 ) : (
                   <p className="py-6 text-center text-sm text-white/55">
                     No prizes configured for this giveaway
@@ -1382,11 +1463,13 @@ export function GiveawayDetailClient({
                             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-                          <span className="absolute left-3 top-3 rounded-md bg-black/60 px-2 py-1 text-xs font-bold backdrop-blur-sm">
-                            {currencySymbol}
-                            {g.totalValue || "0"}{" "}
-                            <span className="font-medium text-white/55">value</span>
-                          </span>
+                          {g.totalValue && g.totalValue !== "0" && g.totalValue !== "0.00" && (
+                            <span className="absolute left-3 top-3 rounded-md bg-black/60 px-2 py-1 text-xs font-bold backdrop-blur-sm">
+                              {currencySymbol}
+                              {g.totalValue}{" "}
+                              <span className="font-medium text-white/55">value</span>
+                            </span>
+                          )}
                         </div>
                         <div className="p-5">
                           <h4 className="truncate text-base font-bold group-hover:text-orange-400">

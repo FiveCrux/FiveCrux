@@ -35,7 +35,6 @@ import Navbar from "@/componentss/shared/navbar"
 import Footer from "@/componentss/shared/footer"
 import { toast } from "sonner"
 import FileUpload from "@/componentss/shared/file-upload"
-import { CurrencySelect } from "@/componentss/currency-select"
 import { DateTimePicker } from "@/componentss/ui/date-time-picker"
 
 // Animated background particles
@@ -80,21 +79,22 @@ export default function EditGiveawayPage() {
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    value: "",
     endDate: undefined as Date | undefined,
     featured: false,
     autoAnnounce: true,
     creatorName: session?.user?.name || "",
     creatorEmail: session?.user?.email || "",
-    currency: "USD",
-    currencySymbol: "$",
   })
 
+  // Entry mode: OFF = must join ALL requirements (equal single entry);
+  // ON = each requirement joined earns 1 point, more points = higher win chance.
+  const [usePoints, setUsePoints] = useState(false)
+
   const [requirements, setRequirements] = useState([
-    { id: 1, type: "discord", description: "", points: 1, required: true },
+    { id: 1, type: "discord", description: "" },
   ])
 
-  const [prizes, setPrizes] = useState([{ id: 1, name: "", description: "", value: "", position: 1, numberOfWinners: 1 }])
+  const [prizes, setPrizes] = useState([{ id: 1, name: "", numberOfWinners: 1 }])
 
   const [media, setMedia] = useState({
     images: [] as (File | string)[],
@@ -149,15 +149,15 @@ export default function EditGiveawayPage() {
           setFormData({
             title: giveaway.title || "",
             description: giveaway.description || "",
-            value: giveaway.total_value || giveaway.totalValue || "",
             endDate: endDateValue ? new Date(endDateValue) : undefined,
             featured: giveaway.featured || false,
             autoAnnounce: giveaway.auto_announce || giveaway.autoAnnounce || true,
             creatorName: giveaway.creator_name || giveaway.creatorName || session?.user?.name || "",
             creatorEmail: giveaway.creator_email || giveaway.creatorEmail || session?.user?.email || "",
-            currency: giveaway.currency || "USD",
-            currencySymbol: giveaway.currency_symbol || giveaway.currencySymbol || "$",
           })
+
+          // Prefill point-system mode
+          setUsePoints(giveaway.use_points ?? giveaway.usePoints ?? false)
 
           // Prefill requirements
           if (giveaway.requirements && giveaway.requirements.length > 0) {
@@ -165,8 +165,6 @@ export default function EditGiveawayPage() {
               id: index + 1,
               type: req.type || "discord",
               description: req.description || "",
-              points: req.points || 1,
-              required: req.required !== undefined ? req.required : true,
             })))
           }
 
@@ -175,9 +173,6 @@ export default function EditGiveawayPage() {
             setPrizes(giveaway.prizes.map((prize: any, index: number) => ({
               id: index + 1,
               name: prize.name || "",
-              description: prize.description || "",
-              value: prize.value || "",
-              position: prize.position || index + 1,
               numberOfWinners: prize.numberOfWinners || prize.number_of_winners || 1,
             })))
           }
@@ -261,7 +256,7 @@ export default function EditGiveawayPage() {
 
   const addRequirement = () => {
     const newId = Math.max(...requirements.map((r) => r.id)) + 1
-    setRequirements([...requirements, { id: newId, type: "discord", description: "", points: 1, required: false }])
+    setRequirements([...requirements, { id: newId, type: "discord", description: "" }])
   }
 
   const removeRequirement = (id: number) => {
@@ -269,23 +264,12 @@ export default function EditGiveawayPage() {
   }
 
   const updateRequirement = (id: number, field: string, value: any) => {
-    if (field === "description") {
-      const requirement = requirements.find((r) => r.id === id)
-      // If type is youtube, validate that it's a YouTube URL
-      if (requirement?.type === "youtube" && value) {
-        const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+/
-        if (!youtubeRegex.test(value)) {
-          toast.error("Please enter a valid YouTube URL (e.g., https://youtube.com/@channel or https://youtu.be/...)")
-          return
-        }
-      }
-    }
     setRequirements(requirements.map((r) => (r.id === id ? { ...r, [field]: value } : r)))
   }
 
   const addPrize = () => {
     const newId = Math.max(...prizes.map((p) => p.id)) + 1
-    setPrizes([...prizes, { id: newId, name: "", description: "", value: "", position: prizes.length + 1, numberOfWinners: 1 }])
+    setPrizes([...prizes, { id: newId, name: "", numberOfWinners: 1 }])
   }
 
   const removePrize = (id: number) => {
@@ -355,21 +339,6 @@ export default function EditGiveawayPage() {
       }
     }
 
-    // Validate currency
-    if (!formData.currency) {
-      newErrors.currency = "Currency is required"
-    }
-
-    // Validate total value
-    if (!formData.value.trim()) {
-      newErrors.value = "Total value is required"
-    } else {
-      const numValue = parseFloat(formData.value)
-      if (isNaN(numValue) || numValue <= 0) {
-        newErrors.value = "Total value must be a positive number"
-      }
-    }
-
     // Validate end date
     if (!formData.endDate) {
       newErrors.endDate = "End date is required"
@@ -403,18 +372,12 @@ export default function EditGiveawayPage() {
     const discordRegex = /^(https?:\/\/)?(www\.)?(discord\.(gg|com|io)|discordapp\.com)\/.+/
     
     requirements.forEach((requirement, index) => {
-      if (requirement.required && !requirement.description.trim()) {
-        newErrors[`requirement_${requirement.id}_description`] = `Requirement ${index + 1} description is required`
-      } else if (requirement.description.trim()) {
-        if (requirement.type === "youtube" && !youtubeRegex.test(requirement.description.trim())) {
-          newErrors[`requirement_${requirement.id}_description`] = `Requirement ${index + 1} must be a valid YouTube URL`
-        } else if (requirement.type === "discord" && !discordRegex.test(requirement.description.trim())) {
-          newErrors[`requirement_${requirement.id}_description`] = `Requirement ${index + 1} must be a valid Discord invite link`
-        }
-      }
-      
-      if (requirement.points < 1 || requirement.points > 10) {
-        newErrors[`requirement_${requirement.id}_points`] = `Requirement ${index + 1} points must be between 1 and 10`
+      if (!requirement.description.trim()) {
+        newErrors[`requirement_${requirement.id}_description`] = `Requirement ${index + 1} link is required`
+      } else if (requirement.type === "youtube" && !youtubeRegex.test(requirement.description.trim())) {
+        newErrors[`requirement_${requirement.id}_description`] = `Requirement ${index + 1} must be a valid YouTube URL`
+      } else if (requirement.type === "discord" && !discordRegex.test(requirement.description.trim())) {
+        newErrors[`requirement_${requirement.id}_description`] = `Requirement ${index + 1} must be a valid Discord invite link`
       }
     })
 
@@ -490,12 +453,11 @@ export default function EditGiveawayPage() {
         giveaway: {
           title: formData.title,
           description: formData.description,
-          total_value: formData.value, // Only numeric value
-          currency: formData.currency || "USD",
-          currency_symbol: formData.currencySymbol || "$",
+          total_value: "0", // Deprecated — prizes carry their own info now
           end_date: formData.endDate ? formData.endDate.toISOString() : "",
           featured: formData.featured,
           auto_announce: formData.autoAnnounce,
+          use_points: usePoints,
           creator_name: formData.creatorName,
           creator_email: formData.creatorEmail,
           images: finalImages,
@@ -506,8 +468,21 @@ export default function EditGiveawayPage() {
           rules: [],
           status: "active",
         },
-        requirements,
-        prizes,
+        // Each requirement earns 1 point. Points-off → all required (must join
+        // everything); points-on → optional, and more joined = higher odds.
+        requirements: requirements.map((r) => ({
+          type: r.type,
+          description: r.description,
+          link: r.description,
+          points: 1,
+          required: !usePoints,
+        })),
+        prizes: prizes.map((p, i) => ({
+          name: p.name,
+          number_of_winners: p.numberOfWinners || 1,
+          position: i + 1,
+          value: "0",
+        })),
       };
 
       const res = await fetch(`/api/giveaways/${giveawayId}`, {
@@ -537,7 +512,10 @@ export default function EditGiveawayPage() {
     }
   };
 
-  const totalPoints = requirements.reduce((sum, req) => sum + req.points, 0)
+  // Each requirement = 1 point. In points mode this is the max points a user
+  // can collect; otherwise it's just the number of tasks they must complete.
+  const totalPoints = requirements.length
+  const totalWinners = prizes.reduce((sum, p) => sum + (Number(p.numberOfWinners) || 0), 0)
 
   const handleFileUpload = async (file: File, type: "image" | "video", purpose: string = "screenshot") => {
     try {
@@ -827,62 +805,7 @@ export default function EditGiveawayPage() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="value" className="text-white font-medium">
-                          Total Value *
-                        </Label>
-                        <div className="mt-2 flex flex-col gap-2">
-                          <CurrencySelect
-                            value={formData.currency}
-                            onValueChange={(value) => {
-                              setFormData({ ...formData, currency: value })
-                              if (errors.currency) {
-                                setErrors(prev => {
-                                  const newErrors = { ...prev }
-                                  delete newErrors.currency
-                                  return newErrors
-                                })
-                              }
-                            }}
-                            onCurrencySelect={(currency) =>
-                              setFormData({
-                                ...formData,
-                                currency: currency.code,
-                                currencySymbol: currency.symbol,
-                              })
-                            }
-                            placeholder="Select currency"
-                            disabled={false}
-                            currencies="all"
-                            variant="default"
-                            className={`bg-white/[0.04] border-white/[0.08] text-white ${errors.currency ? 'border-red-500' : ''}`}
-                          />
-                          <Input
-                            id="value"
-                            type="number"
-                            min="0"
-                            value={formData.value}
-                            onChange={(e) => {
-                              setFormData({ ...formData, value: e.target.value })
-                              if (errors.value) {
-                                setErrors(prev => {
-                                  const newErrors = { ...prev }
-                                  delete newErrors.value
-                                  return newErrors
-                                })
-                              }
-                            }}
-                            placeholder="150"
-                            className={`bg-white/[0.04] border-white/[0.08] text-white placeholder-white/30 focus:border-orange-500 focus-visible:ring-orange-500/40 ${errors.value ? 'border-red-500' : ''}`}
-                            required
-                          />
-                        </div>
-                        {(errors.currency || errors.value) && (
-                          <p className="text-red-400 text-xs mt-1">{errors.currency || errors.value}</p>
-                        )}
-                      </div>
-
+                    <div className="grid grid-cols-1 gap-4">
                       <div>
                         <DateTimePicker
                           date={formData.endDate}
@@ -941,11 +864,24 @@ export default function EditGiveawayPage() {
                         Entry Requirements
                       </div>
                       <Badge className="bg-orange-500/15 text-orange-400 border-orange-500/30">
-                        {totalPoints} total points
+                        {totalPoints} {totalPoints === 1 ? "task" : "tasks"}
                       </Badge>
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
+                    {/* Point system toggle */}
+                    <div className="flex items-start justify-between gap-4 rounded-2xl border border-white/[0.07] bg-white/[0.02] px-4 py-3.5">
+                      <div>
+                        <div className="text-sm font-semibold">Point system (weighted odds)</div>
+                        <div className="mt-0.5 text-xs leading-relaxed text-white/55">
+                          {usePoints
+                            ? "ON — each Discord joined = 1 point. The more a user joins, the higher their chance to win."
+                            : "OFF — everyone must join ALL servers to enter, and each entrant has an equal chance."}
+                        </div>
+                      </div>
+                      <Switch checked={usePoints} onCheckedChange={setUsePoints} />
+                    </div>
+
                     {requirements.map((requirement, index) => (
                       <motion.div
                         key={requirement.id}
@@ -956,77 +892,36 @@ export default function EditGiveawayPage() {
                       >
                         <div className="flex items-center justify-between mb-4">
                           <h4 className="text-white font-medium">Requirement {index + 1}</h4>
-                          <div className="flex items-center gap-2">
-                            {requirement.required && (
-                              <Badge className="bg-red-500/20 text-red-400 border-red-500/30 text-xs">Required</Badge>
-                            )}
-                            {requirements.length > 1 && (
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => removeRequirement(requirement.id)}
-                                className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
-                            )}
-                          </div>
+                          {requirements.length > 1 && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeRequirement(requirement.id)}
+                              className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          )}
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <div>
-                            <Label className="text-white text-sm">Type</Label>
-                            <Select
-                              value={requirement.type}
-                              onValueChange={(value) => updateRequirement(requirement.id, "type", value)}
-                            >
-                              <SelectTrigger className="mt-1 bg-white/[0.04] border-white/[0.08] text-white focus:ring-orange-500/40">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent className="bg-[#0d0d0f] border-white/[0.08] text-white">
-                                {requirementTypes.map((type) => (
-                                  <SelectItem key={type.value} value={type.value}>
-                                    {type.icon} {type.label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-
-                          <div>
-                            <Label className="text-white text-sm">Points</Label>
-                            <Input
-                              type="number"
-                              min="1"
-                              max="10"
-                              value={requirement.points}
-                              onChange={(e) => {
-                                updateRequirement(requirement.id, "points", Number.parseInt(e.target.value))
-                                if (errors[`requirement_${requirement.id}_points`]) {
-                                  setErrors(prev => {
-                                    const newErrors = { ...prev }
-                                    delete newErrors[`requirement_${requirement.id}_points`]
-                                    return newErrors
-                                  })
-                                }
-                              }}
-                              className={`mt-1 bg-white/[0.04] border-white/[0.08] text-white focus:border-orange-500 focus-visible:ring-orange-500/40 ${errors[`requirement_${requirement.id}_points`] ? 'border-red-500' : ''}`}
-                            />
-                            {errors[`requirement_${requirement.id}_points`] && (
-                              <p className="text-red-400 text-xs mt-1">{errors[`requirement_${requirement.id}_points`]}</p>
-                            )}
-                          </div>
-
-                          <div className="flex items-end pt-2 md:pt-0">
-                            <div className="flex items-center space-x-2">
-                              <Switch
-                                checked={requirement.required}
-                                onCheckedChange={(checked) => updateRequirement(requirement.id, "required", checked)}
-                              />
-                              <Label className="text-white text-sm">Required</Label>
-                            </div>
-                          </div>
+                        <div>
+                          <Label className="text-white text-sm">Type</Label>
+                          <Select
+                            value={requirement.type}
+                            onValueChange={(value) => updateRequirement(requirement.id, "type", value)}
+                          >
+                            <SelectTrigger className="mt-1 bg-white/[0.04] border-white/[0.08] text-white focus:ring-orange-500/40">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="bg-[#0d0d0f] border-white/[0.08] text-white">
+                              {requirementTypes.map((type) => (
+                                <SelectItem key={type.value} value={type.value}>
+                                  {type.icon} {type.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
 
                         <div className="mt-4">
@@ -1128,7 +1023,7 @@ export default function EditGiveawayPage() {
                           )}
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-[1fr_140px] gap-4">
                           <div>
                             <Label className="text-white text-sm">Prize Name</Label>
                             <Input
@@ -1140,17 +1035,7 @@ export default function EditGiveawayPage() {
                           </div>
 
                           <div>
-                            <Label className="text-white text-sm">Value</Label>
-                            <Input
-                              value={prize.value}
-                              onChange={(e) => updatePrize(prize.id, "value", e.target.value)}
-                              placeholder="$50"
-                              className="mt-1 bg-white/[0.04] border-white/[0.08] text-white placeholder-white/30 focus:border-orange-500 focus-visible:ring-orange-500/40"
-                            />
-                          </div>
-
-                          <div>
-                            <Label className="text-white text-sm">Number of Winners</Label>
+                            <Label className="text-white text-sm">Winners</Label>
                             <Input
                               type="number"
                               min="1"
@@ -1160,17 +1045,6 @@ export default function EditGiveawayPage() {
                               className="mt-1 bg-white/[0.04] border-white/[0.08] text-white placeholder-white/30 focus:border-orange-500 focus-visible:ring-orange-500/40"
                             />
                           </div>
-                        </div>
-
-                        <div className="mt-4">
-                          <Label className="text-white text-sm">Description</Label>
-                          <Textarea
-                            value={prize.description}
-                            onChange={(e) => updatePrize(prize.id, "description", e.target.value)}
-                            placeholder="Describe the prize in detail..."
-                            rows={2}
-                            className="mt-1 bg-white/[0.04] border-white/[0.08] text-white placeholder-white/30 focus:border-orange-500 focus-visible:ring-orange-500/40"
-                          />
                         </div>
                       </motion.div>
                     ))}
@@ -1461,8 +1335,15 @@ export default function EditGiveawayPage() {
                       </div>
 
                       <div className="flex items-center justify-between">
+                        <div>
+                          <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/55">Winners</div>
+                          <div className="mt-1 flex items-baseline gap-1.5">
+                            <span className="tabular-nums text-2xl font-bold leading-none">{totalWinners}</span>
+                            <span className="text-xs text-white/55">across {prizes.length} {prizes.length === 1 ? "prize" : "prizes"}</span>
+                          </div>
+                        </div>
                         <Badge className="bg-orange-500/15 text-orange-400 border-orange-500/30">
-                          {formData.value || "$0"} Value
+                          {usePoints ? `up to ${totalPoints}pt` : `${totalPoints} ${totalPoints === 1 ? "task" : "tasks"}`}
                         </Badge>
                       </div>
 
@@ -1474,9 +1355,6 @@ export default function EditGiveawayPage() {
                             <span className="text-white/70">
                               {req.description || requirementTypes.find((t) => t.value === req.type)?.label}
                             </span>
-                            <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30 text-xs">
-                              {req.points}pt
-                            </Badge>
                           </div>
                         ))}
                       </div>

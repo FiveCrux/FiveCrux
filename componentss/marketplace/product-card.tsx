@@ -3,6 +3,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import { ShoppingCart, Star, ChevronRight } from "lucide-react"
+import { formatPrice } from "@/lib/format-price"
 
 export interface MarketProduct {
   id: number | string
@@ -18,6 +19,8 @@ export interface MarketProduct {
   coverImage?: string
   tag?: "FEATURED" | "FREE" | null
   category?: string
+  /** Seller-selected currency symbol (e.g. "€"); falls back to the app default. */
+  currencySymbol?: string
   href: string
 }
 
@@ -135,10 +138,10 @@ export function ProductCard({ product, className = "" }: { product: MarketProduc
               <span className="text-base font-extrabold text-white">
                 {discounted && (
                   <span className="mr-1 text-xs font-medium text-white/55 line-through">
-                    ${originalPrice!.toFixed(2)}
+                    {formatPrice(originalPrice, product.currencySymbol)}
                   </span>
                 )}
-                ${price.toFixed(2)}
+                {formatPrice(price, product.currencySymbol)}
               </span>
             )}
           </div>

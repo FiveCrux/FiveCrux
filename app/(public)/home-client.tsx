@@ -30,6 +30,8 @@ import Navbar from "@/componentss/shared/navbar"
 import Footer from "@/componentss/shared/footer"
 import SideAdsFrame from "@/componentss/ads/side-banners"
 import { ProductCard, type MarketProduct } from "@/componentss/marketplace/product-card"
+import { formatPrice } from "@/lib/format-price"
+import type { HomeContent } from "@/lib/site-content"
 
 // Fixed section shortcuts (these are pages, not categories). The actual browse
 // categories are dynamic (DB) and fetched + appended at runtime.
@@ -39,19 +41,6 @@ const SHORTCUTS: { name: string; icon: LucideIcon; href: string }[] = [
   { name: "Giveaways", icon: Gift, href: "/giveaways" },
 ]
 
-const PLATFORM_FEATURES = [
-  { title: "Community Driven", description: "Built by experienced FiveM developers, trusted and improved by the community.", icon: Users },
-  { title: "Premium Quality", description: "Only top-tier scripts that meet our quality standards make it onto FiveCrux.", icon: Star },
-  { title: "Security Verified", description: "Every resource is manually reviewed before it goes live.", icon: Shield },
-  { title: "Maximum Reach", description: "Get discovered by thousands of FiveM server owners worldwide.", icon: Megaphone },
-]
-
-const FAQS = [
-  { q: "How does publishing a script work?", a: "Submit your script through the developer panel. Each submission goes through a quality, security, and compatibility review before being published." },
-  { q: "How do I get paid?", a: "Payments are handled through Tebex — money from your sales goes directly to your connected Tebex account." },
-  { q: "Is there any publishing fee?", a: "There is no upfront fee to publish. You can optionally pay for featured slots and ads for extra reach." },
-  { q: "Can I host giveaways on FiveCrux?", a: "Yes. Developers can create and publish giveaways to promote their scripts and reach a wider FiveM audience." },
-]
 
 function mapFeatured(item: any): MarketProduct {
   return {
@@ -64,6 +53,7 @@ function mapFeatured(item: any): MarketProduct {
     seller: item.scriptSellerName || item.seller_name || item.seller,
     sellerImage: item.scriptSellerImage || item.seller_image,
     coverImage: item.scriptCoverImage || item.cover_image,
+    currencySymbol: item.scriptCurrencySymbol || item.currency_symbol || item.currencySymbol,
     tag: "FEATURED",
     href: `/script/${item.scriptId ?? item.id}`,
   }
@@ -83,6 +73,7 @@ function mapScript(item: any): MarketProduct {
     seller: item.seller_name || item.sellerName || item.seller,
     sellerImage: item.seller_image || item.sellerImage,
     coverImage: item.cover_image || item.coverImage,
+    currencySymbol: item.currency_symbol || item.currencySymbol,
     category: item.category,
     href: `/script/${item.id}`,
   }
@@ -122,8 +113,9 @@ function Row({ title, icon, emoji, items, seeAllHref }: {
 }
 
 // ── Rotating featured spotlight hero ──
-function HeroSpotlight({ items }: {
+function HeroSpotlight({ items, promo }: {
   items: MarketProduct[]
+  promo: HomeContent["heroPromo"]
 }) {
   const [idx, setIdx] = useState(0)
   // Always append a "get featured here" promo slide — turns the hero into an
@@ -164,33 +156,31 @@ function HeroSpotlight({ items }: {
           {isPromo ? (
             <>
               <span className="mb-4 inline-flex items-center gap-1.5 self-start rounded-full border border-orange-400/40 bg-orange-500/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.15em] text-orange-300 backdrop-blur-sm">
-                <Sparkles className="h-3.5 w-3.5" /> Premium Placement
+                <Sparkles className="h-3.5 w-3.5" /> {promo.badge}
               </span>
               <h1 className="mb-3 max-w-3xl text-4xl font-black leading-[1.05] tracking-tight drop-shadow-lg sm:text-6xl">
-                Put your script in the{" "}
-                <span className="bg-gradient-to-r from-orange-400 to-yellow-300 bg-clip-text text-transparent">spotlight</span>.
+                {promo.headline}{" "}
+                <span className="bg-gradient-to-r from-orange-400 to-yellow-300 bg-clip-text text-transparent">{promo.headlineAccent}</span>.
               </h1>
               <p className="mb-5 max-w-xl text-sm leading-relaxed text-white/75 sm:text-base">
-                Right here on the homepage — the first thing thousands of FiveM server owners
-                see every day. Grab a <span className="font-semibold text-white">Featured</span> slot
-                and get discovered first.
+                {promo.subtext}
               </p>
               {/* Tier pills */}
               <div className="mb-6 flex flex-wrap items-center gap-2">
-                {["Starter", "Premium", "Executive"].map((t) => (
+                {promo.tiers.map((t) => (
                   <span key={t} className="rounded-full border border-orange-500/30 bg-orange-500/10 px-3 py-1 text-xs font-semibold text-orange-200">
                     {t}
                   </span>
                 ))}
-                <span className="text-xs font-medium text-white/45">from €20 / week</span>
+                <span className="text-xs font-medium text-white/45">{promo.priceText}</span>
               </div>
               <div className="flex flex-wrap items-center gap-3">
                 <Link href="/advertise" className="group flex items-center gap-2 rounded-xl bg-orange-500 px-7 py-3.5 text-[15px] font-bold text-black transition hover:bg-orange-400 shadow-[0_0_0_1px_rgba(249,115,22,0.5),0_10px_40px_rgba(249,115,22,0.45)]">
-                  <Star className="h-4 w-4" /> Get Featured
+                  <Star className="h-4 w-4" /> {promo.ctaPrimary}
                   <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                 </Link>
                 <Link href="/advertise" className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.06] px-6 py-3.5 font-semibold backdrop-blur-md transition hover:bg-white/10">
-                  See all plans
+                  {promo.ctaSecondary}
                 </Link>
               </div>
             </>
@@ -211,7 +201,7 @@ function HeroSpotlight({ items }: {
                 )}
                 {active.seller && <span className="text-sm text-white/70">by {active.seller}</span>}
                 {!active.hidePrice && (
-                  <span className="ml-2 text-2xl font-black">{active.free || active.price === 0 ? "Free" : `$${active.price.toFixed(2)}`}</span>
+                  <span className="ml-2 text-2xl font-black">{active.free || active.price === 0 ? "Free" : formatPrice(active.price, active.currencySymbol)}</span>
                 )}
               </div>
               <div className="flex flex-wrap items-center gap-3">
@@ -268,10 +258,12 @@ export function HomeClient({
   initialFeatured = [],
   initialCategories = [],
   initialScripts = [],
+  content,
 }: {
   initialFeatured: any[]
   initialCategories?: { name: string; slug: string; icon: string | null }[]
   initialScripts?: any[]
+  content: HomeContent
 }) {
   const router = useRouter()
   const [query, setQuery] = useState("")
@@ -380,7 +372,7 @@ export function HomeClient({
       <Navbar />
 
       <SideAdsFrame>
-      <HeroSpotlight items={rows.heroItems} />
+      <HeroSpotlight items={rows.heroItems} promo={content.heroPromo} />
 
       {/* Category chips */}
       <section className="mt-5 px-2.5">
@@ -425,8 +417,8 @@ export function HomeClient({
       <section className="mt-20 px-2.5">
         <div className="mx-auto w-full">
           <div className="mb-12 max-w-2xl">
-            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-orange-400">Why Choose Us</p>
-            <h2 className="text-4xl font-extrabold tracking-tight sm:text-5xl">Why Choose <span className="text-orange-400">FiveCrux</span>?</h2>
+            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-orange-400">{content.whyChooseUs.eyebrow}</p>
+            <h2 className="text-4xl font-extrabold tracking-tight sm:text-5xl">{content.whyChooseUs.heading}</h2>
           </div>
           <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
             {/* Large hero tile */}
@@ -436,27 +428,27 @@ export function HomeClient({
                 <div className="mb-8 flex h-16 w-16 items-center justify-center rounded-2xl border border-orange-500/20 bg-orange-500/10">
                   <Users className="h-8 w-8 text-orange-400" />
                 </div>
-                <h3 className="mb-4 text-3xl font-extrabold">Community Driven</h3>
-                <p className="text-lg leading-relaxed text-white/60">Built by experienced FiveM developers, trusted and improved by the community.</p>
+                <h3 className="mb-4 text-3xl font-extrabold">{content.whyChooseUs.features[0]?.title}</h3>
+                <p className="text-lg leading-relaxed text-white/60">{content.whyChooseUs.features[0]?.description}</p>
               </div>
               <div className="relative mt-10 flex items-center gap-2 text-sm font-semibold text-yellow-400">
-                <Sparkles className="h-4 w-4" /><span>Powered by real developers</span>
+                <Sparkles className="h-4 w-4" /><span>{content.whyChooseUs.tagline}</span>
               </div>
             </div>
             {/* Premium Quality */}
             <div className="flex items-start gap-4 rounded-2xl border border-white/[0.08] bg-white/[0.04] p-7 backdrop-blur-md transition hover:border-orange-500/30">
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.06]"><Star className="h-6 w-6 text-white/70" /></div>
-              <div><h3 className="mb-1.5 text-lg font-bold">Premium Quality</h3><p className="text-sm leading-relaxed text-white/65">Only top-tier scripts that meet our quality standards make it onto FiveCrux.</p></div>
+              <div><h3 className="mb-1.5 text-lg font-bold">{content.whyChooseUs.features[1]?.title}</h3><p className="text-sm leading-relaxed text-white/65">{content.whyChooseUs.features[1]?.description}</p></div>
             </div>
             {/* Security Verified */}
             <div className="flex items-start gap-4 rounded-2xl border border-white/[0.08] bg-white/[0.04] p-7 backdrop-blur-md transition hover:border-orange-500/30">
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.06]"><Shield className="h-6 w-6 text-white/70" /></div>
-              <div><h3 className="mb-1.5 text-lg font-bold">Security Verified</h3><p className="text-sm leading-relaxed text-white/65">Every resource is manually reviewed before it goes live.</p></div>
+              <div><h3 className="mb-1.5 text-lg font-bold">{content.whyChooseUs.features[2]?.title}</h3><p className="text-sm leading-relaxed text-white/65">{content.whyChooseUs.features[2]?.description}</p></div>
             </div>
             {/* Maximum Reach — wide */}
             <div className="flex items-start gap-4 rounded-2xl border border-white/[0.08] bg-white/[0.04] p-7 backdrop-blur-md transition hover:border-orange-500/30 lg:col-span-2">
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.06]"><Megaphone className="h-6 w-6 text-white/70" /></div>
-              <div><h3 className="mb-1.5 text-lg font-bold">Maximum Reach</h3><p className="text-sm leading-relaxed text-white/65">Get discovered by thousands of FiveM server owners worldwide.</p></div>
+              <div><h3 className="mb-1.5 text-lg font-bold">{content.whyChooseUs.features[3]?.title}</h3><p className="text-sm leading-relaxed text-white/65">{content.whyChooseUs.features[3]?.description}</p></div>
             </div>
           </div>
         </div>
@@ -466,36 +458,36 @@ export function HomeClient({
       <section className="mt-20 px-2.5">
         <div className="mx-auto w-full">
           <div className="mb-12">
-            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-orange-400">Our Services</p>
-            <h2 className="max-w-2xl text-3xl font-extrabold tracking-tight sm:text-5xl">Powered by the <span className="text-orange-400">Crux</span> Ecosystem</h2>
+            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-orange-400">{content.ecosystem.eyebrow}</p>
+            <h2 className="max-w-2xl text-3xl font-extrabold tracking-tight sm:text-5xl">{content.ecosystem.heading}</h2>
           </div>
           <div className="space-y-6">
             {/* GameCrux — visual left */}
-            <a href="https://www.gamecrux.io/" target="_blank" rel="noopener noreferrer"
+            <a href={content.ecosystem.cards[0]?.url} target="_blank" rel="noopener noreferrer"
               className="group flex flex-col overflow-hidden rounded-3xl border border-white/[0.08] bg-white/[0.04] backdrop-blur-md transition-all hover:border-orange-500/40 md:flex-row">
               <div className="relative flex items-center justify-center overflow-hidden p-12 md:w-2/5" style={{ background: "linear-gradient(135deg, rgba(249,115,22,0.25), rgba(20,20,20,0.4))" }}>
                 <div className="absolute inset-0 opacity-30" style={{ background: "radial-gradient(circle at center, rgba(249,115,22,0.5), transparent 70%)" }} />
                 <Image src="/gamecrux.webp" alt="GameCrux" width={96} height={96} className="relative rounded-2xl drop-shadow-2xl" />
               </div>
               <div className="flex flex-col justify-center p-8 sm:p-12 md:w-3/5">
-                <span className="mb-3 text-xs font-semibold uppercase tracking-widest text-yellow-400/80">Gaming Platform</span>
-                <h3 className="mb-4 text-3xl font-extrabold sm:text-4xl">GameCrux</h3>
-                <p className="mb-7 max-w-lg text-lg leading-relaxed text-white/60">Discover, play, and enjoy a curated selection of exciting minigames.</p>
-                <span className="inline-flex items-center gap-2 text-base font-semibold text-orange-400 transition-all group-hover:gap-3">Visit GameCrux <ArrowRight className="h-5 w-5" /></span>
+                <span className="mb-3 text-xs font-semibold uppercase tracking-widest text-yellow-400/80">{content.ecosystem.cards[0]?.label}</span>
+                <h3 className="mb-4 text-3xl font-extrabold sm:text-4xl">{content.ecosystem.cards[0]?.title}</h3>
+                <p className="mb-7 max-w-lg text-lg leading-relaxed text-white/60">{content.ecosystem.cards[0]?.description}</p>
+                <span className="inline-flex items-center gap-2 text-base font-semibold text-orange-400 transition-all group-hover:gap-3">{content.ecosystem.cards[0]?.linkText} <ArrowRight className="h-5 w-5" /></span>
               </div>
             </a>
             {/* Crux Studio — visual right */}
-            <a href="https://crux.tebex.io/" target="_blank" rel="noopener noreferrer"
+            <a href={content.ecosystem.cards[1]?.url} target="_blank" rel="noopener noreferrer"
               className="group flex flex-col overflow-hidden rounded-3xl border border-white/[0.08] bg-white/[0.04] backdrop-blur-md transition-all hover:border-orange-500/40 md:flex-row-reverse">
               <div className="relative flex items-center justify-center overflow-hidden p-12 md:w-2/5" style={{ background: "linear-gradient(135deg, rgba(250,204,21,0.22), rgba(20,20,20,0.4))" }}>
                 <div className="absolute inset-0 opacity-30" style={{ background: "radial-gradient(circle at center, rgba(250,204,21,0.5), transparent 70%)" }} />
                 <Image src="/cs.webp" alt="Crux Studio" width={96} height={96} className="relative rounded-2xl drop-shadow-2xl" />
               </div>
               <div className="flex flex-col justify-center p-8 sm:p-12 md:w-3/5 md:items-end md:text-right">
-                <span className="mb-3 text-xs font-semibold uppercase tracking-widest text-yellow-400/80">FiveM Marketplace</span>
-                <h3 className="mb-4 text-3xl font-extrabold sm:text-4xl">Crux Studio</h3>
-                <p className="mb-7 max-w-lg text-lg leading-relaxed text-white/60">Premium FiveM assets crafted with passion and attention to detail.</p>
-                <span className="inline-flex items-center gap-2 text-base font-semibold text-orange-400 transition-all group-hover:gap-3">Visit Crux Studio <ArrowRight className="h-5 w-5" /></span>
+                <span className="mb-3 text-xs font-semibold uppercase tracking-widest text-yellow-400/80">{content.ecosystem.cards[1]?.label}</span>
+                <h3 className="mb-4 text-3xl font-extrabold sm:text-4xl">{content.ecosystem.cards[1]?.title}</h3>
+                <p className="mb-7 max-w-lg text-lg leading-relaxed text-white/60">{content.ecosystem.cards[1]?.description}</p>
+                <span className="inline-flex items-center gap-2 text-base font-semibold text-orange-400 transition-all group-hover:gap-3">{content.ecosystem.cards[1]?.linkText} <ArrowRight className="h-5 w-5" /></span>
               </div>
             </a>
           </div>
@@ -507,20 +499,20 @@ export function HomeClient({
         <div className="mx-auto grid w-full gap-10 lg:grid-cols-2 lg:gap-16">
           {/* Left sticky intro */}
           <div className="lg:sticky lg:top-28 lg:self-start">
-            <span className="text-xs font-bold uppercase tracking-[0.25em] text-orange-400">FAQ</span>
-            <h2 className="mt-3 text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">Frequently Asked <span className="text-orange-400">Questions</span></h2>
-            <p className="mt-5 max-w-md leading-relaxed text-white/60">Still have questions? Everything you need to know about publishing, payouts, and growing on FiveCrux is right here.</p>
+            <span className="text-xs font-bold uppercase tracking-[0.25em] text-orange-400">{content.faq.eyebrow}</span>
+            <h2 className="mt-3 text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">{content.faq.heading}</h2>
+            <p className="mt-5 max-w-md leading-relaxed text-white/60">{content.faq.intro}</p>
             <div className="mt-8 flex max-w-md items-center gap-4 rounded-2xl border border-white/[0.08] bg-white/[0.04] p-5 backdrop-blur-md">
               <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-orange-500/30 bg-orange-500/15"><MessagesSquare className="h-5 w-5 text-orange-400" /></span>
               <div>
-                <p className="text-sm font-semibold">Can&apos;t find an answer?</p>
-                <p className="text-sm text-white/50">Reach out to our support team anytime.</p>
+                <p className="text-sm font-semibold">{content.faq.contactTitle}</p>
+                <p className="text-sm text-white/50">{content.faq.contactText}</p>
               </div>
             </div>
           </div>
           {/* Right accordion */}
           <div className="flex flex-col gap-3">
-            {FAQS.map((f) => (
+            {content.faq.items.map((f) => (
               <FaqItem key={f.q} q={f.q} a={f.a} />
             ))}
           </div>

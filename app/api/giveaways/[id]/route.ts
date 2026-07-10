@@ -6,6 +6,7 @@ import { db } from "@/lib/db/client"
 import { eq } from "drizzle-orm"
 import { giveawayRequirements, giveawayPrizes } from "@/lib/db/schema"
 import { announceGiveawayPending } from "@/lib/discord"
+import { isDiscordRequirement, resolveGuildInfo } from "@/lib/discord-verify"
 
 export async function GET(
   request: NextRequest,
@@ -61,8 +62,8 @@ export async function PATCH(
     const data = await request.json()
     const { giveaway, requirements, prizes } = data
 
-    // Validate required fields
-    if (!giveaway.title || !giveaway.description || !giveaway.total_value || !giveaway.end_date) {
+    // Validate required fields (total_value is no longer a giveaway field)
+    if (!giveaway.title || !giveaway.description || !giveaway.end_date) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
     }
 
@@ -99,12 +100,21 @@ export async function PATCH(
     await db.delete(giveawayRequirements).where(eq(giveawayRequirements.giveawayId, id))
     await db.delete(giveawayPrizes).where(eq(giveawayPrizes.giveawayId, id))
 
-    // Create new requirements
+    // Create new requirements (re-resolve Discord server info from the invite)
     if (requirements && requirements.length > 0) {
       for (const requirement of requirements) {
+        let guild: Awaited<ReturnType<typeof resolveGuildInfo>> | null = null
+        if (isDiscordRequirement(requirement.type)) {
+          guild = await resolveGuildInfo(requirement.link || requirement.description)
+        }
         await createGiveawayRequirement({
           ...requirement,
           giveawayId: id,
+          link: requirement.link || requirement.description || null,
+          guild_id: guild?.guildId ?? null,
+          server_name: guild?.serverName ?? null,
+          server_icon: guild?.serverIcon ?? null,
+          invite_code: guild?.inviteCode ?? null,
         })
       }
     }

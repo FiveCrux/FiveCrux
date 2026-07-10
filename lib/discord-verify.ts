@@ -22,10 +22,47 @@ export function guildIdFromLink(link: string | null | undefined): string | null 
 }
 
 /** Discord invite code from a discord.gg / discord.com/invite link, if present. */
-function inviteCodeFromLink(link: string | null | undefined): string | null {
+export function inviteCodeFromLink(link: string | null | undefined): string | null {
   if (!link) return null;
   const m = String(link).match(/(?:discord\.gg|discord(?:app)?\.com\/invite)\/([A-Za-z0-9-]+)/i);
   return m ? m[1] : null;
+}
+
+export type GuildInfo = {
+  guildId: string | null;
+  serverName: string | null;
+  serverIcon: string | null; // full CDN URL, or null if the guild has no icon
+  inviteCode: string | null;
+};
+
+/**
+ * Resolve an invite link to the server's id, name, and icon URL — via Discord's
+ * public (unauthenticated) invite lookup. Used at create time to cache what the
+ * giveaway detail page shows next to each "Join" button. All fields null-safe.
+ */
+export async function resolveGuildInfo(link: string | null | undefined): Promise<GuildInfo> {
+  const code = inviteCodeFromLink(link);
+  const directId = guildIdFromLink(link);
+  const empty: GuildInfo = { guildId: directId, serverName: null, serverIcon: null, inviteCode: code };
+  if (!code) return empty;
+  try {
+    const r = await fetch(`https://discord.com/api/v10/invites/${code}?with_counts=true`);
+    if (!r.ok) return empty;
+    const d = await r.json();
+    const guild = d?.guild;
+    if (!guild?.id) return empty;
+    const icon = guild.icon
+      ? `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.${String(guild.icon).startsWith("a_") ? "gif" : "png"}?size=128`
+      : null;
+    return {
+      guildId: guild.id,
+      serverName: guild.name ?? null,
+      serverIcon: icon,
+      inviteCode: code,
+    };
+  } catch {
+    return empty;
+  }
 }
 
 /**

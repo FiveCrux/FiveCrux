@@ -1,8 +1,9 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/auth"
-import { createGiveaway, createGiveawayRequirement, createGiveawayPrize, getGiveaways, hasRole, hasAnyRole } from "@/lib/database-new"
+import { createGiveaway, createGiveawayRequirement, createGiveawayPrize, getGiveaways } from "@/lib/database-new"
 import { announceGiveawayPending } from "@/lib/discord"
+import { isDiscordRequirement, resolveGuildInfo } from "@/lib/discord-verify"
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,14 +18,16 @@ export async function POST(request: NextRequest) {
     // User must be authenticated
     const user = session.user as any
 
-    // Determine approval status based on user role
-    const isFounderOrAdmin = hasAnyRole(user.roles, ['founder', 'admin'])
-    const approvalStatus = isFounderOrAdmin ? 'active' : 'pending'
+    // Approval applies to EVERYONE (admins included): every new giveaway goes to
+    // the pending queue and only appears publicly after an admin approves it.
+    // (Previously admins were told "approved" but the row still sat in pending.)
+    const approvalStatus = 'pending'
 
     // Validate required fields (guard a missing/!object `giveaway` so a bad
     // payload returns 400, not a 500 from reading .title on undefined).
+    // total_value is no longer a giveaway field (prizes carry their own info).
     if (!giveaway || typeof giveaway !== "object" ||
-        !giveaway.title || !giveaway.description || !giveaway.total_value || !giveaway.end_date) {
+        !giveaway.title || !giveaway.description || !giveaway.end_date) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
     }
 
@@ -36,12 +39,25 @@ export async function POST(request: NextRequest) {
       status: approvalStatus as any,
     })
 
-    // Create requirements
+    // Create requirements. For Discord requirements, resolve the server's
+    // id/name/icon from the invite link once, here, and cache it on the row so
+    // the detail page can render the server chip without hitting Discord again.
     if (requirements && requirements.length > 0) {
       for (const requirement of requirements) {
+        let guild: Awaited<ReturnType<typeof resolveGuildInfo>> | null = null
+        if (isDiscordRequirement(requirement.type)) {
+          guild = await resolveGuildInfo(requirement.link || requirement.description)
+        }
         await createGiveawayRequirement({
           ...requirement,
           giveaway_id: giveawayId,
+          // Keep `link` populated (the invite/URL) so entry verification works;
+          // the form historically stores it in `description`.
+          link: requirement.link || requirement.description || null,
+          guild_id: guild?.guildId ?? null,
+          server_name: guild?.serverName ?? null,
+          server_icon: guild?.serverIcon ?? null,
+          invite_code: guild?.inviteCode ?? null,
         })
       }
     }
@@ -79,11 +95,9 @@ export async function POST(request: NextRequest) {
       // Don't fail the submission if Discord notification fails
     }
 
-    const message = isFounderOrAdmin 
-      ? "Giveaway created and approved successfully!" 
-      : "Giveaway submitted successfully! It will be reviewed by an admin before going live."
+    const message = "Giveaway submitted successfully! It will be reviewed by an admin before going live."
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       success: true, 
       id: giveawayId, 
       message,
