@@ -115,6 +115,7 @@ export interface Coupon extends BaseEntity {
   code: string;
   discountType: CouponDiscountType;
   discountValue: string;
+  currencySymbol: string | null;
   scope: CouponScope;
   minCartValue: string;
   maxUses: number | null;
@@ -134,6 +135,7 @@ export interface CouponPayload {
   effectiveOn: CouponScope;
   discountType: CouponDiscountType;
   discountValue: number;
+  currencySymbol?: string | null;
   redeemLimit: number | null;
   minimumBasketValue: number;
   redeemLimitPerCustomer: number;

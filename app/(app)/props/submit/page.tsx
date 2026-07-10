@@ -27,6 +27,8 @@ import { Label } from "@/componentss/ui/label"
 import Navbar from "@/componentss/shared/navbar"
 import Footer from "@/componentss/shared/footer"
 import { toast } from "sonner"
+import { CurrencySelect } from "@/componentss/currency-select"
+import * as countryData from "country-data-list"
 
 export default function SubmitPropPage() {
   const { data: session, status } = useSession()
@@ -44,6 +46,8 @@ export default function SubmitPropPage() {
     name: "",
     description: "",
     price: "",
+    currency: "",
+    currencySymbol: "",
     discountPercentage: "0",
     zipFile: "",
     tebexStoreToken: "",
@@ -68,6 +72,8 @@ export default function SubmitPropPage() {
               name: prop.name || "",
               description: prop.description || "",
               price: prop.price?.toString() || "",
+              currency: prop.currency || "",
+              currencySymbol: prop.currency_symbol || prop.currencySymbol || "",
               discountPercentage: prop.discountPercentage?.toString() || "0",
               zipFile: prop.zipFile || "",
               tebexStoreToken: prop.tebexStoreToken || "",
@@ -195,6 +201,8 @@ export default function SubmitPropPage() {
         name: formData.name,
         description: formData.description,
         price: parseFloat(formData.price),
+        currency: formData.currency || null,
+        currencySymbol: formData.currencySymbol || null,
         discountPercentage: parseFloat(formData.discountPercentage || "0"),
         images: media.images,
         zipFile: "", // delivery is via Tebex now; no in-app file
@@ -236,6 +244,7 @@ export default function SubmitPropPage() {
   const isFree = hasPrice && priceNum === 0
   const hasDiscount = hasPrice && discountNum > 0 && !isFree
   const discountedPrice = hasDiscount ? priceNum * (1 - discountNum / 100) : priceNum
+  const previewCurrencySymbol = formData.currencySymbol || "€"
   const coverImage = media.images[0]
   const sellerName = session?.user?.name || "You"
   const sellerImage = session?.user?.image || ""
@@ -375,19 +384,49 @@ export default function SubmitPropPage() {
                   {/* Pricing */}
                   <section>
                     <SectionHeader icon={<DollarSign className="h-4 w-4" />} title="Pricing" />
+                    <div className="mt-5">
+                      <Label className={`${micro} text-white/50`}>Currency *</Label>
+                      <div className="mt-2">
+                        <CurrencySelect
+                          value={formData.currency}
+                          onValueChange={(value) => {
+                            const currency = countryData.currencies.all.find((c: any) => c.code === value)
+                            setFormData({
+                              ...formData,
+                              currency: value,
+                              currencySymbol: (currency as any)?.symbol || currency?.code || "",
+                            })
+                          }}
+                          onCurrencySelect={(currency) => {
+                            setFormData({
+                              ...formData,
+                              currency: currency.code,
+                              currencySymbol: currency.symbol,
+                            })
+                          }}
+                          placeholder="Select currency"
+                          currencies="all"
+                          variant="default"
+                          className="bg-[#0e0e0e] border-white/[0.08] text-white"
+                        />
+                      </div>
+                    </div>
                     <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
                       <div>
-                        <Label className={`${micro} text-white/50`}>Price (€) *</Label>
-                        <Input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value={formData.price}
-                          onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                          placeholder="0.00"
-                          className={`${fieldClass} px-4 py-3 text-[15px] font-semibold tabular-nums`}
-                          required
-                        />
+                        <Label className={`${micro} text-white/50`}>Price *</Label>
+                        <div className={`${fieldClass} flex items-center px-4`}>
+                          <span className="text-sm text-white/55">{previewCurrencySymbol}</span>
+                          <Input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={formData.price}
+                            onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                            placeholder="0.00"
+                            className="mt-0 border-0 bg-transparent px-2 py-3 text-[15px] font-semibold tabular-nums focus-visible:ring-0"
+                            required
+                          />
+                        </div>
                       </div>
                       <div>
                         <Label className={`${micro} text-white/50`}>Discount Percentage (%)</Label>
@@ -470,11 +509,11 @@ export default function SubmitPropPage() {
                           ) : (
                             <>
                               <span className="text-[26px] font-extrabold leading-none tracking-tight tabular-nums">
-                                €{hasPrice ? discountedPrice.toFixed(2) : "0.00"}
+                                {previewCurrencySymbol}{hasPrice ? discountedPrice.toFixed(2) : "0.00"}
                               </span>
                               {hasDiscount && (
                                 <span className="text-sm text-white/55 line-through tabular-nums">
-                                  €{priceNum.toFixed(2)}
+                                  {previewCurrencySymbol}{priceNum.toFixed(2)}
                                 </span>
                               )}
                             </>

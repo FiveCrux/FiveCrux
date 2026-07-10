@@ -77,6 +77,7 @@ export async function PUT(
         discountValue: discountValue.toString(),
         commissionType,
         commissionValue: commissionValue.toString(),
+        currencySymbol: (discountType === "Amount" || commissionType === "Amount") ? (body.currencySymbol || "$") : null,
         isActive,
         updatedAt: new Date(),
       })
