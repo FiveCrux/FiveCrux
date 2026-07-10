@@ -3916,9 +3916,10 @@ export async function getUserImportedTebexPackageIds(userId: string): Promise<st
 }
 
 // ── Giveaway prize-delivery tracker (#5, creator-side, anti-scam) ──────────
-// Winners already exist in giveaway_prize_winners (created by
-// trigger-winner-selection). `claimed` doubles as the "Delivered" flag; a
-// creator marks who got what so nobody can double-claim.
+// Winners already exist in giveaway_prize_winners (created by the creator's
+// own "Draw Winners" button, see lib/giveaway-winners.ts — no automatic
+// trigger). `claimed` doubles as the "Delivered" flag; a creator marks who
+// got what so nobody can double-claim.
 
 export type CreatorGiveawayWinner = {
   id: number;
@@ -3939,7 +3940,8 @@ export type CreatorGiveawayWinner = {
 /**
  * All winners across the creator's OWN giveaways, joined
  * winner → prize → giveaway (approved_giveaways.creator_id === userId).
- * Winners only exist on approved giveaways (created by trigger-winner-selection).
+ * Winners only exist on approved giveaways, once the creator (or an admin)
+ * has pressed "Draw Winners" (see lib/giveaway-winners.ts).
  */
 export async function getCreatorGiveawayWinners(userId: string): Promise<CreatorGiveawayWinner[]> {
   const rows = await db

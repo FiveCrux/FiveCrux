@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/auth'
+import { db } from '@/lib/db/client'
+import { approvedGiveaways } from '@/lib/db/schema'
+import { eq } from 'drizzle-orm'
 import { drawWinnersForGiveaway } from '@/lib/giveaway-winners'
 
 function hasAnyRole(userRoles: string[] | undefined, allowedRoles: string[]): boolean {
@@ -8,6 +11,9 @@ function hasAnyRole(userRoles: string[] | undefined, allowedRoles: string[]): bo
   return userRoles.some((r) => allowedRoles.includes(r))
 }
 
+// Creator-facing "Draw Winners" — no automatic/scheduled trigger exists
+// anymore; a giveaway's own creator explicitly presses this once it has
+// ended. Admins/founders may also use it (e.g. to help a creator).
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -17,11 +23,7 @@ export async function POST(
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-
     const user = session.user as any
-    if (!hasAnyRole(user.roles, ['founder', 'admin'])) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
 
     const { id } = await params
     const giveawayId = Number(id)
@@ -29,16 +31,23 @@ export async function POST(
       return NextResponse.json({ error: 'Invalid giveaway id' }, { status: 400 })
     }
 
-    const body = await request.json().catch(() => ({})) as {
-      announce?: boolean
-      overwriteExisting?: boolean
+    const giveawayRows = await db.select().from(approvedGiveaways).where(eq(approvedGiveaways.id, giveawayId)).limit(1)
+    if (giveawayRows.length === 0) {
+      return NextResponse.json({ error: 'Giveaway not found' }, { status: 404 })
+    }
+    const giveaway = giveawayRows[0]
+
+    const isOwner = giveaway.creatorId === user.id
+    const isStaff = hasAnyRole(user.roles, ['founder', 'admin'])
+    if (!isOwner && !isStaff) {
+      return NextResponse.json({ error: 'Only this giveaway\'s creator can draw its winners' }, { status: 403 })
     }
 
-    const result = await drawWinnersForGiveaway(giveawayId, {
-      announce: body.announce,
-      overwriteExisting: body.overwriteExisting,
-    })
+    if (!giveaway.endDate || new Date(giveaway.endDate) > new Date()) {
+      return NextResponse.json({ error: 'This giveaway has not ended yet' }, { status: 400 })
+    }
 
+    const result = await drawWinnersForGiveaway(giveawayId, { announce: true, overwriteExisting: false })
     if (!result.ok) {
       return NextResponse.json({ error: result.error }, { status: result.status })
     }

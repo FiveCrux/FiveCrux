@@ -237,6 +237,7 @@ export default function ProfilePage() {
 
   const [showAdsForm, setShowAdsForm] = useState(false);
   const [editingAd, setEditingAd] = useState<any>(null);
+  const [drawingWinnersId, setDrawingWinnersId] = useState<number | null>(null);
   const [analyticsTarget, setAnalyticsTarget] = useState<{ adType: "ad" | "featured_script" | "side_banner"; adId: string | number; title: string } | null>(null);
   const [selectedSlotUniqueId, setSelectedSlotUniqueId] = useState<
     string | null
@@ -378,6 +379,27 @@ export default function ProfilePage() {
   const handleDeleteGiveaway = async (giveawayId: number) => {
     if (!confirm("Are you sure you want to delete this giveaway?")) return;
     deleteGiveawayMutation.mutate(giveawayId);
+  };
+
+  const handleDrawWinners = async (giveawayId: number) => {
+    if (!confirm("Draw winners for this giveaway now? This can't be undone.")) return;
+    setDrawingWinnersId(giveawayId);
+    try {
+      const res = await fetch(`/api/giveaways/${giveawayId}/draw-winners`, { method: "POST" });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        toast.success(
+          data.announced ? "Winners drawn and announced on Discord!" : "Winners drawn!"
+        );
+        refetchGiveaways();
+      } else {
+        toast.error(data.error || "Failed to draw winners");
+      }
+    } catch {
+      toast.error("Failed to draw winners");
+    } finally {
+      setDrawingWinnersId(null);
+    }
   };
 
   const handleDeleteAd = async (adId: number) => {
@@ -1225,6 +1247,25 @@ export default function ProfilePage() {
                                   <span className="hidden sm:inline">Delete</span>
                                 </Button>
                               </div>
+
+                              {(() => {
+                                const endDate = giveaway.end_date ? new Date(giveaway.end_date) : null;
+                                const isEnded = endDate ? new Date() > endDate : false;
+                                if (!isEnded || giveaway.status !== "approved") return null;
+                                const isDrawing = drawingWinnersId === giveaway.id;
+                                return (
+                                  <Button
+                                    size="sm"
+                                    type="button"
+                                    onClick={() => handleDrawWinners(giveaway.id)}
+                                    disabled={isDrawing}
+                                    className="w-full bg-orange-500 hover:bg-orange-600 text-black font-semibold disabled:opacity-60"
+                                  >
+                                    <Trophy className="h-4 w-4 mr-1.5" />
+                                    {isDrawing ? "Drawing..." : "Draw Winners"}
+                                  </Button>
+                                );
+                              })()}
                             </div>
                           </CardContent>
                         </Card>

@@ -507,37 +507,6 @@ export function GiveawayDetailClient({
     autoVerifyDiscordRequirements()
   }, [giveaway, transformedGiveaway.requirements, isGiveawayEnded])
 
-  useEffect(() => {
-    const triggerWinnerSelection = async () => {
-      if (!giveaway || !isGiveawayEnded) return
-
-      const hasWinners = giveaway.prizes?.some((p: any) => (p.winners && p.winners.length > 0) || p.winnerName)
-      if (hasWinners) return
-
-      try {
-        console.log('Giveaway has ended without winners, triggering selection...')
-        const response = await fetch(`/api/giveaways/${giveawayId}/trigger-winner-selection`, {
-          method: 'POST',
-        })
-
-        if (response.ok) {
-          const data = await response.json()
-          console.log('Winner selection completed:', data)
-
-          if (!data.alreadyProcessed) {
-            setTimeout(() => {
-              window.location.reload()
-            }, 2000)
-          }
-        }
-      } catch (error) {
-        console.error('Error triggering winner selection:', error)
-      }
-    }
-
-    triggerWinnerSelection()
-  }, [giveaway, isGiveawayEnded, giveawayId])
-
   const handleTaskComplete = async (taskId: number) => {
     const task = transformedGiveaway.requirements.find((req: any) => req.id === taskId)
 
