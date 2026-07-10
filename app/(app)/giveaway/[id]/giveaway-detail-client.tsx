@@ -343,6 +343,7 @@ export function GiveawayDetailClient({
       name: giveaway?.creator_name || giveaway?.creatorName || "Unknown Creator",
       email: giveaway?.creator_email || giveaway?.creatorEmail || "",
       id: giveaway?.creator_id || giveaway?.creatorId || "",
+      discordId: giveaway?.creator_discord_id || giveaway?.creatorDiscordId || "",
       avatar: giveaway?.creator_image || "/placeholder-user.jpg",
       verified: isCreatorVerified,
     },
@@ -886,6 +887,19 @@ export function GiveawayDetailClient({
                 <span className="inline-flex items-center" title="Verified Creator">
                   <VerifiedIcon size="sm" />
                 </span>
+              )}
+              {transformedGiveaway.creator.discordId && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(transformedGiveaway.creator.discordId)
+                    toast.success("Discord ID copied")
+                  }}
+                  className="ml-1 inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 text-xs text-white/55 transition-colors hover:border-orange-500/40 hover:text-white"
+                  title="Copy host's Discord ID"
+                >
+                  <Copy className="h-3 w-3" /> {transformedGiveaway.creator.discordId}
+                </button>
               )}
             </div>
 
