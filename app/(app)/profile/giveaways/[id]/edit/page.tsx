@@ -94,6 +94,41 @@ export default function EditGiveawayPage() {
     { id: 1, type: "discord", description: "" },
   ])
 
+  // Live "which server is this" preview as the creator types a Discord invite —
+  // same resolver the submit API uses, just called client-side for feedback.
+  const [discordPreviews, setDiscordPreviews] = useState<Record<number, {
+    link: string
+    loading: boolean
+    serverName?: string
+    serverIcon?: string
+  }>>({})
+
+  useEffect(() => {
+    const timers: ReturnType<typeof setTimeout>[] = []
+    requirements.forEach((req) => {
+      if (req.type !== "discord" || !req.description.trim()) return
+      const cached = discordPreviews[req.id]
+      if (cached?.link === req.description) return
+      const link = req.description
+      const timer = setTimeout(async () => {
+        setDiscordPreviews((prev) => ({ ...prev, [req.id]: { link, loading: true } }))
+        try {
+          const res = await fetch(`/api/discord/resolve-invite?link=${encodeURIComponent(link)}`)
+          const data = await res.json()
+          setDiscordPreviews((prev) => ({
+            ...prev,
+            [req.id]: { link, loading: false, serverName: data?.serverName || undefined, serverIcon: data?.serverIcon || undefined },
+          }))
+        } catch {
+          setDiscordPreviews((prev) => ({ ...prev, [req.id]: { link, loading: false } }))
+        }
+      }, 600)
+      timers.push(timer)
+    })
+    return () => timers.forEach(clearTimeout)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [requirements])
+
   const [prizes, setPrizes] = useState([{ id: 1, name: "", numberOfWinners: 1 }])
 
   const [media, setMedia] = useState({
@@ -855,143 +890,17 @@ export default function EditGiveawayPage() {
                   </CardContent>
                 </Card>
 
-                {/* Entry Requirements */}
-                <Card className="bg-white/[0.04] border-white/[0.08] backdrop-blur-xl rounded-2xl">
-                  <CardHeader>
-                    <CardTitle className="text-white flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Target className="h-5 w-5 text-orange-500" />
-                        Entry Requirements
-                      </div>
-                      <Badge className="bg-orange-500/15 text-orange-400 border-orange-500/30">
-                        {totalPoints} {totalPoints === 1 ? "task" : "tasks"}
-                      </Badge>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {/* Point system toggle */}
-                    <div className="flex items-start justify-between gap-4 rounded-2xl border border-white/[0.07] bg-white/[0.02] px-4 py-3.5">
-                      <div>
-                        <div className="text-sm font-semibold">Point system (weighted odds)</div>
-                        <div className="mt-0.5 text-xs leading-relaxed text-white/55">
-                          {usePoints
-                            ? "ON — each Discord joined = 1 point. The more a user joins, the higher their chance to win."
-                            : "OFF — everyone must join ALL servers to enter, and each entrant has an equal chance."}
-                        </div>
-                      </div>
-                      <Switch checked={usePoints} onCheckedChange={setUsePoints} />
-                    </div>
-
-                    {requirements.map((requirement, index) => (
-                      <motion.div
-                        key={requirement.id}
-                        className="bg-white/[0.03] rounded-xl p-4 border border-white/[0.08]"
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                      >
-                        <div className="flex items-center justify-between mb-4">
-                          <h4 className="text-white font-medium">Requirement {index + 1}</h4>
-                          {requirements.length > 1 && (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeRequirement(requirement.id)}
-                              className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
-
-                        <div>
-                          <Label className="text-white text-sm">Type</Label>
-                          <Select
-                            value={requirement.type}
-                            onValueChange={(value) => updateRequirement(requirement.id, "type", value)}
-                          >
-                            <SelectTrigger className="mt-1 bg-white/[0.04] border-white/[0.08] text-white focus:ring-orange-500/40">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent className="bg-[#0d0d0f] border-white/[0.08] text-white">
-                              {requirementTypes.map((type) => (
-                                <SelectItem key={type.value} value={type.value}>
-                                  {type.icon} {type.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div className="mt-4">
-                          <Label className="text-white text-sm">
-                            {requirement.type === "discord" 
-                              ? "Discord Server Link" 
-                              : requirement.type === "youtube"
-                              ? "YouTube Channel Link"
-                              : "Description"}
-                          </Label>
-                          <Input
-                            type={requirement.type === "youtube" ? "url" : "text"}
-                            value={requirement.description}
-                            onChange={(e) => {
-                              updateRequirement(requirement.id, "description", e.target.value)
-                              if (errors[`requirement_${requirement.id}_description`]) {
-                                setErrors(prev => {
-                                  const newErrors = { ...prev }
-                                  delete newErrors[`requirement_${requirement.id}_description`]
-                                  return newErrors
-                                })
-                              }
-                            }}
-                            placeholder={
-                              requirement.type === "discord" 
-                                ? "https://discord.gg/your-server" 
-                                : requirement.type === "youtube"
-                                ? "https://youtube.com/@channel or https://youtu.be/..."
-                                : "Describe what users need to do..."
-                            }
-                            className={`mt-1 bg-white/[0.04] border-white/[0.08] text-white placeholder-white/30 focus:border-orange-500 focus-visible:ring-orange-500/40 ${errors[`requirement_${requirement.id}_description`] ? 'border-red-500' : ''}`}
-                          />
-                          {errors[`requirement_${requirement.id}_description`] && (
-                            <p className="text-red-400 text-xs mt-1">{errors[`requirement_${requirement.id}_description`]}</p>
-                          )}
-                          {!errors[`requirement_${requirement.id}_description`] && requirement.type === "discord" && (
-                            <p className="text-xs text-white/55 mt-1">
-                              Enter your Discord server invite link (e.g., https://discord.gg/abc123)
-                            </p>
-                          )}
-                          {!errors[`requirement_${requirement.id}_description`] && requirement.type === "youtube" && (
-                            <p className="text-xs text-white/55 mt-1">
-                              Enter your YouTube channel URL (e.g., https://youtube.com/@channel or https://youtu.be/videoId)
-                            </p>
-                          )}
-                        </div>
-                      </motion.div>
-                    ))}
-
-                    <Button
-                      type="button"
-                      onClick={addRequirement}
-                      variant="outline"
-                      className="w-full bg-white/[0.02] border-white/[0.08] text-white/70 hover:text-white hover:border-orange-500 hover:bg-orange-500/10"
-                    >
-                      <Plus className="mr-2 h-4 w-4" />
-                      Add Requirement
-                    </Button>
-                  </CardContent>
-                </Card>
-
-                {/* Prizes */}
+                {/* Prizes & Requirements (combined) */}
                 <Card className="bg-white/[0.04] border-white/[0.08] backdrop-blur-xl rounded-2xl">
                   <CardHeader>
                     <CardTitle className="text-white flex items-center gap-2">
                       <Trophy className="h-5 w-5 text-orange-500" />
-                      Prizes
+                      Prizes & Requirements
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
+                    <h3 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/40">Prizes</h3>
+
                     {prizes.map((prize, index) => (
                       <motion.div
                         key={prize.id}
@@ -1057,6 +966,151 @@ export default function EditGiveawayPage() {
                     >
                       <Plus className="mr-2 h-4 w-4" />
                       Add Prize
+                    </Button>
+
+                    {/* Entry requirements (same section) */}
+                    <div className="mt-8 flex items-center gap-2.5">
+                      <span className="text-orange-500"><Target className="h-4 w-4" /></span>
+                      <h3 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/40">Entry Requirements</h3>
+                      <div className="h-px flex-1 bg-white/[0.07]" />
+                      <Badge className="bg-orange-500/15 text-orange-400 border-orange-500/30 text-[11px] tabular-nums">
+                        {totalPoints} {totalPoints === 1 ? "task" : "tasks"}
+                      </Badge>
+                    </div>
+
+                    {/* Point system toggle */}
+                    <div className="flex items-start justify-between gap-4 rounded-2xl border border-white/[0.07] bg-white/[0.02] px-4 py-3.5">
+                      <div>
+                        <div className="text-sm font-semibold">Point system (weighted odds)</div>
+                        <div className="mt-0.5 text-xs leading-relaxed text-white/55">
+                          {usePoints
+                            ? "ON — each Discord joined = 1 point. The more a user joins, the higher their chance to win."
+                            : "OFF — everyone must join ALL servers to enter, and each entrant has an equal chance."}
+                        </div>
+                      </div>
+                      <Switch checked={usePoints} onCheckedChange={setUsePoints} />
+                    </div>
+
+                    {requirements.map((requirement, index) => (
+                      <motion.div
+                        key={requirement.id}
+                        className="bg-white/[0.03] rounded-xl p-4 border border-white/[0.08]"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                      >
+                        <div className="flex items-center justify-between mb-4">
+                          <h4 className="text-white font-medium">Requirement {index + 1}</h4>
+                          {requirements.length > 1 && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeRequirement(requirement.id)}
+                              className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+
+                        <div>
+                          <Label className="text-white text-sm">Type</Label>
+                          <Select
+                            value={requirement.type}
+                            onValueChange={(value) => updateRequirement(requirement.id, "type", value)}
+                          >
+                            <SelectTrigger className="mt-1 bg-white/[0.04] border-white/[0.08] text-white focus:ring-orange-500/40">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="bg-[#0d0d0f] border-white/[0.08] text-white">
+                              {requirementTypes.map((type) => (
+                                <SelectItem key={type.value} value={type.value}>
+                                  {type.icon} {type.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="mt-4">
+                          <Label className="text-white text-sm">
+                            {requirement.type === "discord"
+                              ? "Discord Server Link"
+                              : requirement.type === "youtube"
+                              ? "YouTube Channel Link"
+                              : "Description"}
+                          </Label>
+                          <Input
+                            type={requirement.type === "youtube" ? "url" : "text"}
+                            value={requirement.description}
+                            onChange={(e) => {
+                              updateRequirement(requirement.id, "description", e.target.value)
+                              if (errors[`requirement_${requirement.id}_description`]) {
+                                setErrors(prev => {
+                                  const newErrors = { ...prev }
+                                  delete newErrors[`requirement_${requirement.id}_description`]
+                                  return newErrors
+                                })
+                              }
+                            }}
+                            placeholder={
+                              requirement.type === "discord"
+                                ? "https://discord.gg/your-server"
+                                : requirement.type === "youtube"
+                                ? "https://youtube.com/@channel or https://youtu.be/..."
+                                : "Describe what users need to do..."
+                            }
+                            className={`mt-1 bg-white/[0.04] border-white/[0.08] text-white placeholder-white/30 focus:border-orange-500 focus-visible:ring-orange-500/40 ${errors[`requirement_${requirement.id}_description`] ? 'border-red-500' : ''}`}
+                          />
+                          {errors[`requirement_${requirement.id}_description`] && (
+                            <p className="text-red-400 text-xs mt-1">{errors[`requirement_${requirement.id}_description`]}</p>
+                          )}
+                          {!errors[`requirement_${requirement.id}_description`] && requirement.type === "discord" && (
+                            <p className="text-xs text-white/55 mt-1">
+                              Enter your Discord server invite link (e.g., https://discord.gg/abc123)
+                            </p>
+                          )}
+                          {requirement.type === "discord" && discordPreviews[requirement.id]?.link === requirement.description && (
+                            <div className="mt-2.5 flex items-center gap-2.5 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2.5">
+                              {discordPreviews[requirement.id].loading ? (
+                                <>
+                                  <Loader2 className="h-4 w-4 animate-spin text-white/40" />
+                                  <span className="text-xs text-white/50">Looking up server…</span>
+                                </>
+                              ) : discordPreviews[requirement.id].serverName ? (
+                                <>
+                                  {discordPreviews[requirement.id].serverIcon ? (
+                                    <img src={discordPreviews[requirement.id].serverIcon} alt="" className="h-6 w-6 rounded-full" />
+                                  ) : (
+                                    <span className="grid h-6 w-6 place-items-center rounded-full bg-white/10 text-[10px] font-bold text-white/60">
+                                      {discordPreviews[requirement.id].serverName!.charAt(0).toUpperCase()}
+                                    </span>
+                                  )}
+                                  <span className="text-sm font-semibold text-white">{discordPreviews[requirement.id].serverName}</span>
+                                </>
+                              ) : (
+                                <span className="text-xs text-red-400">Couldn&apos;t find that server — check the invite link</span>
+                              )}
+                            </div>
+                          )}
+                          {!errors[`requirement_${requirement.id}_description`] && requirement.type === "youtube" && (
+                            <p className="text-xs text-white/55 mt-1">
+                              Enter your YouTube channel URL (e.g., https://youtube.com/@channel or https://youtu.be/videoId)
+                            </p>
+                          )}
+                        </div>
+                      </motion.div>
+                    ))}
+
+                    <Button
+                      type="button"
+                      onClick={addRequirement}
+                      variant="outline"
+                      className="w-full bg-white/[0.02] border-white/[0.08] text-white/70 hover:text-white hover:border-orange-500 hover:bg-orange-500/10"
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
+                      Add Requirement
                     </Button>
                   </CardContent>
                 </Card>

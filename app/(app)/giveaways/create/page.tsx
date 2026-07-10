@@ -65,6 +65,41 @@ export default function CreateGiveawayPage() {
     { id: 1, type: "discord", description: "" },
   ])
 
+  // Live "which server is this" preview as the creator types a Discord invite —
+  // same resolver the submit API uses, just called client-side for feedback.
+  const [discordPreviews, setDiscordPreviews] = useState<Record<number, {
+    link: string
+    loading: boolean
+    serverName?: string
+    serverIcon?: string
+  }>>({})
+
+  useEffect(() => {
+    const timers: ReturnType<typeof setTimeout>[] = []
+    requirements.forEach((req) => {
+      if (req.type !== "discord" || !req.description.trim()) return
+      const cached = discordPreviews[req.id]
+      if (cached?.link === req.description) return
+      const link = req.description
+      const timer = setTimeout(async () => {
+        setDiscordPreviews((prev) => ({ ...prev, [req.id]: { link, loading: true } }))
+        try {
+          const res = await fetch(`/api/discord/resolve-invite?link=${encodeURIComponent(link)}`)
+          const data = await res.json()
+          setDiscordPreviews((prev) => ({
+            ...prev,
+            [req.id]: { link, loading: false, serverName: data?.serverName || undefined, serverIcon: data?.serverIcon || undefined },
+          }))
+        } catch {
+          setDiscordPreviews((prev) => ({ ...prev, [req.id]: { link, loading: false } }))
+        }
+      }, 600)
+      timers.push(timer)
+    })
+    return () => timers.forEach(clearTimeout)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [requirements])
+
   const [prizes, setPrizes] = useState([{ id: 1, name: "", numberOfWinners: 1 }])
 
   const [media, setMedia] = useState({
@@ -683,10 +718,12 @@ export default function CreateGiveawayPage() {
                   </div>
                 </section>
 
-                {/* ---------- Prizes ---------- */}
+                {/* ---------- Prizes & Requirements (combined) ---------- */}
                 <section>
-                  <SectionHeader icon={<Trophy className="h-4 w-4" />} title="Prizes" />
-                  <div className="mt-5 space-y-4">
+                  <SectionHeader icon={<Trophy className="h-4 w-4" />} title="Prizes & Requirements" />
+
+                  <h3 className="mt-6 mb-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/40">Prizes</h3>
+                  <div className="mt-3 space-y-4">
                     {prizes.map((prize, index) => (
                       <div
                         key={prize.id}
@@ -754,13 +791,11 @@ export default function CreateGiveawayPage() {
                       <Plus className="h-3.5 w-3.5" /> Add prize
                     </button>
                   </div>
-                </section>
 
-                {/* ---------- Entry requirements ---------- */}
-                <section>
-                  <div className="flex items-center gap-2.5">
+                  {/* ---------- Entry requirements (same section) ---------- */}
+                  <div className="mt-8 flex items-center gap-2.5">
                     <span className="text-[#f97316]"><Target className="h-4 w-4" /></span>
-                    <h2 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/55">Entry requirements</h2>
+                    <h3 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/40">Entry Requirements</h3>
                     <div className="h-px flex-1 bg-white/[0.07]" />
                     <Badge className="bg-[#f97316]/10 text-[#f97316] border-[#f97316]/20 text-[11px] tabular-nums">
                       {totalPoints} {totalPoints === 1 ? "task" : "tasks"}
@@ -857,6 +892,29 @@ export default function CreateGiveawayPage() {
                             <p className="text-xs text-white/55 mt-1">
                               Enter your Discord server invite link (e.g., https://discord.gg/abc123)
                             </p>
+                          )}
+                          {requirement.type === "discord" && discordPreviews[requirement.id]?.link === requirement.description && (
+                            <div className="mt-2.5 flex items-center gap-2.5 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2.5">
+                              {discordPreviews[requirement.id].loading ? (
+                                <>
+                                  <Loader2 className="h-4 w-4 animate-spin text-white/40" />
+                                  <span className="text-xs text-white/50">Looking up server…</span>
+                                </>
+                              ) : discordPreviews[requirement.id].serverName ? (
+                                <>
+                                  {discordPreviews[requirement.id].serverIcon ? (
+                                    <img src={discordPreviews[requirement.id].serverIcon} alt="" className="h-6 w-6 rounded-full" />
+                                  ) : (
+                                    <span className="grid h-6 w-6 place-items-center rounded-full bg-white/10 text-[10px] font-bold text-white/60">
+                                      {discordPreviews[requirement.id].serverName!.charAt(0).toUpperCase()}
+                                    </span>
+                                  )}
+                                  <span className="text-sm font-semibold text-white">{discordPreviews[requirement.id].serverName}</span>
+                                </>
+                              ) : (
+                                <span className="text-xs text-red-400">Couldn&apos;t find that server — check the invite link</span>
+                              )}
+                            </div>
                           )}
                           {!errors[`requirement_${requirement.id}_description`] && requirement.type === "youtube" && (
                             <p className="text-xs text-white/55 mt-1">
