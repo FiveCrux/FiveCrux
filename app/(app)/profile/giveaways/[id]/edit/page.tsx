@@ -84,8 +84,16 @@ export default function EditGiveawayPage() {
     autoAnnounce: true,
     creatorName: session?.user?.name || "",
     creatorEmail: session?.user?.email || "",
-    creatorDiscordId: "",
   })
+
+  // One or more of the host's own Discord IDs — shown on the detail page so
+  // entrants/winners can reach them (a creator may run for multiple accounts).
+  const [creatorDiscordIds, setCreatorDiscordIds] = useState<string[]>([""])
+  const addCreatorDiscordId = () => setCreatorDiscordIds((prev) => [...prev, ""])
+  const removeCreatorDiscordId = (index: number) =>
+    setCreatorDiscordIds((prev) => prev.filter((_, i) => i !== index))
+  const updateCreatorDiscordId = (index: number, value: string) =>
+    setCreatorDiscordIds((prev) => prev.map((v, i) => (i === index ? value : v)))
 
   // Entry mode: OFF = must join ALL requirements (equal single entry);
   // ON = each requirement joined earns 1 point, more points = higher win chance.
@@ -190,8 +198,9 @@ export default function EditGiveawayPage() {
             autoAnnounce: giveaway.auto_announce || giveaway.autoAnnounce || true,
             creatorName: giveaway.creator_name || giveaway.creatorName || session?.user?.name || "",
             creatorEmail: giveaway.creator_email || giveaway.creatorEmail || session?.user?.email || "",
-            creatorDiscordId: giveaway.creator_discord_id || giveaway.creatorDiscordId || "",
           })
+          const existingDiscordIds: string[] = giveaway.creator_discord_ids || giveaway.creatorDiscordIds || []
+          setCreatorDiscordIds(existingDiscordIds.length > 0 ? existingDiscordIds : [""])
 
           // Prefill point-system mode
           setUsePoints(giveaway.use_points ?? giveaway.usePoints ?? false)
@@ -498,7 +507,7 @@ export default function EditGiveawayPage() {
           use_points: usePoints,
           creator_name: formData.creatorName,
           creator_email: formData.creatorEmail,
-          creator_discord_id: formData.creatorDiscordId.trim() || null,
+          creator_discord_ids: creatorDiscordIds.map((v) => v.trim()).filter(Boolean),
           images: finalImages,
           videos: finalVideos,
           cover_image: finalCoverImage,
@@ -816,16 +825,37 @@ export default function EditGiveawayPage() {
                     </div>
 
                     <div>
-                      <Label htmlFor="creatorDiscordId" className="text-white font-medium">
-                        Your Discord ID
+                      <Label className="text-white font-medium">
+                        Your Discord ID(s)
                       </Label>
-                      <Input
-                        id="creatorDiscordId"
-                        value={formData.creatorDiscordId}
-                        onChange={(e) => setFormData({ ...formData, creatorDiscordId: e.target.value })}
-                        placeholder="e.g. 699612552073838642"
-                        className="mt-2 bg-white/[0.04] border-white/[0.08] text-white placeholder-white/30 focus:border-orange-500 focus-visible:ring-orange-500/40"
-                      />
+                      <div className="mt-2 space-y-2">
+                        {creatorDiscordIds.map((id, index) => (
+                          <div key={index} className="flex items-center gap-2">
+                            <Input
+                              value={id}
+                              onChange={(e) => updateCreatorDiscordId(index, e.target.value)}
+                              placeholder="e.g. 699612552073838642"
+                              className="bg-white/[0.04] border-white/[0.08] text-white placeholder-white/30 focus:border-orange-500 focus-visible:ring-orange-500/40"
+                            />
+                            {creatorDiscordIds.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => removeCreatorDiscordId(index)}
+                                className="shrink-0 rounded-lg p-2 text-white/40 hover:bg-white/[0.06] hover:text-white"
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={addCreatorDiscordId}
+                        className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-orange-400 hover:text-orange-300"
+                      >
+                        <Plus className="h-3.5 w-3.5" /> Add another ID
+                      </button>
                       <p className="text-xs text-white/55 mt-1">
                         Optional — shown on the giveaway page so entrants and winners can reach you directly.
                       </p>
