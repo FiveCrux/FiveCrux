@@ -31,6 +31,7 @@ import Navbar from "@/componentss/shared/navbar";
 import Footer from "@/componentss/shared/footer";
 import SideAdsFrame from "@/componentss/ads/side-banners";
 import { isVerifiedCreator } from "@/lib/utils";
+import { FrameworkBadge } from "@/componentss/shared/framework-badge";
 import Link from "next/link";
 
 interface Script {
@@ -457,9 +458,7 @@ export function ScriptDetailClient({
               {/* Tags */}
               <div className="flex flex-wrap gap-1.5">
                 {script.framework?.map((fw, idx) => (
-                  <span key={idx} className="rounded-full border border-white/[0.1] bg-white/[0.06] px-3.5 py-1 text-[11px] font-bold capitalize text-white/55">
-                    {fw}
-                  </span>
+                  <FrameworkBadge key={idx} framework={fw} size="md" />
                 ))}
                 {isFree && (
                   <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3.5 py-1 text-[11px] font-bold text-emerald-400">

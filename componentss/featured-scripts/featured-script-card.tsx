@@ -5,10 +5,10 @@ import { motion } from "framer-motion"
 import Link from "next/link"
 import Image from "next/image"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/componentss/ui/card"
-import { Badge } from "@/componentss/ui/badge"
 import { Button } from "@/componentss/ui/button"
 import { Avatar, AvatarImage, AvatarFallback } from "@/componentss/ui/avatar"
 import { VerifiedIcon } from "@/componentss/shared/verified-icon"
+import { FrameworkBadge } from "@/componentss/shared/framework-badge"
 import { isVerifiedCreator } from "@/lib/utils"
 interface FeaturedScriptCardProps {
   item: {
@@ -133,12 +133,8 @@ export default function FeaturedScriptCard({ item, index, className = "", style 
                     className="flex flex-wrap gap-1.5"
                   >
                     {item.framework.map((fw: string, idx: number) => (
-                      <motion.div
-                        key={idx}
-                      >
-                        <Badge className="bg-white/[0.06] text-white/70 backdrop-blur-sm text-[10px] font-semibold border border-white/10 rounded-md px-2 py-0.5 uppercase tracking-[0.04em] hover:bg-white/[0.06] hover:text-white/70">
-                          {fw}
-                        </Badge>
+                      <motion.div key={idx}>
+                        <FrameworkBadge framework={fw} />
                       </motion.div>
                     ))}
                   </motion.div>

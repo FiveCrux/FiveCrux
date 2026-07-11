@@ -658,7 +658,7 @@ export default function AdminPage() {
       badge: pendingCount,
     },
     { value: "users", label: "Users", icon: Users, gated: true },
-    { value: "scripts", label: "Scripts", icon: FileCode2 },
+    { value: "scripts", label: "Assets", icon: FileCode2 },
     { value: "giveaways", label: "Giveaways", icon: Gift },
     { value: "props", label: "Props", icon: Box },
     { value: "ads", label: "Ads", icon: Megaphone, gated: true },
@@ -1135,7 +1135,7 @@ export default function AdminPage() {
               >
                 {[
                   { label: "Users", value: displayStats.totalUsers, icon: Users },
-                  { label: "Scripts", value: displayStats.totalScripts, icon: FileCode2 },
+                  { label: "Assets", value: displayStats.totalScripts, icon: FileCode2 },
                   { label: "Giveaways", value: displayStats.totalGiveaways, icon: Gift },
                   { label: "Props", value: displayStats.totalProps, icon: Box },
                   { label: "Ads", value: displayStats.totalAds, icon: Megaphone },
@@ -1679,7 +1679,7 @@ export default function AdminPage() {
                               Loading...
                             </>
                           ) : (
-                            "Load More Scripts"
+                            "Load More Assets"
                           )}
                         </Button>
                       </div>
@@ -2228,7 +2228,7 @@ export default function AdminPage() {
                                   </SelectTrigger>
                                   <SelectContent className="bg-[#0d0d0f] border-white/[0.08]">
                                     <SelectItem value="scripts">
-                                      Scripts
+                                      Assets
                                     </SelectItem>
                                     <SelectItem value="giveaways">
                                       Giveaways

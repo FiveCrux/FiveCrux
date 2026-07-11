@@ -14,6 +14,8 @@ import {
   ShieldCheck,
   Hash,
   Plus,
+  X,
+  ClipboardList,
 } from "lucide-react"
 
 type TebexPackage = {
@@ -184,6 +186,13 @@ function ConnectedView({
   const [disconnecting, setDisconnecting] = useState(false)
   const [packageIdInput, setPackageIdInput] = useState("")
   const [importingOne, setImportingOne] = useState(false)
+  const [loadingPreview, setLoadingPreview] = useState(false)
+
+  // Review-before-submit modal: holds the package(s) about to be sent to admin
+  // approval, and which underlying import call to fire once the user confirms.
+  const [review, setReview] = useState<{ packages: TebexPackage[]; onConfirm: () => void } | null>(
+    null
+  )
 
   const toggle = (id: number) =>
     setSelected((prev) => {
@@ -216,6 +225,27 @@ function ConnectedView({
       toast.error(e instanceof Error ? e.message : "Import failed")
     } finally {
       setImporting(false)
+    }
+  }
+
+  // Fetch a single package's details (no import yet) so it can be shown in the
+  // review-before-submit modal, then hand off to runImportOne on confirm.
+  const openSinglePreview = async () => {
+    const id = Number(packageIdInput.trim())
+    if (!packageIdInput.trim() || !Number.isFinite(id)) {
+      toast.error("Enter a valid Tebex package id.")
+      return
+    }
+    setLoadingPreview(true)
+    try {
+      const res = await fetch(`/api/tebex/store/import?packageId=${id}`)
+      const d = await res.json()
+      if (!res.ok) throw new Error(d.error || "Could not find that package.")
+      setReview({ packages: [d.package], onConfirm: runImportOne })
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not find that package.")
+    } finally {
+      setLoadingPreview(false)
     }
   }
 
@@ -281,7 +311,12 @@ function ConnectedView({
         </span>
         <div className="ml-auto flex items-center gap-2">
           <button
-            onClick={() => runImport(importable.map((p) => p.id))}
+            onClick={() =>
+              setReview({
+                packages: importable,
+                onConfirm: () => runImport(importable.map((p) => p.id)),
+              })
+            }
             disabled={importing || importable.length === 0}
             className="inline-flex items-center gap-1.5 rounded-lg bg-orange-500 px-4 py-2 text-sm font-bold text-black transition hover:bg-orange-400 disabled:opacity-50"
           >
@@ -310,18 +345,22 @@ function ConnectedView({
             value={packageIdInput}
             onChange={(e) => setPackageIdInput(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter" && !importingOne) runImportOne()
+              if (e.key === "Enter" && !loadingPreview) openSinglePreview()
             }}
             inputMode="numeric"
             placeholder="e.g. 5829104"
             className="min-w-0 flex-1 rounded-lg border border-white/[0.08] bg-white/[0.04] px-3.5 py-2.5 text-sm tabular-nums text-white outline-none transition focus:border-orange-500/50"
           />
           <button
-            onClick={runImportOne}
-            disabled={importingOne}
+            onClick={openSinglePreview}
+            disabled={loadingPreview || importingOne}
             className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-orange-500 px-5 py-2.5 text-sm font-bold text-black transition hover:bg-orange-400 disabled:opacity-60"
           >
-            {importingOne ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+            {loadingPreview || importingOne ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Plus className="h-4 w-4" />
+            )}
             Import
           </button>
         </div>
@@ -349,7 +388,13 @@ function ConnectedView({
             <div className="mb-4 flex items-center justify-between rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-2.5">
               <span className="text-sm text-white/70">{selected.size} selected</span>
               <button
-                onClick={() => runImport(Array.from(selected))}
+                onClick={() => {
+                  const ids = Array.from(selected)
+                  setReview({
+                    packages: state.packages.filter((p) => selected.has(p.id)),
+                    onConfirm: () => runImport(ids),
+                  })
+                }}
                 disabled={importing}
                 className="inline-flex items-center gap-1.5 rounded-lg bg-orange-500 px-4 py-1.5 text-sm font-bold text-black transition hover:bg-orange-400 disabled:opacity-50"
               >
@@ -417,6 +462,110 @@ function ConnectedView({
           </p>
         </>
       )}
+
+      {review && (
+        <ImportReviewModal
+          packages={review.packages}
+          money={money}
+          onCancel={() => setReview(null)}
+          onConfirm={() => {
+            review.onConfirm()
+            setReview(null)
+          }}
+        />
+      )}
+    </div>
+  )
+}
+
+// Shows exactly what's about to be submitted for admin approval before the
+// import actually fires — title/price/category/description/image per package.
+function ImportReviewModal({
+  packages,
+  money,
+  onCancel,
+  onConfirm,
+}: {
+  packages: TebexPackage[]
+  money: (p: TebexPackage) => string
+  onCancel: () => void
+  onConfirm: () => void
+}) {
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+      <div className="w-full max-w-lg rounded-2xl border border-white/[0.08] bg-[#0d0d0d] shadow-2xl">
+        <div className="flex items-start justify-between gap-4 border-b border-white/[0.06] p-5">
+          <div className="flex items-start gap-3">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-orange-500/10 ring-1 ring-orange-500/25">
+              <ClipboardList className="h-5 w-5 text-orange-400" />
+            </span>
+            <div>
+              <h3 className="text-base font-bold text-white">
+                Submit for admin approval?
+              </h3>
+              <p className="mt-0.5 text-xs text-white/45">
+                {packages.length} listing{packages.length === 1 ? "" : "s"} will be created as
+                pending — review before it&apos;s sent.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onCancel}
+            className="shrink-0 rounded-lg p-1.5 text-white/40 transition hover:bg-white/[0.06] hover:text-white"
+            aria-label="Cancel"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="max-h-[50vh] space-y-2.5 overflow-y-auto p-5">
+          {packages.map((p) => (
+            <div
+              key={p.id}
+              className="flex items-start gap-3 rounded-xl border border-white/[0.08] bg-white/[0.03] p-3"
+            >
+              <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-white/[0.08] bg-[#0e0e0f]">
+                {p.image ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img src={p.image} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  <div className="grid h-full w-full place-items-center text-white/20">
+                    <Store className="h-4 w-4" />
+                  </div>
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold text-white">{p.name}</p>
+                <p className="mt-0.5 text-xs text-white/50">
+                  {money(p)}
+                  {p.category?.name ? ` · ${p.category.name}` : ""}
+                </p>
+                {p.description && (
+                  <p className="mt-1 line-clamp-2 text-xs text-white/40">
+                    {p.description.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim()}
+                  </p>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex items-center justify-end gap-2 border-t border-white/[0.06] p-5">
+          <button
+            onClick={onCancel}
+            className="rounded-lg border border-white/[0.1] px-4 py-2 text-sm font-medium text-white/70 transition hover:bg-white/[0.06] hover:text-white"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-orange-500 px-4 py-2 text-sm font-bold text-black transition hover:bg-orange-400"
+          >
+            <PackageCheck className="h-4 w-4" />
+            Confirm &amp; Submit
+          </button>
+        </div>
+      </div>
     </div>
   )
 }

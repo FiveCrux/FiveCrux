@@ -13,6 +13,36 @@ export const dynamic = "force-dynamic";
 const stripHtml = (s: string | null | undefined) =>
   (s || "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
 
+// Preview a single package by id (no import) — used by the "review before
+// submit" confirmation modal for the "import by package ID" flow, where the
+// client has no package data yet (just a typed-in id).
+export async function GET(req: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const userId = (session.user as any).id as string;
+
+    const u = await getUserById(userId);
+    const token = (u as any)?.tebexStoreToken || null;
+    if (!token) {
+      return NextResponse.json({ error: "Connect your Tebex store first." }, { status: 400 });
+    }
+
+    const id = Number(req.nextUrl.searchParams.get("packageId"));
+    if (!Number.isFinite(id)) {
+      return NextResponse.json({ error: "Invalid package id." }, { status: 400 });
+    }
+
+    const pkg = await getPackage(token, id);
+    if (!pkg) return NextResponse.json({ error: "Package not found." }, { status: 404 });
+
+    return NextResponse.json({ package: pkg });
+  } catch (e) {
+    console.error("GET /api/tebex/store/import error:", e);
+    return NextResponse.json({ error: "Could not fetch package." }, { status: 500 });
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);

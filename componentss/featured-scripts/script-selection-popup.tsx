@@ -7,6 +7,7 @@ import { Button } from "@/componentss/ui/button"
 import { Input } from "@/componentss/ui/input"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/componentss/ui/dialog"
 import { Badge } from "@/componentss/ui/badge"
+import { FrameworkBadge } from "@/componentss/shared/framework-badge"
 import { useToast } from "@/hooks/use-toast"
 import { useUserScripts } from "@/hooks/use-scripts-queries"
 import Image from "next/image"
@@ -72,12 +73,12 @@ export default function ScriptSelectionPopup({ isOpen, onClose, onSelect, slotUn
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="bg-gray-800 border-gray-700 max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="bg-[#0d0d0d] border-white/[0.08] max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-white text-xl">
             Select Script to Feature
           </DialogTitle>
-          <DialogDescription className="text-gray-400">
+          <DialogDescription className="text-white/50">
             Choose one of your approved scripts to feature in this slot
           </DialogDescription>
         </DialogHeader>
@@ -85,23 +86,23 @@ export default function ScriptSelectionPopup({ isOpen, onClose, onSelect, slotUn
         <div className="space-y-4">
           {/* Search Bar */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-white/40" />
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search scripts by title, description, or category..."
-              className="bg-gray-700 border-gray-600 text-white pl-10"
+              className="bg-white/[0.04] border-white/[0.08] text-white pl-10"
             />
           </div>
 
           {/* Scripts List */}
           {isLoading ? (
             <div className="flex justify-center items-center py-20">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
             </div>
           ) : filteredScripts.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-gray-400 mb-4">
+              <p className="text-white/50 mb-4">
                 {approvedScripts.length === 0
                   ? "You don't have any approved scripts yet. Create and get a script approved first!"
                   : "No scripts match your search."}
@@ -109,7 +110,7 @@ export default function ScriptSelectionPopup({ isOpen, onClose, onSelect, slotUn
               {approvedScripts.length === 0 && (
                 <Button
                   onClick={handleClose}
-                  className="bg-purple-600 hover:bg-purple-700"
+                  className="bg-orange-500 hover:bg-orange-400 text-black font-bold"
                 >
                   Close
                 </Button>
@@ -126,18 +127,18 @@ export default function ScriptSelectionPopup({ isOpen, onClose, onSelect, slotUn
                     animate={{ opacity: 1, y: 0 }}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className={`relative cursor-pointer rounded-lg border-2 transition-all ${
+                    className={`relative cursor-pointer rounded-2xl border transition-all ${
                       isSelected
-                        ? "border-purple-500 bg-purple-500/10"
-                        : "border-gray-700 bg-gray-800/50 hover:border-gray-600"
+                        ? "border-orange-500/60 bg-orange-500/[0.06]"
+                        : "border-white/[0.08] bg-white/[0.03] hover:border-white/20"
                     }`}
                     onClick={() => setSelectedScriptId(script.id)}
                   >
                     {/* Selection Indicator */}
                     {isSelected && (
                       <div className="absolute top-2 right-2 z-10">
-                        <div className="bg-purple-500 rounded-full p-1">
-                          <Check className="h-4 w-4 text-white" />
+                        <div className="bg-orange-500 rounded-full p-1">
+                          <Check className="h-4 w-4 text-black" />
                         </div>
                       </div>
                     )}
@@ -145,7 +146,7 @@ export default function ScriptSelectionPopup({ isOpen, onClose, onSelect, slotUn
                     <div className="p-4">
                       {/* Cover Image */}
                       {script.cover_image ? (
-                        <div className="relative w-full h-32 mb-3 rounded-lg overflow-hidden">
+                        <div className="relative w-full h-32 mb-3 rounded-xl overflow-hidden border border-white/[0.06]">
                           <Image
                             src={script.cover_image}
                             alt={script.title}
@@ -154,8 +155,8 @@ export default function ScriptSelectionPopup({ isOpen, onClose, onSelect, slotUn
                           />
                         </div>
                       ) : (
-                        <div className="w-full h-32 mb-3 rounded-lg bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center">
-                          <span className="text-gray-500 text-sm">No Image</span>
+                        <div className="w-full h-32 mb-3 rounded-xl border border-white/[0.06] bg-white/[0.04] flex items-center justify-center">
+                          <span className="text-white/30 text-sm">No Image</span>
                         </div>
                       )}
 
@@ -165,19 +166,17 @@ export default function ScriptSelectionPopup({ isOpen, onClose, onSelect, slotUn
                       </h3>
 
                       {/* Description */}
-                      <p className="text-gray-400 text-sm mb-3 line-clamp-2">
+                      <p className="text-white/50 text-sm mb-3 line-clamp-2">
                         {script.description}
                       </p>
 
                       {/* Meta Info */}
                       <div className="flex items-center gap-2 flex-wrap">
-                        <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30 text-xs">
+                        <Badge className="bg-white/[0.06] text-white/70 border-white/10 text-xs">
                           {script.category}
                         </Badge>
                         {script.framework && Array.isArray(script.framework) && script.framework.length > 0 && (
-                          <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-xs">
-                            {script.framework[0]}
-                          </Badge>
+                          <FrameworkBadge framework={script.framework[0]} />
                         )}
                         <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30 text-xs">
                           {script.free || script.price === 0 ? "Free" : `${script.currency_symbol || "$"}${script.price}`}
@@ -191,19 +190,19 @@ export default function ScriptSelectionPopup({ isOpen, onClose, onSelect, slotUn
           )}
 
           {/* Action Buttons */}
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-700">
+          <div className="flex justify-end gap-3 pt-4 border-t border-white/[0.08]">
             <Button
               variant="outline"
               onClick={handleClose}
               disabled={isSubmitting}
-              className="border-gray-600 text-gray-300 hover:text-white hover:border-gray-500"
+              className="border-white/[0.1] text-white/70 hover:text-white hover:border-white/20"
             >
               Cancel
             </Button>
             <Button
               onClick={handleSelect}
               disabled={!selectedScriptId || isSubmitting || approvedScripts.length === 0}
-              className="bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-orange-500 hover:bg-orange-400 text-black font-bold disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? "Processing..." : "Select Script"}
             </Button>

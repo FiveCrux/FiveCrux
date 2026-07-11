@@ -222,10 +222,13 @@ async function main() {
     { id: 8002, name: "Vehicles", slug: "vehicles", icon: "Car", appliesTo: "scripts", isActive: true, showOnHome: true, homeOrder: 2, sortOrder: 2 },
     { id: 8003, name: "Weapons", slug: "weapons", icon: "Crosshair", appliesTo: "scripts", isActive: true, showOnHome: true, homeOrder: 3, sortOrder: 3 },
     { id: 8004, name: "Clothing", slug: "clothing", icon: "Shirt", appliesTo: "both", isActive: true, showOnHome: true, homeOrder: 4, sortOrder: 4 },
-    { id: 8005, name: "Maps", slug: "maps", icon: "Map", appliesTo: "scripts", isActive: true, showOnHome: true, homeOrder: 5, sortOrder: 5 },
-    { id: 8006, name: "Economy", slug: "economy", icon: "Coins", appliesTo: "scripts", isActive: true, showOnHome: true, homeOrder: 6, sortOrder: 6 },
+    // "Maps" (slug: maps) intentionally dropped — duplicated "MLOs" above; the
+    // client wants them treated as one thing, MLO. Prod still has both rows
+    // (docs/categories-migration.sql) — merging/removing the prod row is a DB
+    // change the user must run themselves (see db-hands-off rule).
+    { id: 8006, name: "Economy", slug: "economy", icon: "Coins", appliesTo: "scripts", isActive: true, showOnHome: true, homeOrder: 5, sortOrder: 5 },
   ]).onConflictDoNothing()
-  console.log("✓ 6 browse categories")
+  console.log("✓ 5 browse categories")
 
   // ---- Frameworks (dynamic, admin-managed) ----------------------------------
   await db.insert(schema.frameworks).values([

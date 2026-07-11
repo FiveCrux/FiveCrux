@@ -166,7 +166,9 @@ export default function NavbarComponent() {
               )}
             </Link>
 
-            {status === "authenticated" ? (
+            {status === "loading" ? (
+              <div className="hidden h-9 w-[84px] animate-pulse rounded-xl bg-white/[0.05] sm:block" />
+            ) : status === "authenticated" ? (
               <div className="hidden items-center gap-2.5 sm:flex">
                 {hasAdminAccess && (
                   <Link
@@ -249,7 +251,9 @@ export default function NavbarComponent() {
               </nav>
 
               <div className="mt-5 flex flex-col gap-2.5">
-                {status === "authenticated" ? (
+                {status === "loading" ? (
+                  <div className="h-11 w-full animate-pulse rounded-xl bg-white/[0.05]" />
+                ) : status === "authenticated" ? (
                   <>
                     <div className="flex items-center gap-3 border-b border-white/[0.08] pb-4">
                       <Avatar className="h-10 w-10 ring-1 ring-orange-500/30">

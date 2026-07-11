@@ -27,8 +27,10 @@ import {
   LayoutDashboard,
   BadgeCheck,
   Trophy,
+  Search,
 } from "lucide-react";
 import { Button } from "@/componentss/ui/button";
+import { Input } from "@/componentss/ui/input";
 import {
   Card,
   CardContent,
@@ -36,6 +38,13 @@ import {
   CardTitle,
 } from "@/componentss/ui/card";
 import { Badge } from "@/componentss/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/componentss/ui/select";
 import {
   Tabs,
   TabsContent,
@@ -212,7 +221,7 @@ export default function ProfilePage() {
     data: adsData,
     isLoading: adsLoading,
     refetch: refetchAds,
-  } = useUserAdvertisements(100, 0, activeTab === "ads");
+  } = useUserAdvertisements(100, 0, activeTab === "ad-slots");
 
   const {
     data: entriesData,
@@ -227,13 +236,21 @@ export default function ProfilePage() {
     data: featuredScriptsData,
     isLoading: featuredScriptsLoading,
     refetch: refetchFeaturedScripts,
-  } = useUserFeaturedScripts(100, activeTab === "featured-scripts");
+  } = useUserFeaturedScripts(100, activeTab === "ad-slots");
   const createFeaturedScriptMutation = useCreateFeaturedScript();
   const deleteFeaturedScriptMutation = useDeleteFeaturedScript();
 
   // Mutations for delete operations
   const deleteScriptMutation = useDeleteUserScript();
   const deleteGiveawayMutation = useDeleteUserGiveaway();
+
+  // Which purchased-slot type the consolidated "My Ad Slots" tab is showing.
+  const [adSlotView, setAdSlotView] = useState<"ads" | "side-banners" | "featured">("ads");
+  const AD_SLOT_VIEWS: { value: "ads" | "side-banners" | "featured"; label: string }[] = [
+    { value: "ads", label: "Ads" },
+    { value: "side-banners", label: "Side Banners" },
+    { value: "featured", label: "Featured Scripts" },
+  ];
 
   const [showAdsForm, setShowAdsForm] = useState(false);
   const [editingAd, setEditingAd] = useState<any>(null);
@@ -256,9 +273,25 @@ export default function ProfilePage() {
     string[]
   >([]); // Available slot unique IDs
 
+  const [scriptSearchQuery, setScriptSearchQuery] = useState("");
+  const [scriptCategoryFilter, setScriptCategoryFilter] = useState("all");
+
   // Extract data from React Query responses
   const scripts = scriptsData?.scripts || [];
   const scriptsTotal = scriptsData?.total || 0;
+  const scriptCategories = Array.from(
+    new Set(scripts.map((s: any) => s.category).filter(Boolean))
+  ) as string[];
+  const filteredScripts = scripts.filter((script: any) => {
+    const matchesCategory =
+      scriptCategoryFilter === "all" || script.category === scriptCategoryFilter;
+    const query = scriptSearchQuery.trim().toLowerCase();
+    const matchesQuery =
+      !query ||
+      script.title?.toLowerCase().includes(query) ||
+      script.description?.toLowerCase().includes(query);
+    return matchesCategory && matchesQuery;
+  });
   const giveaways = giveawaysData?.giveaways || [];
   const giveawaysTotal = giveawaysData?.total || 0;
   const ads = adsData?.ads || [];
@@ -568,15 +601,13 @@ export default function ProfilePage() {
   const navItems: { value: string; label: string; icon: any }[] = [
     { value: "overview", label: "Overview", icon: LayoutDashboard },
     { value: "analytics", label: "Analytics", icon: BarChart3 },
-    { value: "scripts", label: "Scripts", icon: Package },
+    { value: "scripts", label: "Assets", icon: Package },
     { value: "tebex-store", label: "Tebex Store", icon: Store },
     { value: "props", label: "Props", icon: Package },
     { value: "giveaways", label: "Giveaways", icon: Gift },
     { value: "winners", label: "Winners", icon: Trophy },
-    { value: "ads", label: "Ads", icon: Tag },
-    { value: "side-banners", label: "Side Banners", icon: Megaphone },
+    { value: "ad-slots", label: "My Ad Slots", icon: Tag },
     { value: "advertise", label: "Advertise", icon: Megaphone },
-    { value: "featured-scripts", label: "Featured Scripts", icon: Star },
     { value: "entries", label: "Entries", icon: Sparkles },
     { value: "get-verified", label: "Get Verified", icon: ShieldCheck },
     { value: "settings", label: "Settings", icon: Settings },
@@ -726,7 +757,7 @@ export default function ProfilePage() {
                 <div className="mt-5 divide-y divide-white/[0.05] border-y border-white/[0.05]">
                   <div className="flex items-center justify-between py-2.5">
                     <span className="text-[11px] font-medium uppercase tracking-[0.18em] text-white/55">
-                      Scripts
+                      Assets
                     </span>
                     <span className="text-sm font-bold">{stats.totalScripts}</span>
                   </div>
@@ -813,7 +844,7 @@ export default function ProfilePage() {
                 className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4"
               >
                 {[
-                  { label: "Scripts", value: stats.totalScripts, icon: Package, accent: false },
+                  { label: "Assets", value: stats.totalScripts, icon: Package, accent: false },
                   { label: "Giveaways", value: stats.totalGiveaways, icon: Gift, accent: false },
                   { label: "Ads", value: stats.totalAds, icon: Tag, accent: true },
                   { label: "Entries", value: stats.totalEntries, icon: Sparkles, accent: false },
@@ -933,7 +964,7 @@ export default function ProfilePage() {
                   transition={{ duration: 0.8 }}
                 >
                   <div className="flex flex-col gap-3 mb-6 items-start justify-between sm:flex-row sm:items-center">
-                    <h2 className="text-xl sm:text-2xl font-bold">My Scripts</h2>
+                    <h2 className="text-xl sm:text-2xl font-bold">My Assets</h2>
                     <Button
                       onClick={() => router.push("/scripts/submit")}
                       className="w-full sm:w-auto bg-orange-500 hover:bg-orange-600 text-black font-semibold"
@@ -943,13 +974,43 @@ export default function ProfilePage() {
                     </Button>
                   </div>
 
+                  {scripts.length > 0 && (
+                    <div className="flex flex-col gap-3 mb-6 sm:flex-row">
+                      <div className="relative flex-1">
+                        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
+                        <Input
+                          value={scriptSearchQuery}
+                          onChange={(e) => setScriptSearchQuery(e.target.value)}
+                          placeholder="Search your scripts..."
+                          className="pl-9 bg-[#0e0e0e] border-white/[0.08]"
+                        />
+                      </div>
+                      <Select
+                        value={scriptCategoryFilter}
+                        onValueChange={setScriptCategoryFilter}
+                      >
+                        <SelectTrigger className="w-full sm:w-[200px] bg-[#0e0e0e] border-white/[0.08]">
+                          <SelectValue placeholder="All categories" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All categories</SelectItem>
+                          {scriptCategories.map((category) => (
+                            <SelectItem key={category} value={category} className="capitalize">
+                              {category}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
                   {scriptsLoading ? (
                     <div className="flex justify-center items-center py-20">
                       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {scripts.map((script: any) => (
+                      {filteredScripts.map((script: any) => (
                         <Card
                           key={script.id}
                           className="bg-[#0e0e0e] border-white/[0.06] rounded-2xl hover:border-orange-500/40 transition-colors"
@@ -1073,6 +1134,20 @@ export default function ProfilePage() {
                               <Plus className="h-4 w-4 mr-2" />
                               Create Your First Script
                             </Button>
+                          </CardContent>
+                        </Card>
+                      )}
+
+                      {scripts.length > 0 && filteredScripts.length === 0 && (
+                        <Card className="bg-[#0e0e0e] border-white/[0.06] rounded-2xl md:col-span-2 lg:col-span-3">
+                          <CardContent className="p-12 text-center">
+                            <Search className="h-12 w-12 text-white/20 mx-auto mb-4" />
+                            <h3 className="text-xl font-bold mb-2">
+                              No scripts match your search
+                            </h3>
+                            <p className="text-white/55">
+                              Try a different search term or category.
+                            </p>
                           </CardContent>
                         </Card>
                       )}
@@ -1309,7 +1384,26 @@ export default function ProfilePage() {
               </TabsContent>
 
               {/* Ads Tab */}
-              <TabsContent value="ads" className="space-y-6 mt-0">
+              <TabsContent value="ad-slots" className="space-y-6 mt-0">
+                {/* Switcher — Ads / Side Banners / Featured Scripts share this one section */}
+                <div className="inline-flex items-center gap-1 rounded-xl border border-white/[0.08] bg-white/[0.03] p-1">
+                  {AD_SLOT_VIEWS.map((v) => (
+                    <button
+                      key={v.value}
+                      type="button"
+                      onClick={() => setAdSlotView(v.value)}
+                      className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
+                        adSlotView === v.value
+                          ? "bg-orange-500 text-black"
+                          : "text-white/60 hover:text-white"
+                      }`}
+                    >
+                      {v.label}
+                    </button>
+                  ))}
+                </div>
+
+                {adSlotView === "ads" && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -1673,11 +1767,10 @@ export default function ProfilePage() {
                     </>
                   )}
                 </motion.div>
-              </TabsContent>
+                )}
 
-              {/* Side Banners Tab — manage the creative for bought side slots */}
-              <TabsContent value="side-banners" className="space-y-6 mt-0">
-                <SideBannersManager />
+                {/* Side Banners — manage the creative for bought side slots */}
+                {adSlotView === "side-banners" && <SideBannersManager />}
               </TabsContent>
 
               {/* Get Verified Tab — apply for the verified-creator badge */}
@@ -1700,8 +1793,11 @@ export default function ProfilePage() {
                 <AdvertisePanel />
               </TabsContent>
 
-              {/* Featured Scripts Tab */}
-              <TabsContent value="featured-scripts" className="space-y-6 mt-0">
+              {/* Featured Scripts — same consolidated "My Ad Slots" section (renders
+                  alongside the Ads/Side-Banners TabsContent above since they share
+                  the "ad-slots" value; visibility is gated by adSlotView instead). */}
+              <TabsContent value="ad-slots" className="space-y-6 mt-0">
+                {adSlotView === "featured" && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -2087,6 +2183,7 @@ export default function ProfilePage() {
                     </>
                   )}
                 </motion.div>
+                )}
               </TabsContent>
 
               {/* Entries Tab */}
@@ -2320,7 +2417,7 @@ export default function ProfilePage() {
                             <p className="text-2xl font-bold text-orange-500">
                               {stats.totalScripts}
                             </p>
-                            <p className="text-sm text-white/55">Scripts</p>
+                            <p className="text-sm text-white/55">Assets</p>
                           </div>
                           <div className="text-center p-4 bg-white/[0.03] border border-white/[0.06] rounded-xl">
                             <p className="text-2xl font-bold text-green-500">

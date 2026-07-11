@@ -1,5 +1,6 @@
 import { randomUUID } from 'crypto';
 import { db } from './db/client';
+import { formatDisplayName } from './utils';
 
 // App-generated integer primary key (the prod DB uses manual integer PKs, not
 // DB identity). Seconds-resolution timestamp + random; fits PostgreSQL int4.
@@ -729,7 +730,7 @@ export async function getScripts(filters?: ScriptFilters) {
       original_price: script.originalPrice,
       currency: script.currency,
       currency_symbol: script.currencySymbol,
-      seller_name: script.seller_name,
+      seller_name: formatDisplayName(script.seller_name) || script.seller_name,
       seller_email: script.seller_email,
       seller_id: script.sellerId,
       seller_image: script.sellerId ? sellerImagesMap.get(script.sellerId) || null : null,
@@ -781,7 +782,7 @@ export async function getScriptById(id: number) {
         original_price: script.originalPrice,
         currency: script.currency,
         currency_symbol: script.currencySymbol,
-        seller_name: script.seller_name,
+        seller_name: formatDisplayName(script.seller_name) || script.seller_name,
         seller_email: script.seller_email,
         other_links: script.otherLinks || [],
         youtube_video_link: script.youtubeVideoLink,
@@ -820,7 +821,7 @@ export async function getScriptById(id: number) {
         original_price: script.originalPrice,
         currency: script.currency,
         currency_symbol: script.currencySymbol,
-        seller_name: script.seller_name,
+        seller_name: formatDisplayName(script.seller_name) || script.seller_name,
         seller_email: script.seller_email,
         other_links: script.otherLinks || [],
         youtube_video_link: script.youtubeVideoLink,
@@ -859,7 +860,7 @@ export async function getScriptById(id: number) {
         original_price: script.originalPrice,
         currency: script.currency,
         currency_symbol: script.currencySymbol,
-        seller_name: script.seller_name,
+        seller_name: formatDisplayName(script.seller_name) || script.seller_name,
         seller_email: script.seller_email,
         other_links: script.otherLinks || [],
         youtube_video_link: script.youtubeVideoLink,
@@ -1084,6 +1085,8 @@ export async function approveScript(scriptId: number, adminId: string, adminNote
     // Insert into approved_scripts table
     const approvedScript = await db.insert(approvedScripts).values({
       ...script,
+      createdAt: new Date(), // stamp with approval time, not the original submission time —
+      // otherwise a script that waited in the queue sorts as "old" and never reaches New Releases
       approvedAt: new Date(),
       approvedBy: adminId,
       adminNotes: adminNotes || null
@@ -1627,6 +1630,7 @@ export async function getGiveaways(filters?: {
 
     return {
       ...giveaway,
+      creatorName: formatDisplayName(giveaway.creatorName) || giveaway.creatorName,
       creatorImage,
       creatorRoles,
       isUpcoming,
@@ -1692,6 +1696,7 @@ export async function getGiveawayById(id: number, session?: any) {
       
       return {
         ...giveaway,
+        creatorName: formatDisplayName(giveaway.creatorName) || giveaway.creatorName,
         entriesCount: actualEntryCount, // Use actual count instead of stored count
         userEntry, // Include user's entry for points display
         requirements,
@@ -1743,6 +1748,7 @@ export async function getGiveawayById(id: number, session?: any) {
       
       return {
         ...giveaway,
+        creatorName: formatDisplayName(giveaway.creatorName) || giveaway.creatorName,
         entriesCount: actualEntryCount, // Use actual count instead of stored count
         requirements,
         prizes: prizesWithWinners,
@@ -1793,6 +1799,7 @@ export async function getGiveawayById(id: number, session?: any) {
       
       return {
         ...giveaway,
+        creatorName: formatDisplayName(giveaway.creatorName) || giveaway.creatorName,
         entriesCount: actualEntryCount, // Use actual count instead of stored count
         requirements,
         prizes: prizesWithWinners,
@@ -2976,6 +2983,7 @@ export async function getRelatedGiveaways(currentGiveawayId: number, limit: numb
         
         return {
           ...giveaway,
+          creatorName: formatDisplayName(giveaway.creatorName) || giveaway.creatorName,
           entriesCount: entryCount[0]?.count || 0
         };
       })
@@ -3334,6 +3342,7 @@ export async function getFeaturedScriptsWithDetails(filters?: {
     // Map results with seller info
     const mappedResults = results.map(result => ({
       ...result,
+      scriptSellerName: formatDisplayName(result.scriptSellerName) || result.scriptSellerName,
       scriptSellerImage: result.scriptSellerId ? sellerImagesMap.get(result.scriptSellerId) || null : null,
       scriptSellerRoles: result.scriptSellerId ? sellerRolesMap.get(result.scriptSellerId) || null : null,
     }));

@@ -4,6 +4,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { ShoppingCart, Star, ChevronRight } from "lucide-react"
 import { formatPrice } from "@/lib/format-price"
+import { FrameworkBadge } from "@/componentss/shared/framework-badge"
 
 export interface MarketProduct {
   id: number | string
@@ -107,12 +108,7 @@ export function ProductCard({ product, className = "" }: { product: MarketProduc
         {product.framework && product.framework.length > 0 && (
           <div className="mb-2 flex items-center gap-1.5">
             {product.framework.slice(0, 3).map((fw) => (
-              <span
-                key={fw}
-                className="rounded border border-white/15 bg-white/10 px-1.5 py-0.5 text-[10px] font-bold uppercase"
-              >
-                {fw}
-              </span>
+              <FrameworkBadge key={fw} framework={fw} />
             ))}
           </div>
         )}

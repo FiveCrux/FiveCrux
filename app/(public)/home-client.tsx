@@ -28,6 +28,7 @@ import {
 import { categoryIcon } from "@/lib/category-icons"
 import Navbar from "@/componentss/shared/navbar"
 import Footer from "@/componentss/shared/footer"
+import { FrameworkBadge } from "@/componentss/shared/framework-badge"
 import SideAdsFrame from "@/componentss/ads/side-banners"
 import { ProductCard, type MarketProduct } from "@/componentss/marketplace/product-card"
 import { formatPrice } from "@/lib/format-price"
@@ -203,7 +204,7 @@ function HeroSpotlight({ items, promo }: {
               <h1 className="mb-3 max-w-3xl text-3xl font-black tracking-tight drop-shadow-lg sm:text-5xl">{active.title}</h1>
               <div className="mb-4 flex flex-wrap items-center gap-2">
                 {active.framework?.slice(0, 2).map((fw: string) => (
-                  <span key={fw} className="rounded-md border border-white/15 bg-white/10 px-2 py-1 text-xs font-bold backdrop-blur-sm">{fw}</span>
+                  <FrameworkBadge key={fw} framework={fw} className="backdrop-blur-sm" />
                 ))}
                 {typeof active.rating === "number" && (
                   <span className="flex items-center gap-1 text-sm font-semibold text-yellow-400">
