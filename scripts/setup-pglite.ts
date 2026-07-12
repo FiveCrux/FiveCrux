@@ -47,11 +47,15 @@ async function main() {
     "1614680376573-df3480f0c6ff",
   ].map((s) => `https://images.unsplash.com/photo-${s}?auto=format&fit=crop&w=1200&q=80`)
 
-  // ---- Approved scripts (live marketplace) ----------------------------------
+  // ---- Approved scripts (live marketplace) -----------------------------------
+  // `category` must be a real category SLUG (mlo/vehicles/weapons/clothing/
+  // economy) — the submit form populates it from the categories table, and
+  // category-browse pages filter by exact slug match. One script per category
+  // so every nav/category page has something to show.
   const approvedScripts: (typeof schema.approvedScripts.$inferInsert)[] = [
     {
       id: 1001, title: "Advanced Banking System", description: "Full-featured banking with ATMs, transfers, loans and a sleek NUI. Optimised, escrow-free, regularly updated.",
-      price: "24.99", originalPrice: "39.99", currency: "EUR", currencySymbol: "€", category: "Scripts",
+      price: "24.99", originalPrice: "39.99", currency: "EUR", currencySymbol: "€", category: "economy",
       framework: ["ESX", "QBCore"], sellerId: seller.id, seller_name: seller.name, seller_email: seller.email,
       features: ["ATM system", "Player-to-player transfers", "Loans & interest", "Admin dashboard"],
       requirements: ["oxmysql", "es_extended"], images: imgs, screenshots: imgs, coverImage: imgs[0],
@@ -61,7 +65,7 @@ async function main() {
     },
     {
       id: 1002, title: "Drug Selling System", description: "Dynamic drug economy with zones, NPC dealers, police alerts and configurable pricing.",
-      price: "19.99", currency: "EUR", currencySymbol: "€", category: "Scripts",
+      price: "19.99", currency: "EUR", currencySymbol: "€", category: "economy",
       framework: ["QBCore"], sellerId: seller.id, seller_name: seller.name, seller_email: seller.email,
       features: ["Dynamic pricing", "Police integration", "Configurable zones"], requirements: ["qb-core"],
       images: [imgs[1]], screenshots: [imgs[1], imgs[2]], coverImage: imgs[1], featured: true, free: false,
@@ -70,17 +74,31 @@ async function main() {
     },
     {
       id: 1003, title: "Free HUD Starter", description: "Clean, lightweight HUD with health/armor/hunger/thirst. A great free starting point.",
-      price: "0", currency: "EUR", currencySymbol: "€", category: "Scripts",
+      price: "0", currency: "EUR", currencySymbol: "€", category: "clothing",
       framework: ["Standalone"], sellerId: seller.id, seller_name: seller.name, seller_email: seller.email,
       features: ["Lightweight", "Customisable", "Standalone"], requirements: [], images: [imgs[2]],
       coverImage: imgs[2], featured: false, free: true,
     },
     {
       id: 1004, title: "Mechanic Job Pro", description: "Complete mechanic job: repairs, tuning, towing, billing and a garage management UI.",
-      price: "29.99", originalPrice: "44.99", currency: "EUR", currencySymbol: "€", category: "Scripts",
+      price: "29.99", originalPrice: "44.99", currency: "EUR", currencySymbol: "€", category: "vehicles",
       framework: ["ESX", "QBCore"], sellerId: seller.id, seller_name: seller.name, seller_email: seller.email,
       features: ["Repairs & tuning", "Towing", "Billing"], requirements: ["oxmysql"], images: [imgs[3]],
       coverImage: imgs[3], featured: false, free: false,
+    },
+    {
+      id: 1005, title: "Weapon Shop & Crafting", description: "Configurable weapon shops, crafting benches and a licensing system.",
+      price: "17.99", currency: "EUR", currencySymbol: "€", category: "weapons",
+      framework: ["QBCore", "Qbox"], sellerId: seller.id, seller_name: seller.name, seller_email: seller.email,
+      features: ["Weapon shops", "Crafting", "Licensing"], requirements: ["qb-core"], images: [imgs[0]],
+      coverImage: imgs[0], featured: false, free: false,
+    },
+    {
+      id: 1006, title: "Luxury Garage MLO Manager", description: "Full garage management script paired with a custom MLO — storage, valet and customisation.",
+      price: "32.99", currency: "EUR", currencySymbol: "€", category: "mlo",
+      framework: ["ESX", "QBCore"], sellerId: seller.id, seller_name: seller.name, seller_email: seller.email,
+      features: ["Vehicle storage", "Valet service", "Customisation menu"], requirements: ["oxmysql"], images: [imgs[1]],
+      coverImage: imgs[1], featured: false, free: false,
     },
   ]
   for (const s of approvedScripts) {
@@ -92,13 +110,13 @@ async function main() {
   const pendingScripts: (typeof schema.pendingScripts.$inferInsert)[] = [
     {
       id: 2001, title: "Casino Heist [PENDING]", description: "Multi-stage casino heist with hacking minigames and dynamic loot.",
-      price: "34.99", currency: "EUR", currencySymbol: "€", category: "Scripts", framework: ["QBCore"],
+      price: "34.99", currency: "EUR", currencySymbol: "€", category: "economy", framework: ["QBCore"],
       sellerId: seller.id, seller_name: seller.name, seller_email: seller.email, features: ["Minigames", "Dynamic loot"],
       requirements: ["qb-core"], images: [imgs[0]], coverImage: imgs[0], adminNotes: null,
     },
     {
       id: 2002, title: "Fishing & Boating [PENDING]", description: "Relaxing fishing economy with rare catches, rods and a boat shop.",
-      price: "14.99", currency: "EUR", currencySymbol: "€", category: "Scripts", framework: ["ESX"],
+      price: "14.99", currency: "EUR", currencySymbol: "€", category: "economy", framework: ["ESX"],
       sellerId: seller.id, seller_name: seller.name, seller_email: seller.email, features: ["Rare catches", "Boat shop"],
       requirements: ["es_extended"], images: [imgs[1]], coverImage: imgs[1], adminNotes: null,
     },
@@ -177,36 +195,49 @@ async function main() {
 
   // ---- Approved ads ---------------------------------------------------------
   await db.insert(schema.approvedAds).values([
-    { id: 6001, title: "Premium Script Store", description: "Browse 200+ optimised FiveM scripts", imageUrl: imgs[0], linkUrl: "https://fivecrux.local", category: "Scripts", createdBy: "dev-admin", status: "active", slotStatus: "active" },
-    { id: 6002, title: "MLO Mega Pack", description: "50 interiors in one bundle", imageUrl: imgs[1], linkUrl: "https://fivecrux.local", category: "Props", createdBy: "dev-admin", status: "active", slotStatus: "active" },
+    { id: 6001, title: "Premium Script Store", description: "Browse 200+ optimised FiveM scripts", imageUrl: imgs[0], linkUrl: "https://fivecrux.local", category: "scripts", createdBy: "dev-admin", status: "active", slotStatus: "active" },
+    { id: 6002, title: "MLO Mega Pack", description: "50 interiors in one bundle", imageUrl: imgs[1], linkUrl: "https://fivecrux.local", category: "props", createdBy: "dev-admin", status: "active", slotStatus: "active" },
   ]).onConflictDoNothing()
   console.log("✓ 2 approved ads")
 
   // ---- Pending ad -----------------------------------------------------------
   await db.insert(schema.pendingAds).values({
-    id: 6003, title: "Server Hosting Deal [PENDING]", description: "20% off FiveM server hosting", imageUrl: imgs[3], linkUrl: "https://host.local", category: "Scripts", createdBy: seller.id, slotStatus: "active",
+    id: 6003, title: "Server Hosting Deal [PENDING]", description: "20% off FiveM server hosting", imageUrl: imgs[3], linkUrl: "https://host.local", category: "scripts", createdBy: seller.id, slotStatus: "active",
   }).onConflictDoNothing()
   console.log("✓ 1 pending ad")
 
-  // ---- Side banner (demo) ---------------------------------------------------
-  // LEFT-TOP slot = sold + live (owned by CruxDev) so the rail shows a real
-  // banner; the other 3 slots (left-bottom, right-top, right-bottom) stay open so
-  // the buy flow is demoable. Log in as CruxDev (creator) to manage/edit the
-  // banner from Profile → Side Banners.
-  await db.insert(schema.sideBannerBookings).values({
-    id: 10001,
-    position: "left-top",
-    status: "active",
-    title: "Advanced Banking — 20% off",
-    imageUrl: imgs[0],
-    linkUrl: "https://fivecrux.local",
-    createdBy: seller.id, // dev-creator (CruxDev)
-    durationWeeks: 2,
-    startDate: new Date(),
-    endDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
-    orderReference: "demo-seed",
-  }).onConflictDoNothing()
-  console.log("✓ 1 active side banner (left-top, demo)")
+  // ---- Side banners (demo) ---------------------------------------------------
+  // All 4 sellable slots (left-top/left-bottom/right-top/right-bottom) are
+  // sold + live so the rails never show an empty "Advertise here" CTA in the
+  // demo. Log in as CruxDev (creator) to manage/edit these from
+  // Profile → Side Banners.
+  await db.insert(schema.sideBannerBookings).values([
+    {
+      id: 10001, position: "left-top", status: "active", title: "Advanced Banking — 20% off",
+      imageUrl: imgs[0], linkUrl: "https://fivecrux.local/script/1001", createdBy: seller.id,
+      durationWeeks: 2, startDate: new Date(), endDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+      orderReference: "demo-seed-1",
+    },
+    {
+      id: 10002, position: "left-bottom", status: "active", title: "Luxury Garage MLO Manager",
+      imageUrl: imgs[1], linkUrl: "https://fivecrux.local/script/1006", createdBy: seller.id,
+      durationWeeks: 4, startDate: new Date(), endDate: new Date(Date.now() + 28 * 24 * 60 * 60 * 1000),
+      orderReference: "demo-seed-2",
+    },
+    {
+      id: 10003, position: "right-top", status: "active", title: "Weapon Shop & Crafting — new release",
+      imageUrl: imgs[2], linkUrl: "https://fivecrux.local/script/1005", createdBy: seller.id,
+      durationWeeks: 1, startDate: new Date(), endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      orderReference: "demo-seed-3",
+    },
+    {
+      id: 10004, position: "right-bottom", status: "active", title: "Mechanic Job Pro — 33% off",
+      imageUrl: imgs[3], linkUrl: "https://fivecrux.local/script/1004", createdBy: seller.id,
+      durationWeeks: 2, startDate: new Date(), endDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+      orderReference: "demo-seed-4",
+    },
+  ]).onConflictDoNothing()
+  console.log("✓ 4 active side banners (all 4 slots sold + live)")
 
   // ---- Coupon ---------------------------------------------------------------
   await db.insert(schema.coupons).values({
@@ -244,7 +275,7 @@ async function main() {
   // ---- Rejected items (admin rejection-queue UI) ----------------------------
   await db.insert(schema.rejectedScripts).values({
     id: 2003, title: "Illegal Firearms Pack [REJECTED]", description: "Unlicensed weapon models bundled without permission.",
-    price: "9.99", currency: "EUR", currencySymbol: "€", category: "Scripts", framework: ["Standalone"],
+    price: "9.99", currency: "EUR", currencySymbol: "€", category: "weapons", framework: ["Standalone"],
     sellerId: seller.id, seller_name: seller.name, seller_email: seller.email, features: [], requirements: [],
     images: [imgs[0]], coverImage: imgs[0], rejectionReason: "Uses third-party assets without a redistribution license.",
   }).onConflictDoNothing()
@@ -262,7 +293,7 @@ async function main() {
   }).onConflictDoNothing()
   await db.insert(schema.rejectedAds).values({
     id: 6004, title: "Competitor Store [REJECTED]", description: "Ad promoting a rival marketplace.",
-    imageUrl: imgs[3], linkUrl: "https://rival.local", category: "Scripts", createdBy: seller.id, slotStatus: "active",
+    imageUrl: imgs[3], linkUrl: "https://rival.local", category: "scripts", createdBy: seller.id, slotStatus: "active",
     rejectionReason: "Ads may not promote a competing marketplace.",
   }).onConflictDoNothing()
   console.log("✓ 1 rejected script + 1 rejected prop + 1 rejected giveaway + 1 rejected ad")
@@ -275,7 +306,7 @@ async function main() {
   }).onConflictDoNothing()
   await db.insert(schema.approvedAds).values({
     id: 6005, title: "CruxDev's Banking Script Sale", description: "20% off the Advanced Banking System this week only.",
-    imageUrl: imgs[0], linkUrl: "https://fivecrux.local/script/1001", category: "Scripts", createdBy: seller.id,
+    imageUrl: imgs[0], linkUrl: "https://fivecrux.local/script/1001", category: "scripts", createdBy: seller.id,
     status: "active", slotStatus: "active", slotUniqueId: "adslot-demo-1", clickCount: 15, viewCount: 146,
   }).onConflictDoNothing()
   console.log("✓ 2 purchased ad slots for CruxDev (1 used, 1 open, 1 locked)")
@@ -294,13 +325,6 @@ async function main() {
     featuredEndDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
   }).onConflictDoNothing()
   console.log("✓ 2 purchased featured-script slots for CruxDev (1 used, 1 open, 1 locked)")
-
-  // ---- Extra side banner slot in the 'reserved' hold state ------------------
-  await db.insert(schema.sideBannerBookings).values({
-    id: 10002, position: "right-top", status: "reserved", createdBy: seller.id, durationWeeks: 4,
-    reservedUntil: new Date(Date.now() + 10 * 60 * 1000), orderReference: "demo-reserved-hold",
-  }).onConflictDoNothing()
-  console.log("✓ 1 side banner in 'reserved' checkout-hold state (right-top)")
 
   // ---- Creator code (storewide referral/affiliate code) ---------------------
   await db.insert(schema.creatorCodes).values({
