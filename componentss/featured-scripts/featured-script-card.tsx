@@ -126,19 +126,16 @@ export default function FeaturedScriptCard({ item, index, className = "", style 
               <CardTitle className="text-base font-bold text-white leading-tight line-clamp-2">
                 {item.title}
               </CardTitle>
-               {/* Framework Badges */}
-               {item.framework &&
-                item.framework.length > 0 && (
-                  <motion.div
-                    className="flex flex-wrap gap-1.5"
-                  >
-                    {item.framework.map((fw: string, idx: number) => (
-                      <motion.div key={idx}>
-                        <FrameworkBadge framework={fw} />
-                      </motion.div>
-                    ))}
-                  </motion.div>
-                )}
+               {/* Framework Badges — fixed-height row (present even when empty) so
+                   a script with no framework tags doesn't render a shorter card
+                   than its neighbors in the same row. */}
+               <div className="flex h-5 flex-wrap items-center gap-1.5">
+                 {item.framework?.map((fw: string, idx: number) => (
+                   <motion.div key={idx}>
+                     <FrameworkBadge framework={fw} />
+                   </motion.div>
+                 ))}
+               </div>
               <CardDescription className="text-white/55 text-xs leading-snug flex items-center gap-1.5 flex-row">
                 <Avatar className="h-4 w-4 flex-shrink-0">
                   <AvatarImage

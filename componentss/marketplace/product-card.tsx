@@ -105,13 +105,14 @@ export function ProductCard({ product, className = "" }: { product: MarketProduc
 
       {/* Body */}
       <div className="p-3.5">
-        {product.framework && product.framework.length > 0 && (
-          <div className="mb-2 flex items-center gap-1.5">
-            {product.framework.slice(0, 3).map((fw) => (
-              <FrameworkBadge key={fw} framework={fw} />
-            ))}
-          </div>
-        )}
+        {/* Fixed-height row (present even with no framework tags) so every card
+            in a grid/row lines up the same — a product with no framework was
+            previously rendering a shorter card than its neighbors. */}
+        <div className="mb-2 flex h-5 items-center gap-1.5">
+          {product.framework?.slice(0, 3).map((fw) => (
+            <FrameworkBadge key={fw} framework={fw} />
+          ))}
+        </div>
         <h3 className="mb-2 truncate text-sm font-bold leading-snug text-white">{product.title}</h3>
         <div className="mb-3 flex items-center gap-2">
           {product.sellerImage ? (

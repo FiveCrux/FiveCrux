@@ -3163,13 +3163,23 @@ export async function getFeaturedScriptSlotByUniqueId(slotUniqueId: string) {
   const allSlots = await db
     .select()
     .from(userFeaturedScriptSlots);
-  
+
   const slot = allSlots.find(s => {
     const uniqueIds = (s.featuredSlotUniqueIds || []) as string[];
     return uniqueIds.includes(slotUniqueId);
   });
-  
+
   return slot || null;
+}
+
+/** Is this purchased-slot unique id already assigned to an active featured script? */
+export async function isFeaturedSlotUniqueIdInUse(slotUniqueId: string): Promise<boolean> {
+  const rows = await db
+    .select({ id: featuredScripts.id })
+    .from(featuredScripts)
+    .where(and(eq(featuredScripts.featuredSlotUniqueId, slotUniqueId), eq(featuredScripts.featuredStatus, 'active')))
+    .limit(1);
+  return rows.length > 0;
 }
 
 // Create featured script (no approval needed - users can only feature approved scripts)
