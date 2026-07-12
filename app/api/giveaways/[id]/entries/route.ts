@@ -211,11 +211,34 @@ export async function PATCH(
       return NextResponse.json({ error: "You must enter the giveaway first" }, { status: 400 })
     }
 
+    // Re-verify claims server-side (same check as entry creation) — the client's
+    // completedRequirements list is not trusted as-is, since a self-reported
+    // "I joined the Discord" claim here would otherwise credit points (and
+    // winner-selection weight) without ever actually joining.
+    const requirements = await db.select().from(giveawayRequirements)
+      .where(eq(giveawayRequirements.giveawayId, giveawayId))
+    const claimed = new Set(completedRequirements.map((x: any) => String(x)))
+    const discordAccessToken = (session as any).accessToken as string | undefined
+
+    const verifiedCompleted: number[] = []
+    for (const req of requirements) {
+      let satisfied = claimed.has(String(req.id))
+      if (isDiscordRequirement(req.type)) {
+        const guildId = await resolveGuildId(req.link)
+        if (discordAccessToken && guildId) {
+          const member = await isMemberOfGuild(discordAccessToken, guildId)
+          if (member === true) satisfied = true
+          else if (member === false) satisfied = false
+        }
+      }
+      if (satisfied) verifiedCompleted.push(req.id)
+    }
+
     // Update the entry points
     const entryId = await updateGiveawayEntryPoints(
-      giveawayId, 
-      (session.user as any).id, 
-      completedRequirements
+      giveawayId,
+      (session.user as any).id,
+      verifiedCompleted
     )
 
     return NextResponse.json({ 

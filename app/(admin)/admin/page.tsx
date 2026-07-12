@@ -2556,7 +2556,7 @@ export default function AdminPage() {
                         )}
 
                         {/* Load More Button for Ads */}
-                        {ads.length > 0 && hasMoreAds && (
+                        {filteredAds.length > 0 && hasMoreAds && (
                           <div className="flex justify-center pt-6">
                             <Button
                               onClick={() => fetchNextAds()}

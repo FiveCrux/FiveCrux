@@ -52,7 +52,7 @@ export async function PATCH(
     }
 
     const session = await getServerSession(authOptions)
-    if (!session) {
+    if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -73,6 +73,18 @@ export async function PATCH(
       return NextResponse.json({ error: "Giveaway not found" }, { status: 404 })
     }
 
+    const isAdmin = hasAnyRole(user.roles, ['admin', 'founder'])
+    const isOwner = (currentGiveaway as any).creatorId === user.id
+    if (!isAdmin && !isOwner) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
+    }
+
+    // `featured` has no paid/verified user-facing path — only an admin can set it.
+    const giveawayUpdate = { ...giveaway }
+    if (!isAdmin) {
+      delete giveawayUpdate.featured
+    }
+
     // Check if giveaway needs re-approval (if it's currently approved)
     // Approved giveaways are in approvedGiveaways table, so they need re-approval
     const needsReapproval = currentGiveaway.table_source === 'approved'
@@ -82,12 +94,12 @@ export async function PATCH(
 
     if (needsReapproval) {
       // Move from approved to pending for re-approval
-      updatedGiveaway = await updateGiveawayForReapproval(id, giveaway)
+      updatedGiveaway = await updateGiveawayForReapproval(id, giveawayUpdate)
       status = "pending"
     } else {
       // Regular update for pending/rejected giveaways
       updatedGiveaway = await updateGiveaway(id, {
-        ...giveaway,
+        ...giveawayUpdate,
         updatedAt: new Date(),
       })
     }
@@ -96,9 +108,15 @@ export async function PATCH(
       return NextResponse.json({ error: "Giveaway not found" }, { status: 404 })
     }
 
-    // Delete existing requirements and prizes
-    await db.delete(giveawayRequirements).where(eq(giveawayRequirements.giveawayId, id))
-    await db.delete(giveawayPrizes).where(eq(giveawayPrizes.giveawayId, id))
+    // Only replace requirements/prizes when the request actually included
+    // replacements — otherwise omitting them from a partial PATCH would wipe
+    // the giveaway's existing requirements/prizes.
+    if (requirements !== undefined) {
+      await db.delete(giveawayRequirements).where(eq(giveawayRequirements.giveawayId, id))
+    }
+    if (prizes !== undefined) {
+      await db.delete(giveawayPrizes).where(eq(giveawayPrizes.giveawayId, id))
+    }
 
     // Create new requirements (re-resolve Discord server info from the invite)
     if (requirements && requirements.length > 0) {

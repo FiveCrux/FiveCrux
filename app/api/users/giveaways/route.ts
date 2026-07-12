@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/auth';
-import { 
-  getPendingGiveaways, 
-  getApprovedGiveaways, 
+import {
+  getPendingGiveaways,
+  getApprovedGiveaways,
   getRejectedGiveaways,
-  createGiveaway,
-  updateGiveaway,
   deleteGiveaway,
+  getGiveawayById,
   hasRole,
   hasAnyRole
 } from '@/lib/database-new';
@@ -134,63 +133,17 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// Allow users to create giveaways using the existing database function
-export async function POST(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+// NOTE: POST was removed (2026-07-13) — it had no legitimate frontend caller
+// (giveaway creation goes through POST /api/giveaways, which correctly puts
+// new giveaways in the pending-approval queue). This route's POST instead
+// inserted directly with status:'active' — skipping moderation entirely —
+// and let the client set `featured` with no admin gate.
 
-    // User must be authenticated
-    const user = session.user as any
+// NOTE: PATCH was removed (2026-07-13) — it had no ownership check (any logged-in
+// user could edit any creator's giveaway) and no legitimate frontend caller used it.
+// Giveaway edits go through /api/giveaways/[id] (PATCH), which enforces isOwner || isAdmin.
 
-    const body = await request.json();
-
-    const giveawayId = await createGiveaway({
-      title: body.title,
-      description: body.description,
-      totalValue: body.total_value,
-      category: body.category,
-      endDate: body.end_date,
-      maxEntries: body.max_entries,
-      featured: body.featured ?? false,
-      autoAnnounce: true,
-      creatorName: (session.user as any).name || 'Unknown Creator',
-      creatorEmail: (session.user as any).email || '',
-      creatorId: (session.user as any).id,
-      images: body.images || [],
-      videos: body.videos || [],
-      coverImage: body.cover_image || null,
-      rules: body.rules || [],
-      status: 'active',
-    } as any);
-
-    return NextResponse.json({ success: true, giveawayId });
-  } catch (error) {
-    console.error('Error creating user giveaway:', error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
-}
-
-// Allow users to update their giveaways
-export async function PATCH(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-    const body = await request.json();
-    const { giveawayId, ...updateData } = body;
-    if (!giveawayId) return NextResponse.json({ error: "Giveaway ID is required" }, { status: 400 });
-
-    // Update giveaway using the approval system
-    const updated = await updateGiveaway(Number(giveawayId), updateData);
-    return NextResponse.json({ success: !!updated });
-  } catch (error) {
-    console.error('Error updating user giveaway:', error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
-}
-
-// Allow users to delete their giveaways
+// Allow users to delete their own giveaways
 export async function DELETE(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -199,6 +152,16 @@ export async function DELETE(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const giveawayId = searchParams.get('id');
     if (!giveawayId) return NextResponse.json({ error: "Giveaway ID is required" }, { status: 400 });
+
+    const giveaway = await getGiveawayById(Number(giveawayId));
+    if (!giveaway) return NextResponse.json({ error: "Giveaway not found" }, { status: 404 });
+
+    const user = session.user as any;
+    const isAdmin = hasAnyRole(user.roles || [], ['admin', 'founder']);
+    const isOwner = (giveaway as any).creatorId === user.id;
+    if (!isAdmin && !isOwner) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    }
 
     const ok = await deleteGiveaway(Number(giveawayId));
     return NextResponse.json({ success: ok });

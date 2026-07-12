@@ -31,9 +31,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
     }
 
-    // Create giveaway
+    // Create giveaway. `featured` is never trusted from the client here — there
+    // is no paid/verified path for a user to buy a featured giveaway slot, so
+    // it can only ever be set by an admin (see PATCH /api/giveaways/[id]).
     const giveawayId = await createGiveaway({
       ...giveaway,
+      featured: false,
       auto_announce: true,
       creator_id: session ? String((session.user as any)?.id || "") : null,
       status: approvalStatus as any,

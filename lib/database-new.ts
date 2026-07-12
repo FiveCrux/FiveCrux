@@ -360,6 +360,19 @@ export async function getSlotByUniqueId(slotUniqueId: string) {
   return slot || null;
 }
 
+/** Is this purchased ad-slot unique id already assigned to a live (pending or active) ad? */
+export async function isAdSlotUniqueIdInUse(slotUniqueId: string): Promise<boolean> {
+  const [pendingRows, approvedRows] = await Promise.all([
+    db.select({ id: pendingAds.id }).from(pendingAds)
+      .where(and(eq(pendingAds.slotUniqueId, slotUniqueId), eq(pendingAds.slotStatus, 'active')))
+      .limit(1),
+    db.select({ id: approvedAds.id }).from(approvedAds)
+      .where(and(eq(approvedAds.slotUniqueId, slotUniqueId), eq(approvedAds.slotStatus, 'active')))
+      .limit(1),
+  ]);
+  return pendingRows.length > 0 || approvedRows.length > 0;
+}
+
 // Check and deactivate expired slots and their associated ads
 export async function checkAndDeactivateExpiredSlots(): Promise<{ checked: number; deactivated: number; adsDeactivated: number }> {
   const now = new Date();

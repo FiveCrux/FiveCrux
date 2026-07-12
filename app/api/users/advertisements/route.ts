@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/auth';
-import { 
-  getPendingAds, 
-  getApprovedAds, 
+import {
+  getPendingAds,
+  getApprovedAds,
   getRejectedAds,
+  getSlotByUniqueId,
+  isAdSlotUniqueIdInUse,
   hasRole,
   hasAnyRole
 } from '@/lib/database-new';
@@ -123,16 +125,37 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// Allow users to create ads
+// Allow users to create ads in a slot THEY actually purchased. Previously
+// slot_unique_id was never validated — no ownership check, no active-status
+// check, no uniqueness check — so any logged-in user could create an ad with
+// a client-supplied end_date (or piggyback another user's slot) for free.
+// Mirrors the same fix already applied to featured scripts.
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const userId = (session.user as any).id;
 
     const body = await request.json();
+    const slotUniqueId = typeof body.slot_unique_id === "string" ? body.slot_unique_id : null;
+
+    if (!slotUniqueId) {
+      return NextResponse.json({ error: "slot_unique_id is required" }, { status: 400 });
+    }
+
+    // The slot must be a real, currently-active slot this user actually bought.
+    const slot = await getSlotByUniqueId(slotUniqueId);
+    if (!slot || slot.userId !== userId || slot.status !== "active") {
+      return NextResponse.json({ error: "That slot doesn't belong to you or isn't active" }, { status: 403 });
+    }
+    // The slot must not already be filled by another live ad.
+    if (await isAdSlotUniqueIdInUse(slotUniqueId)) {
+      return NextResponse.json({ error: "That slot is already in use" }, { status: 409 });
+    }
+
     const { createPendingAd } = await import('@/lib/database-new');
     const adId = await createPendingAd({
       title: body.title,
@@ -140,10 +163,10 @@ export async function POST(request: NextRequest) {
       imageUrl: body.image_url,
       linkUrl: body.link_url,
       category: body.category,
-      slot_unique_id: body.slot_unique_id || null, // Pass slot_unique_id if provided
-      startDate: body.start_date,
-      endDate: body.end_date, // Will be overridden by slot's endDate if slot_unique_id is provided
-      createdBy: (session.user as any).id,
+      slot_unique_id: slotUniqueId,
+      // endDate is always derived from the slot itself inside createPendingAd
+      // when slot_unique_id is present — the client's end_date is ignored.
+      createdBy: userId,
     } as any);
     
     // Send Discord notification for ALL ad creations

@@ -203,43 +203,19 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Allow users to update their scripts
-export async function PATCH(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions);
-    
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+// NOTE: PATCH was removed (2026-07-13) — it had no ownership check (any logged-in
+// user could edit any seller's script) and no legitimate frontend caller used it.
+// Script edits go through /api/scripts/[id] (PATCH), which enforces isOwner || isAdmin.
 
-    const userEmail = session.user.email;
-    const body = await request.json();
-    const { scriptId, ...updateData } = body;
-
-    if (!scriptId) {
-      return NextResponse.json({ error: "Script ID is required" }, { status: 400 });
-    }
-
-    // Ownership check would require fetching from pending/approved by seller_email
-    const { updateScript } = await import('@/lib/database-new');
-    const updated = await updateScript(Number(scriptId), updateData);
-    return NextResponse.json({ success: !!updated });
-  } catch (error) {
-    console.error('Error updating user script:', error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
-}
-
-// Allow users to delete their scripts
+// Allow users to delete their own scripts
 export async function DELETE(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userEmail = session.user.email;
     const { searchParams } = new URL(request.url);
     const scriptId = searchParams.get('id');
 
@@ -247,7 +223,19 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Script ID is required" }, { status: 400 });
     }
 
-    const { deleteScript } = await import('@/lib/database-new');
+    const { getScriptById, deleteScript } = await import('@/lib/database-new');
+    const script = await getScriptById(Number(scriptId));
+    if (!script) {
+      return NextResponse.json({ error: "Script not found" }, { status: 404 });
+    }
+
+    const userRoles = (session.user as any).roles || [];
+    const isAdmin = Array.isArray(userRoles) && (userRoles.includes('admin') || userRoles.includes('founder'));
+    const isOwner = (script as any)?.seller_email && session.user.email && (script as any).seller_email === session.user.email;
+    if (!isAdmin && !isOwner) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    }
+
     const ok = await deleteScript(Number(scriptId));
     return NextResponse.json({ success: ok });
   } catch (error) {
