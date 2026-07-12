@@ -611,12 +611,16 @@ export default function ProfilePage() {
     { value: "entries", label: "Entries", icon: Sparkles },
     { value: "get-verified", label: "Get Verified", icon: ShieldCheck },
     { value: "settings", label: "Settings", icon: Settings },
-    ...(canManageCoupons
-      ? [
-          { value: "coupons", label: "Coupons", icon: Tag },
-          { value: "creator-codes", label: "Creator Codes", icon: Megaphone },
-        ]
-      : []),
+    // Coupons/Creator Codes management disabled (2026-07-12): FiveCrux is
+    // moving to Tebex-native discount codes at checkout instead of maintaining
+    // a parallel custom coupon system. Commented out (not deleted) so it can
+    // be restored if needed — see coupons-tab.tsx / creator-codes-tab.tsx.
+    // ...(canManageCoupons
+    //   ? [
+    //       { value: "coupons", label: "Coupons", icon: Tag },
+    //       { value: "creator-codes", label: "Creator Codes", icon: Megaphone },
+    //     ]
+    //   : []),
   ];
 
   const activeNavLabel =
@@ -2322,6 +2326,8 @@ export default function ProfilePage() {
                 </motion.div>
               </TabsContent>
 
+              {/* Coupons/Creator Codes tabs disabled (2026-07-12) — see navItems
+                  comment above. Commented out, not deleted.
               {canManageCoupons && (
                 <TabsContent value="coupons" className="space-y-6 mt-0">
                   <motion.div
@@ -2345,6 +2351,7 @@ export default function ProfilePage() {
                   </motion.div>
                 </TabsContent>
               )}
+              */}
 
               {/* Props Tab */}
               <TabsContent value="props" className="space-y-6 mt-0">

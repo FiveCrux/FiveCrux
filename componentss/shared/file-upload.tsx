@@ -105,7 +105,7 @@ export default function FileUpload({
           className={`border-2 border-dashed transition-all duration-300 cursor-pointer ${
             isDragOver
               ? "border-orange-500 bg-orange-500/10"
-              : "border-gray-600 hover:border-orange-500/50"
+              : "border-white/[0.15] hover:border-orange-500/50"
           }`}
           onClick={() => fileInputRef.current?.click()}
           onDrop={handleDrop}
@@ -118,12 +118,12 @@ export default function FileUpload({
               animate={{ scale: 1, opacity: 1 }}
               transition={{ duration: 0.3 }}
             >
-              <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+              <Upload className="mx-auto h-12 w-12 text-white/40 mb-4" />
               <div className="space-y-2">
                 <p className="text-white font-medium">
                   Click to upload or drag and drop
                 </p>
-                <p className="text-sm text-gray-400">
+                <p className="text-sm text-white/45">
                   {accept === "image/*" ? "PNG, JPG, WebP up to" : "Files up to"} {maxSize}MB
                   {purpose && ` (${purpose})`}
                 </p>
@@ -137,7 +137,7 @@ export default function FileUpload({
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.3 }}
         >
-          <Card className="border border-gray-600">
+          <Card className="border border-white/[0.08]">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
                 {selectedFile.type.startsWith("image/") ? (
@@ -149,7 +149,7 @@ export default function FileUpload({
                   <p className="text-white font-medium truncate">
                     {selectedFile.name}
                   </p>
-                  <p className="text-sm text-gray-400">
+                  <p className="text-sm text-white/45">
                     {formatFileSize(selectedFile.size)}
                   </p>
                 </div>

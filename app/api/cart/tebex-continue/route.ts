@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
 
     const custom = buildCustom(user.id, orderId, prep.cart.id, prep.provItems);
 
-    const { checkoutUrl } = await finalizeBasket({
+    const result = await finalizeBasket({
       userId: user.id,
       cartId: prep.cart.id,
       storeToken,
@@ -54,9 +54,10 @@ export async function GET(request: NextRequest) {
       orderId,
       custom,
     });
+    if (!result.ok) return fail(result.error);
 
     // Straight to Tebex hosted checkout (payment).
-    return NextResponse.redirect(checkoutUrl);
+    return NextResponse.redirect(result.checkoutUrl);
   } catch (error) {
     console.error("Tebex continue (post-auth) error:", error);
     return fail("checkout-failed");

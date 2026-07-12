@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
 
     // No auth required → add packages + persist order + return the checkout URL.
     try {
-      const { checkoutUrl, order } = await finalizeBasket({
+      const result = await finalizeBasket({
         userId: user.id,
         cartId: prep.cart.id,
         storeToken,
@@ -101,7 +101,10 @@ export async function POST(request: NextRequest) {
         orderId,
         custom,
       });
-      return NextResponse.json({ success: true, order, basketIdent, checkoutUrl });
+      if (!result.ok) {
+        return NextResponse.json({ error: result.error }, { status: result.status });
+      }
+      return NextResponse.json({ success: true, order: result.order, basketIdent, checkoutUrl: result.checkoutUrl });
     } catch (e) {
       console.error("Tebex basket finalize failed:", e);
       return NextResponse.json({ error: "Failed to start Tebex checkout" }, { status: 502 });

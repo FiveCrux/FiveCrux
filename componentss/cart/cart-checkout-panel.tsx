@@ -5,9 +5,12 @@ import { Receipt, BadgeCheck, Lock, CreditCard, ShieldCheck, Ticket } from "luci
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/componentss/ui/select"
 
 type AppliedCode = {
-  id: number
+  // Coupons are Tebex-native now (no local id, and no known discount until
+  // checkout — this store requires buyer login before Tebex can compute a
+  // real discounted total). Creator codes still have both (FiveCrux-tracked).
+  id?: number
   code: string
-  discountAmount: number
+  discountAmount?: number
 }
 
 type CodeMode = "coupon" | "creator"
@@ -171,9 +174,13 @@ export default function CartCheckoutPanel({ total }: CartCheckoutPanelProps) {
           <div className="mt-2.5 inline-flex items-center gap-2 rounded-full bg-emerald-500/12 px-3 py-1 text-xs font-bold text-emerald-400 ring-1 ring-emerald-500/25">
             <BadgeCheck className="h-3.5 w-3.5" />
             {appliedCode.code} applied
-            <span className="tabular-nums text-emerald-300">
-              −€{appliedCode.discountAmount.toFixed(2)}
-            </span>
+            {appliedCode.discountAmount != null ? (
+              <span className="tabular-nums text-emerald-300">
+                −€{appliedCode.discountAmount.toFixed(2)}
+              </span>
+            ) : (
+              <span className="text-emerald-300/80">— discount shown at checkout</span>
+            )}
           </div>
         )}
 
@@ -188,7 +195,7 @@ export default function CartCheckoutPanel({ total }: CartCheckoutPanelProps) {
             <dt className="text-white/50">Subtotal</dt>
             <dd className="font-semibold tabular-nums text-white">€{total.toFixed(2)}</dd>
           </div>
-          {appliedCode && (
+          {appliedCode && appliedCode.discountAmount != null && (
             <div className="flex items-center justify-between">
               <dt className="text-white/50">Discount</dt>
               <dd className="font-semibold tabular-nums text-emerald-400">
@@ -206,13 +213,20 @@ export default function CartCheckoutPanel({ total }: CartCheckoutPanelProps) {
 
         <div className="flex items-end justify-between">
           <div>
-            <div className="text-[11px] uppercase tracking-[0.16em] text-white/55">Total due</div>
+            <div className="text-[11px] uppercase tracking-[0.16em] text-white/55">
+              {appliedMode === "coupon" ? "Before discount" : "Total due"}
+            </div>
             <div className="text-xs text-white/55">EUR · one-time</div>
           </div>
           <div className="text-[38px] font-extrabold leading-none tracking-tight tabular-nums text-white">
             €{payableAmount.toFixed(2)}
           </div>
         </div>
+        {appliedMode === "coupon" && (
+          <p className="mt-1 text-right text-[12px] text-white/45">
+            Your coupon is applied at Tebex checkout — the discounted total shows there.
+          </p>
+        )}
 
         <button
           type="button"
@@ -221,7 +235,7 @@ export default function CartCheckoutPanel({ total }: CartCheckoutPanelProps) {
           className="group mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-orange-500 py-4 text-[15px] font-bold text-black transition hover:bg-orange-400 disabled:cursor-not-allowed disabled:opacity-60"
         >
           <Lock className="h-4 w-4" />
-          {isCheckingOut ? "Redirecting…" : `Checkout — €${payableAmount.toFixed(2)}`}
+          {isCheckingOut ? "Redirecting…" : "Continue to Checkout"}
         </button>
         <p className="mt-2.5 flex items-center justify-center gap-1.5 text-[12px] text-white/55">
           <CreditCard className="h-3.5 w-3.5" />

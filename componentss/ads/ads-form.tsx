@@ -271,12 +271,12 @@ export default function AdsForm({ isOpen, onClose, onSuccess, editData, slotUniq
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-gray-800 border-gray-700 max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="bg-[#0d0d0d] border-white/[0.08] max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-white text-xl">
             {isEditMode ? "Edit Ad" : "Create New Ad"}
           </DialogTitle>
-          <DialogDescription className="text-gray-400">
+          <DialogDescription className="text-white/50">
             {isEditMode 
               ? "Update your advertisement details" 
               : "Create a new advertisement to promote your content"
@@ -293,7 +293,7 @@ export default function AdsForm({ isOpen, onClose, onSuccess, editData, slotUniq
           >
             {/* Title */}
             <div>
-              <label className="text-sm font-medium text-gray-300 mb-2 block">
+              <label className="text-sm font-medium text-white/70 mb-2 block">
                 Ad Title *
               </label>
               <Input
@@ -309,7 +309,7 @@ export default function AdsForm({ isOpen, onClose, onSuccess, editData, slotUniq
                   }
                 }}
                 placeholder="Enter ad title..."
-                className={`bg-gray-700 border-gray-600 text-white ${errors.title ? 'border-red-500' : ''}`}
+                className={`bg-white/[0.04] border-white/[0.08] text-white ${errors.title ? 'border-red-500' : ''}`}
                 required
               />
               {errors.title && (
@@ -319,7 +319,7 @@ export default function AdsForm({ isOpen, onClose, onSuccess, editData, slotUniq
 
             {/* Description */}
             <div>
-              <label className="text-sm font-medium text-gray-300 mb-2 block">
+              <label className="text-sm font-medium text-white/70 mb-2 block">
                 Description *
               </label>
               <Textarea
@@ -335,7 +335,7 @@ export default function AdsForm({ isOpen, onClose, onSuccess, editData, slotUniq
                   }
                 }}
                 placeholder="Describe your ad..."
-                className={`bg-gray-700 border-gray-600 text-white ${errors.description ? 'border-red-500' : ''}`}
+                className={`bg-white/[0.04] border-white/[0.08] text-white ${errors.description ? 'border-red-500' : ''}`}
                 rows={3}
                 required
               />
@@ -346,7 +346,7 @@ export default function AdsForm({ isOpen, onClose, onSuccess, editData, slotUniq
 
             {/* Category */}
             <div>
-              <label className="text-sm font-medium text-gray-300 mb-2 block">
+              <label className="text-sm font-medium text-white/70 mb-2 block">
                 Category *
               </label>
               <Select 
@@ -362,14 +362,14 @@ export default function AdsForm({ isOpen, onClose, onSuccess, editData, slotUniq
                   }
                 }}
               >
-                <SelectTrigger className={`bg-gray-700 border-gray-600 text-white ${errors.category ? 'border-red-500' : ''}`}>
+                <SelectTrigger className={`bg-white/[0.04] border-white/[0.08] text-white ${errors.category ? 'border-red-500' : ''}`}>
                   <SelectValue placeholder="Select category..." />
                 </SelectTrigger>
-                <SelectContent className="bg-gray-700 border-gray-600">
-                  <SelectItem value="scripts" className="text-white hover:bg-gray-600">Scripts</SelectItem>
-                  <SelectItem value="props" className="text-white hover:bg-gray-600">Props</SelectItem>
-                  <SelectItem value="giveaways" className="text-white hover:bg-gray-600">Giveaways</SelectItem>
-                  {/* <SelectItem value="both" className="text-white hover:bg-gray-600">Both</SelectItem> */}
+                <SelectContent className="bg-[#0d0d0f] border-white/[0.08]">
+                  <SelectItem value="scripts" className="text-white hover:bg-white/[0.06]">Assets</SelectItem>
+                  <SelectItem value="props" className="text-white hover:bg-white/[0.06]">Props</SelectItem>
+                  <SelectItem value="giveaways" className="text-white hover:bg-white/[0.06]">Giveaways</SelectItem>
+                  {/* <SelectItem value="both" className="text-white hover:bg-white/[0.06]">Both</SelectItem> */}
                 </SelectContent>
               </Select>
               {errors.category && (
@@ -379,11 +379,11 @@ export default function AdsForm({ isOpen, onClose, onSuccess, editData, slotUniq
 
             {/* Link URL */}
             <div>
-              <label className="text-sm font-medium text-gray-300 mb-2 block">
+              <label className="text-sm font-medium text-white/70 mb-2 block">
                 Link URL *
               </label>
               <div className="relative">
-                <Link className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Link className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40 h-4 w-4" />
                 <Input
                   value={formData.link_url}
                   onChange={(e) => {
@@ -397,7 +397,7 @@ export default function AdsForm({ isOpen, onClose, onSuccess, editData, slotUniq
                     }
                   }}
                   placeholder="https://example.com"
-                  className={`bg-gray-700 border-gray-600 text-white pl-10 ${errors.link_url ? 'border-red-500' : ''}`}
+                  className={`bg-white/[0.04] border-white/[0.08] text-white pl-10 ${errors.link_url ? 'border-red-500' : ''}`}
                   type="url"
                   required
                 />
@@ -409,7 +409,7 @@ export default function AdsForm({ isOpen, onClose, onSuccess, editData, slotUniq
 
             {/* Image Upload */}
             <div>
-              <label className="text-sm font-medium text-gray-300 mb-2 block">
+              <label className="text-sm font-medium text-white/70 mb-2 block">
                 Ad Image *
               </label>
               {errors.image && (
@@ -418,11 +418,11 @@ export default function AdsForm({ isOpen, onClose, onSuccess, editData, slotUniq
               
               {/* Show existing image preview with delete button when editing and image exists */}
               {isEditMode && formData.image_url && !imageDeleted && !selectedImage ? (
-                <div className="p-3 border border-gray-600 rounded-lg bg-gray-700/30">
-                  <p className="text-xs text-gray-400 mb-2">Current Image:</p>
-                  <img 
-                    src={formData.image_url} 
-                    alt="Current ad" 
+                <div className="p-3 border border-white/[0.08] rounded-lg bg-white/[0.04]">
+                  <p className="text-xs text-white/50 mb-2">Current Image:</p>
+                  <img
+                    src={formData.image_url}
+                    alt="Current ad"
                     className="w-full h-32 object-cover rounded-lg mb-3"
                   />
                   <Button
@@ -430,7 +430,7 @@ export default function AdsForm({ isOpen, onClose, onSuccess, editData, slotUniq
                     variant="outline"
                     size="sm"
                     onClick={handleDeleteCurrentImage}
-                    className="w-full border-red-600 text-red-400 hover:bg-red-900/20 hover:text-red-300"
+                    className="w-full border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300"
                   >
                     <X className="h-3 w-3 mr-2" />
                     Delete Image
@@ -453,7 +453,7 @@ export default function AdsForm({ isOpen, onClose, onSuccess, editData, slotUniq
                   </p>
                   {selectedImage && (
                     <div className="mt-2 flex items-center gap-2">
-                      <Badge variant="secondary" className="bg-green-900/20 text-green-400">
+                      <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                         {selectedImage.name}
                       </Badge>
                       <Button
@@ -479,17 +479,17 @@ export default function AdsForm({ isOpen, onClose, onSuccess, editData, slotUniq
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.1 }}
-            className="flex gap-3 pt-4 border-t border-gray-700"
+            className="flex gap-3 pt-4 border-t border-white/[0.08]"
           >
             <Button
               type="button"
               onClick={handleSubmit}
               disabled={isSubmitting}
-              className="bg-orange-600 hover:bg-orange-700 text-white flex-1"
+              className="bg-orange-500 hover:bg-orange-400 text-black font-bold flex-1"
             >
               {isSubmitting ? (
                 <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-black mr-2" />
                   {isEditMode ? "Updating Ad..." : "Creating Ad..."}
                 </>
               ) : (
@@ -503,7 +503,7 @@ export default function AdsForm({ isOpen, onClose, onSuccess, editData, slotUniq
               type="button"
               variant="outline"
               onClick={onClose}
-              className="border-gray-600 text-gray-300 hover:bg-gray-700"
+              className="border-white/[0.1] text-white/70 hover:bg-white/[0.06] hover:text-white"
             >
               Cancel
             </Button>

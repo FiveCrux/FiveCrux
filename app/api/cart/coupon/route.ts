@@ -1,31 +1,18 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
-import { and, eq } from "drizzle-orm"
 
 import { authOptions } from "@/auth"
-import { db } from "@/lib/db/client"
-import { carts } from "@/lib/db/schema"
-import { validateCoupon } from "@/lib/cart-checkout-utils"
+import { FIVECRUX_TEBEX_PUBLIC_TOKEN } from "@/lib/tebex"
+import { previewCoupon } from "@/lib/tebex-checkout-flow"
 
-async function getActiveCart(userId: string) {
-  const cart = await db.query.carts.findFirst({
-    where: and(eq(carts.userId, userId), eq(carts.status, "active")),
-    with: { items: true },
-  })
-
-  if (!cart || cart.items.length === 0) {
-    return { error: "Cart empty" }
-  }
-
-  return {
-    items: cart.items,
-    total: cart.items.reduce(
-      (sum, item) => sum + Number(item.price) * item.quantity,
-      0
-    ),
-  }
-}
-
+// Preview whether a coupon code is valid before checkout. Coupons are
+// Tebex-native (2026-07-12) — there's no FiveCrux-side coupon table anymore,
+// so this applies the code to a throwaway empty Tebex basket and reports
+// whether Tebex accepts it. It CANNOT show the real discount amount: this
+// store requires the buyer to log in before packages can be added to a
+// basket, so the true post-discount total is only known once the real,
+// authenticated, package-filled basket is built during actual checkout (see
+// lib/tebex-checkout-flow.ts's finalizeBasket()).
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
@@ -34,7 +21,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const userId = (session.user as any).id as string
     const body = await request.json()
     const code = typeof body.couponCode === "string" ? body.couponCode.trim().toUpperCase() : ""
 
@@ -42,41 +28,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Coupon code is required" }, { status: 400 })
     }
 
-    const cart = await getActiveCart(userId)
-
-    if ("error" in cart) {
-      return NextResponse.json({ error: cart.error }, { status: 400 })
+    const storeToken = FIVECRUX_TEBEX_PUBLIC_TOKEN
+    if (!storeToken) {
+      return NextResponse.json({ error: "Store not configured" }, { status: 501 })
     }
 
-    // Preview uses the SAME validation + creator-scoping as checkout so the
-    // discount shown here matches exactly what checkout applies (money-safety).
-    const result = await validateCoupon(code, userId, cart.total, cart.items)
-
-    if (!result) {
-      return NextResponse.json({ error: "Coupon code is required" }, { status: 400 })
+    const result = await previewCoupon(storeToken, code)
+    if (!result.ok) {
+      return NextResponse.json({ error: result.error }, { status: result.status })
     }
-
-    if ("error" in result) {
-      // Preserve the previous status codes: "Invalid coupon code" → 404, rest → 400.
-      const status = result.error === "Invalid coupon code" ? 404 : 400
-      return NextResponse.json({ error: result.error }, { status })
-    }
-
-    const discountAmount = result.discountAmount
-    const payableAmount = Math.max(0, cart.total - discountAmount)
 
     return NextResponse.json({
       success: true,
-      coupon: {
-        id: result.coupon.id,
-        code: result.coupon.code,
-        discountAmount,
-      },
-      totalAmount: cart.total,
-      payableAmount,
+      coupon: { code: result.code },
     })
   } catch (error) {
-    console.error("Coupon validation error:", error)
+    console.error("Coupon preview error:", error)
     return NextResponse.json({ error: "Failed to validate coupon" }, { status: 500 })
   }
 }

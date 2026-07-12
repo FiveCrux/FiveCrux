@@ -39,11 +39,11 @@ export default function PropsTab() {
       </div>
 
       {!canListProps ? (
-        <Card className="bg-gray-800/30 border-orange-500/20">
+        <Card className="bg-[#0e0e0e] border-orange-500/20">
           <CardContent className="p-12 text-center">
             <ShieldAlert className="h-12 w-12 text-orange-500 mx-auto mb-4" />
             <h3 className="text-xl font-bold text-white mb-2">Permission Required</h3>
-            <p className="text-gray-400 mb-6 max-w-md mx-auto">
+            <p className="text-white/55 mb-6 max-w-md mx-auto">
               You need the <span className="text-orange-400 font-semibold">Prop Lister</span> role to sell 3D models and props on FiveCrux.
             </p>
             <Button 
@@ -60,10 +60,10 @@ export default function PropsTab() {
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
         </div>
       ) : props.length === 0 ? (
-        <Card className="bg-gray-800/30 border-gray-700/50">
+        <Card className="bg-[#0e0e0e] border-white/[0.06]">
           <CardContent className="p-12 text-center">
-            <Package className="h-12 w-12 text-gray-500 mx-auto mb-4" />
-            <p className="text-gray-400">You haven't listed any props yet.</p>
+            <Package className="h-12 w-12 text-white/20 mx-auto mb-4" />
+            <p className="text-white/55">You haven't listed any props yet.</p>
           </CardContent>
         </Card>
       ) : (
@@ -71,10 +71,10 @@ export default function PropsTab() {
           {props.map((prop: any) => (
             <Card
               key={prop.id}
-              className="bg-gray-800/30 border-gray-700/50 hover:border-orange-500/50 transition-colors"
+              className="bg-[#0e0e0e] border-white/[0.06] hover:border-orange-500/40 transition-colors"
             >
               <CardContent className="p-6">
-                <div className="aspect-video bg-gray-700 rounded-lg mb-4 overflow-hidden relative">
+                <div className="aspect-video bg-white/[0.04] rounded-lg mb-4 overflow-hidden relative">
                   {prop.images && prop.images.length > 0 ? (
                     <img
                       src={prop.images[0]}
@@ -84,7 +84,7 @@ export default function PropsTab() {
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                      <Package className="h-12 w-12 text-gray-500" />
+                      <Package className="h-12 w-12 text-white/20" />
                     </div>
                   )}
                   {parseFloat(prop.discountPercentage) > 0 && (
@@ -99,7 +99,7 @@ export default function PropsTab() {
                     <h3 className="font-bold text-base sm:text-lg break-words">
                       {prop.name}
                     </h3>
-                    <p className="text-gray-400 text-sm line-clamp-2 break-words">
+                    <p className="text-white/55 text-sm line-clamp-2 break-words">
                       {prop.description}
                     </p>
                   </div>
@@ -110,7 +110,7 @@ export default function PropsTab() {
                         <span className="text-orange-500">{prop.currencySymbol || prop.currency_symbol || "€"}</span> {prop.discountedPrice || prop.price}
                       </span>
                       {prop.discountedPrice && (
-                        <span className="text-sm text-gray-500 line-through">
+                        <span className="text-sm text-white/40 line-through">
                           {prop.currencySymbol || prop.currency_symbol || "€"}{prop.price}
                         </span>
                       )}
