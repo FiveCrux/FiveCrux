@@ -241,6 +241,82 @@ async function main() {
   ]).onConflictDoNothing()
   console.log("✓ 6 frameworks")
 
+  // ---- Rejected items (admin rejection-queue UI) ----------------------------
+  await db.insert(schema.rejectedScripts).values({
+    id: 2003, title: "Illegal Firearms Pack [REJECTED]", description: "Unlicensed weapon models bundled without permission.",
+    price: "9.99", currency: "EUR", currencySymbol: "€", category: "Scripts", framework: ["Standalone"],
+    sellerId: seller.id, seller_name: seller.name, seller_email: seller.email, features: [], requirements: [],
+    images: [imgs[0]], coverImage: imgs[0], rejectionReason: "Uses third-party assets without a redistribution license.",
+  }).onConflictDoNothing()
+  await db.insert(schema.rejectedProps).values({
+    id: "prop-2002", name: "Copied Hospital MLO [REJECTED]", description: "Interior too closely matches an existing paid release.",
+    price: "18.99", images: [imgs[1]], zipFile: "hospital-mlo.zip", createdBy: seller.id,
+    rejectionReason: "Substantially similar to an existing marketplace listing.",
+  }).onConflictDoNothing()
+  await db.insert(schema.rejectedGiveaways).values({
+    id: 3004, title: "Crypto Giveaway [REJECTED]", description: "Giveaway offering cryptocurrency as the prize.",
+    totalValue: "1000", currency: "EUR", currencySymbol: "€", endDate: "2026-11-30T23:59:59.000Z", maxEntries: 1000,
+    featured: false, creatorName: seller.name, creatorEmail: seller.email, creatorId: seller.id, images: [imgs[2]],
+    coverImage: imgs[2], tags: ["crypto"], rules: [], status: "rejected",
+    rejectionReason: "Cryptocurrency prizes aren't allowed under the giveaway policy.",
+  }).onConflictDoNothing()
+  await db.insert(schema.rejectedAds).values({
+    id: 6004, title: "Competitor Store [REJECTED]", description: "Ad promoting a rival marketplace.",
+    imageUrl: imgs[3], linkUrl: "https://rival.local", category: "Scripts", createdBy: seller.id, slotStatus: "active",
+    rejectionReason: "Ads may not promote a competing marketplace.",
+  }).onConflictDoNothing()
+  console.log("✓ 1 rejected script + 1 rejected prop + 1 rejected giveaway + 1 rejected ad")
+
+  // ---- Purchased ad slots (dev-creator owns 2 of 3 — one used, one open) ----
+  await db.insert(schema.userAdSlots).values({
+    id: 11001, userId: seller.id, slotNumber: [1, 2], slotUniqueIds: ["adslot-demo-1", "adslot-demo-2"],
+    endDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000), packageId: "premium", durationMonths: 3,
+    paypalOrderId: "demo-ad-slot-order", status: "active",
+  }).onConflictDoNothing()
+  await db.insert(schema.approvedAds).values({
+    id: 6005, title: "CruxDev's Banking Script Sale", description: "20% off the Advanced Banking System this week only.",
+    imageUrl: imgs[0], linkUrl: "https://fivecrux.local/script/1001", category: "Scripts", createdBy: seller.id,
+    status: "active", slotStatus: "active", slotUniqueId: "adslot-demo-1", clickCount: 15, viewCount: 146,
+  }).onConflictDoNothing()
+  console.log("✓ 2 purchased ad slots for CruxDev (1 used, 1 open, 1 locked)")
+
+  // ---- Purchased featured-script slots (same 2-of-3 pattern) ----------------
+  await db.insert(schema.userFeaturedScriptSlots).values({
+    id: 12001, featuredUserId: seller.id, featuredSlotNumber: [1, 2],
+    featuredSlotUniqueIds: ["featslot-demo-1", "featslot-demo-2"],
+    featuredSlotEndDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
+    featuredPackageId: "premium", featuredDurationWeeks: 8,
+    featuredPaypalOrderId: "demo-featured-slot-order", featuredSlotStatus: "active",
+  }).onConflictDoNothing()
+  await db.insert(schema.featuredScripts).values({
+    id: 13001, scriptId: 1002, featuredSlotUniqueId: "featslot-demo-1", featuredSlotStatus: "active",
+    featuredCreatedBy: seller.id, featuredStatus: "active", featuredClickCount: 8, featuredViewCount: 210,
+    featuredEndDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
+  }).onConflictDoNothing()
+  console.log("✓ 2 purchased featured-script slots for CruxDev (1 used, 1 open, 1 locked)")
+
+  // ---- Extra side banner slot in the 'reserved' hold state ------------------
+  await db.insert(schema.sideBannerBookings).values({
+    id: 10002, position: "right-top", status: "reserved", createdBy: seller.id, durationWeeks: 4,
+    reservedUntil: new Date(Date.now() + 10 * 60 * 1000), orderReference: "demo-reserved-hold",
+  }).onConflictDoNothing()
+  console.log("✓ 1 side banner in 'reserved' checkout-hold state (right-top)")
+
+  // ---- Creator code (storewide referral/affiliate code) ---------------------
+  await db.insert(schema.creatorCodes).values({
+    code: "CRUXDEV", createdBy: seller.id, discountType: "percentage", discountValue: "5",
+    commissionType: "percentage", commissionValue: "10", isActive: true, usedCount: 3,
+  }).onConflictDoNothing()
+  console.log("✓ 1 creator code (CRUXDEV)")
+
+  // ---- Giveaway entries (populate the creator's Entries tab) ----------------
+  await db.insert(schema.giveawayEntries).values([
+    { id: 14001, giveawayId: 3001, userId: "dev-buyer", userName: "Buyer Dev", userEmail: "buyer@fivecrux.local", discordId: "111111111111111111", status: "active", pointsEarned: 15, requirementsCompleted: ["4001", "4002"] },
+    { id: 14002, giveawayId: 3001, userId: "dev-vcreator", userName: "VCreator Dev", userEmail: "vcreator@fivecrux.local", discordId: "222222222222222222", status: "active", pointsEarned: 10, requirementsCompleted: ["4001"] },
+    { id: 14003, giveawayId: 3002, userId: "dev-buyer", userName: "Buyer Dev", userEmail: "buyer@fivecrux.local", discordId: "111111111111111111", status: "active", pointsEarned: 10, requirementsCompleted: ["4003"] },
+  ]).onConflictDoNothing()
+  console.log("✓ 3 giveaway entries")
+
   await client.close()
   console.log("\n✅ Local PGlite DB ready. Start the app with USE_PGLITE=true.")
 }
