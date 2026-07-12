@@ -1809,7 +1809,7 @@ export default function ProfilePage() {
                 >
                   {featuredScriptsLoading ? (
                     <div className="flex justify-center items-center py-20">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
                     </div>
                   ) : featuredScripts.length > 0 ? (
                     <>
@@ -1817,7 +1817,7 @@ export default function ProfilePage() {
                         {featuredScripts.map((featuredScript: any) => (
                           <Card
                             key={featuredScript.id}
-                            className="bg-[#0e0e0e] border-white/[0.06] rounded-2xl hover:border-purple-500/40 transition-all duration-300"
+                            className="bg-[#0e0e0e] border-white/[0.06] rounded-2xl hover:border-orange-500/40 transition-all duration-300"
                           >
                             {featuredScript.scriptCoverImage && (
                               <div className="relative w-full h-48 overflow-hidden rounded-t-lg">
@@ -1835,7 +1835,7 @@ export default function ProfilePage() {
                               <div className="flex items-center justify-between">
                                 <Badge
                                   variant="secondary"
-                                  className="bg-purple-500/20 text-purple-400 border-purple-500/30"
+                                  className="bg-orange-500/20 text-orange-400 border-orange-500/30"
                                 >
                                   Featured Script
                                 </Badge>
@@ -1968,10 +1968,10 @@ export default function ProfilePage() {
                                   setShowScriptSelectionPopup(true);
                                 }}
                               >
-                                <Card className="bg-white/[0.04] backdrop-blur-sm rounded-2xl border-2 border-dashed border-purple-500/40 hover:border-purple-500 transition-all duration-300 h-full flex flex-col items-center justify-center min-h-[300px]">
+                                <Card className="bg-white/[0.04] backdrop-blur-sm rounded-2xl border-2 border-dashed border-orange-500/40 hover:border-orange-500 transition-all duration-300 h-full flex flex-col items-center justify-center min-h-[300px]">
                                   <CardContent className="flex flex-col items-center justify-center py-12">
-                                    <div className="w-20 h-20 rounded-full bg-purple-500/10 border-2 border-dashed border-purple-500/50 flex items-center justify-center mb-4 group-hover:bg-purple-500/20 group-hover:border-purple-500 transition-all duration-300">
-                                      <Plus className="h-10 w-10 text-purple-500 group-hover:scale-110 transition-transform duration-300" />
+                                    <div className="w-20 h-20 rounded-full bg-orange-500/10 border-2 border-dashed border-orange-500/50 flex items-center justify-center mb-4 group-hover:bg-orange-500/20 group-hover:border-orange-500 transition-all duration-300">
+                                      <Plus className="h-10 w-10 text-orange-500 group-hover:scale-110 transition-transform duration-300" />
                                     </div>
                                     <h3 className="text-lg font-semibold text-white mb-2">
                                       Feature a Script
@@ -1980,7 +1980,7 @@ export default function ProfilePage() {
                                       Click to select a script to feature in this
                                       slot
                                     </p>
-                                    <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">
+                                    <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30">
                                       Available Slot
                                     </Badge>
                                   </CardContent>
@@ -2004,7 +2004,7 @@ export default function ProfilePage() {
                                   <div className="flex items-center justify-between">
                                     <Badge
                                       variant="secondary"
-                                      className="bg-purple-500/20 text-purple-400 border-purple-500/30"
+                                      className="bg-orange-500/20 text-orange-400 border-orange-500/30"
                                     >
                                       Slot {index + 1}
                                     </Badge>
@@ -2043,7 +2043,7 @@ export default function ProfilePage() {
                                     </div>
                                   </div>
                                 </CardContent>
-                                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-pink-400/20 backdrop-blur-sm z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                                <div className="absolute inset-0 bg-gradient-to-br from-orange-500/20 to-yellow-400/20 backdrop-blur-sm z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                                   <Link href="/advertise">
                                     <motion.div
                                       whileHover={{ scale: 1.05 }}
@@ -2051,7 +2051,7 @@ export default function ProfilePage() {
                                     >
                                       <Button
                                         size="lg"
-                                        className="bg-gradient-to-r from-purple-500 to-pink-400 hover:from-purple-600 hover:to-pink-500 text-white font-bold px-8 py-3 shadow-lg"
+                                        className="bg-gradient-to-r from-orange-500 to-yellow-400 hover:from-orange-600 hover:to-yellow-500 text-black font-bold px-8 py-3 shadow-lg"
                                       >
                                         <DollarSign className="h-5 w-5 mr-2" />
                                         Buy Slot
@@ -2088,10 +2088,10 @@ export default function ProfilePage() {
                                   setShowScriptSelectionPopup(true);
                                 }}
                               >
-                                <Card className="bg-white/[0.04] backdrop-blur-sm rounded-2xl border-2 border-dashed border-purple-500/40 hover:border-purple-500 transition-all duration-300 h-full flex flex-col items-center justify-center min-h-[300px]">
+                                <Card className="bg-white/[0.04] backdrop-blur-sm rounded-2xl border-2 border-dashed border-orange-500/40 hover:border-orange-500 transition-all duration-300 h-full flex flex-col items-center justify-center min-h-[300px]">
                                   <CardContent className="flex flex-col items-center justify-center py-12">
-                                    <div className="w-20 h-20 rounded-full bg-purple-500/10 border-2 border-dashed border-purple-500/50 flex items-center justify-center mb-4 group-hover:bg-purple-500/20 group-hover:border-purple-500 transition-all duration-300">
-                                      <Plus className="h-10 w-10 text-purple-500 group-hover:scale-110 transition-transform duration-300" />
+                                    <div className="w-20 h-20 rounded-full bg-orange-500/10 border-2 border-dashed border-orange-500/50 flex items-center justify-center mb-4 group-hover:bg-orange-500/20 group-hover:border-orange-500 transition-all duration-300">
+                                      <Plus className="h-10 w-10 text-orange-500 group-hover:scale-110 transition-transform duration-300" />
                                     </div>
                                     <h3 className="text-lg font-semibold text-white mb-2">
                                       Feature a Script
@@ -2100,7 +2100,7 @@ export default function ProfilePage() {
                                       Click to select a script to feature in this
                                       slot
                                     </p>
-                                    <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">
+                                    <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30">
                                       Available Slot
                                     </Badge>
                                   </CardContent>
@@ -2124,7 +2124,7 @@ export default function ProfilePage() {
                                   <div className="flex items-center justify-between">
                                     <Badge
                                       variant="secondary"
-                                      className="bg-purple-500/20 text-purple-400 border-purple-500/30"
+                                      className="bg-orange-500/20 text-orange-400 border-orange-500/30"
                                     >
                                       Slot {index + 1}
                                     </Badge>
@@ -2163,7 +2163,7 @@ export default function ProfilePage() {
                                     </div>
                                   </div>
                                 </CardContent>
-                                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-pink-400/20 backdrop-blur-sm z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                                <div className="absolute inset-0 bg-gradient-to-br from-orange-500/20 to-yellow-400/20 backdrop-blur-sm z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                                   <Link href="/advertise">
                                     <motion.div
                                       whileHover={{ scale: 1.05 }}
@@ -2171,7 +2171,7 @@ export default function ProfilePage() {
                                     >
                                       <Button
                                         size="lg"
-                                        className="bg-gradient-to-r from-purple-500 to-pink-400 hover:from-purple-600 hover:to-pink-500 text-white font-bold px-8 py-3 shadow-lg"
+                                        className="bg-gradient-to-r from-orange-500 to-yellow-400 hover:from-orange-600 hover:to-yellow-500 text-black font-bold px-8 py-3 shadow-lg"
                                       >
                                         <DollarSign className="h-5 w-5 mr-2" />
                                         Buy Slot
