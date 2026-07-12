@@ -94,7 +94,7 @@ const featuredScriptPackages: PricingPackage[] = [
     name: "STARTER PACK",
     packageId: "starter",
     slotsPerMonth: 1,
-    description: "Perfect for showcasing one script. Slot unlocked immediately.",
+    description: "Perfect for showcasing one asset. Slot unlocked immediately.",
     gradient: "from-purple-600 to-pink-600",
     icon: Star,
     durations: [
@@ -108,7 +108,7 @@ const featuredScriptPackages: PricingPackage[] = [
     name: "PREMIUM PACK",
     packageId: "premium",
     slotsPerMonth: 3,
-    description: "Ideal for showcasing multiple scripts. All slots unlocked immediately.",
+    description: "Ideal for showcasing multiple assets. All slots unlocked immediately.",
     gradient: "from-purple-500 to-pink-500",
     icon: Sparkles,
     popular: true,
@@ -123,7 +123,7 @@ const featuredScriptPackages: PricingPackage[] = [
     name: "EXECUTIVE PACK",
     packageId: "executive",
     slotsPerMonth: 5,
-    description: "Maximum visibility for your scripts. All slots unlocked immediately.",
+    description: "Maximum visibility for your assets. All slots unlocked immediately.",
     gradient: "from-pink-500 via-purple-500 to-indigo-500",
     icon: Crown,
     durations: [
@@ -524,7 +524,7 @@ export default function AdvertisePanel() {
               Advertise on <span className="text-[#f97316]">FiveCrux</span>
             </h1>
             <p className="mx-auto mt-5 max-w-xl text-lg text-white/55">
-              Put your scripts, server, or brand in front of thousands of active FiveM
+              Put your assets, server, or brand in front of thousands of active FiveM
               server owners.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
@@ -572,7 +572,7 @@ export default function AdvertisePanel() {
               Reach that scales with your budget
             </h2>
             <p className="mx-auto mt-3 max-w-xl text-white/50">
-              Banner Ad Slots &amp; Featured Script Slots, in three packages. Compare at a
+              Banner Ad Slots &amp; Featured Asset Slots, in three packages. Compare at a
               glance.
             </p>
           </div>
@@ -607,7 +607,7 @@ export default function AdvertisePanel() {
                     : "text-white/55 hover:text-white/80"
                 )}
               >
-                Featured script slots
+                Featured asset slots
               </button>
               <button
                 onClick={() => setActiveTab("side-banners")}
@@ -688,7 +688,7 @@ export default function AdvertisePanel() {
                     ]
                   : [
                       {
-                        text: `${pkg.slotsPerMonth} featured script slot${pkg.slotsPerMonth > 1 ? "s" : ""}`,
+                        text: `${pkg.slotsPerMonth} featured asset slot${pkg.slotsPerMonth > 1 ? "s" : ""}`,
                         icon: Check,
                       },
                       { text: "Premium homepage placement", icon: Star },
@@ -728,7 +728,7 @@ export default function AdvertisePanel() {
                   <div className="flex-1">
                     {/* Plan label */}
                     <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/55">
-                      {activeTab === "ads" ? "Ad Slots" : "Featured Script"}
+                      {activeTab === "ads" ? "Ad Slots" : "Featured Asset"}
                     </div>
 
                     {/* Plan name */}

@@ -457,7 +457,7 @@ function ConnectedView({
           </div>
 
           <p className="mt-5 text-xs text-white/40">
-            Imported listings land in your <span className="text-white/60">Scripts</span> tab as pending — an admin
+            Imported listings land in your <span className="text-white/60">Assets</span> tab as pending — an admin
             reviews them before they go live. You can edit category, framework and media there.
           </p>
         </>

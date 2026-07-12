@@ -127,7 +127,7 @@ export default function AdminCategoriesPage() {
   };
 
   const remove = async (id: number) => {
-    if (!confirm("Delete this category? Scripts already tagged with it keep their tag.")) return;
+    if (!confirm("Delete this category? Assets already tagged with it keep their tag.")) return;
     setSaving(id);
     try {
       const r = await fetch(`/api/admin/categories/${id}`, { method: "DELETE" });
@@ -214,7 +214,7 @@ export default function AdminCategoriesPage() {
                 onChange={(e) => setDraft((d) => ({ ...d, appliesTo: e.target.value }))}
                 className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm outline-none focus:border-orange-500/50"
               >
-                <option value="scripts">Scripts</option>
+                <option value="scripts">Assets</option>
                 <option value="props">Props</option>
                 <option value="both">Both</option>
               </select>

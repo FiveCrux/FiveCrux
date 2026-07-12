@@ -73,7 +73,7 @@ interface Script {
 }
 
 const scriptCategories = [
-  { value: "scripts", label: "Scripts" },
+  { value: "scripts", label: "Assets" },
   { value: "maps", label: "Maps" },
   { value: "props", label: "Props" },
   { value: "clothing", label: "Clothing" },
@@ -453,19 +453,19 @@ export default function EditScriptPage() {
       if (response.ok) {
         const result = await response.json()
         if (result.needsReapproval) {
-          toast.success("Script updated successfully!", {
+          toast.success("Asset updated successfully!", {
             description: "It has been moved to pending status and will require admin approval before going live again."
           })
         } else {
-          toast.success("Script updated successfully!")
+          toast.success("Asset updated successfully!")
         }
         router.push("/profile")
       } else {
-        throw new Error("Failed to update script")
+        throw new Error("Failed to update asset")
       }
     } catch (error) {
       console.error("Error updating script:", error)
-      toast.error("Error updating script. Please try again.")
+      toast.error("Error updating asset. Please try again.")
     } finally {
       setSaving(false)
     }
@@ -538,9 +538,9 @@ export default function EditScriptPage() {
               </Button>
               <div>
                 <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-orange-500 to-yellow-400 bg-clip-text text-transparent">
-                  Edit Script
+                  Edit Asset
                 </h1>
-                <p className="text-gray-400">Update your script information</p>
+                <p className="text-gray-400">Update your asset information</p>
               </div>
             </motion.div>
           </div>
@@ -562,13 +562,13 @@ export default function EditScriptPage() {
                 <CardContent className="space-y-6">
                   <div>
                     <Label htmlFor="title" className="text-white font-medium">
-                      Script Title *
+                      Asset Title *
                     </Label>
                     <Input
                       id="title"
                       value={formData.title}
                       onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                      placeholder="Enter script title..."
+                      placeholder="Enter asset title..."
                       className="mt-2 bg-white/[0.03] border-white/[0.08] text-white placeholder-gray-500 focus:border-orange-500 focus-visible:ring-orange-500/40 focus-visible:ring-2"
                       required
                     />
@@ -582,7 +582,7 @@ export default function EditScriptPage() {
                       id="description"
                       value={formData.description}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      placeholder="Describe your script..."
+                      placeholder="Describe your asset..."
                       rows={4}
                       className="mt-2 bg-white/[0.03] border-white/[0.08] text-white placeholder-gray-500 focus:border-orange-500 focus-visible:ring-orange-500/40 focus-visible:ring-2"
                       required
@@ -659,7 +659,7 @@ export default function EditScriptPage() {
                       }}
                     />
                     <Label htmlFor="isFree" className="text-white font-medium cursor-pointer">
-                      Free Script
+                      Free Asset
                     </Label>
                   </div>
 
@@ -985,7 +985,7 @@ export default function EditScriptPage() {
                         <>
                           <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                           <p className="text-gray-400">Upload cover image</p>
-                          <p className="text-sm text-gray-500 mt-2">1280×720 · PNG, JPG up to 5MB (will be displayed on scripts listing)</p>
+                          <p className="text-sm text-gray-500 mt-2">1280×720 · PNG, JPG up to 5MB (will be displayed on assets listing)</p>
                         </>
                       )}
                     </label>
@@ -1038,7 +1038,7 @@ export default function EditScriptPage() {
                       ) : (
                         <>
                           <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                          <p className="text-gray-400">Upload script screenshots</p>
+                          <p className="text-gray-400">Upload asset screenshots</p>
                           <p className="text-sm text-gray-500 mt-2">PNG, JPG up to 5MB each (max 10 images)</p>
                         </>
                       )}
@@ -1203,9 +1203,9 @@ export default function EditScriptPage() {
                       )}
 
                       <div>
-                        <h3 className="text-white font-bold text-lg">{formData.title || "Your Script Title"}</h3>
+                        <h3 className="text-white font-bold text-lg">{formData.title || "Your Asset Title"}</h3>
                         <p className="text-gray-400 text-sm mt-2">
-                          {formData.description || "Your script description will appear here..."}
+                          {formData.description || "Your asset description will appear here..."}
                         </p>
                       </div>
 

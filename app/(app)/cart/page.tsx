@@ -134,7 +134,7 @@ export default function CartPage() {
               Your cart is empty
             </h2>
             <p className="mx-auto mb-8 max-w-md text-white/55">
-              Add ad packages or featured script slots to see them here.
+              Add ad packages or featured asset slots to see them here.
             </p>
             <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Link

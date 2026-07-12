@@ -38,7 +38,7 @@ export default function CartPaymentSuccess() {
             <h2 className="text-3xl font-extrabold text-white">Thank You!</h2>
             <p className="text-green-400 font-semibold">Your payment has been received.</p>
             <p className="text-gray-400 text-sm max-w-xs mx-auto mt-2">
-              Your ad slots / featured-script slots activate within moments of
+              Your ad slots / featured-asset slots activate within moments of
               the payment confirmation. Check your dashboard below.
             </p>
           </div>

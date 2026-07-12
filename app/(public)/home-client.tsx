@@ -37,7 +37,7 @@ import type { HomeContent } from "@/lib/site-content"
 // Fixed section shortcuts (these are pages, not categories). The actual browse
 // categories are dynamic (DB) and fetched + appended at runtime.
 const SHORTCUTS: { name: string; icon: LucideIcon; href: string }[] = [
-  { name: "Scripts", icon: Code2, href: "/scripts" },
+  { name: "Assets", icon: Code2, href: "/scripts" },
   { name: "Props", icon: Package, href: "/props" },
   { name: "Giveaways", icon: Gift, href: "/giveaways" },
 ]
@@ -218,7 +218,7 @@ function HeroSpotlight({ items, promo }: {
               </div>
               <div className="flex flex-wrap items-center gap-3">
                 <Link href={active.href} className="flex items-center gap-2 rounded-xl bg-orange-500 px-6 py-3 font-bold text-black transition hover:bg-orange-400 shadow-[0_0_0_1px_rgba(249,115,22,0.5),0_8px_32px_rgba(249,115,22,0.35)]">
-                  <Play className="h-4 w-4" /> View Script
+                  <Play className="h-4 w-4" /> View Asset
                 </Link>
                 <Link href={active.href} className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.06] px-6 py-3 font-semibold backdrop-blur-md transition hover:bg-white/10">
                   <ShoppingCart className="h-4 w-4" /> Add to Cart

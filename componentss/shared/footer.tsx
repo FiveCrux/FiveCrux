@@ -10,7 +10,7 @@ const columns: {
   {
     title: "Marketplace",
     links: [
-      { name: "Scripts", href: "/scripts" },
+      { name: "Assets", href: "/scripts" },
       { name: "Props", href: "/props" },
       { name: "Giveaways", href: "/giveaways" },
       { name: "Advertise", href: "/advertise" },
@@ -30,7 +30,7 @@ const columns: {
     links: [
       { name: "Contact", href: "mailto:support@fivecrux.com" },
       { name: "Discord", href: DISCORD, external: true },
-      { name: "Sell a script", href: "/scripts/submit" },
+      { name: "Sell an asset", href: "/scripts/submit" },
     ],
   },
 ]
@@ -54,7 +54,7 @@ export default function Footer() {
               <Image src="/fivecrux-logo.png" alt="FiveCrux" width={142} height={34} />
             </Link>
             <p className="mt-5 text-sm leading-relaxed text-white/55">
-              Premium FiveM scripts, MLOs &amp; resources — discover, buy and run them on your server.
+              Premium FiveM assets, MLOs &amp; resources — discover, buy and run them on your server.
             </p>
             <div className="mt-6 flex gap-3.5">
               {socials.map(({ label, href, Icon }) => (

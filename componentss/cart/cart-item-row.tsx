@@ -31,7 +31,7 @@ const parseMetadata = (metadata: unknown) => {
 const getPackageLabel = (item: CartItemRowProps["item"]) => {
   const metadata = parseMetadata(item.metadata) as any
   if (metadata?.packageType === "ads") return "Ad Package"
-  if (metadata?.packageType === "featured-scripts") return "Featured Script Package"
+  if (metadata?.packageType === "featured-scripts") return "Featured Asset Package"
   return item.itemType ? String(item.itemType).toUpperCase() : "ITEM"
 }
 

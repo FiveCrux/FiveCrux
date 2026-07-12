@@ -183,18 +183,18 @@ export function ScriptDetailClient({
         clearTimeout(timeoutId);
 
         if (!response.ok) {
-          setError(response.status === 404 ? "Script not found" : "Failed to load script");
+          setError(response.status === 404 ? "Asset not found" : "Failed to load asset");
           return;
         }
         const data = await response.json();
         if (!data || data.error) {
-          setError("Script not found");
+          setError("Asset not found");
           return;
         }
         setScript(data);
       } catch (err) {
         if ((err as any)?.name !== "AbortError") console.error("Error fetching script:", err);
-        setError("Failed to load script");
+        setError("Failed to load asset");
       } finally {
         setLoading(false);
       }
@@ -302,11 +302,11 @@ export function ScriptDetailClient({
         <Navbar />
         <div className="min-h-screen text-white flex items-center justify-center bg-[#0a0a0a]">
           <div className="text-center">
-            <h1 className="text-2xl font-bold mb-4">Script Not Found</h1>
-            <p className="text-gray-400 mb-6">{error || "The script you're looking for doesn't exist."}</p>
+            <h1 className="text-2xl font-bold mb-4">Asset Not Found</h1>
+            <p className="text-gray-400 mb-6">{error || "The asset you're looking for doesn't exist."}</p>
             <Button onClick={() => router.push("/scripts")} className="bg-orange-500 hover:bg-orange-600">
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Scripts
+              Back to Assets
             </Button>
           </div>
         </div>
@@ -322,7 +322,7 @@ export function ScriptDetailClient({
   const currency = script.currency_symbol || "$";
   const canBuy = !!((script.tebexPackageId && script.tebexStoreToken) || script.link);
   const sellerInitial = script.seller_name ? script.seller_name.charAt(0).toUpperCase() : "?";
-  const categoryLabel = script.category || "Script";
+  const categoryLabel = script.category || "Asset";
   const hasFeatures = script.features && script.features.length > 0;
   const hasRequirements = script.requirements && script.requirements.length > 0;
   const extLinks = (script.other_links || []).filter(Boolean);
@@ -338,7 +338,7 @@ export function ScriptDetailClient({
           <nav className="flex items-center gap-2 py-5 text-[13px] text-white/55">
             <Link href="/scripts" className="transition hover:text-white/70">Marketplace</Link>
             <ChevronRight className="h-3.5 w-3.5" />
-            <Link href="/scripts" className="transition hover:text-white/70">Scripts</Link>
+            <Link href="/scripts" className="transition hover:text-white/70">Assets</Link>
             <ChevronRight className="h-3.5 w-3.5" />
             <span className="truncate text-white/60">{script.title}</span>
           </nav>
@@ -651,13 +651,13 @@ export function ScriptDetailClient({
             ) : (
               <div className="mt-5 rounded-[20px] border border-white/[0.07] bg-white/[0.02] py-12 text-center">
                 <Package className="mx-auto mb-4 h-12 w-12 text-gray-500" />
-                <p className="text-gray-400">No other scripts available at the moment.</p>
+                <p className="text-gray-400">No other assets available at the moment.</p>
               </div>
             )}
 
             <div className="mt-10 text-center">
               <Link href="/scripts" className="inline-flex items-center gap-2 font-semibold text-orange-400 transition hover:text-orange-300">
-                Browse all scripts <ChevronRight className="h-4 w-4" />
+                Browse all assets <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
           </section>

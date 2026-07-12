@@ -123,10 +123,10 @@ export default function EditProductsPage() {
         });
         if (response.ok) {
           setScripts((prev) => prev.map((s) => (s.id === editing.id ? { ...s, ...form } : s)))
-          setMessage("Script updated successfully!")
+          setMessage("Asset updated successfully!")
           setMessageType("success")
         } else {
-          setMessage("Error updating script.")
+          setMessage("Error updating asset.")
           setMessageType("error")
         }
       } else if (editing?.type === "giveaway") {
@@ -223,7 +223,7 @@ export default function EditProductsPage() {
 
   const filterTabs: { key: FilterKey; label: string }[] = [
     { key: "all", label: "All" },
-    { key: "scripts", label: "Scripts" },
+    { key: "scripts", label: "Assets" },
     { key: "giveaways", label: "Giveaways" },
     { key: "published", label: "Published" },
     { key: "pending", label: "Pending review" },
@@ -340,7 +340,7 @@ export default function EditProductsPage() {
               <p className="mt-2 max-w-sm text-sm text-gray-400">
                 {query.trim() || filter !== "all"
                   ? "No listings match your filters. Try clearing the search or switching tabs."
-                  : "You haven't listed any scripts or giveaways. Create your first listing to start selling on FiveCrux."}
+                  : "You haven't listed any assets or giveaways. Create your first listing to start selling on FiveCrux."}
               </p>
               <Link href="/profile" className="mt-6">
                 <Button className="bg-gradient-to-r from-orange-500 to-yellow-500 font-semibold text-black hover:from-orange-400 hover:to-yellow-400">
@@ -401,7 +401,7 @@ export default function EditProductsPage() {
                               <div className="truncate font-semibold">{row.title}</div>
                               {row.type === "script" ? (
                                 <span className="mt-1 inline-flex items-center gap-1 rounded-md bg-sky-500/10 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-sky-300 ring-1 ring-sky-500/20">
-                                  <Code2 className="h-2.5 w-2.5" /> Script
+                                  <Code2 className="h-2.5 w-2.5" /> Asset
                                 </span>
                               ) : (
                                 <span className="mt-1 inline-flex items-center gap-1 rounded-md bg-orange-500/12 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-orange-300 ring-1 ring-orange-500/25">
@@ -529,7 +529,7 @@ export default function EditProductsPage() {
                   <Gift className="h-4 w-4 text-orange-300" />
                 )}
                 <h3 className="text-base font-semibold">
-                  Edit {editing.type === "script" ? "script" : "giveaway"}
+                  Edit {editing.type === "script" ? "asset" : "giveaway"}
                 </h3>
               </div>
               <button

@@ -667,16 +667,16 @@ export function ScriptsClient({
                 Marketplace
               </span>
               <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
-                <span className="text-[#f97316]">Scripts</span>
+                <span className="text-[#f97316]">Assets</span>
               </h1>
               <p className="mt-2 max-w-2xl text-sm text-white/50 sm:text-base">
-                Browse our complete collection of premium FiveM scripts.
+                Browse our complete collection of premium FiveM assets.
               </p>
             </div>
             {!loading && (
               <div className="flex w-fit items-center gap-1.5 rounded-full border border-[#f97316]/15 bg-[#f97316]/10 px-3 py-1.5 text-xs font-semibold text-[#f97316]">
                 <Zap className="h-3.5 w-3.5 fill-[#f97316]" />
-                <span>{sortedScripts.length} scripts found</span>
+                <span>{sortedScripts.length} assets found</span>
               </div>
             )}
           </motion.div>
@@ -689,7 +689,7 @@ export function ScriptsClient({
             <div className="mb-10">
               <div className="mb-4 flex items-center gap-2">
                 <Zap className="h-5 w-5 text-orange-500" />
-                <h2 className="text-lg font-bold text-white">Featured Scripts</h2>
+                <h2 className="text-lg font-bold text-white">Featured Assets</h2>
               </div>
               <div className="-mx-2.5 flex gap-4 overflow-x-auto px-2.5 pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 {featuredProducts.map((product) => (
@@ -707,7 +707,7 @@ export function ScriptsClient({
               <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/55" />
               <input
                 type="text"
-                placeholder="Search scripts…"
+                placeholder="Search assets…"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] py-3 pl-11 pr-4 text-sm text-white placeholder-white/40 outline-none transition focus:border-orange-500/50 focus:bg-white/[0.06]"
@@ -716,7 +716,7 @@ export function ScriptsClient({
 
             {/* Sort */}
             <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger aria-label="Sort scripts by" className="h-auto w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-3 text-sm font-semibold text-white/70 focus:ring-0 focus:ring-offset-0 focus:outline-none sm:w-[190px]">
+              <SelectTrigger aria-label="Sort assets by" className="h-auto w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-3 text-sm font-semibold text-white/70 focus:ring-0 focus:ring-offset-0 focus:outline-none sm:w-[190px]">
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
               <SelectContent className="border-white/10 bg-[#111113] text-white">
@@ -750,7 +750,7 @@ export function ScriptsClient({
           {/* Tab chips */}
           <div className="mb-4 flex flex-wrap gap-2">
             {([
-              { id: "all", label: "All Scripts" },
+              { id: "all", label: "All Assets" },
               { id: "featured", label: "Featured" },
               { id: "onsale", label: "On Sale" },
             ] as const).map((tab) => (
@@ -895,7 +895,7 @@ export function ScriptsClient({
           <div className="mb-5 flex flex-wrap items-center gap-3 text-sm text-white/50">
             <span className="flex items-center gap-1.5">
               <Zap className="h-3.5 w-3.5 text-[#f97316]" />
-              {sortedScripts.length} of {allScripts.length} scripts
+              {sortedScripts.length} of {allScripts.length} assets
               {searchQuery && (
                 <span>
                   {" "}for <span className="font-medium text-[#f97316]">&quot;{searchQuery}&quot;</span>
@@ -994,7 +994,7 @@ export function ScriptsClient({
           ) : sortedScripts.length === 0 ? (
             <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] py-16 text-center">
               <Search className="mx-auto mb-4 h-12 w-12 text-white/20" />
-              <h3 className="text-lg font-semibold text-white">No scripts found</h3>
+              <h3 className="text-lg font-semibold text-white">No assets found</h3>
               <p className="mt-1 text-sm text-white/50">Try adjusting your search or filters.</p>
               <Button
                 onClick={clearAllFilters}

@@ -46,8 +46,8 @@ export default function ScriptSelectionPopup({ isOpen, onClose, onSelect, slotUn
   const handleSelect = async () => {
     if (!selectedScriptId) {
       toast({
-        title: "Please select a script",
-        description: "You need to select a script to feature.",
+        title: "Please select an asset",
+        description: "You need to select an asset to feature.",
         variant: "destructive"
       })
       return
@@ -76,10 +76,10 @@ export default function ScriptSelectionPopup({ isOpen, onClose, onSelect, slotUn
       <DialogContent className="bg-[#0d0d0d] border-white/[0.08] max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-white text-xl">
-            Select Script to Feature
+            Select Asset to Feature
           </DialogTitle>
           <DialogDescription className="text-white/50">
-            Choose one of your approved scripts to feature in this slot
+            Choose one of your approved assets to feature in this slot
           </DialogDescription>
         </DialogHeader>
 
@@ -90,7 +90,7 @@ export default function ScriptSelectionPopup({ isOpen, onClose, onSelect, slotUn
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search scripts by title, description, or category..."
+              placeholder="Search assets by title, description, or category..."
               className="bg-white/[0.04] border-white/[0.08] text-white pl-10"
             />
           </div>
@@ -104,8 +104,8 @@ export default function ScriptSelectionPopup({ isOpen, onClose, onSelect, slotUn
             <div className="text-center py-12">
               <p className="text-white/50 mb-4">
                 {approvedScripts.length === 0
-                  ? "You don't have any approved scripts yet. Create and get a script approved first!"
-                  : "No scripts match your search."}
+                  ? "You don't have any approved assets yet. Create and get an asset approved first!"
+                  : "No assets match your search."}
               </p>
               {approvedScripts.length === 0 && (
                 <Button
@@ -204,7 +204,7 @@ export default function ScriptSelectionPopup({ isOpen, onClose, onSelect, slotUn
               disabled={!selectedScriptId || isSubmitting || approvedScripts.length === 0}
               className="bg-orange-500 hover:bg-orange-400 text-black font-bold disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSubmitting ? "Processing..." : "Select Script"}
+              {isSubmitting ? "Processing..." : "Select Asset"}
             </Button>
           </div>
         </div>

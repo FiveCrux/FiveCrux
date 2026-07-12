@@ -14,9 +14,9 @@ import ImpersonationWidget from "@/componentss/dev/impersonation-widget"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "FiveCrux - Premium FiveM Scripts & Giveaways",
+  title: "FiveCrux - Premium FiveM Assets & Giveaways",
   description:
-    "Your one-stop destination for premium FiveM scripts and exciting giveaways. Discover, purchase, and download the community's best scripts."
+    "Your one-stop destination for premium FiveM assets and exciting giveaways. Discover, purchase, and download the community's best assets."
 }
 
 export default function RootLayout({

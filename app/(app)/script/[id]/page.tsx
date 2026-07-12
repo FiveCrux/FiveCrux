@@ -28,15 +28,15 @@ export async function generateMetadata({
 
   if (!data || data.error) {
     return {
-      title: "Script | FiveCrux",
-      description: "Browse premium FiveM scripts on the FiveCrux marketplace.",
+      title: "Asset | FiveCrux",
+      description: "Browse premium FiveM assets on the FiveCrux marketplace.",
     };
   }
 
   const title = `${data.title} | FiveCrux`;
   const description =
     (data.description as string | undefined)?.slice(0, 160) ||
-    "Premium FiveM script on the FiveCrux marketplace.";
+    "Premium FiveM asset on the FiveCrux marketplace.";
   const cover = data.cover_image || (data.images && data.images[0]) || undefined;
 
   return {

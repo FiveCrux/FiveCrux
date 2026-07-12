@@ -891,7 +891,7 @@ export default function CreateGiveawayPage() {
                               <Input
                                 value={prize.name}
                                 onChange={(e) => updatePrize(prize.id, "name", e.target.value)}
-                                placeholder="Premium Script Bundle"
+                                placeholder="Premium Asset Bundle"
                                 className={`mt-2 px-4 py-2.5 text-sm ${fieldClass}`}
                               />
                             </div>

@@ -151,36 +151,36 @@ export function CategoryClient({
   // Category information
   const categoryInfo = {
     economy: {
-      name: "Economy Scripts",
-      description: "Banking systems, shops, businesses, and financial management scripts",
+      name: "Economy Assets",
+      description: "Banking systems, shops, businesses, and financial management assets",
     },
     vehicles: {
-      name: "Vehicle Scripts",
-      description: "Car dealerships, garages, vehicle management, and automotive scripts",
+      name: "Vehicle Assets",
+      description: "Car dealerships, garages, vehicle management, and automotive assets",
     },
     jobs: {
-      name: "Job Scripts",
-      description: "Police, EMS, mechanic, and other career-based roleplay scripts",
+      name: "Job Assets",
+      description: "Police, EMS, mechanic, and other career-based roleplay assets",
     },
     housing: {
-      name: "Housing Scripts",
+      name: "Housing Assets",
       description: "Property systems, apartments, real estate, and housing management",
     },
     medical: {
-      name: "Medical Scripts",
-      description: "Hospital systems, medical equipment, and healthcare scripts",
+      name: "Medical Assets",
+      description: "Hospital systems, medical equipment, and healthcare assets",
     },
     police: {
-      name: "Police Scripts",
+      name: "Police Assets",
       description: "Law enforcement tools, MDT systems, and police equipment",
     },
     utilities: {
-      name: "Utility Scripts",
-      description: "Admin tools, utilities, and helper scripts for server management",
+      name: "Utility Assets",
+      description: "Admin tools, utilities, and helper assets for server management",
     },
     core: {
-      name: "Core Scripts",
-      description: "Framework scripts, core systems, and essential server components",
+      name: "Core Assets",
+      description: "Framework assets, core systems, and essential server components",
     },
   }
 

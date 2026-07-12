@@ -561,7 +561,7 @@ export default function AdminPage() {
     key: string;
     title: string;
     image: string;
-    type: "Script" | "Prop" | "Giveaway" | "Ad";
+    type: "Asset" | "Prop" | "Giveaway" | "Ad";
     submitter: string;
     when: string;
     onApprove?: () => void;
@@ -590,7 +590,7 @@ export default function AdminPage() {
         key: `script-${s.id}`,
         title: s.title,
         image: s.cover_image || s.images?.[0] || "",
-        type: "Script",
+        type: "Asset",
         submitter: s.seller_name,
         when: timeAgo(s.created_at),
         onApprove: () => handleScriptAction(s.id, "approved"),
@@ -643,7 +643,7 @@ export default function AdminPage() {
 
   // Type badge colors for the pending table (semantic-ish per content type).
   const typeBadgeClass: Record<PendingRow["type"], string> = {
-    Script: "bg-sky-500/10 text-sky-400 ring-sky-500/20",
+    Asset: "bg-sky-500/10 text-sky-400 ring-sky-500/20",
     Prop: "bg-amber-500/10 text-amber-400 ring-amber-500/20",
     Giveaway: "bg-orange-500/10 text-orange-400 ring-orange-500/20",
     Ad: "bg-fuchsia-500/10 text-fuchsia-400 ring-fuchsia-500/20",
@@ -1505,10 +1505,10 @@ export default function AdminPage() {
                 <CardHeader>
                   <CardTitle className="text-white flex items-center gap-2">
                     <Package className="h-5 w-5 text-green-500" />
-                    Script Management
+                    Asset Management
                   </CardTitle>
                   <CardDescription className="text-gray-400">
-                    Review and manage pending scripts
+                    Review and manage pending assets
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -1746,7 +1746,7 @@ export default function AdminPage() {
                     {filteredScripts.length === 0 && (
                       <div className="text-center py-8 text-gray-400">
                         <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                        <p>No scripts found with the selected filter.</p>
+                        <p>No assets found with the selected filter.</p>
                       </div>
                     )}
 
@@ -2733,9 +2733,9 @@ export default function AdminPage() {
         >
           <DialogContent className="bg-[#0d0d0f] border-white/[0.08] rounded-2xl">
             <DialogHeader>
-              <DialogTitle className="text-white">Reject Script</DialogTitle>
+              <DialogTitle className="text-white">Reject Asset</DialogTitle>
               <DialogDescription className="text-gray-400">
-                Please provide a reason for rejecting this script
+                Please provide a reason for rejecting this asset
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
@@ -2765,7 +2765,7 @@ export default function AdminPage() {
                       Rejecting...
                     </>
                   ) : (
-                    "Reject Script"
+                    "Reject Asset"
                   )}
                 </Button>
                 <Button
@@ -2897,10 +2897,10 @@ export default function AdminPage() {
             <DialogHeader>
               <DialogTitle className="text-white flex items-center gap-2">
                 <FileText className="h-5 w-5 text-orange-500" />
-                Script Details
+                Asset Details
               </DialogTitle>
               <DialogDescription className="text-gray-400">
-                Complete information about the script submission
+                Complete information about the asset submission
               </DialogDescription>
             </DialogHeader>
             {viewingScript && (
@@ -3328,7 +3328,7 @@ export default function AdminPage() {
                         className="bg-green-500 hover:bg-green-600 flex-1"
                       >
                         <CheckCircle className="h-4 w-4 mr-2" />
-                        Approve Script
+                        Approve Asset
                       </Button>
                     )}
                     <Button
@@ -3348,7 +3348,7 @@ export default function AdminPage() {
                       ) : (
                         <>
                           <XCircle className="h-4 w-4 mr-2" />
-                          Reject Script
+                          Reject Asset
                         </>
                       )}
                     </Button>

@@ -332,7 +332,7 @@ export default function CouponsTab() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Ad Slots">Ad Slots</SelectItem>
-                    <SelectItem value="Featured Script Slots">Featured Script Slots</SelectItem>
+                    <SelectItem value="Featured Script Slots">Featured Asset Slots</SelectItem>
                     <SelectItem value="Props">Props</SelectItem>
                     <SelectItem value="all">All</SelectItem>
                   </SelectContent>

@@ -63,7 +63,7 @@ function toMarketProduct(s: ApiScript): MarketProduct {
 
 const CATEGORIES = [
   { value: "all", label: "All" },
-  { value: "script", label: "Scripts" },
+  { value: "script", label: "Assets" },
   { value: "mlo", label: "MLOs" },
   { value: "vehicle", label: "Vehicles" },
   { value: "weapon", label: "Weapons" },
@@ -188,13 +188,13 @@ export function MarketplaceClient({ initialScripts = [] }: { initialScripts?: an
                 Discover Premium FiveM Assets
               </h1>
               <p className="mx-auto mt-4 max-w-2xl text-base text-white/60 sm:text-lg">
-                Scripts, MLOs, vehicles, weapons and more — curated for your server.
+                Assets, MLOs, vehicles, weapons and more — curated for your server.
               </p>
               <div className="mt-8">
                 <Link href="/scripts/submit">
                   <Button className="bg-gradient-to-r from-orange-500 to-yellow-400 px-8 py-3 text-base font-bold text-black shadow-lg shadow-orange-500/20 hover:from-orange-600 hover:to-yellow-500">
                     <Upload className="mr-2 h-5 w-5" />
-                    Submit Your Script
+                    Submit Your Asset
                   </Button>
                 </Link>
               </div>

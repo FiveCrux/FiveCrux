@@ -585,7 +585,7 @@ export default function ProfileCouponsPage() {
                   <SelectContent className="border-white/[0.08] bg-[#0d0d0f] text-white">
                     <SelectItem value="Ad Slots">Ad Slots</SelectItem>
                     <SelectItem value="Featured Script Slots">
-                      Featured Script Slots
+                      Featured Asset Slots
                     </SelectItem>
                     <SelectItem value="Props">Props</SelectItem>
                     <SelectItem value="all">All</SelectItem>

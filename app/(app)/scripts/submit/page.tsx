@@ -513,10 +513,10 @@ export default function SubmitScriptPage() {
 
       if (response.ok) {
         if (isEditMode) {
-          toast.success("Script updated successfully!")
+          toast.success("Asset updated successfully!")
           router.push('/profile')
         } else {
-          toast.success("Script submitted successfully!", {
+          toast.success("Asset submitted successfully!", {
             description: "It will be reviewed before being published."
           })
           router.push('/profile')
@@ -526,7 +526,7 @@ export default function SubmitScriptPage() {
       }
     } catch (error) {
       console.error("Error submitting script:", error)
-      toast.error(isEditMode ? "Error updating script. Please try again." : "Error submitting script. Please try again.")
+      toast.error(isEditMode ? "Error updating asset. Please try again." : "Error submitting asset. Please try again.")
     } finally {
       setIsSubmitting(false)
     }
@@ -577,7 +577,7 @@ export default function SubmitScriptPage() {
                 {isEditMode ? "Edit · Live Preview" : "New listing · Live Preview"}
               </span>
               <h1 className="mt-4 text-[28px] font-extrabold leading-none tracking-tight sm:text-[34px]">
-                {isEditMode ? "Edit script listing" : "New script listing"}
+                {isEditMode ? "Edit asset listing" : "New asset listing"}
               </h1>
             </div>
             <div className="flex items-center gap-3">
@@ -625,7 +625,7 @@ export default function SubmitScriptPage() {
                         id="title"
                         value={formData.title}
                         onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                        placeholder="Enter your script title"
+                        placeholder="Enter your asset title"
                         className={cn("mt-2 w-full px-4 py-3 text-[15px] font-medium h-auto", fieldClass)}
                         required
                       />
@@ -639,7 +639,7 @@ export default function SubmitScriptPage() {
                         id="description"
                         value={formData.description}
                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                        placeholder="Describe your script in detail..."
+                        placeholder="Describe your asset in detail..."
                         rows={3}
                         className={cn("mt-2 w-full px-4 py-3 text-sm leading-relaxed text-white/85", fieldClass)}
                         required
@@ -1253,7 +1253,7 @@ export default function SubmitScriptPage() {
                     ) : (
                       <>
                         <Sparkles className="mr-2 h-5 w-5" />
-                        {isEditMode ? "Update Script" : "Submit Script"}
+                        {isEditMode ? "Update Asset" : "Submit Asset"}
                       </>
                     )}
                   </Button>
@@ -1300,7 +1300,7 @@ export default function SubmitScriptPage() {
                 </div>
                 <div className="px-5 pb-5 pt-4">
                   <h3 className="text-lg font-extrabold leading-tight tracking-tight">
-                    {formData.title || "Untitled script"}
+                    {formData.title || "Untitled asset"}
                   </h3>
                   <p className="mt-1.5 line-clamp-2 text-[13px] leading-relaxed text-white/55">
                     {formData.description || "No description yet."}

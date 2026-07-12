@@ -49,7 +49,7 @@ export default function CreatorAnalytics() {
 
       {/* Stat tiles */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-        <Tile icon={<Eye className="h-4 w-4" />} label="Total views" value={fmt(a.traffic.total)} sub="scripts · props · ads" />
+        <Tile icon={<Eye className="h-4 w-4" />} label="Total views" value={fmt(a.traffic.total)} sub="assets · props · ads" />
         <Tile icon={<ShoppingBag className="h-4 w-4" />} label="Sales" value={fmt(a.sales.count)} sub={`${money(a.sales.revenue)} revenue`} accent />
         <Tile icon={<Users className="h-4 w-4" />} label="Buyers" value={fmt(a.sales.buyers)} sub="unique" />
         <Tile icon={<Gift className="h-4 w-4" />} label="Giveaway entries" value={fmt(a.giveaways.entries)} sub={`${fmt(a.giveaways.participants)} people`} />
@@ -60,7 +60,7 @@ export default function CreatorAnalytics() {
       <div className="mt-4">
         <Section title="Traffic">
           <div className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4">
-            <Metric label="Script views" value={fmt(a.traffic.scriptViews)} />
+            <Metric label="Asset views" value={fmt(a.traffic.scriptViews)} />
             <Metric label="Prop views" value={fmt(a.traffic.propViews)} />
             <Metric label="Ad views" value={fmt(a.traffic.ads.views)} extra={`${fmt(a.traffic.ads.clicks)} clicks`} />
             <Metric label="Featured views" value={fmt(a.traffic.featured.views)} extra={`${fmt(a.traffic.featured.clicks)} clicks`} />
@@ -104,7 +104,7 @@ export default function CreatorAnalytics() {
         </Section>
         <Section title="Listings">
           <div className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4">
-            <Metric label="Scripts" value={fmt(a.listings.scripts)} extra={a.listings.pendingScripts ? `${a.listings.pendingScripts} pending` : undefined} />
+            <Metric label="Assets" value={fmt(a.listings.scripts)} extra={a.listings.pendingScripts ? `${a.listings.pendingScripts} pending` : undefined} />
             <Metric label="Props" value={fmt(a.listings.props)} extra={a.listings.pendingProps ? `${a.listings.pendingProps} pending` : undefined} />
             <Metric label="Subs (banner)" value={fmt(a.subscriptions.sideBanners)} />
             <Metric label="Subs (featured)" value={fmt(a.subscriptions.featuredSlots)} />
@@ -116,7 +116,7 @@ export default function CreatorAnalytics() {
       <div className="mt-5 flex items-start gap-2.5 rounded-xl border border-white/[0.07] bg-white/[0.02] p-3.5 text-xs leading-relaxed text-white/45">
         <Info className="mt-0.5 h-4 w-4 shrink-0 text-white/35" />
         <span>
-          <b className="text-white/60">Script sales aren&apos;t shown here</b> — scripts are sold directly on your own Tebex store, which FiveCrux doesn&apos;t have access to. Sales/revenue above cover platform purchases (props &amp; slots). Listing views are counted from now onward.
+          <b className="text-white/60">Asset sales aren&apos;t shown here</b> — assets are sold directly on your own Tebex store, which FiveCrux doesn&apos;t have access to. Sales/revenue above cover platform purchases (props &amp; slots). Listing views are counted from now onward.
         </span>
       </div>
     </div>

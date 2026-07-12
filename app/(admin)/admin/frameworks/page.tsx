@@ -98,7 +98,7 @@ export default function AdminFrameworksPage() {
   };
 
   const remove = async (id: number) => {
-    if (!confirm("Delete this framework? Scripts already tagged with it keep their tag.")) return;
+    if (!confirm("Delete this framework? Assets already tagged with it keep their tag.")) return;
     setSaving(id);
     try {
       const r = await fetch(`/api/admin/frameworks/${id}`, { method: "DELETE" });

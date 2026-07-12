@@ -249,7 +249,7 @@ export default function ProfilePage() {
   const AD_SLOT_VIEWS: { value: "ads" | "side-banners" | "featured"; label: string }[] = [
     { value: "ads", label: "Ads" },
     { value: "side-banners", label: "Side Banners" },
-    { value: "featured", label: "Featured Scripts" },
+    { value: "featured", label: "Featured Assets" },
   ];
 
   const [showAdsForm, setShowAdsForm] = useState(false);
@@ -411,7 +411,7 @@ export default function ProfilePage() {
   };
 
   const handleDeleteScript = async (scriptId: number) => {
-    if (!confirm("Are you sure you want to delete this script?")) return;
+    if (!confirm("Are you sure you want to delete this asset?")) return;
     deleteScriptMutation.mutate(scriptId);
   };
 
@@ -513,7 +513,7 @@ export default function ProfilePage() {
   };
 
   const handleDeleteFeaturedScript = async (featuredScriptId: number) => {
-    if (!confirm("Are you sure you want to delete this featured script?"))
+    if (!confirm("Are you sure you want to delete this featured asset?"))
       return;
     deleteFeaturedScriptMutation.mutate(featuredScriptId);
   };
@@ -917,7 +917,7 @@ export default function ProfilePage() {
                             <div className="min-w-0">
                               <p className="font-medium truncate">{script.title}</p>
                               <p className="text-sm text-white/55">
-                                Script •{" "}
+                                Asset •{" "}
                                 {new Date(
                                   script.created_at
                                 ).toLocaleDateString()}
@@ -957,7 +957,7 @@ export default function ProfilePage() {
                         <div className="py-10 text-center">
                           <Sparkles className="h-10 w-10 text-white/20 mx-auto mb-3" />
                           <p className="text-white/55 text-sm">
-                            No recent activity yet. Create a script or giveaway to get started.
+                            No recent activity yet. Create an asset or giveaway to get started.
                           </p>
                         </div>
                       )}
@@ -980,7 +980,7 @@ export default function ProfilePage() {
                       className="w-full sm:w-auto bg-orange-500 hover:bg-orange-600 text-black font-semibold"
                     >
                       <Plus className="h-4 w-4 mr-2" />
-                      Create New Script
+                      Create New Asset
                     </Button>
                   </div>
 
@@ -991,7 +991,7 @@ export default function ProfilePage() {
                         <Input
                           value={scriptSearchQuery}
                           onChange={(e) => setScriptSearchQuery(e.target.value)}
-                          placeholder="Search your scripts..."
+                          placeholder="Search your assets..."
                           className="pl-9 bg-[#0e0e0e] border-white/[0.08]"
                         />
                       </div>
@@ -1131,10 +1131,10 @@ export default function ProfilePage() {
                           <CardContent className="p-12 text-center">
                             <Package className="h-12 w-12 text-white/20 mx-auto mb-4" />
                             <h3 className="text-xl font-bold mb-2">
-                              No scripts yet
+                              No assets yet
                             </h3>
                             <p className="text-white/55 mb-4">
-                              Start creating your first script to showcase your
+                              Start creating your first asset to showcase your
                               work
                             </p>
                             <Button
@@ -1142,7 +1142,7 @@ export default function ProfilePage() {
                               className="bg-orange-500 hover:bg-orange-600 text-black font-semibold"
                             >
                               <Plus className="h-4 w-4 mr-2" />
-                              Create Your First Script
+                              Create Your First Asset
                             </Button>
                           </CardContent>
                         </Card>
@@ -1153,7 +1153,7 @@ export default function ProfilePage() {
                           <CardContent className="p-12 text-center">
                             <Search className="h-12 w-12 text-white/20 mx-auto mb-4" />
                             <h3 className="text-xl font-bold mb-2">
-                              No scripts match your search
+                              No assets match your search
                             </h3>
                             <p className="text-white/55">
                               Try a different search term or category.
@@ -1831,7 +1831,7 @@ export default function ProfilePage() {
                                   src={featuredScript.scriptCoverImage}
                                   alt={
                                     featuredScript.scriptTitle ||
-                                    `Script ${featuredScript.scriptId}`
+                                    `Asset ${featuredScript.scriptId}`
                                   }
                                   className="w-full h-full object-cover"
                                 />
@@ -1843,7 +1843,7 @@ export default function ProfilePage() {
                                   variant="secondary"
                                   className="bg-orange-500/20 text-orange-400 border-orange-500/30"
                                 >
-                                  Featured Script
+                                  Featured Asset
                                 </Badge>
                                 <Badge
                                   className={`text-xs ${
@@ -1861,7 +1861,7 @@ export default function ProfilePage() {
                               </div>
                               <CardTitle className="text-white text-lg line-clamp-2">
                                 {featuredScript.scriptTitle ||
-                                  `Script ID: ${featuredScript.scriptId}`}
+                                  `Asset ID: ${featuredScript.scriptId}`}
                               </CardTitle>
                             </CardHeader>
                             <CardContent>
@@ -1912,7 +1912,7 @@ export default function ProfilePage() {
                                         setAnalyticsTarget({
                                           adType: "featured_script",
                                           adId: featuredScript.id,
-                                          title: featuredScript.scriptTitle || `Script ID: ${featuredScript.scriptId}`,
+                                          title: featuredScript.scriptTitle || `Asset ID: ${featuredScript.scriptId}`,
                                         })
                                       }
                                       className="text-orange-400 hover:text-orange-300"
@@ -1933,7 +1933,7 @@ export default function ProfilePage() {
                                     className="text-blue-400 hover:text-blue-300"
                                   >
                                     <Eye className="h-4 w-4 mr-1" />
-                                    View Script
+                                    View Asset
                                   </Button>
                                   <Button
                                     size="sm"
@@ -1980,10 +1980,10 @@ export default function ProfilePage() {
                                       <Plus className="h-10 w-10 text-orange-500 group-hover:scale-110 transition-transform duration-300" />
                                     </div>
                                     <h3 className="text-lg font-semibold text-white mb-2">
-                                      Feature a Script
+                                      Feature an Asset
                                     </h3>
                                     <p className="text-white/55 text-sm text-center mb-4">
-                                      Click to select a script to feature in this
+                                      Click to select an asset to feature in this
                                       slot
                                     </p>
                                     <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30">
@@ -2026,7 +2026,7 @@ export default function ProfilePage() {
                                 <CardContent className="relative z-0">
                                   <p className="text-white/55 text-sm mb-4 line-clamp-3">
                                     Purchase this slot to unlock and feature your
-                                    script.
+                                    asset.
                                   </p>
                                   <div className="w-full h-32 rounded-lg overflow-hidden mb-4 bg-gradient-to-br from-gray-700/30 to-gray-800/30 flex items-center justify-center border border-gray-700/50">
                                     <Star className="h-12 w-12 text-gray-600" />
@@ -2100,10 +2100,10 @@ export default function ProfilePage() {
                                       <Plus className="h-10 w-10 text-orange-500 group-hover:scale-110 transition-transform duration-300" />
                                     </div>
                                     <h3 className="text-lg font-semibold text-white mb-2">
-                                      Feature a Script
+                                      Feature an Asset
                                     </h3>
                                     <p className="text-white/55 text-sm text-center mb-4">
-                                      Click to select a script to feature in this
+                                      Click to select an asset to feature in this
                                       slot
                                     </p>
                                     <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30">
@@ -2146,7 +2146,7 @@ export default function ProfilePage() {
                                 <CardContent className="relative z-0">
                                   <p className="text-white/55 text-sm mb-4 line-clamp-3">
                                     Purchase this slot to unlock and feature your
-                                    script.
+                                    asset.
                                   </p>
                                   <div className="w-full h-32 rounded-lg overflow-hidden mb-4 bg-gradient-to-br from-gray-700/30 to-gray-800/30 flex items-center justify-center border border-gray-700/50">
                                     <Star className="h-12 w-12 text-gray-600" />

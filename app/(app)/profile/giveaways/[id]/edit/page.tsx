@@ -1019,7 +1019,7 @@ export default function EditGiveawayPage() {
                               <Input
                                 value={prize.name}
                                 onChange={(e) => updatePrize(prize.id, "name", e.target.value)}
-                                placeholder="Premium Script Bundle"
+                                placeholder="Premium Asset Bundle"
                                 className="mt-1 bg-white/[0.04] border-white/[0.08] text-white placeholder-white/30 focus:border-orange-500 focus-visible:ring-orange-500/40"
                               />
                             </div>
