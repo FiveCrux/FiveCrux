@@ -413,6 +413,9 @@ export const giveawayPrizes = pgTable('giveaway_prizes', {
   winnerName: text('winner_name'), // Deprecated - kept for backward compatibility
   winnerEmail: text('winner_email'), // Deprecated - kept for backward compatibility
   claimed: boolean('claimed').default(false),
+  // Discord ID(s) of whoever handles delivery for THIS prize specifically —
+  // a giveaway can have multiple prizes run by different people.
+  discordIds: text('discord_ids').array().default([]),
 });
 
 // Giveaway prize winners table (stores multiple winners per prize)

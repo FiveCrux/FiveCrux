@@ -1597,6 +1597,8 @@ export async function createGiveawayPrize(prizeData: NewGiveawayPrize) {
     giveawayId: prizeData.giveawayId || (prizeData as any).giveaway_id,
     numberOfWinners: prizeData.numberOfWinners || (prizeData as any).number_of_winners || 1,
     position: prizeData.position || (prizeData as any).position || 1,
+    // Discord ID(s) of whoever handles delivery for this specific prize.
+    discordIds: prizeData.discordIds || (prizeData as any).discord_ids || [],
   };
   
   console.log('mappedData:', mappedData);

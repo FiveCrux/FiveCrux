@@ -138,7 +138,7 @@ export default function EditGiveawayPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [requirements])
 
-  const [prizes, setPrizes] = useState([{ id: 1, name: "", numberOfWinners: 1, value: "" }])
+  const [prizes, setPrizes] = useState([{ id: 1, name: "", numberOfWinners: 1, value: "", discordIds: [""] }])
 
   const [media, setMedia] = useState({
     images: [] as (File | string)[],
@@ -216,12 +216,16 @@ export default function EditGiveawayPage() {
 
           // Prefill prizes
           if (giveaway.prizes && giveaway.prizes.length > 0) {
-            setPrizes(giveaway.prizes.map((prize: any, index: number) => ({
-              id: index + 1,
-              name: prize.name || "",
-              numberOfWinners: prize.numberOfWinners || prize.number_of_winners || 1,
-              value: (prize.value && prize.value !== "0" ? prize.value : "") || "",
-            })))
+            setPrizes(giveaway.prizes.map((prize: any, index: number) => {
+              const existingIds: string[] = prize.discordIds || prize.discord_ids || []
+              return {
+                id: index + 1,
+                name: prize.name || "",
+                numberOfWinners: prize.numberOfWinners || prize.number_of_winners || 1,
+                value: (prize.value && prize.value !== "0" ? prize.value : "") || "",
+                discordIds: existingIds.length > 0 ? existingIds : [""],
+              }
+            }))
           }
 
           // Prefill media
@@ -316,7 +320,7 @@ export default function EditGiveawayPage() {
 
   const addPrize = () => {
     const newId = Math.max(...prizes.map((p) => p.id)) + 1
-    setPrizes([...prizes, { id: newId, name: "", numberOfWinners: 1, value: "" }])
+    setPrizes([...prizes, { id: newId, name: "", numberOfWinners: 1, value: "", discordIds: [""] }])
   }
 
   const removePrize = (id: number) => {
@@ -326,6 +330,21 @@ export default function EditGiveawayPage() {
   const updatePrize = (id: number, field: string, value: any) => {
     setPrizes(prizes.map((p) => (p.id === id ? { ...p, [field]: value } : p)))
   }
+
+  // A single prize can be handled by more than one person, so each prize
+  // carries its own list of Discord IDs (not just one global host ID).
+  const addPrizeDiscordId = (prizeId: number) =>
+    setPrizes((prev) => prev.map((p) => (p.id === prizeId ? { ...p, discordIds: [...p.discordIds, ""] } : p)))
+  const removePrizeDiscordId = (prizeId: number, index: number) =>
+    setPrizes((prev) =>
+      prev.map((p) => (p.id === prizeId ? { ...p, discordIds: p.discordIds.filter((_, i) => i !== index) } : p))
+    )
+  const updatePrizeDiscordId = (prizeId: number, index: number, value: string) =>
+    setPrizes((prev) =>
+      prev.map((p) =>
+        p.id === prizeId ? { ...p, discordIds: p.discordIds.map((v, i) => (i === index ? value : v)) } : p
+      )
+    )
 
   const validateYouTubeUrl = (url: string): boolean => {
     if (!url.trim()) return true // Empty is valid (optional field)
@@ -530,6 +549,7 @@ export default function EditGiveawayPage() {
           number_of_winners: p.numberOfWinners || 1,
           position: i + 1,
           value: p.value?.trim() || "0",
+          discord_ids: p.discordIds.map((v) => v.trim()).filter(Boolean),
         })),
       };
 
@@ -1015,6 +1035,43 @@ export default function EditGiveawayPage() {
                                 className="mt-1 bg-white/[0.04] border-white/[0.08] text-white placeholder-white/30 focus:border-orange-500 focus-visible:ring-orange-500/40"
                               />
                             </div>
+                          </div>
+
+                          {/* Per-prize Discord ID(s) — a single giveaway can have
+                              different prizes handled/delivered by different people */}
+                          <div className="mt-3">
+                            <Label className="text-white text-sm">Discord ID(s) for this prize</Label>
+                            <div className="mt-2 space-y-2">
+                              {prize.discordIds.map((id, idIndex) => (
+                                <div key={idIndex} className="flex items-center gap-2">
+                                  <Input
+                                    value={id}
+                                    onChange={(e) => updatePrizeDiscordId(prize.id, idIndex, e.target.value)}
+                                    placeholder="e.g. 699612552073838642"
+                                    className="bg-white/[0.04] border-white/[0.08] text-white placeholder-white/30 focus:border-orange-500 focus-visible:ring-orange-500/40"
+                                  />
+                                  {prize.discordIds.length > 1 && (
+                                    <button
+                                      type="button"
+                                      onClick={() => removePrizeDiscordId(prize.id, idIndex)}
+                                      className="shrink-0 rounded-lg p-2 text-white/40 hover:bg-white/[0.06] hover:text-white"
+                                    >
+                                      <X className="h-4 w-4" />
+                                    </button>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => addPrizeDiscordId(prize.id)}
+                              className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-orange-400 hover:text-orange-300"
+                            >
+                              <Plus className="h-3.5 w-3.5" /> Add another ID
+                            </button>
+                            <p className="text-xs text-white/55 mt-1">
+                              Optional — whoever handles this prize's delivery. Add more than one if multiple people manage it.
+                            </p>
                           </div>
                         </motion.div>
                       ))}

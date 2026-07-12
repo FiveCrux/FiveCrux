@@ -1365,6 +1365,7 @@ export function GiveawayDetailClient({
                   const winnerCount = Number(prize.numberOfWinners ?? prize.number_of_winners ?? 1) || 1
                   const hasPrizeValue =
                     prize.value && prize.value !== "0" && prize.value !== "$" && prize.value !== "0.00"
+                  const prizeDiscordIds: string[] = prize.discordIds || prize.discord_ids || []
                   const rowContent = (
                     <>
                       {isGiveawayEnded && (
@@ -1407,6 +1408,29 @@ export function GiveawayDetailClient({
                         </button>
                       ) : (
                         <div className="flex w-full items-center gap-3 px-4 py-3.5">{rowContent}</div>
+                      )}
+
+                      {/* Contact Discord ID(s) for THIS prize — different prizes
+                          in the same giveaway can be handled by different people */}
+                      {prizeDiscordIds.length > 0 && (
+                        <div className="flex flex-wrap items-center gap-1.5 px-4 pb-3 -mt-1">
+                          <span className="text-[11px] text-white/45">Contact for this prize:</span>
+                          {prizeDiscordIds.map((id: string) => (
+                            <button
+                              key={id}
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                navigator.clipboard.writeText(id)
+                                toast.success("Discord ID copied")
+                              }}
+                              className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 text-xs text-white/55 transition-colors hover:border-orange-500/40 hover:text-white"
+                              title="Copy Discord ID"
+                            >
+                              <Copy className="h-3 w-3" /> {id}
+                            </button>
+                          ))}
+                        </div>
                       )}
 
                       {/* Body — winners revealed on expand (ended only) */}
