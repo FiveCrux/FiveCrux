@@ -1,23 +1,26 @@
-import { Database, Box, Zap, Puzzle, Layers, type LucideIcon } from "lucide-react"
+import { Zap, Puzzle, Layers, type LucideIcon } from "lucide-react"
+import Image from "next/image"
 import { cn } from "@/lib/utils"
 
-type FrameworkMeta = { label: string; icon: LucideIcon; color: string; bg: string; ring: string }
+type FrameworkMeta = { label: string; icon: LucideIcon | null; logo: string | null; color: string; bg: string; ring: string }
 
 // One accent per framework so cards read at a glance instead of every tag
-// being the same flat gray chip. New/unlisted frameworks (admin can add any
-// slug) fall back to a neutral treatment below.
+// being the same flat gray chip. QBCore/Qbox use their real logos; frameworks
+// without a supplied logo fall back to a Lucide icon. New/unlisted frameworks
+// (admin can add any slug) fall back to a neutral treatment below.
 const FRAMEWORK_META: Record<string, FrameworkMeta> = {
-  qbcore: { label: "QBCore", icon: Database, color: "text-pink-400", bg: "bg-pink-500/15", ring: "ring-pink-500/25" },
-  qbox: { label: "Qbox", icon: Box, color: "text-amber-400", bg: "bg-amber-500/15", ring: "ring-amber-500/25" },
-  esx: { label: "ESX", icon: Zap, color: "text-red-400", bg: "bg-red-500/15", ring: "ring-red-500/25" },
-  ox: { label: "OX", icon: Layers, color: "text-sky-400", bg: "bg-sky-500/15", ring: "ring-sky-500/25" },
-  vrp: { label: "VRP", icon: Layers, color: "text-purple-400", bg: "bg-purple-500/15", ring: "ring-purple-500/25" },
-  standalone: { label: "Standalone", icon: Puzzle, color: "text-emerald-400", bg: "bg-emerald-500/15", ring: "ring-emerald-500/25" },
+  qbcore: { label: "QBCore", icon: null, logo: "/frameworks/qbcore.png", color: "text-pink-400", bg: "bg-pink-500/15", ring: "ring-pink-500/25" },
+  qbox: { label: "Qbox", icon: null, logo: "/frameworks/qbox.png", color: "text-amber-400", bg: "bg-amber-500/15", ring: "ring-amber-500/25" },
+  esx: { label: "ESX", icon: Zap, logo: null, color: "text-red-400", bg: "bg-red-500/15", ring: "ring-red-500/25" },
+  ox: { label: "OX", icon: Layers, logo: null, color: "text-sky-400", bg: "bg-sky-500/15", ring: "ring-sky-500/25" },
+  vrp: { label: "VRP", icon: Layers, logo: null, color: "text-purple-400", bg: "bg-purple-500/15", ring: "ring-purple-500/25" },
+  standalone: { label: "Standalone", icon: Puzzle, logo: null, color: "text-emerald-400", bg: "bg-emerald-500/15", ring: "ring-emerald-500/25" },
 }
 
 const FALLBACK_META: FrameworkMeta = {
   label: "",
   icon: Puzzle,
+  logo: null,
   color: "text-white/60",
   bg: "bg-white/[0.08]",
   ring: "ring-white/15",
@@ -54,13 +57,23 @@ export function FrameworkBadge({
     >
       <span
         className={cn(
-          "grid place-items-center rounded-full ring-1",
+          "grid place-items-center overflow-hidden rounded-full ring-1",
           isMd ? "h-5 w-5" : "h-4 w-4",
           meta.bg,
           meta.ring
         )}
       >
-        <Icon className={cn(isMd ? "h-3 w-3" : "h-2.5 w-2.5", meta.color)} />
+        {meta.logo ? (
+          <Image
+            src={meta.logo}
+            alt={meta.label}
+            width={isMd ? 20 : 16}
+            height={isMd ? 20 : 16}
+            className="h-full w-full object-cover"
+          />
+        ) : Icon ? (
+          <Icon className={cn(isMd ? "h-3 w-3" : "h-2.5 w-2.5", meta.color)} />
+        ) : null}
       </span>
       {meta.label}
     </span>

@@ -172,7 +172,7 @@ export default function ScriptSelectionPopup({ isOpen, onClose, onSelect, slotUn
 
                       {/* Meta Info */}
                       <div className="flex items-center gap-2 flex-wrap">
-                        <Badge className="bg-white/[0.06] text-white/70 border-white/10 text-xs">
+                        <Badge className="bg-white/[0.06] text-white/70 border-white/10 text-xs capitalize">
                           {script.category}
                         </Badge>
                         {script.framework && Array.isArray(script.framework) && script.framework.length > 0 && (

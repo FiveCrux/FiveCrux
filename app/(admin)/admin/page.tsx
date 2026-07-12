@@ -1339,7 +1339,7 @@ export default function AdminPage() {
                                   </span>
                                 </p>
                                 <p className="mt-0.5 text-[11px] text-white/55">
-                                  by {script.seller_name} · {script.status}
+                                  by {script.seller_name} · <span className="capitalize">{script.status}</span>
                                 </p>
                               </div>
                             </div>
@@ -1624,7 +1624,7 @@ export default function AdminPage() {
                               </div>
                               <div className="min-w-0">
                                 <span className="text-gray-400">Category:</span>
-                                <p className="text-white truncate">
+                                <p className="text-white truncate capitalize">
                                   {script.category}
                                 </p>
                               </div>
@@ -1654,13 +1654,13 @@ export default function AdminPage() {
                           </div>
                           <div className="flex flex-col items-start sm:items-end gap-2 flex-shrink-0">
                             <Badge
-                              className={
+                              className={`capitalize ${
                                 script.status === "pending"
                                   ? "bg-yellow-500 text-white"
                                   : script.status === "approved"
                                   ? "bg-green-500 text-white"
                                   : "bg-red-500 text-white"
-                              }
+                              }`}
                             >
                               {script.status}
                             </Badge>
@@ -1904,7 +1904,7 @@ export default function AdminPage() {
                               </div>
                               <div className="min-w-0">
                                 <span className="text-gray-400">Category:</span>
-                                <p className="text-white truncate">
+                                <p className="text-white truncate capitalize">
                                   {giveaway.category}
                                 </p>
                               </div>
@@ -1939,13 +1939,13 @@ export default function AdminPage() {
                           </div>
                           <div className="flex flex-col items-start sm:items-end gap-2 flex-shrink-0">
                             <Badge
-                              className={
+                              className={`capitalize ${
                                 giveaway.status === "pending"
                                   ? "bg-yellow-500 text-white"
                                   : giveaway.status === "approved"
                                   ? "bg-green-500 text-white"
                                   : "bg-red-500 text-white"
-                              }
+                              }`}
                             >
                               {giveaway.status}
                             </Badge>
@@ -2127,13 +2127,13 @@ export default function AdminPage() {
                           </div>
                           <div className="flex flex-col items-start sm:items-end gap-2 flex-shrink-0">
                             <Badge
-                              className={
+                              className={`capitalize ${
                                 prop.status === "pending"
                                   ? "bg-yellow-500 text-white"
                                   : prop.status === "approved"
                                   ? "bg-green-500 text-white"
                                   : "bg-red-500 text-white"
-                              }
+                              }`}
                             >
                               {prop.status}
                             </Badge>
@@ -2477,7 +2477,7 @@ export default function AdminPage() {
                                         <div className="flex gap-2 mt-1 flex-wrap">
                                           <Badge
                                             variant="secondary"
-                                            className="bg-white/[0.08] text-gray-300"
+                                            className="bg-white/[0.08] text-gray-300 capitalize"
                                           >
                                             {ad.category}
                                           </Badge>
@@ -2502,14 +2502,14 @@ export default function AdminPage() {
                                       View
                                     </Button>
                                     <Badge
-                                      className={
+                                      className={`capitalize ${
                                         ad.status === "approved" ||
                                         ad.status === "active"
                                           ? "bg-green-500 text-white"
                                           : ad.status === "rejected"
                                           ? "bg-red-500 text-white"
                                           : "bg-yellow-500 text-white"
-                                      }
+                                      }`}
                                     >
                                       {ad.status || "pending"}
                                     </Badge>
@@ -2915,13 +2915,13 @@ export default function AdminPage() {
                     />
                     <div className="absolute top-4 right-4">
                       <Badge
-                        className={
+                        className={`capitalize ${
                           viewingScript.status === "pending"
                             ? "bg-yellow-500 text-white"
                             : viewingScript.status === "approved"
                             ? "bg-green-500 text-white"
                             : "bg-red-500 text-white"
-                        }
+                        }`}
                       >
                         {viewingScript.status}
                       </Badge>
@@ -2959,7 +2959,7 @@ export default function AdminPage() {
                             <span className="text-gray-400 text-sm font-medium">
                               Category:
                             </span>
-                            <p className="text-white">
+                            <p className="text-white capitalize">
                               {viewingScript.category}
                             </p>
                           </div>
@@ -3386,13 +3386,13 @@ export default function AdminPage() {
                     />
                     <div className="absolute top-4 right-4">
                       <Badge
-                        className={
+                        className={`capitalize ${
                           viewingGiveaway.status === "pending"
                             ? "bg-yellow-500 text-white"
                             : viewingGiveaway.status === "approved"
                             ? "bg-green-500 text-white"
                             : "bg-red-500 text-white"
-                        }
+                        }`}
                       >
                         {viewingGiveaway.status}
                       </Badge>
@@ -3872,7 +3872,7 @@ export default function AdminPage() {
                       <span className="text-gray-400 text-sm font-medium">
                         Status:
                       </span>
-                      <p className="text-white">{viewingGiveaway.status}</p>
+                      <p className="text-white capitalize">{viewingGiveaway.status}</p>
                     </div>
                     <div>
                       <span className="text-gray-400 text-sm font-medium">
@@ -4058,14 +4058,14 @@ export default function AdminPage() {
                 {/* Status Badge */}
                 <div className="flex items-center gap-3">
                   <Badge
-                    className={
+                    className={`capitalize ${
                       viewingAd.status === "approved" ||
                       viewingAd.status === "active"
                         ? "bg-green-500 text-white"
                         : viewingAd.status === "rejected"
                         ? "bg-red-500 text-white"
                         : "bg-yellow-500 text-white"
-                    }
+                    }`}
                   >
                     {viewingAd.status || "pending"}
                   </Badge>
@@ -4099,7 +4099,7 @@ export default function AdminPage() {
                           <p className="text-gray-300 text-sm mb-1">
                             Category:
                           </p>
-                          <p className="text-white">{viewingAd.category}</p>
+                          <p className="text-white capitalize">{viewingAd.category}</p>
                         </div>
                         <div>
                           <p className="text-gray-300 text-sm mb-1">
@@ -4204,7 +4204,7 @@ export default function AdminPage() {
                         </div>
                         <div>
                           <p className="text-gray-300 text-sm mb-1">Status:</p>
-                          <p className="text-white">
+                          <p className="text-white capitalize">
                             {viewingAd.status || "pending"}
                           </p>
                         </div>

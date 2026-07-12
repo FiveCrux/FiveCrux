@@ -918,7 +918,7 @@ export default function ProfilePage() {
                               </p>
                             </div>
                           </div>
-                          <Badge className={`shrink-0 ${getStatusColor(script.status)}`}>
+                          <Badge className={`shrink-0 capitalize ${getStatusColor(script.status)}`}>
                             {script.status}
                           </Badge>
                         </div>
@@ -942,7 +942,7 @@ export default function ProfilePage() {
                               </p>
                             </div>
                           </div>
-                          <Badge className={`shrink-0 ${getStatusColor(giveaway.status)}`}>
+                          <Badge className={`shrink-0 capitalize ${getStatusColor(giveaway.status)}`}>
                             {giveaway.status}
                           </Badge>
                         </div>
@@ -1059,7 +1059,7 @@ export default function ProfilePage() {
                                     </span>
                                   )}
                                 </div>
-                                <Badge className={getStatusColor(script.status)}>
+                                <Badge className={`capitalize ${getStatusColor(script.status)}`}>
                                   {script.status}
                                 </Badge>
                               </div>
@@ -1223,7 +1223,7 @@ export default function ProfilePage() {
                                   </span>
                                 </div>
                                 <Badge
-                                  className={getStatusColor(giveaway.status)}
+                                  className={`capitalize ${getStatusColor(giveaway.status)}`}
                                 >
                                   {giveaway.status}
                                 </Badge>
@@ -1429,12 +1429,12 @@ export default function ProfilePage() {
                               <div className="flex items-center justify-between">
                                 <Badge
                                   variant="secondary"
-                                  className="bg-orange-500/20 text-orange-400 border-orange-500/30"
+                                  className="bg-orange-500/20 text-orange-400 border-orange-500/30 capitalize"
                                 >
                                   {ad.category}
                                 </Badge>
                                 <Badge
-                                  className={`text-xs ${getStatusColor(
+                                  className={`text-xs capitalize ${getStatusColor(
                                     ad.status
                                   )}`}
                                 >
