@@ -944,7 +944,7 @@ export default function CreateGiveawayPage() {
                               <Plus className="h-3.5 w-3.5" /> Add another ID
                             </button>
                             <p className="mt-1.5 text-xs text-white/40">
-                              Optional — whoever handles this prize's delivery. Add more than one if multiple people manage it.
+                              Optional — whoever handles this prize&apos;s delivery. Add more than one if multiple people manage it.
                             </p>
                           </div>
                         </div>

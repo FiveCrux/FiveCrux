@@ -258,8 +258,11 @@ async function main() {
     // (docs/categories-migration.sql) — merging/removing the prod row is a DB
     // change the user must run themselves (see db-hands-off rule).
     { id: 8006, name: "Economy", slug: "economy", icon: "Coins", appliesTo: "scripts", isActive: true, showOnHome: true, homeOrder: 5, sortOrder: 5 },
+    // Added 2026-07-13 per Bandookchi's category spec (Discord): Script + Peds.
+    { id: 8007, name: "Script", slug: "script", icon: "FileCode2", appliesTo: "scripts", isActive: true, showOnHome: true, homeOrder: 6, sortOrder: 6 },
+    { id: 8008, name: "Peds", slug: "peds", icon: "PersonStanding", appliesTo: "scripts", isActive: true, showOnHome: true, homeOrder: 7, sortOrder: 7 },
   ]).onConflictDoNothing()
-  console.log("✓ 5 browse categories")
+  console.log("✓ 7 browse categories")
 
   // ---- Frameworks (dynamic, admin-managed) ----------------------------------
   await db.insert(schema.frameworks).values([

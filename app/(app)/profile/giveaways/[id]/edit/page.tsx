@@ -1070,7 +1070,7 @@ export default function EditGiveawayPage() {
                               <Plus className="h-3.5 w-3.5" /> Add another ID
                             </button>
                             <p className="text-xs text-white/55 mt-1">
-                              Optional — whoever handles this prize's delivery. Add more than one if multiple people manage it.
+                              Optional — whoever handles this prize&apos;s delivery. Add more than one if multiple people manage it.
                             </p>
                           </div>
                         </motion.div>
