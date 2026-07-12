@@ -307,8 +307,14 @@ export default function ProfilePage() {
   const availableFeaturedScriptSlotUniqueIds =
     featuredScriptSlotsData?.availableUniqueIds || [];
 
-  // Calculate slot availability
-  const usedSlots = ads.length;
+  // Calculate slot availability. "Used" means actually occupying one of the
+  // purchased slot_unique_ids (matches isAdSlotUniqueIdInUse's semantics,
+  // which only checks pending/approved ads with a real slot attached) — not
+  // just "any ad this user has ever submitted." A rejected ad, or an ad with
+  // no slot attached, must not count against the purchased-slot total.
+  const usedSlots = ads.filter(
+    (ad: any) => ad.status !== "rejected" && !!(ad.slot_unique_id || ad.slotUniqueId)
+  ).length;
   const availableSlots = Math.max(0, purchasedSlots - usedSlots);
   const totalSlots = 3; // Total slots available
   const lockedSlots = Math.max(0, totalSlots - purchasedSlots);
