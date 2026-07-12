@@ -47,6 +47,7 @@ import {
   LogOut,
   CalendarDays,
   ShieldCheck,
+  Search,
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/componentss/ui/button";
@@ -400,6 +401,8 @@ export default function AdminPage() {
   });
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [activeScriptFilter, setActiveScriptFilter] = useState("all");
+  const [scriptSearchQuery, setScriptSearchQuery] = useState("");
+  const [scriptCategoryFilter, setScriptCategoryFilter] = useState("all");
   const [rejectingScript, setRejectingScript] = useState<number | null>(null);
   const [rejectingScriptLoading, setRejectingScriptLoading] = useState(false);
   const [approvingScript, setApprovingScript] = useState<number | null>(null);
@@ -408,6 +411,8 @@ export default function AdminPage() {
   const [viewingAd, setViewingAd] = useState<any>(null);
   const [rejectionReason, setRejectionReason] = useState("");
   const [activeGiveawayFilter, setActiveGiveawayFilter] = useState("all");
+  const [giveawaySearchQuery, setGiveawaySearchQuery] = useState("");
+  const [giveawayCategoryFilter, setGiveawayCategoryFilter] = useState("all");
   const [rejectingGiveaway, setRejectingGiveaway] = useState<number | null>(
     null
   );
@@ -415,10 +420,13 @@ export default function AdminPage() {
     useState(false);
   const [giveawayRejectionReason, setGiveawayRejectionReason] = useState("");
   const [activeAdFilter, setActiveAdFilter] = useState("all");
+  const [adSearchQuery, setAdSearchQuery] = useState("");
+  const [adCategoryFilter, setAdCategoryFilter] = useState("all");
   const [rejectingAd, setRejectingAd] = useState<number | null>(null);
   const [rejectingAdLoading, setRejectingAdLoading] = useState(false);
   const [adRejectionReason, setAdRejectionReason] = useState("");
   const [activePropFilter, setActivePropFilter] = useState("all");
+  const [propSearchQuery, setPropSearchQuery] = useState("");
   const [rejectingProp, setRejectingProp] = useState<string | null>(null);
   const [rejectingPropLoading, setRejectingPropLoading] = useState(false);
   const [approvingProp, setApprovingProp] = useState<string | null>(null);
@@ -673,20 +681,67 @@ export default function AdminPage() {
   ];
 
   // Filter scripts based on active filter
+  const scriptCategories = Array.from(
+    new Set(scripts.map((s) => s.category).filter(Boolean))
+  ) as string[];
   const filteredScripts = scripts.filter((script) => {
-    if (activeScriptFilter === "all") return true;
-    return script.status === activeScriptFilter;
+    if (activeScriptFilter !== "all" && script.status !== activeScriptFilter) return false;
+    if (scriptCategoryFilter !== "all" && script.category !== scriptCategoryFilter) return false;
+    const query = scriptSearchQuery.trim().toLowerCase();
+    if (!query) return true;
+    return (
+      script.title?.toLowerCase().includes(query) ||
+      script.description?.toLowerCase().includes(query) ||
+      script.seller_name?.toLowerCase().includes(query) ||
+      script.seller_email?.toLowerCase().includes(query)
+    );
   });
 
   // Filter giveaways based on active filter
+  const giveawayCategories = Array.from(
+    new Set(giveaways.map((g) => g.category).filter(Boolean))
+  ) as string[];
   const filteredGiveaways = giveaways.filter((giveaway) => {
-    if (activeGiveawayFilter === "all") return true;
-    return giveaway.status === activeGiveawayFilter;
+    if (activeGiveawayFilter !== "all" && giveaway.status !== activeGiveawayFilter) return false;
+    if (giveawayCategoryFilter !== "all" && giveaway.category !== giveawayCategoryFilter) return false;
+    const query = giveawaySearchQuery.trim().toLowerCase();
+    if (!query) return true;
+    return (
+      giveaway.title?.toLowerCase().includes(query) ||
+      giveaway.description?.toLowerCase().includes(query) ||
+      giveaway.creator_name?.toLowerCase().includes(query) ||
+      giveaway.creator_email?.toLowerCase().includes(query) ||
+      giveaway.tags?.some((tag) => tag?.toLowerCase().includes(query))
+    );
   });
 
   const filteredProps = props.filter((prop) => {
-    if (activePropFilter === "all") return true;
-    return prop.status === activePropFilter;
+    if (activePropFilter !== "all" && prop.status !== activePropFilter) return false;
+    const query = propSearchQuery.trim().toLowerCase();
+    if (!query) return true;
+    return (
+      prop.name?.toLowerCase().includes(query) ||
+      prop.description?.toLowerCase().includes(query) ||
+      (prop as any).createdBy?.toLowerCase?.().includes(query)
+    );
+  });
+
+  const adCategories = Array.from(
+    new Set(ads.map((a) => a.category).filter(Boolean))
+  ) as string[];
+  const filteredAds = ads.filter((ad) => {
+    if (activeAdFilter === "pending" && !(!ad.status || ad.status === "pending")) return false;
+    if (activeAdFilter === "approved" && !(ad.status === "approved" || ad.status === "active")) return false;
+    if (activeAdFilter === "rejected" && ad.status !== "rejected") return false;
+    if (adCategoryFilter !== "all" && ad.category !== adCategoryFilter) return false;
+    const query = adSearchQuery.trim().toLowerCase();
+    if (!query) return true;
+    return (
+      ad.title?.toLowerCase().includes(query) ||
+      ad.description?.toLowerCase().includes(query) ||
+      ad.creator_name?.toLowerCase().includes(query) ||
+      ad.creator_email?.toLowerCase().includes(query)
+    );
   });
 
   // Handle script approval/rejection
@@ -1518,7 +1573,38 @@ export default function AdminPage() {
                     </div>
                   </div>
 
+                  <div className="flex flex-col gap-3 mb-6 sm:flex-row">
+                    <div className="relative flex-1">
+                      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
+                      <Input
+                        value={scriptSearchQuery}
+                        onChange={(e) => setScriptSearchQuery(e.target.value)}
+                        placeholder="Search by title, description, or seller..."
+                        className="pl-9 bg-white/[0.03] border-white/[0.08]"
+                      />
+                    </div>
+                    <Select
+                      value={scriptCategoryFilter}
+                      onValueChange={setScriptCategoryFilter}
+                    >
+                      <SelectTrigger className="w-full sm:w-[200px] bg-white/[0.03] border-white/[0.08]">
+                        <SelectValue placeholder="All categories" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All categories</SelectItem>
+                        {scriptCategories.map((category) => (
+                          <SelectItem key={category} value={category} className="capitalize">
+                            {category}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
                   <div className="space-y-4">
+                    {filteredScripts.length === 0 && (
+                      <p className="text-center text-white/50 py-8">No assets match your search.</p>
+                    )}
                     {filteredScripts.map((script) => (
                       <div
                         key={script.id}
@@ -1767,7 +1853,38 @@ export default function AdminPage() {
                     </div>
                   </div>
 
+                  <div className="flex flex-col gap-3 mb-6 sm:flex-row">
+                    <div className="relative flex-1">
+                      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
+                      <Input
+                        value={giveawaySearchQuery}
+                        onChange={(e) => setGiveawaySearchQuery(e.target.value)}
+                        placeholder="Search by title, creator, or tag..."
+                        className="pl-9 bg-white/[0.03] border-white/[0.08]"
+                      />
+                    </div>
+                    <Select
+                      value={giveawayCategoryFilter}
+                      onValueChange={setGiveawayCategoryFilter}
+                    >
+                      <SelectTrigger className="w-full sm:w-[200px] bg-white/[0.03] border-white/[0.08]">
+                        <SelectValue placeholder="All categories" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All categories</SelectItem>
+                        {giveawayCategories.map((category) => (
+                          <SelectItem key={category} value={category} className="capitalize">
+                            {category}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
                   <div className="space-y-4">
+                    {filteredGiveaways.length === 0 && (
+                      <p className="text-center text-white/50 py-8">No giveaways match your search.</p>
+                    )}
                     {filteredGiveaways.map((giveaway) => (
                       <div
                         key={giveaway.id}
@@ -1953,7 +2070,20 @@ export default function AdminPage() {
                     </div>
                   </div>
 
+                  <div className="relative mb-6">
+                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
+                    <Input
+                      value={propSearchQuery}
+                      onChange={(e) => setPropSearchQuery(e.target.value)}
+                      placeholder="Search by name, description, or creator ID..."
+                      className="pl-9 bg-white/[0.03] border-white/[0.08]"
+                    />
+                  </div>
+
                   <div className="space-y-4">
+                    {filteredProps.length === 0 && (
+                      <p className="text-center text-white/50 py-8">No props match your search.</p>
+                    )}
                     {filteredProps.map((prop) => (
                       <div
                         key={prop.id}
@@ -2261,6 +2391,35 @@ export default function AdminPage() {
                       </div>
                     </CardHeader>
                     <CardContent>
+                      {ads.length > 0 && (
+                        <div className="flex flex-col gap-3 mb-4 sm:flex-row">
+                          <div className="relative flex-1">
+                            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
+                            <Input
+                              value={adSearchQuery}
+                              onChange={(e) => setAdSearchQuery(e.target.value)}
+                              placeholder="Search by title, description, or creator..."
+                              className="pl-9 bg-white/[0.04] border-white/[0.08]"
+                            />
+                          </div>
+                          <Select
+                            value={adCategoryFilter}
+                            onValueChange={setAdCategoryFilter}
+                          >
+                            <SelectTrigger className="w-full sm:w-[200px] bg-white/[0.04] border-white/[0.08]">
+                              <SelectValue placeholder="All categories" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">All categories</SelectItem>
+                              {adCategories.map((category) => (
+                                <SelectItem key={category} value={category} className="capitalize">
+                                  {category}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
                       <div className="space-y-4">
                         {adsLoading ? (
                           <div className="flex items-center justify-center p-8">
@@ -2279,22 +2438,15 @@ export default function AdminPage() {
                               Create your first ad to get started
                             </p>
                           </div>
+                        ) : filteredAds.length === 0 ? (
+                          <div className="flex flex-col items-center justify-center p-8 text-center">
+                            <Megaphone className="h-12 w-12 text-gray-600 mb-4" />
+                            <p className="text-gray-400">
+                              No ads match your search
+                            </p>
+                          </div>
                         ) : (
-                          ads
-                            .filter((ad) => {
-                              if (activeAdFilter === "all") return true;
-                              // For pending ads, they might not have a status field or it might be null
-                              if (activeAdFilter === "pending")
-                                return !ad.status || ad.status === "pending";
-                              if (activeAdFilter === "approved")
-                                return (
-                                  ad.status === "approved" ||
-                                  ad.status === "active"
-                                );
-                              if (activeAdFilter === "rejected")
-                                return ad.status === "rejected";
-                              return true;
-                            })
+                          filteredAds
                             .map((ad) => {
                               console.log(
                                 "Admin - Ad:",

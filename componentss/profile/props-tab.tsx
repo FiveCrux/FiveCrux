@@ -1,11 +1,20 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { Plus, Package, Eye, Edit, Trash2, ShieldAlert } from "lucide-react";
+import { Plus, Package, Eye, Edit, Trash2, ShieldAlert, Search } from "lucide-react";
 import { Button } from "@/componentss/ui/button";
 import { Card, CardContent } from "@/componentss/ui/card";
 import { Badge } from "@/componentss/ui/badge";
+import { Input } from "@/componentss/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/componentss/ui/select";
 import { useUserProps, useDeleteUserProp } from "@/hooks/use-props-queries";
 
 export default function PropsTab() {
@@ -14,9 +23,25 @@ export default function PropsTab() {
   const { data: propsData, isLoading } = useUserProps(100, 0);
   const deletePropMutation = useDeleteUserProp();
 
+  const [propSearchQuery, setPropSearchQuery] = useState("");
+  const [propStatusFilter, setPropStatusFilter] = useState("all");
+
   const userRoles = (session?.user as any)?.roles || [];
   const canListProps = userRoles.includes('prop_lister') || userRoles.includes('admin') || userRoles.includes('founder');
   const props = propsData?.props || [];
+  const propStatuses = Array.from(
+    new Set(props.map((p: any) => p.status).filter(Boolean))
+  ) as string[];
+  const filteredProps = props.filter((prop: any) => {
+    const matchesStatus =
+      propStatusFilter === "all" || prop.status === propStatusFilter;
+    const query = propSearchQuery.trim().toLowerCase();
+    const matchesQuery =
+      !query ||
+      prop.name?.toLowerCase().includes(query) ||
+      prop.description?.toLowerCase().includes(query);
+    return matchesStatus && matchesQuery;
+  });
 
   const handleDeleteProp = async (propId: string) => {
     if (!confirm("Are you sure you want to delete this prop?")) return;
@@ -37,6 +62,33 @@ export default function PropsTab() {
           </Button>
         )}
       </div>
+
+      {canListProps && props.length > 0 && (
+        <div className="flex flex-col gap-3 mb-6 sm:flex-row">
+          <div className="relative flex-1">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
+            <Input
+              value={propSearchQuery}
+              onChange={(e) => setPropSearchQuery(e.target.value)}
+              placeholder="Search your props..."
+              className="pl-9 bg-[#0e0e0e] border-white/[0.08]"
+            />
+          </div>
+          <Select value={propStatusFilter} onValueChange={setPropStatusFilter}>
+            <SelectTrigger className="w-full sm:w-[200px] bg-[#0e0e0e] border-white/[0.08]">
+              <SelectValue placeholder="All statuses" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All statuses</SelectItem>
+              {propStatuses.map((status) => (
+                <SelectItem key={status} value={status} className="capitalize">
+                  {status}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       {!canListProps ? (
         <Card className="bg-[#0e0e0e] border-orange-500/20">
@@ -66,9 +118,16 @@ export default function PropsTab() {
             <p className="text-white/55">You haven't listed any props yet.</p>
           </CardContent>
         </Card>
+      ) : filteredProps.length === 0 ? (
+        <Card className="bg-[#0e0e0e] border-white/[0.06]">
+          <CardContent className="p-12 text-center">
+            <Package className="h-12 w-12 text-white/20 mx-auto mb-4" />
+            <p className="text-white/55">No props match your search.</p>
+          </CardContent>
+        </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {props.map((prop: any) => (
+          {filteredProps.map((prop: any) => (
             <Card
               key={prop.id}
               className="bg-[#0e0e0e] border-white/[0.06] hover:border-orange-500/40 transition-colors"
