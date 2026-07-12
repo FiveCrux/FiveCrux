@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { verifyTebexWebhook, type TebexWebhookPayload } from "@/lib/tebex";
 import { db } from "@/lib/db/client";
 import { tebexOrders, orders, orderItems, carts, cartItems, userAdSlots, userFeaturedScriptSlots, coupons, couponRedemptions } from "@/lib/db/schema";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { createAdSlots, createFeaturedScriptSlots, activateSideBanner, extendSlotsForRecurring, endRecurringSlots } from "@/lib/database-new";
 import { sideBannerBookings } from "@/lib/db/schema";
 
@@ -70,8 +70,22 @@ async function provisionCart(
   }
 
   // 1. Provision each platform entitlement.
-  for (const item of items) {
-    await provisionEntitlement(userId, item, orderRef);
+  // NOTE: not transactional — if item N throws after items 1..N-1 already
+  // created real slots, the caller (provisionPlatformFee) reports the whole
+  // cart unprovisioned and the webhook now leaves the order non-"completed"
+  // so Tebex retries. A retry re-runs ALL items, so an already-succeeded
+  // item could be provisioned twice. Rare (requires a multi-item cart where
+  // one item fails) and low-harm (an extra slot, not a lost one) — flagged
+  // here for future hardening (e.g. per-item idempotency keys) rather than
+  // solved now, since the alternative failure mode (silently losing a paid
+  // entitlement forever) is far worse.
+  for (const [index, item] of items.entries()) {
+    try {
+      await provisionEntitlement(userId, item, orderRef);
+    } catch (error) {
+      console.error("Tebex webhook: provisionCart item failed", { orderRef, index, item, error });
+      throw error;
+    }
   }
 
   // 2. Populate order_items from the cart, mark order paid, clear the cart.
@@ -182,6 +196,33 @@ async function updateOrderStatus(
   return null;
 }
 
+/**
+ * Atomically transition an order to `to` ONLY if its current status is one of
+ * `fromAny` — e.g. "refunded" only from "completed"/"pending", never from
+ * "refunded" again. Returns the updated row if the transition happened, or
+ * null if another status already won (already-terminal, or a concurrent
+ * request got there first). This is a single conditional UPDATE, not a
+ * read-then-write, so two near-simultaneous webhook deliveries for the same
+ * reversal can't both "win" and both run side effects (e.g. both restoring a
+ * coupon use for one real refund).
+ */
+async function transitionOrderStatus(
+  orderId: string,
+  to: "completed" | "declined" | "refunded",
+  fromAny: Array<"pending" | "completed" | "declined" | "refunded">,
+  extra?: { transactionId?: string; amount?: string | null }
+) {
+  const setValues: Record<string, unknown> = { status: to, updatedAt: new Date() };
+  if (extra?.transactionId) setValues.tebexTransactionId = extra.transactionId;
+  if (extra?.amount != null) setValues.amount = extra.amount;
+  const rows = await db
+    .update(tebexOrders)
+    .set(setValues)
+    .where(and(eq(tebexOrders.id, orderId), inArray(tebexOrders.status, fromAny)))
+    .returning();
+  return rows[0] ?? null;
+}
+
 /** Read-only: find the tebex_orders row for these identifiers (no mutation). */
 async function findOrderByIdents(ids: { basketIdent?: string; transactionId?: string }) {
   if (ids.basketIdent) {
@@ -217,10 +258,42 @@ async function findOrderByCustom(custom: any) {
   return null;
 }
 
+/** Parse a tebex_orders `custom` value regardless of whether it came back as a JSON string or already-parsed object. */
+function parseCustom(custom: unknown): Record<string, any> | null {
+  if (typeof custom === "string") {
+    try {
+      return JSON.parse(custom);
+    } catch {
+      return null;
+    }
+  }
+  return (custom as Record<string, any>) ?? null;
+}
+
+/**
+ * Restore coupon usage + mark the FiveCrux order failed for a cart order that
+ * will never be paid (refunded/charged-back, OR declined). Idempotent-ish: if
+ * the order's already 'failed' this still re-decrements usedCount, so callers
+ * must only invoke this ONCE per real payment failure (guarded by the atomic
+ * tebex_orders status transition in the caller, not by this function itself).
+ */
+async function restoreCouponForFiveCruxOrder(fivecruxOrderId: number): Promise<void> {
+  const fcOrder = await db.query.orders.findFirst({ where: eq(orders.id, fivecruxOrderId) });
+  if (!fcOrder || fcOrder.status === "failed") return; // already handled — don't double-decrement
+  // orders.status enum has no 'refunded' → 'failed' marks it no-longer-valid.
+  await db.update(orders).set({ status: "failed", updatedAt: new Date() }).where(eq(orders.id, fivecruxOrderId));
+  if (fcOrder.couponId != null) {
+    await db.update(coupons).set({ usedCount: sql`GREATEST(${coupons.usedCount} - 1, 0)`, updatedAt: new Date() }).where(eq(coupons.id, fcOrder.couponId));
+    await db.delete(couponRedemptions).where(eq(couponRedemptions.orderId, fivecruxOrderId));
+  }
+}
+
 /**
  * Revoke a refunded/charged-back platform order: deactivate the ad/featured slots
- * it provisioned, flip the FiveCrux order to 'refunded', and restore any coupon
- * usage. Keyed on the Tebex order id (= the order-reference stored on each slot).
+ * it provisioned, restore any coupon usage. Keyed on the Tebex order id (= the
+ * order-reference stored on each slot). Does NOT touch tebex_orders.status —
+ * the caller transitions that atomically so two concurrent reversal events for
+ * the same order can't both run this and double-restore the coupon.
  */
 async function revokeForOrder(order: { id: string; custom: unknown }): Promise<void> {
   try {
@@ -230,19 +303,11 @@ async function revokeForOrder(order: { id: string; custom: unknown }): Promise<v
     // Side banner booked under this order → free the position.
     await db.update(sideBannerBookings).set({ status: "cancelled", updatedAt: new Date() }).where(eq(sideBannerBookings.orderReference, order.id));
 
-    // 2. Cart orders carry a fivecruxOrderId in custom → flip it + restore coupon.
-    const meta = typeof order.custom === "string"
-      ? (() => { try { return JSON.parse(order.custom as string) } catch { return null } })()
-      : (order.custom as any);
+    // 2. Cart orders carry a fivecruxOrderId in custom → restore coupon usage.
+    const meta = parseCustom(order.custom);
     const fivecruxOrderId = meta?.fivecruxOrderId;
     if (fivecruxOrderId != null) {
-      const fcOrder = await db.query.orders.findFirst({ where: eq(orders.id, Number(fivecruxOrderId)) });
-      // orders.status enum has no 'refunded' → 'failed' marks it no-longer-valid.
-      await db.update(orders).set({ status: "failed", updatedAt: new Date() }).where(eq(orders.id, Number(fivecruxOrderId)));
-      if (fcOrder?.couponId != null) {
-        await db.update(coupons).set({ usedCount: sql`GREATEST(${coupons.usedCount} - 1, 0)`, updatedAt: new Date() }).where(eq(coupons.id, fcOrder.couponId));
-        await db.delete(couponRedemptions).where(eq(couponRedemptions.orderId, Number(fivecruxOrderId)));
-      }
+      await restoreCouponForFiveCruxOrder(Number(fivecruxOrderId));
     }
   } catch (e) {
     console.error("Tebex webhook: revoke failed for order", order.id, e);
@@ -402,9 +467,14 @@ export async function POST(request: NextRequest) {
         }
 
         // C2 idempotency: a replayed/duplicate completed event for an order we've
-        // already completed must NOT provision again.
-        if (existing.status === "completed") {
-          return NextResponse.json({ ok: true, idempotent: true });
+        // already completed must NOT provision again. Also treat "refunded" as
+        // terminal — a late/duplicate/replayed payment.completed for an order
+        // that was already refunded must NEVER re-provision the entitlement
+        // and silently flip the order back to "completed" (this previously
+        // happened: nothing blocked it once the refund's own status check
+        // passed, effectively un-refunding a chargeback).
+        if (existing.status === "completed" || existing.status === "refunded") {
+          return NextResponse.json({ ok: true, idempotent: true, status: existing.status });
         }
 
         // Provision BEFORE marking completed, so a duplicate that arrives after
@@ -412,7 +482,15 @@ export async function POST(request: NextRequest) {
         if (existing.kind === "platform_fee") {
           const result = await provisionPlatformFee(existing, payloadCustom, existing.id);
           if (!result.provisioned) {
-            console.warn("Tebex webhook: platform_fee completed but NOT provisioned:", { orderId: existing.id, reason: result.reason });
+            // CRITICAL: do NOT mark the order completed here. The customer was
+            // charged but got no slot — if we stamped "completed" anyway, the
+            // idempotency check above would permanently block every future
+            // retry from ever provisioning it. Returning 500 makes Tebex retry
+            // delivery (the order stays "pending" so a later attempt — after a
+            // transient DB blip clears, or once someone fixes a bad package
+            // mapping — can still succeed).
+            console.error("Tebex webhook: platform_fee completed but NOT provisioned — leaving order pending for retry:", { orderId: existing.id, reason: result.reason });
+            return NextResponse.json({ error: "provisioning_failed", reason: result.reason }, { status: 500 });
           }
         }
         // For kind === 'seller_product' the seller's store fulfills; we only track status.
@@ -422,7 +500,37 @@ export async function POST(request: NextRequest) {
       }
 
       case "payment.declined": {
-        await updateOrderStatus("declined", extractIdentifiers(payload.subject));
+        const ids = extractIdentifiers(payload.subject);
+        let existing = await findOrderByIdents(ids);
+        if (!existing) existing = await findOrderByCustom((payload.subject as any)?.custom);
+        if (!existing) {
+          await updateOrderStatus("declined", ids); // best-effort, nothing to restore
+          return NextResponse.json({ ok: true });
+        }
+        // Only downgrade a still-pending order. A stray/duplicate/out-of-order
+        // "declined" for an order that has since actually completed or been
+        // refunded must NOT overwrite that status (previously this was an
+        // unconditional UPDATE with no WHERE-status guard, so a late "declined"
+        // could corrupt a completed order's status and cause a legitimate
+        // later payment.completed replay to re-provision it a second time).
+        const transitioned = await transitionOrderStatus(existing.id, "declined", ["pending"], {
+          transactionId: ids.transactionId,
+          amount: ids.amount,
+        });
+        if (transitioned) {
+          // Restore whatever this decline consumed: coupon usage (cart orders)
+          // and the side-banner reservation (so the position is bookable again
+          // immediately instead of waiting out the hold's natural expiry).
+          const meta = parseCustom(existing.custom);
+          if (meta?.fivecruxOrderId != null) {
+            await restoreCouponForFiveCruxOrder(Number(meta.fivecruxOrderId)).catch((e) =>
+              console.error("Tebex webhook: coupon restore on decline failed", existing!.id, e)
+            );
+          }
+          if (meta?.kind === "side_banner" && meta.bookingId != null) {
+            await db.update(sideBannerBookings).set({ status: "cancelled", updatedAt: new Date() }).where(eq(sideBannerBookings.id, Number(meta.bookingId)));
+          }
+        }
         return NextResponse.json({ ok: true });
       }
 
@@ -431,11 +539,19 @@ export async function POST(request: NextRequest) {
         const ids = extractIdentifiers(payload.subject);
         let existing = await findOrderByIdents(ids);
         if (!existing) existing = await findOrderByCustom((payload.subject as any)?.custom);
-        // C1: revoke entitlements + restore coupon, then mark refunded. Idempotent
-        // (skip if already refunded).
-        if (existing && existing.status !== "refunded") {
-          await revokeForOrder(existing);
-          await updateOrderStatus("refunded", { basketIdent: existing.basketIdent, transactionId: ids.transactionId, amount: ids.amount });
+        if (existing) {
+          // Atomic conditional transition: only ONE concurrent delivery of a
+          // refund/chargeback for the same order can win this (WHERE status !=
+          // 'refunded'), so revokeForOrder — including the coupon-usage
+          // restore — runs exactly once per real reversal, not once per
+          // duplicate webhook delivery.
+          const transitioned = await transitionOrderStatus(existing.id, "refunded", ["pending", "completed", "declined"], {
+            transactionId: ids.transactionId,
+            amount: ids.amount,
+          });
+          if (transitioned) {
+            await revokeForOrder(existing);
+          }
         }
         return NextResponse.json({ ok: true });
       }
@@ -458,11 +574,24 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: "order_not_found_yet" }, { status: 500 });
         }
 
+        // A subscription already refunded/charged-back must never be resurrected
+        // by a late/duplicate/replayed recurring event — neither (re-)provisioned
+        // nor extended.
+        if (existing.status === "refunded") {
+          return NextResponse.json({ ok: true, idempotent: true, status: "refunded" });
+        }
+
         // First charge: provision exactly once. Idempotent via the order status,
         // so this is safe even if a payment.completed for the same charge also fires.
         if (payload.type === "recurring-payment.started" && existing.status !== "completed") {
           if (existing.kind === "platform_fee") {
-            await provisionPlatformFee(existing, recCustom, existing.id);
+            const result = await provisionPlatformFee(existing, recCustom, existing.id);
+            if (!result.provisioned) {
+              // Same reasoning as payment.completed: never stamp "completed" on a
+              // failed provision, or the idempotency check locks out every retry.
+              console.error("Tebex webhook: recurring-payment.started completed but NOT provisioned — leaving order pending for retry:", { orderId: existing.id, reason: result.reason });
+              return NextResponse.json({ error: "provisioning_failed", reason: result.reason }, { status: 500 });
+            }
           }
           await updateOrderStatus("completed", { basketIdent: existing.basketIdent, transactionId: ids.transactionId, amount: ids.amount });
         }
@@ -496,8 +625,11 @@ export async function POST(request: NextRequest) {
     }
   } catch (error) {
     console.error("Tebex webhook handler error:", error);
-    // Still return 200 so Tebex does not hammer us with retries for a
-    // transient DB error on an already-verified event; surface in logs.
-    return NextResponse.json({ ok: true, error: "handler_error" });
+    // 500, not 200: this event was verified but NOT successfully handled (it
+    // threw before reaching any `return`). A 200 here previously told Tebex
+    // "all good" — which meant it would never retry, and a transient error
+    // (a DB blip, an unexpected payload shape) silently ate a real payment
+    // event forever. Returning 500 lets Tebex's retry mechanism try again.
+    return NextResponse.json({ error: "handler_error" }, { status: 500 });
   }
 }

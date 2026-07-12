@@ -114,16 +114,18 @@ export async function GET(request: NextRequest) {
     const framework = searchParams.get("framework")
     const status = searchParams.get("status") || "all"
     const featured = searchParams.get("featured")
+    const sellerId = searchParams.get("sellerId")
     const limit = searchParams.get("limit")
     const offset = searchParams.get("offset")
 
-    console.log("Scripts API - Request params:", { category, framework, status, featured, limit, offset })
+    console.log("Scripts API - Request params:", { category, framework, status, featured, sellerId, limit, offset })
 
     const filters = {
       category: category || undefined,
       framework: framework ? framework.split(',') : undefined,
       status: status === "all" ? "approved" : status, // Default to approved for public access
       featured: featured ? featured === "true" : undefined,
+      sellerId: sellerId || undefined,
       limit: limit ? Number.parseInt(limit) : undefined,
       offset: offset ? Number.parseInt(offset) : undefined,
     }

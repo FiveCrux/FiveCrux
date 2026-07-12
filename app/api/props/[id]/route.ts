@@ -53,17 +53,24 @@ export async function GET(
 
     const session = await getServerSession(authOptions);
     let hasPurchased = false;
+    let purchaseCheckFailed = false;
     if (session?.user) {
       // A transient DB hiccup on the purchase check must not break the whole
-      // prop page (the prop data itself comes from Tebex) — default to false.
+      // prop page (the prop data itself comes from Tebex) — default to false
+      // (the safe direction: never show "Download" to someone who didn't
+      // actually pay). But don't silently lie about it either — flag the
+      // failure so the frontend can tell a customer who DID pay "couldn't
+      // verify, try refreshing" instead of confidently telling them to buy
+      // something they already own.
       try {
         const { hasPurchasedProp } = await import("@/lib/prop-utils");
         hasPurchased = await hasPurchasedProp((session.user as any).id, prop.id);
       } catch (e) {
-        console.warn("hasPurchasedProp check failed (defaulting false):", e);
+        console.warn("hasPurchasedProp check failed:", e);
+        purchaseCheckFailed = true;
       }
     }
-    return NextResponse.json({ ...prop, status: "approved", hasPurchased });
+    return NextResponse.json({ ...prop, status: "approved", hasPurchased, purchaseCheckFailed });
   } catch (error) {
     console.error("Error fetching prop:", error);
     return NextResponse.json({ error: "Failed to fetch prop" }, { status: 500 });

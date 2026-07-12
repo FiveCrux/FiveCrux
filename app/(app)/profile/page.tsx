@@ -372,16 +372,16 @@ export default function ProfilePage() {
           );
           setAvailableSlotUniqueIds(available);
         } else {
-          console.error("Failed to fetch active slots");
-          // Default to 0 if fetch fails
-          setPurchasedSlots(0);
-          setAvailableSlotUniqueIds([]);
+          // Do NOT default to 0 here — a failed fetch is not the same as
+          // "you own zero slots". Overwriting a real purchased-slot count
+          // with 0 on a transient error would show a paying customer's
+          // active slot as "Locked". Leave the last-known-good value in
+          // place and just log it.
+          console.error("Failed to fetch active slots — keeping last known slot count");
         }
       } catch (error) {
         clearTimeout(timeoutId);
-        if ((error as any)?.name !== "AbortError") console.error("Error fetching active slots:", error);
-        setPurchasedSlots(0);
-        setAvailableSlotUniqueIds([]);
+        if ((error as any)?.name !== "AbortError") console.error("Error fetching active slots — keeping last known slot count:", error);
       }
     };
 

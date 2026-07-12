@@ -32,6 +32,7 @@ import Footer from "@/componentss/shared/footer";
 import SideAdsFrame from "@/componentss/ads/side-banners";
 import { isVerifiedCreator } from "@/lib/utils";
 import { FrameworkBadge } from "@/componentss/shared/framework-badge";
+import { ProductCard, type MarketProduct } from "@/componentss/marketplace/product-card";
 import Link from "next/link";
 
 interface Script {
@@ -47,6 +48,7 @@ interface Script {
   seller_name: string;
   seller_email: string;
   seller_id?: string;
+  sellerId?: string;
   seller_image?: string;
   seller_roles?: string[] | null;
   features: string[];
@@ -200,32 +202,39 @@ export function ScriptDetailClient({
     if (scriptId) fetchScript();
   }, [scriptId]);
 
-  // Fetch other scripts (excluding current one) for the "More from seller" row.
+  // Fetch other scripts by the SAME seller (excluding current one) for the
+  // "More from {seller}" row — needs script.sellerId, so waits for the main
+  // script fetch to resolve first instead of racing it.
   useEffect(() => {
+    const sellerId = script?.sellerId;
+    if (!sellerId) return;
     const fetchOtherScripts = async () => {
       try {
         setLoadingOtherScripts(true);
         // No `no-store` — the public scripts listing is CDN-cached (60s); a fresh
         // hit on every script view was needless DB load.
-        const response = await fetch(`/api/scripts?limit=8`);
+        const response = await fetch(`/api/scripts?sellerId=${encodeURIComponent(sellerId)}&limit=8`);
         if (!response.ok) throw new Error("Failed to fetch other scripts");
         const data = await response.json();
-        const filteredScripts = (data.scripts || [])
+        const filteredScripts: MarketProduct[] = (data.scripts || [])
           .filter((s: any) => s.id !== Number(scriptId))
-          .slice(0, 8)
+          .slice(0, 6)
           .map((s: any) => {
             const image = s.cover_image || (s.images && s.images[0]) || (s.screenshots && s.screenshots[0]) || undefined;
+            const isFree = !!s.free || s.price === 0;
             return {
               id: s.id,
               title: s.title,
               price: s.price,
               originalPrice: s.original_price,
-              free: s.free || s.price === 0,
+              free: isFree,
               rating: s.rating,
               seller: s.seller_name || "Unknown",
               sellerImage: s.seller_image,
               coverImage: image,
               framework: Array.isArray(s.framework) ? s.framework : s.framework ? [s.framework] : [],
+              currencySymbol: s.currency_symbol,
+              tag: s.featured ? "FEATURED" : isFree ? "FREE" : null,
               href: `/script/${s.id}`,
             };
           });
@@ -237,8 +246,8 @@ export function ScriptDetailClient({
         setLoadingOtherScripts(false);
       }
     };
-    if (scriptId) fetchOtherScripts();
-  }, [scriptId]);
+    fetchOtherScripts();
+  }, [scriptId, script?.sellerId]);
 
   // Primary buy handler: Tebex Model B when available, else existing link behavior.
   const handleBuy = async () => {
@@ -635,33 +644,8 @@ export function ScriptDetailClient({
               </div>
             ) : otherScripts.length > 0 ? (
               <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
-                {otherScripts.slice(0, 6).map((p) => (
-                  <Link key={p.id} href={p.href} className="group overflow-hidden rounded-[20px] border border-white/[0.07] bg-[#0e0e0e] transition hover:border-white/[0.14]">
-                    <div className="relative h-36 overflow-hidden">
-                      {p.coverImage ? (
-                        <Image src={p.coverImage} alt={p.title} fill sizes="(max-width: 640px) 100vw, 33vw" className="object-cover transition duration-700 group-hover:scale-105" />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center bg-white/[0.04]">
-                          <Package className="h-10 w-10 text-white/15" />
-                        </div>
-                      )}
-                      <span className="absolute left-3 top-3 rounded-full bg-black/45 px-2 py-0.5 text-[10px] font-semibold uppercase ring-1 ring-white/10 backdrop-blur-md">
-                        {(p.framework && p.framework[0]) || "Script"}
-                      </span>
-                    </div>
-                    <div className="p-4">
-                      <div className="truncate text-sm font-semibold">{p.title}</div>
-                      <div className="mt-1 flex items-center justify-between">
-                        <span className="text-base font-bold">{p.free || p.price === 0 ? "Free" : `$${Number(p.price).toFixed(2)}`}</span>
-                        {typeof p.rating === "number" && p.rating > 0 && (
-                          <span className="flex items-center gap-1 text-xs text-white/55">
-                            <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                            {p.rating.toFixed(1)}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </Link>
+                {otherScripts.map((p) => (
+                  <ProductCard key={p.id} product={p} />
                 ))}
               </div>
             ) : (

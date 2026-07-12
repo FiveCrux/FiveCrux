@@ -436,6 +436,11 @@ export default function PropDetailPage() {
               <div className="mt-4 flex flex-col gap-2.5">
                 {renderPrimaryCta()}
               </div>
+              {prop.purchaseCheckFailed && !prop.hasPurchased && (
+                <p className="mt-2 text-center text-[12px] text-amber-400/80">
+                  Couldn&apos;t verify your purchase status — if you already own this, refresh before buying again.
+                </p>
+              )}
               <p className="mt-3 flex items-center justify-center gap-1.5 text-[12px] text-white/55">
                 <ShieldCheck className="h-3.5 w-3.5" /> Instant delivery · escrow protected
               </p>

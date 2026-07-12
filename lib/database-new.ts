@@ -231,31 +231,30 @@ async function getNextSlotNumber(userId: string): Promise<number> {
 // Get count of active slots for a user
 // Counts the total number of slots across all active rows (sum of slotNumber array lengths)
 export async function getUserActiveAdSlots(userId: string): Promise<number> {
-  try {
-    const activeSlots = await db
-      .select()
-      .from(userAdSlots)
-      .where(
-        and(
-          eq(userAdSlots.userId, userId),
-          eq(userAdSlots.status, 'active')
-        )
-      );
-    
-    // Sum up the total number of slots from all rows
-    // Each row contains an array of slot numbers, so we count the total length
-    let totalSlots = 0;
-    for (const slot of activeSlots) {
-      const slotNumbers = (slot.slotNumber || []) as number[];
-      totalSlots += slotNumbers.length;
-    }
-    
-    return totalSlots;
-  } catch (error) {
-    console.error('Error in getUserActiveAdSlots:', error);
-    // Return 0 if table doesn't exist or query fails
-    return 0;
+  // NOTE: deliberately no try/catch-to-0 here. A query failure is NOT the same
+  // as "you own zero slots" — a paying customer whose slot lookup transiently
+  // fails must not be told their purchased slot is "Locked"/unpurchased. Let
+  // the error propagate so the API route returns a real error instead of a
+  // false 200 with activeSlots: 0.
+  const activeSlots = await db
+    .select()
+    .from(userAdSlots)
+    .where(
+      and(
+        eq(userAdSlots.userId, userId),
+        eq(userAdSlots.status, 'active')
+      )
+    );
+
+  // Sum up the total number of slots from all rows
+  // Each row contains an array of slot numbers, so we count the total length
+  let totalSlots = 0;
+  for (const slot of activeSlots) {
+    const slotNumbers = (slot.slotNumber || []) as number[];
+    totalSlots += slotNumbers.length;
   }
+
+  return totalSlots;
 }
 
 // Create ad slots with proper slot numbers and unique IDs (one-time purchase)
@@ -664,6 +663,7 @@ export type ScriptFilters = {
   framework?: string | string[];
   status?: string;
   featured?: boolean;
+  sellerId?: string;
   limit?: number;
   offset?: number;
 }
@@ -691,7 +691,11 @@ export async function getScripts(filters?: ScriptFilters) {
     if (filters?.featured) {
       conditions.push(eq(approvedScripts.featured, true));
     }
-    
+
+    if (filters?.sellerId) {
+      conditions.push(eq(approvedScripts.sellerId, filters.sellerId));
+    }
+
     const query = conditions.length > 0
       ? baseQuery.where(and(...conditions))
       : baseQuery;
@@ -1810,11 +1814,16 @@ export async function getGiveawayById(id: number, session?: any) {
     }
     
     // No fallback to legacy table - all giveaways should be in approval system tables
-    
+
     return null;
   } catch (error) {
+    // Don't swallow real query failures as "not found" — an entrant checking
+    // "did I win" (often right after a prize draw) deserves a real error, not
+    // a false 404 indistinguishable from the giveaway genuinely not existing.
+    // The API route (app/api/giveaways/[id]/route.ts) already has its own
+    // try/catch that turns this into a proper 500.
     console.error('Error in getGiveawayById:', error);
-    return null;
+    throw error;
   }
 }
 
@@ -3032,28 +3041,25 @@ async function getNextFeaturedScriptSlotNumber(userId: string): Promise<number> 
 
 // Get count of active featured script slots for a user
 export async function getUserActiveFeaturedScriptSlots(userId: string): Promise<number> {
-  try {
-    const activeSlots = await db
-      .select()
-      .from(userFeaturedScriptSlots)
-      .where(
-        and(
-          eq(userFeaturedScriptSlots.featuredUserId, userId),
-          eq(userFeaturedScriptSlots.featuredSlotStatus, 'active')
-        )
-      );
-    
-    let totalSlots = 0;
-    for (const slot of activeSlots) {
-      const slotNumbers = (slot.featuredSlotNumber || []) as number[];
-      totalSlots += slotNumbers.length;
-    }
-    
-    return totalSlots;
-  } catch (error) {
-    console.error('Error in getUserActiveFeaturedScriptSlots:', error);
-    return 0;
+  // See getUserActiveAdSlots — no catch-to-0: a query failure must not be
+  // reported to a paying customer as "you own zero slots".
+  const activeSlots = await db
+    .select()
+    .from(userFeaturedScriptSlots)
+    .where(
+      and(
+        eq(userFeaturedScriptSlots.featuredUserId, userId),
+        eq(userFeaturedScriptSlots.featuredSlotStatus, 'active')
+      )
+    );
+
+  let totalSlots = 0;
+  for (const slot of activeSlots) {
+    const slotNumbers = (slot.featuredSlotNumber || []) as number[];
+    totalSlots += slotNumbers.length;
   }
+
+  return totalSlots;
 }
 
 // Create featured script slots with proper slot numbers and unique IDs
@@ -3507,11 +3513,15 @@ export async function getCategories(opts?: { home?: boolean; appliesTo?: 'script
   const conds = [eq(categories.isActive, true)];
   if (opts?.home) conds.push(eq(categories.showOnHome, true));
   if (opts?.appliesTo) conds.push(inArray(categories.appliesTo, [opts.appliesTo, 'both']));
-  return db
+  const rows = await db
     .select()
     .from(categories)
     .where(and(...conds))
     .orderBy(opts?.home ? asc(categories.homeOrder) : asc(categories.sortOrder), asc(categories.name));
+  // "maps" duplicates "mlo" (same content, two category rows) — hide it from every
+  // public-facing list (nav, filters, submit form) until the rows are merged in the
+  // DB. Kept out of getAllCategories() so admin can still see/manage it.
+  return rows.filter((c) => c.slug !== 'maps');
 }
 
 /** ALL categories incl. inactive — for the admin panel. */
@@ -3794,6 +3804,16 @@ export async function activateSideBanner(
   const booking = await getSideBannerBooking(bookingId);
   if (!booking) return { activated: false };
   if (booking.status === 'active') return { activated: true }; // idempotent
+  // Only a still-'reserved' hold may be promoted to active. A booking that's
+  // already 'cancelled' or 'expired' must NOT be silently resurrected by a
+  // late/duplicate/replayed webhook — e.g. it may have been cancelled because
+  // ITS OWN order was refunded, or the hold lapsed and the position was
+  // legitimately re-sold to someone else. The customer was still charged, so
+  // this is the same "can't honor it" outcome as the position-taken case.
+  if (booking.status !== 'reserved') {
+    console.error('activateSideBanner: booking is not reserved (status=%s), refusing to resurrect it — flagging refund', booking.status, bookingId);
+    return { activated: false, needsRefund: true };
+  }
   const weeks = booking.durationWeeks || 1;
   const now = new Date();
   const endDate = new Date(now.getTime() + weeks * 7 * 24 * 60 * 60 * 1000);

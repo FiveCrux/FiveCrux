@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/auth"
-import { getUserActiveAdSlots, createAdSlots, getUserAdSlots } from "@/lib/database-new"
+import { getUserActiveAdSlots, getUserAdSlots } from "@/lib/database-new"
 import { pendingAds, approvedAds } from "@/lib/db/schema"
 import { db } from "@/lib/db/client"
 import { isNotNull } from "drizzle-orm"
@@ -62,77 +62,10 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST - Create new slots after a completed one-time payment
-export async function POST(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions)
-    
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
-    const body = await request.json()
-    const { slotsToAdd, orderRefIds, packageId, durationMonths } = body
-
-    // Validation
-    if (typeof slotsToAdd !== 'number' || slotsToAdd <= 0 || !Number.isInteger(slotsToAdd)) {
-      return NextResponse.json({
-        error: "Invalid slots count. Must be a positive integer"
-      }, { status: 400 })
-    }
-
-    if (!Array.isArray(orderRefIds) || orderRefIds.length !== slotsToAdd) {
-      return NextResponse.json({
-        error: "Order reference IDs array must match slots count"
-      }, { status: 400 })
-    }
-
-    // Validate all order reference IDs are strings
-    if (!orderRefIds.every((id: unknown) => typeof id === 'string' && id.length > 0)) {
-      return NextResponse.json({
-        error: "All order reference IDs must be non-empty strings"
-      }, { status: 400 })
-    }
-
-    // Validate package ID
-    if (!packageId || !['starter', 'premium', 'executive'].includes(packageId)) {
-      return NextResponse.json({ 
-        error: "Invalid package ID. Must be starter, premium, or executive" 
-      }, { status: 400 })
-    }
-
-    // Validate duration
-    if (typeof durationMonths !== 'number' || ![1, 3, 6, 12].includes(durationMonths)) {
-      return NextResponse.json({ 
-        error: "Invalid duration. Must be 1, 3, 6, or 12 months" 
-      }, { status: 400 })
-    }
-
-    const userId = (session.user as any).id
-    
-    // Create a single slot row with all slot unique IDs in slotNumber array
-    // endDate will be calculated as purchaseDate + durationMonths
-    const createdSlot = await createAdSlots(
-      userId,
-      slotsToAdd,
-      orderRefIds,
-      packageId,
-      durationMonths
-    );
-
-    const activeSlots = await getUserActiveAdSlots(userId)
-    
-    return NextResponse.json({ 
-      success: true, 
-      activeSlots,
-      slots: [createdSlot], // Wrap in array for backward compatibility
-      message: `Successfully purchased ${slotsToAdd} ad slot(s)` 
-    })
-  } catch (error) {
-    console.error("Error creating ad slots:", error)
-    return NextResponse.json({ 
-      error: error instanceof Error ? error.message : "Failed to create ad slots" 
-    }, { status: 500 })
-  }
-}
+// POST removed (SECURITY): this endpoint let ANY logged-in user create real ad
+// slots by POSTing arbitrary orderRefIds/packageId/duration — nothing verified
+// a real, paid Tebex order existed for them. Provisioning now happens
+// exclusively via the Tebex webhook (app/api/tebex/webhook/route.ts), which is
+// the only place that has actually confirmed payment. No legitimate frontend
+// caller used this POST (profile page only GETs this route).
 

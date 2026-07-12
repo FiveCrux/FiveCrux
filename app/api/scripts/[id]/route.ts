@@ -94,7 +94,12 @@ export async function PATCH(
         youtubeVideoLink: body.youtube_video_link,
         last_updated: body.last_updated,
         status: "pending",
-        featured: body.featured,
+        // SECURITY: "featured" is paid placement (sold via featured-script
+        // slots) — only an admin/founder may change it here. A regular owner
+        // editing their own script keeps whatever featured value it already
+        // had; body.featured is ignored for them (previously this endpoint
+        // let ANY owner set featured:true on their own script for free).
+        featured: isAdmin ? body.featured : currentScript.featured,
         free: body.free || false,
         hidePrice: body.hidePrice || false,
         tebexStoreToken: body.tebexStoreToken,
@@ -125,7 +130,12 @@ export async function PATCH(
         youtubeVideoLink: body.youtube_video_link,
         last_updated: body.last_updated,
         status: "pending",
-        featured: body.featured,
+        // SECURITY: "featured" is paid placement (sold via featured-script
+        // slots) — only an admin/founder may change it here. A regular owner
+        // editing their own script keeps whatever featured value it already
+        // had; body.featured is ignored for them (previously this endpoint
+        // let ANY owner set featured:true on their own script for free).
+        featured: isAdmin ? body.featured : currentScript.featured,
         free: body.free || false,
         hidePrice: body.hidePrice || false,
         tebexStoreToken: body.tebexStoreToken,
@@ -155,7 +165,12 @@ export async function PATCH(
         cover_image: body.cover_image,
         youtubeVideoLink: body.youtube_video_link,
         last_updated: body.last_updated,
-        featured: body.featured,
+        // SECURITY: "featured" is paid placement (sold via featured-script
+        // slots) — only an admin/founder may change it here. A regular owner
+        // editing their own script keeps whatever featured value it already
+        // had; body.featured is ignored for them (previously this endpoint
+        // let ANY owner set featured:true on their own script for free).
+        featured: isAdmin ? body.featured : currentScript.featured,
         free: body.free || false,
         hidePrice: body.hidePrice || false,
         tebexStoreToken: body.tebexStoreToken,

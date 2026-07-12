@@ -19,8 +19,12 @@ export async function GET() {
       { headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300" } }
     );
   } catch (error) {
+    // A real fetch failure must not read as "no props exist" — a 200 with an
+    // empty array is indistinguishable from a genuinely empty catalog, and it
+    // also defeats React Query's normal "keep last good data on error"
+    // protection (which only kicks in when the request actually fails).
     console.error("Error fetching props:", error);
-    return NextResponse.json({ props: [] }, { status: 200 });
+    return NextResponse.json({ error: "Failed to fetch props" }, { status: 500 });
   }
 }
 

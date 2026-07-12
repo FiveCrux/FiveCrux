@@ -27,9 +27,11 @@ export default function SideBannersManager() {
   const load = () => {
     setLoading(true)
     fetch("/api/side-banners/mine")
-      .then((r) => (r.ok ? r.json() : { bookings: [] }))
-      .then((d) => setItems(Array.isArray(d.bookings) ? d.bookings : []))
-      .catch(() => setItems([]))
+      .then((r) => (r.ok ? r.json() : null))
+      // On failure, keep whatever was last successfully loaded instead of
+      // wiping a real active booking to "no active side-banner slots".
+      .then((d) => { if (d && Array.isArray(d.bookings)) setItems(d.bookings) })
+      .catch(() => {})
       .finally(() => setLoading(false))
   }
   useEffect(load, [])
