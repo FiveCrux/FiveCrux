@@ -549,6 +549,7 @@ export default function SubmitScriptPage() {
     .filter(Boolean) as string[]
   const previewCategoryLabel = scriptCategories.find((c) => c.value === formData.category)?.label
   const previewSellerInitial = (formData.sellerName || "?").trim().charAt(0).toUpperCase() || "?"
+  const previewSellerImage = session?.user?.image || ""
 
   // ---- Shared field className matching the approved Live Preview design ----
   const fieldClass =
@@ -1340,9 +1341,17 @@ export default function SubmitScriptPage() {
                   </div>
 
                   <div className="mt-4 flex items-center gap-2.5 border-t border-white/[0.06] pt-4">
-                    <span className="grid h-7 w-7 place-items-center rounded-full bg-gradient-to-br from-orange-500 to-amber-400 text-[11px] font-black text-black">
-                      {previewSellerInitial}
-                    </span>
+                    {previewSellerImage ? (
+                      <img
+                        src={previewSellerImage}
+                        alt={formData.sellerName || "Seller"}
+                        className="h-7 w-7 rounded-full object-cover"
+                      />
+                    ) : (
+                      <span className="grid h-7 w-7 place-items-center rounded-full bg-gradient-to-br from-orange-500 to-amber-400 text-[11px] font-black text-black">
+                        {previewSellerInitial}
+                      </span>
+                    )}
                     <div className="leading-tight">
                       <div className="flex items-center gap-1 text-[13px] font-semibold">
                         {formData.sellerName || "Your Name"}
