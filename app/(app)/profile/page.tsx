@@ -2458,7 +2458,7 @@ export default function ProfilePage() {
           </Tabs>
         </div>
       </div>
-      <Footer />
+      {/* <Footer /> */}
 
       {/* Ads Form Dialog */}
       <AdsForm
