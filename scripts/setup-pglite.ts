@@ -17,7 +17,7 @@ import { PGlite } from "@electric-sql/pglite"
 import { drizzle } from "drizzle-orm/pglite"
 import { migrate } from "drizzle-orm/pglite/migrator"
 import * as schema from "../lib/db/schema"
-import { DEV_USERS } from "../lib/dev-auth"
+import { DEV_USERS } from "../lib/dev-users"
 
 const DATA_DIR = process.env.PGLITE_DIR || "./.pglite"
 
