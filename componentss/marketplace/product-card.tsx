@@ -23,6 +23,8 @@ export interface MarketProduct {
   /** Seller-selected currency symbol (e.g. "€"); falls back to the app default. */
   currencySymbol?: string
   href: string
+  /** Detail-page view count — used to sort the "Most Viewed" home row. */
+  viewCount?: number
 }
 
 // Deterministic gradient palette used as a cover fallback when a product has no image.

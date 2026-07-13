@@ -88,6 +88,7 @@ function mapScript(item: any): MarketProduct {
     currencySymbol: item.currency_symbol || item.currencySymbol,
     category: item.category,
     href: `/script/${item.id}`,
+    viewCount: Number(item.view_count ?? item.viewCount ?? 0),
   }
 }
 
@@ -348,10 +349,14 @@ export function HomeClient({
     // When there are none, the hero gracefully shows just the "get featured here"
     // promo slide, and the Row component hides the empty carousel. The first 5
     // featured go to the hero; the row skips those to avoid duplicating them.
+    // "Most Viewed" is real: sorted by each script's actual detail-page view
+    // count (view_count), not just a copy of the newest-first list. This is an
+    // all-time total (no per-week tracking exists yet), hence the label.
+    const mostViewed = [...liveScripts].sort((a, b) => (b.viewCount ?? 0) - (a.viewCount ?? 0))
     return {
       heroItems: liveFeatured.slice(0, 5),
       featured: liveFeatured.length > 5 ? liveFeatured.slice(5, 15) : [],
-      trending: liveScripts.slice(0, 12),
+      trending: mostViewed.slice(0, 12),
       newReleases: liveScripts.slice(0, 12), // /api/scripts is ordered newest-first
       free: liveScripts.filter((s) => s.free).slice(0, 12),
     }
@@ -409,7 +414,7 @@ export function HomeClient({
       {/* Discovery rows */}
       <main className="mx-auto mt-8 w-full space-y-10 px-2.5">
         <Row title="Featured" icon={<Sparkles className="h-5 w-5 text-yellow-400" />} items={rows.featured} seeAllHref="/scripts?featured=true" />
-        <Row title="Trending This Week" emoji="🔥" items={rows.trending} seeAllHref="/scripts" />
+        <Row title="Most Viewed" emoji="🔥" items={rows.trending} seeAllHref="/scripts" />
         <Row title="New Releases" icon={<Zap className="h-5 w-5 text-orange-400" />} items={rows.newReleases} seeAllHref="/scripts" />
         <Row title="Free Assets" icon={<Gift className="h-5 w-5 text-green-400" />} items={rows.free} seeAllHref="/scripts?free=true" />
         {categoryRows.map(({ cat, items }) => {
