@@ -667,7 +667,11 @@ export default function ProfilePage() {
             className="lg:grid lg:grid-cols-[260px_1fr] lg:gap-8"
           >
             {/* ============ SIDEBAR ============ */}
-            <aside className="lg:sticky lg:top-[88px] lg:h-fit">
+            {/* Sticky to the top while the main content scrolls; if the
+                sidebar's own content (profile card + full nav) is taller than
+                the viewport, it scrolls independently within itself instead of
+                getting cut off or dragging the whole page. */}
+            <aside className="lg:sticky lg:top-[88px] lg:h-fit lg:max-h-[calc(100vh-104px)] lg:overflow-y-auto">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}

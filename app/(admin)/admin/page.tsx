@@ -1072,7 +1072,7 @@ export default function AdminPage() {
             <aside
               className={`${
                 mobileNavOpen ? "flex" : "hidden"
-              } absolute z-20 h-[calc(100vh-4rem)] w-60 flex-col border-r border-white/[0.06] bg-[#0a0a0a] px-3 py-5 lg:sticky lg:top-16 lg:flex lg:shrink-0 lg:bg-transparent`}
+              } absolute z-20 h-[calc(100vh-4rem)] w-60 flex-col overflow-y-auto border-r border-white/[0.06] bg-[#0a0a0a] px-3 py-5 lg:sticky lg:top-16 lg:flex lg:shrink-0 lg:bg-transparent`}
             >
               <div className="px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/55">
                 Workspace
