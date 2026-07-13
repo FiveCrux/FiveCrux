@@ -207,7 +207,10 @@ export default function CartCheckoutPanel({ total }: CartCheckoutPanelProps) {
           )}
           <div className="flex items-center justify-between">
             <dt className="text-white/50">Sales Tax</dt>
-            <dd className="font-semibold tabular-nums text-white/60">€0.00</dd>
+            {/* Tebex computes real location-based sales tax, but only once a
+                real basket exists — this store requires the buyer to log in
+                with Tebex before that's possible, so it's not known here. */}
+            <dd className="text-xs font-medium text-white/45">Calculated at checkout</dd>
           </div>
         </dl>
 
@@ -218,7 +221,7 @@ export default function CartCheckoutPanel({ total }: CartCheckoutPanelProps) {
             <div className="text-[11px] uppercase tracking-[0.16em] text-white/55">
               {appliedMode === "coupon" ? "Before discount" : "Total due"}
             </div>
-            <div className="text-xs text-white/55">EUR · one-time</div>
+            <div className="text-xs text-white/55">EUR · one-time · excl. tax</div>
           </div>
           <div className="text-[38px] font-extrabold leading-none tracking-tight tabular-nums text-white">
             €{payableAmount.toFixed(2)}
