@@ -261,8 +261,12 @@ async function main() {
     // Added 2026-07-13 per Bandookchi's category spec (Discord): Script + Peds.
     { id: 8007, name: "Script", slug: "script", icon: "FileCode2", appliesTo: "scripts", isActive: true, showOnHome: true, homeOrder: 6, sortOrder: 6 },
     { id: 8008, name: "Peds", slug: "peds", icon: "PersonStanding", appliesTo: "scripts", isActive: true, showOnHome: true, homeOrder: 7, sortOrder: 7 },
+    // "Other" was already a static navbar catch-all link (/scripts?category=other)
+    // but had no real category row — sellers could never actually select it at
+    // submission time, so it always showed an empty page. Added for real.
+    { id: 8009, name: "Other", slug: "other", icon: "Tag", appliesTo: "both", isActive: true, showOnHome: false, homeOrder: 8, sortOrder: 8 },
   ]).onConflictDoNothing()
-  console.log("✓ 7 browse categories")
+  console.log("✓ 8 browse categories")
 
   // ---- Frameworks (dynamic, admin-managed) ----------------------------------
   await db.insert(schema.frameworks).values([
