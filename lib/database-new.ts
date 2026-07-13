@@ -1574,6 +1574,8 @@ export async function createGiveawayRequirement(requirementData: NewGiveawayRequ
     ...requirementData,
     id: genId(), // app-generated integer PK (prod has manual PKs)
     giveawayId: requirementData.giveawayId || (requirementData as any).giveaway_id,
+    // Optional per-prize link (NULL = giveaway-level requirement)
+    prizeId: (requirementData as any).prizeId ?? (requirementData as any).prize_id ?? null,
     // Cached Discord server info (Fivegift-style chip on the detail page)
     guildId: (requirementData as any).guildId ?? (requirementData as any).guild_id ?? null,
     serverName: (requirementData as any).serverName ?? (requirementData as any).server_name ?? null,
@@ -1682,6 +1684,8 @@ export async function getGiveawayById(id: number, session?: any) {
       const prizesWithWinners = prizes.map((prize) => ({
         ...prize,
         winners: winnersByPrize.get(prize.id) || [],
+        // Per-prize requirements (tasks specific to this prize).
+        requirements: requirements.filter((r) => r.prizeId === prize.id),
       }));
       
       // Count actual entries from giveaway_entries table
@@ -1718,7 +1722,7 @@ export async function getGiveawayById(id: number, session?: any) {
         creatorName: formatDisplayName(giveaway.creatorName) || giveaway.creatorName,
         entriesCount: actualEntryCount, // Use actual count instead of stored count
         userEntry, // Include user's entry for points display
-        requirements,
+        requirements: requirements.filter((r) => r.prizeId == null),
         prizes: prizesWithWinners,
         creator_image: creatorImage,
         creator_roles: creatorRoles,
@@ -1746,6 +1750,8 @@ export async function getGiveawayById(id: number, session?: any) {
       const prizesWithWinners = prizes.map((prize) => ({
         ...prize,
         winners: winnersByPrize.get(prize.id) || [],
+        // Per-prize requirements (tasks specific to this prize).
+        requirements: requirements.filter((r) => r.prizeId === prize.id),
       }));
       
       // Count actual entries from giveaway_entries table
@@ -1769,7 +1775,7 @@ export async function getGiveawayById(id: number, session?: any) {
         ...giveaway,
         creatorName: formatDisplayName(giveaway.creatorName) || giveaway.creatorName,
         entriesCount: actualEntryCount, // Use actual count instead of stored count
-        requirements,
+        requirements: requirements.filter((r) => r.prizeId == null),
         prizes: prizesWithWinners,
         creator_image: creatorImage,
         creator_roles: creatorRoles,
@@ -1797,6 +1803,8 @@ export async function getGiveawayById(id: number, session?: any) {
       const prizesWithWinners = prizes.map((prize) => ({
         ...prize,
         winners: winnersByPrize.get(prize.id) || [],
+        // Per-prize requirements (tasks specific to this prize).
+        requirements: requirements.filter((r) => r.prizeId === prize.id),
       }));
       
       // Count actual entries from giveaway_entries table
@@ -1820,7 +1828,7 @@ export async function getGiveawayById(id: number, session?: any) {
         ...giveaway,
         creatorName: formatDisplayName(giveaway.creatorName) || giveaway.creatorName,
         entriesCount: actualEntryCount, // Use actual count instead of stored count
-        requirements,
+        requirements: requirements.filter((r) => r.prizeId == null),
         prizes: prizesWithWinners,
         creator_image: creatorImage,
         creator_roles: creatorRoles,

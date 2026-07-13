@@ -352,11 +352,19 @@ export function GiveawayDetailClient({
       { position: 2, name: "Second Prize", description: "Great second prize", value: "$150", winner: null },
       { position: 3, name: "Third Prize", description: "Nice third prize", value: "$50", winner: null },
     ],
-    requirements: giveaway?.requirements || [
-      { id: 1, description: "Join Discord Server", type: "discord", points: 10, required: true, link: "https://discord.gg/test" },
-      { id: 2, description: "Follow on Twitter", type: "follow", points: 5, required: false, link: "https://twitter.com/test" },
-      { id: 3, description: "Share Giveaway", type: "share", points: 15, required: true, link: null },
-    ],
+    // Union of giveaway-level (legacy) requirements + every prize's own
+    // requirements — the entry task list must show ALL tasks to complete.
+    requirements: (() => {
+      const legacy = giveaway?.requirements || []
+      const perPrize = (giveaway?.prizes || []).flatMap((p: any) => p.requirements || [])
+      const all = [...legacy, ...perPrize]
+      if (all.length > 0) return all
+      return [
+        { id: 1, description: "Join Discord Server", type: "discord", points: 10, required: true, link: "https://discord.gg/test" },
+        { id: 2, description: "Follow on Twitter", type: "follow", points: 5, required: false, link: "https://twitter.com/test" },
+        { id: 3, description: "Share Giveaway", type: "share", points: 15, required: true, link: null },
+      ]
+    })(),
     images: giveaway?.images || [],
     videos: giveaway?.videos || [],
     cover_image: giveaway?.coverImage || (giveaway?.images && giveaway.images[0]) || "/placeholder.jpg",
@@ -1366,6 +1374,7 @@ export function GiveawayDetailClient({
                   const hasPrizeValue =
                     prize.value && prize.value !== "0" && prize.value !== "$" && prize.value !== "0.00"
                   const prizeDiscordIds: string[] = prize.discordIds || prize.discord_ids || []
+                  const prizeReqs: any[] = prize.requirements || []
                   const rowContent = (
                     <>
                       {isGiveawayEnded && (
@@ -1430,6 +1439,24 @@ export function GiveawayDetailClient({
                               <Copy className="h-3 w-3" /> {id}
                             </button>
                           ))}
+                        </div>
+                      )}
+
+                      {/* Tasks specific to THIS prize */}
+                      {prizeReqs.length > 0 && (
+                        <div className="flex flex-wrap items-center gap-1.5 px-4 pb-3 -mt-1">
+                          <span className="text-[11px] text-white/45">Tasks:</span>
+                          {prizeReqs.map((req: any) => {
+                            const label = req.type === "discord" ? "Join Discord" : req.type === "youtube" ? "Subscribe YouTube" : (req.description || "Task")
+                            return (
+                              <span
+                                key={req.id}
+                                className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 text-xs text-white/55"
+                              >
+                                {req.type === "discord" ? "💬" : req.type === "youtube" ? "🎥" : "✅"} {label}
+                              </span>
+                            )
+                          })}
                         </div>
                       )}
 

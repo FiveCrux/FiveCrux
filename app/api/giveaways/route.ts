@@ -42,36 +42,41 @@ export async function POST(request: NextRequest) {
       status: approvalStatus as any,
     })
 
-    // Create requirements. For Discord requirements, resolve the server's
-    // id/name/icon from the invite link once, here, and cache it on the row so
-    // the detail page can render the server chip without hitting Discord again.
-    if (requirements && requirements.length > 0) {
-      for (const requirement of requirements) {
-        let guild: Awaited<ReturnType<typeof resolveGuildInfo>> | null = null
-        if (isDiscordRequirement(requirement.type)) {
-          guild = await resolveGuildInfo(requirement.link || requirement.description)
-        }
-        await createGiveawayRequirement({
-          ...requirement,
-          giveaway_id: giveawayId,
-          // Keep `link` populated (the invite/URL) so entry verification works;
-          // the form historically stores it in `description`.
-          link: requirement.link || requirement.description || null,
-          guild_id: guild?.guildId ?? null,
-          server_name: guild?.serverName ?? null,
-          server_icon: guild?.serverIcon ?? null,
-          invite_code: guild?.inviteCode ?? null,
-        })
+    // Create one requirement row (resolving Discord server info from the invite
+    // link once, cached on the row). `prizeId` is null for giveaway-level tasks
+    // or the owning prize's id for per-prize tasks.
+    const createReq = async (requirement: any, prizeId: number | null) => {
+      let guild: Awaited<ReturnType<typeof resolveGuildInfo>> | null = null
+      if (isDiscordRequirement(requirement.type)) {
+        guild = await resolveGuildInfo(requirement.link || requirement.description)
       }
+      await createGiveawayRequirement({
+        ...requirement,
+        giveaway_id: giveawayId,
+        prize_id: prizeId,
+        link: requirement.link || requirement.description || null,
+        guild_id: guild?.guildId ?? null,
+        server_name: guild?.serverName ?? null,
+        server_icon: guild?.serverIcon ?? null,
+        invite_code: guild?.inviteCode ?? null,
+      })
     }
 
-    // Create prizes
+    // Giveaway-level requirements (legacy / not tied to a specific prize).
+    if (requirements && requirements.length > 0) {
+      for (const requirement of requirements) await createReq(requirement, null)
+    }
+
+    // Create prizes, and for each prize create its own nested requirements
+    // (per-prize tasks) linked via prizeId.
     if (prizes && prizes.length > 0) {
       for (const prize of prizes) {
-        await createGiveawayPrize({
+        const prizeId = await createGiveawayPrize({
           ...prize,
           giveaway_id: giveawayId,
         })
+        const prizeReqs = Array.isArray(prize.requirements) ? prize.requirements : []
+        for (const requirement of prizeReqs) await createReq(requirement, prizeId ?? null)
       }
     }
 

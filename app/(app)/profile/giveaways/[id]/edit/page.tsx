@@ -99,8 +99,9 @@ export default function EditGiveawayPage() {
   // ON = each requirement joined earns 1 point, more points = higher win chance.
   const [usePoints, setUsePoints] = useState(false)
 
+  // Flat list, each requirement tagged with its owning prize's local id.
   const [requirements, setRequirements] = useState([
-    { id: 1, type: "discord", description: "" },
+    { id: 1, type: "discord", description: "", prizeId: 1 },
   ])
 
   // Live "which server is this" preview as the creator types a Discord invite —
@@ -205,18 +206,12 @@ export default function EditGiveawayPage() {
           // Prefill point-system mode
           setUsePoints(giveaway.use_points ?? giveaway.usePoints ?? false)
 
-          // Prefill requirements
-          if (giveaway.requirements && giveaway.requirements.length > 0) {
-            setRequirements(giveaway.requirements.map((req: any, index: number) => ({
-              id: index + 1,
-              type: req.type || "discord",
-              description: req.description || "",
-            })))
-          }
-
-          // Prefill prizes
+          // Prefill prizes + their per-prize requirements. Prizes get local ids
+          // 1..N; each prize's own requirements (giveaway.prizes[i].requirements)
+          // are flattened into the requirements state tagged with that local id.
+          // Any legacy giveaway-level requirements are attached to the 1st prize.
           if (giveaway.prizes && giveaway.prizes.length > 0) {
-            setPrizes(giveaway.prizes.map((prize: any, index: number) => {
+            const mappedPrizes = giveaway.prizes.map((prize: any, index: number) => {
               const existingIds: string[] = prize.discordIds || prize.discord_ids || []
               return {
                 id: index + 1,
@@ -225,7 +220,34 @@ export default function EditGiveawayPage() {
                 value: (prize.value && prize.value !== "0" ? prize.value : "") || "",
                 discordIds: existingIds.length > 0 ? existingIds : [""],
               }
+            })
+            setPrizes(mappedPrizes)
+
+            let counter = 0
+            const flatReqs: { id: number; type: string; description: string; prizeId: number }[] = []
+            giveaway.prizes.forEach((prize: any, index: number) => {
+              const preqs: any[] = prize.requirements || []
+              preqs.forEach((req) => flatReqs.push({
+                id: ++counter,
+                type: req.type || "discord",
+                description: req.description || req.link || "",
+                prizeId: index + 1,
+              }))
+            })
+            // Legacy giveaway-level requirements → attach to the first prize.
+            ;(giveaway.requirements || []).forEach((req: any) => flatReqs.push({
+              id: ++counter,
+              type: req.type || "discord",
+              description: req.description || req.link || "",
+              prizeId: 1,
             }))
+            // Ensure every prize has at least one (empty) requirement row.
+            mappedPrizes.forEach((p: { id: number }) => {
+              if (!flatReqs.some((r) => r.prizeId === p.id)) {
+                flatReqs.push({ id: ++counter, type: "discord", description: "", prizeId: p.id })
+              }
+            })
+            setRequirements(flatReqs.length ? flatReqs : [{ id: 1, type: "discord", description: "", prizeId: 1 }])
           }
 
           // Prefill media
@@ -305,9 +327,11 @@ export default function EditGiveawayPage() {
     { value: "youtube", label: "Subscribe Youtube", icon: "🎥" }
   ]
 
-  const addRequirement = () => {
-    const newId = Math.max(...requirements.map((r) => r.id)) + 1
-    setRequirements([...requirements, { id: newId, type: "discord", description: "" }])
+  const addRequirement = (prizeId: number) => {
+    setRequirements((prev) => [
+      ...prev,
+      { id: (prev.length ? Math.max(...prev.map((r) => r.id)) : 0) + 1, type: "discord", description: "", prizeId },
+    ])
   }
 
   const removeRequirement = (id: number) => {
@@ -321,10 +345,15 @@ export default function EditGiveawayPage() {
   const addPrize = () => {
     const newId = Math.max(...prizes.map((p) => p.id)) + 1
     setPrizes([...prizes, { id: newId, name: "", numberOfWinners: 1, value: "", discordIds: [""] }])
+    setRequirements((prev) => [
+      ...prev,
+      { id: (prev.length ? Math.max(...prev.map((r) => r.id)) : 0) + 1, type: "discord", description: "", prizeId: newId },
+    ])
   }
 
   const removePrize = (id: number) => {
     setPrizes(prizes.filter((p) => p.id !== id))
+    setRequirements((prev) => prev.filter((r) => r.prizeId !== id))
   }
 
   const updatePrize = (id: number, field: string, value: any) => {
@@ -535,21 +564,33 @@ export default function EditGiveawayPage() {
           rules: [],
           status: "active",
         },
-        // Each requirement earns 1 point. Points-off → all required (must join
-        // everything); points-on → optional, and more joined = higher odds.
-        requirements: requirements.map((r) => ({
-          type: r.type,
-          description: r.description,
-          link: r.description,
-          points: 1,
-          required: !usePoints,
-        })),
+        // Giveaway-level requirements (none in the per-prize model; kept for
+        // backward compat if any requirement has no prizeId).
+        requirements: requirements
+          .filter((r) => r.prizeId == null)
+          .map((r) => ({
+            type: r.type,
+            description: r.description,
+            link: r.description,
+            points: 1,
+            required: !usePoints,
+          })),
+        // Each prize carries its OWN requirements (tasks specific to that prize).
         prizes: prizes.map((p, i) => ({
           name: p.name,
           number_of_winners: p.numberOfWinners || 1,
           position: i + 1,
           value: p.value?.trim() || "0",
           discord_ids: p.discordIds.map((v) => v.trim()).filter(Boolean),
+          requirements: requirements
+            .filter((r) => r.prizeId === p.id)
+            .map((r) => ({
+              type: r.type,
+              description: r.description,
+              link: r.description,
+              points: 1,
+              required: !usePoints,
+            })),
         })),
       };
 
@@ -1073,6 +1114,77 @@ export default function EditGiveawayPage() {
                               Optional — whoever handles this prize&apos;s delivery. Add more than one if multiple people manage it.
                             </p>
                           </div>
+
+                          {/* Per-prize requirements — tasks specific to THIS prize */}
+                          <div className="mt-4 border-t border-white/[0.08] pt-4">
+                            <div className="mb-1 flex items-center gap-2">
+                              <Target className="h-3.5 w-3.5 text-orange-500" />
+                              <h5 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/50">Requirements for this prize</h5>
+                            </div>
+                            <div className="divide-y divide-white/[0.08]">
+                              {requirements.filter((r) => r.prizeId === prize.id).map((requirement) => (
+                                <div key={requirement.id} className="py-3 first:pt-1">
+                                  <div className="mb-2 flex items-center justify-between">
+                                    <Label className="text-white text-sm">Type</Label>
+                                    {requirements.filter((r) => r.prizeId === prize.id).length > 1 && (
+                                      <Button type="button" variant="ghost" size="sm" onClick={() => removeRequirement(requirement.id)} className="h-7 px-2 text-red-400 hover:text-red-300 hover:bg-red-500/10">
+                                        <X className="h-4 w-4" />
+                                      </Button>
+                                    )}
+                                  </div>
+                                  <Select value={requirement.type} onValueChange={(value) => updateRequirement(requirement.id, "type", value)}>
+                                    <SelectTrigger className="bg-white/[0.04] border-white/[0.08] text-white focus:ring-orange-500/40"><SelectValue /></SelectTrigger>
+                                    <SelectContent className="bg-[#0d0d0f] border-white/[0.08] text-white">
+                                      {requirementTypes.map((type) => (
+                                        <SelectItem key={type.value} value={type.value}>{type.icon} {type.label}</SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                  <div className="mt-3">
+                                    <Label className="text-white text-sm">
+                                      {requirement.type === "discord" ? "Discord Server Link" : requirement.type === "youtube" ? "YouTube Channel Link" : "Description"}
+                                    </Label>
+                                    <Input
+                                      type={requirement.type === "youtube" ? "url" : "text"}
+                                      value={requirement.description}
+                                      onChange={(e) => {
+                                        updateRequirement(requirement.id, "description", e.target.value)
+                                        if (errors[`requirement_${requirement.id}_description`]) {
+                                          setErrors((prev) => { const n = { ...prev }; delete n[`requirement_${requirement.id}_description`]; return n })
+                                        }
+                                      }}
+                                      placeholder={requirement.type === "discord" ? "https://discord.gg/your-server" : requirement.type === "youtube" ? "https://youtube.com/@channel or https://youtu.be/..." : "Describe what users need to do..."}
+                                      className={`mt-1 bg-white/[0.04] border-white/[0.08] text-white placeholder-white/30 focus:border-orange-500 focus-visible:ring-orange-500/40 ${errors[`requirement_${requirement.id}_description`] ? 'border-red-500' : ''}`}
+                                    />
+                                    {errors[`requirement_${requirement.id}_description`] && (
+                                      <p className="text-red-400 text-xs mt-1">{errors[`requirement_${requirement.id}_description`]}</p>
+                                    )}
+                                    {requirement.type === "discord" && discordPreviews[requirement.id]?.link === requirement.description && (
+                                      <div className="mt-2.5 flex items-center gap-2.5 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2.5">
+                                        {discordPreviews[requirement.id].loading ? (
+                                          <><Loader2 className="h-4 w-4 animate-spin text-white/40" /><span className="text-xs text-white/50">Looking up server…</span></>
+                                        ) : discordPreviews[requirement.id].serverName ? (
+                                          <>
+                                            {discordPreviews[requirement.id].serverIcon ? (
+                                              <img src={discordPreviews[requirement.id].serverIcon} alt="" className="h-6 w-6 rounded-full" />
+                                            ) : (
+                                              <span className="grid h-6 w-6 place-items-center rounded-full bg-white/10 text-[10px] font-bold text-white/60">{discordPreviews[requirement.id].serverName!.charAt(0).toUpperCase()}</span>
+                                            )}
+                                            <span className="text-sm font-semibold text-white">{discordPreviews[requirement.id].serverName}</span>
+                                          </>
+                                        ) : (
+                                          <span className="text-xs text-red-400">Couldn&apos;t find that server — check the invite link</span>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                            <button type="button" onClick={() => addRequirement(prize.id)} className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-orange-400 hover:text-orange-300">
+                              <Plus className="h-3.5 w-3.5" /> Add requirement
+                            </button>
+                          </div>
                         </motion.div>
                       ))}
                     </div>
@@ -1087,15 +1199,12 @@ export default function EditGiveawayPage() {
                       Add Prize
                     </Button>
 
-                    {/* Entry requirements (own card) */}
+                    {/* Entry settings (giveaway-wide) */}
                     <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5">
                     <div className="flex items-center gap-2.5">
                       <span className="text-orange-500"><Target className="h-4 w-4" /></span>
-                      <h3 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/40">Entry Requirements</h3>
+                      <h3 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/40">Entry Settings</h3>
                       <div className="h-px flex-1 bg-white/[0.07]" />
-                      <Badge className="bg-orange-500/15 text-orange-400 border-orange-500/30 text-[11px] tabular-nums">
-                        {totalPoints} {totalPoints === 1 ? "task" : "tasks"}
-                      </Badge>
                     </div>
 
                     {/* Point system toggle */}
@@ -1112,7 +1221,7 @@ export default function EditGiveawayPage() {
                     </div>
 
                     <div className="divide-y divide-white/[0.08] border-t border-white/[0.08]">
-                      {requirements.map((requirement, index) => (
+                      {requirements.filter((r) => r.prizeId == null).map((requirement, index) => (
                         <motion.div
                           key={requirement.id}
                           className="py-4"
@@ -1122,7 +1231,7 @@ export default function EditGiveawayPage() {
                         >
                           <div className="flex items-center justify-between mb-4">
                             <h4 className="text-white font-medium">Requirement {index + 1}</h4>
-                            {requirements.length > 1 && (
+                            {requirements.filter((r) => r.prizeId == null).length > 1 && (
                               <Button
                                 type="button"
                                 variant="ghost"
@@ -1225,15 +1334,6 @@ export default function EditGiveawayPage() {
                       ))}
                     </div>
 
-                    <Button
-                      type="button"
-                      onClick={addRequirement}
-                      variant="outline"
-                      className="w-full bg-white/[0.02] border-white/[0.08] text-white/70 hover:text-white hover:border-orange-500 hover:bg-orange-500/10"
-                    >
-                      <Plus className="mr-2 h-4 w-4" />
-                      Add Requirement
-                    </Button>
                     </div>
                   </CardContent>
                 </Card>

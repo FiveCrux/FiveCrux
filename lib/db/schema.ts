@@ -388,6 +388,9 @@ export const rejectedGiveaways = pgTable('rejected_giveaways', {
 export const giveawayRequirements = pgTable('giveaway_requirements', {
   id: integer('id').primaryKey().notNull(),
   giveawayId: integer('giveaway_id').notNull(),
+  // When set, this requirement belongs to a specific prize (per-prize tasks).
+  // NULL = legacy giveaway-level requirement that applies to the whole giveaway.
+  prizeId: integer('prize_id'),
   type: text('type').notNull(),
   description: text('description').notNull(),
   points: integer('points').notNull(),

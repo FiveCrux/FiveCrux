@@ -69,8 +69,10 @@ export default function CreateGiveawayPage() {
   // ON = each requirement joined earns 1 point, more points = higher win chance.
   const [usePoints, setUsePoints] = useState(false)
 
+  // Requirements are kept as a flat list but each one is tagged with the
+  // `prizeId` (local prize id) it belongs to, so every prize has its own tasks.
   const [requirements, setRequirements] = useState([
-    { id: 1, type: "discord", description: "" },
+    { id: 1, type: "discord", description: "", prizeId: 1 },
   ])
 
   // Live "which server is this" preview as the creator types a Discord invite —
@@ -181,9 +183,11 @@ export default function CreateGiveawayPage() {
     { value: "youtube", label: "Subscribe Youtube", icon: "🎥" }
   ]
 
-  const addRequirement = () => {
-    const newId = Math.max(...requirements.map((r) => r.id)) + 1
-    setRequirements([...requirements, { id: newId, type: "discord", description: "" }])
+  const addRequirement = (prizeId: number) => {
+    setRequirements((prev) => [
+      ...prev,
+      { id: (prev.length ? Math.max(...prev.map((r) => r.id)) : 0) + 1, type: "discord", description: "", prizeId },
+    ])
   }
 
   const removeRequirement = (id: number) => {
@@ -197,10 +201,17 @@ export default function CreateGiveawayPage() {
   const addPrize = () => {
     const newId = Math.max(...prizes.map((p) => p.id)) + 1
     setPrizes([...prizes, { id: newId, name: "", numberOfWinners: 1, value: "", discordIds: [""] }])
+    // Seed one requirement for the new prize so its card shows a task row.
+    setRequirements((prev) => [
+      ...prev,
+      { id: (prev.length ? Math.max(...prev.map((r) => r.id)) : 0) + 1, type: "discord", description: "", prizeId: newId },
+    ])
   }
 
   const removePrize = (id: number) => {
     setPrizes(prizes.filter((p) => p.id !== id))
+    // A prize's own requirements go with it.
+    setRequirements((prev) => prev.filter((r) => r.prizeId !== id))
   }
 
   const updatePrize = (id: number, field: string, value: any) => {
@@ -356,21 +367,33 @@ export default function CreateGiveawayPage() {
           rules: [],
           status: "active",
         },
-        // Each requirement earns 1 point. Points-off → all required (must join
-        // everything); points-on → optional, and more joined = higher odds.
-        requirements: requirements.map((r) => ({
-          type: r.type,
-          description: r.description,
-          link: r.description,
-          points: 1,
-          required: !usePoints,
-        })),
+        // Giveaway-level requirements (none in the per-prize model, but kept for
+        // backward compatibility if any requirement has no prizeId).
+        requirements: requirements
+          .filter((r) => r.prizeId == null)
+          .map((r) => ({
+            type: r.type,
+            description: r.description,
+            link: r.description,
+            points: 1,
+            required: !usePoints,
+          })),
+        // Each prize carries its OWN requirements (tasks specific to that prize).
         prizes: prizes.map((p, i) => ({
           name: p.name,
           number_of_winners: p.numberOfWinners || 1,
           position: i + 1,
           value: p.value?.trim() || "0",
           discord_ids: p.discordIds.map((v) => v.trim()).filter(Boolean),
+          requirements: requirements
+            .filter((r) => r.prizeId === p.id)
+            .map((r) => ({
+              type: r.type,
+              description: r.description,
+              link: r.description,
+              points: 1,
+              required: !usePoints,
+            })),
         })),
       };
 
@@ -409,7 +432,7 @@ export default function CreateGiveawayPage() {
         })
         setYoutubeVideoLink("")
         setYoutubeLinkError("")
-        setRequirements([{ id: 1, type: "discord", description: "" }])
+        setRequirements([{ id: 1, type: "discord", description: "", prizeId: 1 }])
         setPrizes([{ id: 1, name: "", numberOfWinners: 1, value: "", discordIds: [""] }])
         setErrors({})
         setIsScheduled(false) // Reset scheduling toggle
@@ -947,6 +970,77 @@ export default function CreateGiveawayPage() {
                               Optional — whoever handles this prize&apos;s delivery. Add more than one if multiple people manage it.
                             </p>
                           </div>
+
+                          {/* Per-prize requirements — tasks specific to THIS prize */}
+                          <div className="mt-4 border-t border-white/[0.06] pt-4">
+                            <div className="mb-1 flex items-center gap-2">
+                              <Target className="h-3.5 w-3.5 text-[#f97316]" />
+                              <h5 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/50">Requirements for this prize</h5>
+                            </div>
+                            <div className="divide-y divide-white/[0.06]">
+                              {requirements.filter((r) => r.prizeId === prize.id).map((requirement) => (
+                                <div key={requirement.id} className="py-3 first:pt-1">
+                                  <div className="mb-2 flex items-center justify-between">
+                                    <Label className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/50">Type</Label>
+                                    {requirements.filter((r) => r.prizeId === prize.id).length > 1 && (
+                                      <Button type="button" variant="ghost" size="sm" onClick={() => removeRequirement(requirement.id)} className="h-7 px-2 text-white/55 hover:text-red-300 hover:bg-red-500/10">
+                                        <X className="h-4 w-4" />
+                                      </Button>
+                                    )}
+                                  </div>
+                                  <Select value={requirement.type} onValueChange={(value) => updateRequirement(requirement.id, "type", value)}>
+                                    <SelectTrigger className={fieldClass}><SelectValue /></SelectTrigger>
+                                    <SelectContent className="bg-[#141416] border-white/10">
+                                      {requirementTypes.map((type) => (
+                                        <SelectItem key={type.value} value={type.value}>{type.icon} {type.label}</SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                  <div className="mt-3">
+                                    <Label className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/50">
+                                      {requirement.type === "discord" ? "Discord Server Link" : requirement.type === "youtube" ? "YouTube Channel Link" : "Description"}
+                                    </Label>
+                                    <Input
+                                      type={requirement.type === "youtube" ? "url" : "text"}
+                                      value={requirement.description}
+                                      onChange={(e) => {
+                                        updateRequirement(requirement.id, "description", e.target.value)
+                                        if (errors[`requirement_${requirement.id}_description`]) {
+                                          setErrors((prev) => { const n = { ...prev }; delete n[`requirement_${requirement.id}_description`]; return n })
+                                        }
+                                      }}
+                                      placeholder={requirement.type === "discord" ? "https://discord.gg/your-server" : requirement.type === "youtube" ? "https://youtube.com/@channel or https://youtu.be/..." : "Describe what users need to do..."}
+                                      className={`mt-2 px-4 py-2.5 text-sm ${fieldClass} ${errors[`requirement_${requirement.id}_description`] ? 'border-red-500' : ''}`}
+                                    />
+                                    {errors[`requirement_${requirement.id}_description`] && (
+                                      <p className="text-red-400 text-xs mt-1">{errors[`requirement_${requirement.id}_description`]}</p>
+                                    )}
+                                    {requirement.type === "discord" && discordPreviews[requirement.id]?.link === requirement.description && (
+                                      <div className="mt-2.5 flex items-center gap-2.5 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2.5">
+                                        {discordPreviews[requirement.id].loading ? (
+                                          <><Loader2 className="h-4 w-4 animate-spin text-white/40" /><span className="text-xs text-white/50">Looking up server…</span></>
+                                        ) : discordPreviews[requirement.id].serverName ? (
+                                          <>
+                                            {discordPreviews[requirement.id].serverIcon ? (
+                                              <img src={discordPreviews[requirement.id].serverIcon} alt="" className="h-6 w-6 rounded-full" />
+                                            ) : (
+                                              <span className="grid h-6 w-6 place-items-center rounded-full bg-white/10 text-[10px] font-bold text-white/60">{discordPreviews[requirement.id].serverName!.charAt(0).toUpperCase()}</span>
+                                            )}
+                                            <span className="text-sm font-semibold text-white">{discordPreviews[requirement.id].serverName}</span>
+                                          </>
+                                        ) : (
+                                          <span className="text-xs text-red-400">Couldn&apos;t find that server — check the invite link</span>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                            <button type="button" onClick={() => addRequirement(prize.id)} className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-[#f97316] transition hover:text-orange-400">
+                              <Plus className="h-3.5 w-3.5" /> Add requirement
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -959,15 +1053,12 @@ export default function CreateGiveawayPage() {
                       <Plus className="h-3.5 w-3.5" /> Add prize
                     </button>
 
-                    {/* ---------- Entry requirements (own card) ---------- */}
+                    {/* ---------- Entry settings (giveaway-wide) ---------- */}
                     <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5">
                     <div className="flex items-center gap-2.5">
                       <span className="text-[#f97316]"><Target className="h-4 w-4" /></span>
-                      <h3 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/40">Entry Requirements</h3>
+                      <h3 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/40">Entry Settings</h3>
                       <div className="h-px flex-1 bg-white/[0.07]" />
-                      <Badge className="bg-[#f97316]/10 text-[#f97316] border-[#f97316]/20 text-[11px] tabular-nums">
-                        {totalPoints} {totalPoints === 1 ? "task" : "tasks"}
-                      </Badge>
                     </div>
 
                     {/* Point system toggle */}
@@ -984,11 +1075,11 @@ export default function CreateGiveawayPage() {
                     </div>
 
                     <div className="mt-4 divide-y divide-white/[0.06] border-t border-white/[0.06]">
-                      {requirements.map((requirement, index) => (
+                      {requirements.filter((r) => r.prizeId == null).map((requirement, index) => (
                         <div key={requirement.id} className="py-4">
                           <div className="flex items-center justify-between mb-3">
                             <h4 className="text-white font-semibold text-sm">Requirement {index + 1}</h4>
-                            {requirements.length > 1 && (
+                            {requirements.filter((r) => r.prizeId == null).length > 1 && (
                               <Button
                                 type="button"
                                 variant="ghost"
@@ -1091,13 +1182,6 @@ export default function CreateGiveawayPage() {
                       ))}
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={addRequirement}
-                      className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-[#f97316] transition hover:text-orange-400"
-                    >
-                      <Plus className="h-3.5 w-3.5" /> Add requirement
-                    </button>
                     </div>
                   </div>
                 </section>
