@@ -249,7 +249,7 @@ async function main() {
 
   // ---- Browse categories (dynamic, admin-managed) ---------------------------
   await db.insert(schema.categories).values([
-    { id: 8001, name: "MLOs", slug: "mlo", icon: "Building2", appliesTo: "scripts", isActive: true, showOnHome: true, homeOrder: 1, sortOrder: 1 },
+    { id: 8001, name: "Maps", slug: "mlo", icon: "Building2", appliesTo: "scripts", isActive: true, showOnHome: true, homeOrder: 1, sortOrder: 1 },
     { id: 8002, name: "Vehicles", slug: "vehicles", icon: "Car", appliesTo: "scripts", isActive: true, showOnHome: true, homeOrder: 2, sortOrder: 2 },
     { id: 8003, name: "Weapons", slug: "weapons", icon: "Crosshair", appliesTo: "scripts", isActive: true, showOnHome: true, homeOrder: 3, sortOrder: 3 },
     { id: 8004, name: "Clothing", slug: "clothing", icon: "Shirt", appliesTo: "both", isActive: true, showOnHome: true, homeOrder: 4, sortOrder: 4 },

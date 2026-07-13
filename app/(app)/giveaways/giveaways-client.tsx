@@ -445,7 +445,7 @@ export function GiveawaysClient({
                 Giveaways
               </h1>
               <p className="mt-2 text-white/55">
-                Enter to win premium assets, MLOs, and full server packs — free.
+                Enter to win premium assets, Maps, and full server packs — free.
               </p>
             </div>
             <div className="flex items-center gap-1 rounded-xl border border-white/10 bg-white/[0.03] p-1 text-sm">

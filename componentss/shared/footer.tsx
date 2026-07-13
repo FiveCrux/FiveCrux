@@ -19,7 +19,7 @@ const columns: {
   {
     title: "Categories",
     links: [
-      { name: "MLOs", href: "/scripts?category=mlo" },
+      { name: "Maps", href: "/scripts?category=mlo" },
       { name: "Vehicles", href: "/scripts?category=vehicles" },
       { name: "Weapons", href: "/scripts?category=weapons" },
       { name: "Clothing", href: "/scripts?category=clothing" },
@@ -54,7 +54,7 @@ export default function Footer() {
               <Image src="/fivecrux-logo.png" alt="FiveCrux" width={142} height={34} />
             </Link>
             <p className="mt-5 text-sm leading-relaxed text-white/55">
-              Premium FiveM assets, MLOs &amp; resources — discover, buy and run them on your server.
+              Premium FiveM assets, Maps &amp; resources — discover, buy and run them on your server.
             </p>
             <div className="mt-6 flex gap-3.5">
               {socials.map(({ label, href, Icon }) => (
