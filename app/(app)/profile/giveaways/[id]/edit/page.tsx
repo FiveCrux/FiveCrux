@@ -971,11 +971,11 @@ export default function EditGiveawayPage() {
                   <CardContent className="space-y-4">
                     <h3 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/40">Prizes</h3>
 
-                    <div className="divide-y divide-white/[0.08]">
+                    <div className="space-y-4">
                       {prizes.map((prize, index) => (
                         <motion.div
                           key={prize.id}
-                          className="py-4 first:pt-0"
+                          className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5"
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: index * 0.1 }}
@@ -1087,8 +1087,9 @@ export default function EditGiveawayPage() {
                       Add Prize
                     </Button>
 
-                    {/* Entry requirements (same section) */}
-                    <div className="mt-8 flex items-center gap-2.5 border-t border-white/[0.08] pt-6">
+                    {/* Entry requirements (own card) */}
+                    <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5">
+                    <div className="flex items-center gap-2.5">
                       <span className="text-orange-500"><Target className="h-4 w-4" /></span>
                       <h3 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/40">Entry Requirements</h3>
                       <div className="h-px flex-1 bg-white/[0.07]" />
@@ -1233,6 +1234,7 @@ export default function EditGiveawayPage() {
                       <Plus className="mr-2 h-4 w-4" />
                       Add Requirement
                     </Button>
+                    </div>
                   </CardContent>
                 </Card>
 

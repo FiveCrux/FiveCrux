@@ -842,11 +842,11 @@ export default function CreateGiveawayPage() {
                 <section>
                   <SectionHeader icon={<Trophy className="h-4 w-4" />} title="Prizes & Requirements" />
 
-                  <div className="mt-5 rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5">
-                    <h3 className="mb-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/40">Prizes</h3>
-                    <div className="divide-y divide-white/[0.06]">
+                  <div className="mt-5 space-y-4">
+                    <h3 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/40">Prizes</h3>
+                    <div className="space-y-4">
                       {prizes.map((prize, index) => (
-                        <div key={prize.id} className="py-4 first:pt-3">
+                        <div key={prize.id} className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5">
                           <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center gap-2">
                               <span className="grid h-7 w-7 place-items-center rounded-lg bg-[#f97316]/10 text-[#f97316] text-xs font-bold">
@@ -959,8 +959,9 @@ export default function CreateGiveawayPage() {
                       <Plus className="h-3.5 w-3.5" /> Add prize
                     </button>
 
-                    {/* ---------- Entry requirements (same card) ---------- */}
-                    <div className="mt-6 flex items-center gap-2.5 border-t border-white/[0.06] pt-6">
+                    {/* ---------- Entry requirements (own card) ---------- */}
+                    <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5">
+                    <div className="flex items-center gap-2.5">
                       <span className="text-[#f97316]"><Target className="h-4 w-4" /></span>
                       <h3 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/40">Entry Requirements</h3>
                       <div className="h-px flex-1 bg-white/[0.07]" />
@@ -1097,6 +1098,7 @@ export default function CreateGiveawayPage() {
                     >
                       <Plus className="h-3.5 w-3.5" /> Add requirement
                     </button>
+                    </div>
                   </div>
                 </section>
 
