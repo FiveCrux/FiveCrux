@@ -342,15 +342,14 @@ export function HomeClient({
   }, [initialFeatured])
 
   const rows = useMemo(() => {
-    // The hero spotlight uses real featured scripts, but falls back to the
-    // catalog when there are none so the top of the page is never empty.
-    const heroSource = liveFeatured.length ? liveFeatured : liveScripts
+    // BOTH featured surfaces (the big hero "FEATURED SPOTLIGHT" and the
+    // "Featured" carousel row) show ONLY real (paid) featured scripts — never a
+    // catalog fallback, so nothing non-featured is ever mislabelled as featured.
+    // When there are none, the hero gracefully shows just the "get featured here"
+    // promo slide, and the Row component hides the empty carousel. The first 5
+    // featured go to the hero; the row skips those to avoid duplicating them.
     return {
-      heroItems: heroSource.slice(0, 5),
-      // The "Featured" row shows ONLY real (paid) featured scripts — never a
-      // catalog fallback, so nothing non-featured ever appears under "Featured".
-      // The Row component hides itself when this is empty. Skip the first 5 only
-      // when they're the same featured items already shown in the hero above.
+      heroItems: liveFeatured.slice(0, 5),
       featured: liveFeatured.length > 5 ? liveFeatured.slice(5, 15) : [],
       trending: liveScripts.slice(0, 12),
       newReleases: liveScripts.slice(0, 12), // /api/scripts is ordered newest-first
