@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { Receipt, BadgeCheck, Lock, CreditCard, ShieldCheck, Ticket } from "lucide-react"
+import { Receipt, BadgeCheck, Lock, CreditCard, ShieldCheck, Ticket, Check } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/componentss/ui/select"
 
 type AppliedCode = {
@@ -142,10 +142,11 @@ export default function CartCheckoutPanel({ total }: CartCheckoutPanelProps) {
       </div>
 
       <div className="px-6 py-5">
-        {/* Coupon / Creator toggle + code input */}
-        <div className="flex gap-2">
+        {/* Coupon / Creator toggle + code input — one fused segmented control:
+            [ Coupon ▾ | enter code… | ✓ Apply ] */}
+        <div className="flex items-stretch overflow-hidden rounded-xl border border-white/10 bg-white/[0.03] focus-within:border-orange-500/50">
           <Select value={mode} onValueChange={(v) => switchMode(v as CodeMode)}>
-            <SelectTrigger className="w-[130px] flex-none rounded-xl border-white/10 bg-white/[0.03] text-sm font-semibold text-white">
+            <SelectTrigger className="h-auto w-[130px] flex-none rounded-none border-0 border-r border-white/10 bg-transparent text-sm font-semibold text-white focus:ring-0 focus:ring-offset-0">
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="border-white/[0.08] bg-[#0d0d0f] text-white">
@@ -158,14 +159,15 @@ export default function CartCheckoutPanel({ total }: CartCheckoutPanelProps) {
             value={codeInput}
             onChange={(event) => resetInput(event.target.value)}
             placeholder={mode === "coupon" ? "Enter coupon code" : "Enter creator code"}
-            className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3.5 py-2.5 text-sm font-semibold tracking-wide tabular-nums text-white outline-none transition focus:border-orange-500/50"
+            className="w-full min-w-0 flex-1 border-0 bg-transparent px-3.5 py-2.5 text-sm font-semibold tracking-wide tabular-nums text-white outline-none"
           />
           <button
             type="button"
             onClick={applyCode}
             disabled={isApplying || !codeInput.trim()}
-            className="flex-none rounded-xl bg-orange-500 px-4 py-2.5 text-sm font-bold text-black transition hover:bg-orange-400 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex flex-none items-center gap-1.5 rounded-none bg-orange-500 px-4 py-2.5 text-sm font-bold text-black transition hover:bg-orange-400 disabled:cursor-not-allowed disabled:opacity-50"
           >
+            <Check className="h-4 w-4" />
             {isApplying ? "Applying..." : "Apply"}
           </button>
         </div>
