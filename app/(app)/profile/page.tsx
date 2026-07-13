@@ -657,7 +657,10 @@ export default function ProfilePage() {
     <>
       <Navbar />
       <div className="min-h-screen bg-[#0a0a0a] text-white [font-variant-numeric:tabular-nums]">
-        <div className="mx-auto max-w-[1320px] px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+        {/* Full-width like the admin panel — no centered max-width container,
+            so the dashboard fills the viewport instead of leaving big empty
+            margins on wide screens. */}
+        <div className="px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
           <Tabs
             value={activeTab}
             onValueChange={setActiveTab}
