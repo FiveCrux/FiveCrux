@@ -2453,16 +2453,20 @@ export async function getAds(filters?: {
     if (filters?.status === 'active' || !filters?.status) {
       conditions.push(eq(approvedAds.status, 'active'));
       conditions.push(eq(approvedAds.slotStatus, 'active'));
+      // Exclude ads whose paid window has already ended — don't rely on the
+      // lazy client-triggered expiry sweep. Keep open-ended or future end dates.
+      conditions.push(sql`(${approvedAds.endDate} IS NULL OR ${approvedAds.endDate} > now())`);
     }
-    
+
     const limitVal = filters?.limit || 50;
-    
+
     const query = conditions.length
       ? db.select().from(approvedAds).where(and(...conditions))
       : db.select().from(approvedAds).where(
           and(
             eq(approvedAds.status, 'active'),
-            eq(approvedAds.slotStatus, 'active')
+            eq(approvedAds.slotStatus, 'active'),
+            sql`(${approvedAds.endDate} IS NULL OR ${approvedAds.endDate} > now())`
           )
         );
     
@@ -2566,7 +2570,9 @@ export async function getApprovedAds(limit?: number): Promise<any[]> {
     .where(
       and(
         eq(approvedAds.status, 'active'),
-        eq(approvedAds.slotStatus, 'active')
+        eq(approvedAds.slotStatus, 'active'),
+        // Drop ads whose paid window has ended (no reliance on a cron sweep).
+        sql`(${approvedAds.endDate} IS NULL OR ${approvedAds.endDate} > now())`
       )
     )
     .orderBy(desc(approvedAds.approvedAt));

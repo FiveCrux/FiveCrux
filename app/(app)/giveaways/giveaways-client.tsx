@@ -250,11 +250,10 @@ export function GiveawaysClient({
       return isEnded;
     });
 
-    // FEATURED = a giveaway flagged featured (first one), else the first active.
+    // FEATURED = a giveaway an admin actually flagged as featured. No fallback
+    // to the first active one — never label an ordinary giveaway "FEATURED".
     const featuredGiveaway =
-      activeFilteredGiveaways.find((g) => g.featured) ||
-      activeFilteredGiveaways[0] ||
-      null;
+      activeFilteredGiveaways.find((g) => g.featured) || null;
 
     // Grid shows the remaining active giveaways (featured pulled out).
     const gridActiveGiveaways = featuredGiveaway
