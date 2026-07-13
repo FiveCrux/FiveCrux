@@ -342,14 +342,16 @@ export function HomeClient({
   }, [initialFeatured])
 
   const rows = useMemo(() => {
-    // Featured/hero use real featured scripts; if none exist yet, fall back to the
-    // regular catalog so the page is never empty. Trending/New come from the catalog.
-    const featuredOrFallback = liveFeatured.length ? liveFeatured : liveScripts
+    // The hero spotlight uses real featured scripts, but falls back to the
+    // catalog when there are none so the top of the page is never empty.
+    const heroSource = liveFeatured.length ? liveFeatured : liveScripts
     return {
-      heroItems: featuredOrFallback.slice(0, 5),
-      // Skip whatever's already shown in the hero spotlight above — no
-      // point showing the exact same 5 items again immediately below it.
-      featured: featuredOrFallback.slice(5, 15),
+      heroItems: heroSource.slice(0, 5),
+      // The "Featured" row shows ONLY real (paid) featured scripts — never a
+      // catalog fallback, so nothing non-featured ever appears under "Featured".
+      // The Row component hides itself when this is empty. Skip the first 5 only
+      // when they're the same featured items already shown in the hero above.
+      featured: liveFeatured.length > 5 ? liveFeatured.slice(5, 15) : [],
       trending: liveScripts.slice(0, 12),
       newReleases: liveScripts.slice(0, 12), // /api/scripts is ordered newest-first
       free: liveScripts.filter((s) => s.free).slice(0, 12),

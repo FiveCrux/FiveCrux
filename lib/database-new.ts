@@ -3321,6 +3321,10 @@ export async function getFeaturedScriptsWithDetails(filters?: {
     // Also filter out inactive slots
     if (statusFilter === 'active') {
       conditions.push(eq(featuredScripts.featuredSlotStatus, 'active'));
+      // Exclude entries whose paid window has already ended — don't rely on the
+      // lazy client-triggered expiry job. Keep rows with no end date (open-ended)
+      // or an end date still in the future.
+      conditions.push(sql`(${featuredScripts.featuredEndDate} IS NULL OR ${featuredScripts.featuredEndDate} > now())`);
     }
     
     const limitVal = filters?.limit || 50;
