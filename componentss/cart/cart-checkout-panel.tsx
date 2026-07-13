@@ -206,7 +206,7 @@ export default function CartCheckoutPanel({ total }: CartCheckoutPanelProps) {
             </div>
           )}
           <div className="flex items-center justify-between">
-            <dt className="text-white/50">Processing</dt>
+            <dt className="text-white/50">Sales Tax</dt>
             <dd className="font-semibold tabular-nums text-white/60">€0.00</dd>
           </div>
         </dl>
