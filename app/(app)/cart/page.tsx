@@ -110,12 +110,16 @@ export default function CartPage() {
     <div className="min-h-screen bg-[#0a0a0a] text-white antialiased">
       <Navbar />
       <SideAdsFrame>
-      <main className="mx-auto max-w-6xl px-5 py-8 md:py-12">
+      {/* Fill the width between the side-ad rails (no centered max-width cap)
+          so there's no dead gap against the rails — matches scripts/props. */}
+      <main className="w-full px-5 py-8 md:py-12">
         {payment === "success" ? (
-          <CartPaymentSuccess />
+          <div className="mx-auto max-w-3xl">
+            <CartPaymentSuccess />
+          </div>
         ) : loading ? (
           /* Loading state */
-          <div className="flex min-h-[40vh] flex-col items-center justify-center rounded-3xl border border-white/[0.07] bg-[#0e0e0e] p-12 text-center">
+          <div className="mx-auto flex min-h-[40vh] max-w-3xl flex-col items-center justify-center rounded-3xl border border-white/[0.07] bg-[#0e0e0e] p-12 text-center">
             <Loader2 className="h-10 w-10 animate-spin text-orange-500" />
             <p className="mt-5 text-sm text-white/55">Loading your cart…</p>
           </div>
@@ -125,7 +129,7 @@ export default function CartPage() {
             initial={{ opacity: 0, scale: 0.97 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.4 }}
-            className="rounded-3xl border border-white/[0.07] bg-[#0e0e0e] p-10 text-center sm:p-16"
+            className="mx-auto max-w-3xl rounded-3xl border border-white/[0.07] bg-[#0e0e0e] p-10 text-center sm:p-16"
           >
             <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full border border-orange-500/30 bg-orange-500/10">
               <ShoppingBag className="h-9 w-9 text-orange-400" />
@@ -155,7 +159,7 @@ export default function CartPage() {
           </motion.div>
         ) : (
           /* Review & checkout layout: items + extras on the left, receipt rail on the right. */
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_400px]">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_430px]">
             {/* LEFT: compact item rows + extras */}
             <motion.section
               initial={{ opacity: 0, y: 16 }}

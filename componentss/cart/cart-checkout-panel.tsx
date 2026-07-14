@@ -146,7 +146,7 @@ export default function CartCheckoutPanel({ total }: CartCheckoutPanelProps) {
             [ Coupon ▾ | enter code… | ✓ Apply ] */}
         <div className="flex items-stretch overflow-hidden rounded-xl border border-white/10 bg-white/[0.03] focus-within:border-orange-500/50">
           <Select value={mode} onValueChange={(v) => switchMode(v as CodeMode)}>
-            <SelectTrigger className="h-auto w-[130px] flex-none rounded-none border-0 border-r border-white/10 bg-transparent text-sm font-semibold text-white focus:ring-0 focus:ring-offset-0">
+            <SelectTrigger className="h-auto w-[104px] flex-none rounded-none border-0 border-r border-white/10 bg-transparent px-3 text-sm font-semibold text-white focus:ring-0 focus:ring-offset-0">
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="border-white/[0.08] bg-[#0d0d0f] text-white">
