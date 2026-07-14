@@ -161,14 +161,23 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
 
     // Use the existing createScript function from database-new.ts
-    const { createScript } = await import('@/lib/database-new');
-    
+    const { createScript, getCategories } = await import('@/lib/database-new');
+
+    // Defensive: this endpoint has no UI caller, but if anything ever POSTs
+    // here, make sure `category` is a real slug (not a display name), so the
+    // listing shows under its filter. Unknown → "other".
+    const cats = await getCategories();
+    const slugSet = new Set(cats.map((c) => c.slug.toLowerCase()));
+    const nameToSlug = new Map(cats.map((c) => [c.name.toLowerCase().trim(), c.slug]));
+    const rawCat = String(body.category || '').toLowerCase().trim();
+    const category = slugSet.has(rawCat) ? rawCat : (nameToSlug.get(rawCat) || 'other');
+
     const scriptData = {
       title: body.title,
       description: body.description,
       price: body.price,
       original_price: body.original_price,
-      category: body.category,
+      category,
       framework: body.framework,
       seller_name: body.seller_name || session.user.name || 'Unknown Seller',
       seller_email: userEmail,

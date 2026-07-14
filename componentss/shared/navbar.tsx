@@ -24,6 +24,21 @@ function mapCategories(list: any[]) {
     .map((c: any) => ({ name: c.name, link: `/scripts?category=${encodeURIComponent(c.slug)}` }))
 }
 
+// Brand mark. Module-scope (NOT defined inside NavbarComponent) — a nested
+// component gets a new identity on every navbar re-render (scroll, cart count,
+// menu toggle…), which would remount this <Image> and reload the logo on every
+// page. Hoisting it keeps the logo mounted.
+const Logo = ({ onClick }: { onClick?: () => void }) => (
+  <Link
+    href="/"
+    onClick={onClick}
+    aria-label="FiveCrux home"
+    className="relative z-20 flex items-center"
+  >
+    <Image src="/fivecrux-logo.png" alt="FiveCrux" width={142} height={34} priority />
+  </Link>
+)
+
 export default function NavbarComponent() {
   const { data: session, status } = useSession()
   const pathname = usePathname()
@@ -103,18 +118,6 @@ export default function NavbarComponent() {
 
   const isActive = (link: string) =>
     link === "/" ? pathname === "/" : pathname.startsWith(link)
-
-  // ── logo (brand mark — preserved) ──────────────────────────────────
-  const Logo = ({ onClick }: { onClick?: () => void }) => (
-    <Link
-      href="/"
-      onClick={onClick}
-      aria-label="FiveCrux home"
-      className="relative z-20 flex items-center"
-    >
-      <Image src="/fivecrux-logo.png" alt="FiveCrux" width={142} height={34} priority />
-    </Link>
-  )
 
   return (
     <>

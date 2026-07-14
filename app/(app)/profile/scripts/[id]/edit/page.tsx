@@ -72,19 +72,26 @@ interface Script {
   updated_at: string
 }
 
-const scriptCategories = [
-  { value: "scripts", label: "Assets" },
-  { value: "maps", label: "Maps" },
-  { value: "props", label: "Props" },
-  { value: "clothing", label: "Clothing" },
-  { value: "economy", label: "Economy" },
-  { value: "vehicles", label: "Vehicles" }
-]
 export default function EditScriptPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const params = useParams()
   const scriptId = params.id as string
+
+  // Categories from the DB (same source as the submit form) — the old
+  // hardcoded list went stale (missing admin-added categories, wrong slugs),
+  // so editing a listing whose category wasn't in it showed a blank dropdown.
+  const [scriptCategories, setScriptCategories] = useState<{ value: string; label: string }[]>([])
+  useEffect(() => {
+    fetch("/api/categories")
+      .then((r) => (r.ok ? r.json() : null))
+      .then(
+        (d) =>
+          Array.isArray(d?.categories) &&
+          setScriptCategories(d.categories.map((c: any) => ({ value: c.slug, label: c.name })))
+      )
+      .catch(() => {})
+  }, [])
   const frameworks = useFrameworks()
 
   const [loading, setLoading] = useState(true)

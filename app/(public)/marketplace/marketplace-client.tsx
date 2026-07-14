@@ -61,17 +61,27 @@ function toMarketProduct(s: ApiScript): MarketProduct {
   }
 }
 
-const CATEGORIES = [
-  { value: "all", label: "All" },
-  { value: "script", label: "Assets" },
-  { value: "maps", label: "Maps" },
-  { value: "vehicle", label: "Vehicles" },
-  { value: "weapon", label: "Weapons" },
-  { value: "clothing", label: "Clothing" },
-  { value: "prop", label: "Props" },
-]
-
 export function MarketplaceClient({ initialScripts = [] }: { initialScripts?: any[] }) {
+  // Category chips from the DB (same source as every other page) instead of a
+  // hardcoded list — the old static list had drifted (singular "vehicle"/
+  // "weapon" that never matched the plural DB slugs, plus stale entries), so
+  // its filters silently matched nothing.
+  const [categoryOptions, setCategoryOptions] = useState<{ value: string; label: string }[]>([
+    { value: "all", label: "All" },
+  ])
+  useEffect(() => {
+    fetch("/api/categories")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!Array.isArray(d?.categories)) return
+        setCategoryOptions([
+          { value: "all", label: "All" },
+          ...d.categories.map((c: any) => ({ value: c.slug, label: c.name })),
+        ])
+      })
+      .catch(() => {})
+  }, [])
+
   // Dynamic frameworks (DB-managed). value = slug (matches stored framework), label = display.
   const frameworkOptions = useFrameworks()
   // ── data + filter state ──────────────────────────────────────────────
@@ -236,7 +246,7 @@ export function MarketplaceClient({ initialScripts = [] }: { initialScripts?: an
 
           {/* Category chips */}
           <div className="mb-5 flex flex-wrap gap-2">
-            {CATEGORIES.map((cat) => (
+            {categoryOptions.map((cat) => (
               <button
                 key={cat.value}
                 onClick={() => setActiveCategory(cat.value)}

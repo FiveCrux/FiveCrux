@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useMemo } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter, useParams } from "next/navigation"
 import { motion } from "framer-motion"
@@ -37,29 +37,31 @@ import { toast } from "sonner"
 import FileUpload from "@/componentss/shared/file-upload"
 import { DateTimePicker } from "@/componentss/ui/date-time-picker"
 
-// Animated background particles
+// Animated background particles. The random positions/timings are memoized
+// once per mount so they DON'T recompute (and teleport/restart) on every
+// re-render — e.g. every keystroke in the form re-rendered the page.
 const AnimatedParticles = () => {
+  const particles = useMemo(
+    () =>
+      Array.from({ length: 15 }, () => ({
+        x: Math.random() * 100 - 50,
+        y: Math.random() * 100 - 50,
+        duration: Math.random() * 4 + 3,
+        delay: Math.random() * 3,
+        left: `${Math.random() * 100}%`,
+        top: `${Math.random() * 100}%`,
+      })),
+    []
+  )
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden">
-      {[...Array(15)].map((_, i) => (
+      {particles.map((p, i) => (
         <motion.div
           key={i}
           className="absolute w-1 h-1 bg-orange-500/30 rounded-full"
-          animate={{
-            x: [0, Math.random() * 100 - 50],
-            y: [0, Math.random() * 100 - 50],
-            opacity: [0, 1, 0],
-            scale: [0, 1.5, 0],
-          }}
-          transition={{
-            duration: Math.random() * 4 + 3,
-            repeat: Number.POSITIVE_INFINITY,
-            delay: Math.random() * 3,
-          }}
-          style={{
-            left: `${Math.random() * 100}%`,
-            top: `${Math.random() * 100}%`,
-          }}
+          animate={{ x: [0, p.x], y: [0, p.y], opacity: [0, 1, 0], scale: [0, 1.5, 0] }}
+          transition={{ duration: p.duration, repeat: Number.POSITIVE_INFINITY, delay: p.delay }}
+          style={{ left: p.left, top: p.top }}
         />
       ))}
     </div>
