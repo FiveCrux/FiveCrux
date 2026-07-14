@@ -13,6 +13,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Navbar from "@/componentss/shared/navbar";
 import Footer from "@/componentss/shared/footer";
+import BrowseNav from "@/componentss/shared/browse-nav";
 import AdCard, { useRandomAds } from "@/componentss/ads/ad-card";
 import {
   ProductCard,
@@ -464,6 +465,12 @@ export function PropsClient({
               )}
             </motion.div>
           </div>
+        </section>
+
+        {/* Browse nav — same chip row as the home page (consistent site-wide),
+            with "Props" highlighted as the current section. */}
+        <section className="mx-auto w-full px-2.5">
+          <BrowseNav activeName="Props" />
         </section>
 
         {/* ── Catalog ──────────────────────────────────────────────────── */}

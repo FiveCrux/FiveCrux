@@ -15,32 +15,22 @@ import {
   Sparkles,
   Zap,
   Gift,
-  Code2,
-  Package,
   Car,
   Users,
   Shield,
   Megaphone,
   ChevronDown,
   MessagesSquare,
-  type LucideIcon,
 } from "lucide-react"
 import { categoryIcon } from "@/lib/category-icons"
 import Navbar from "@/componentss/shared/navbar"
 import Footer from "@/componentss/shared/footer"
+import BrowseNav from "@/componentss/shared/browse-nav"
 import { FrameworkBadge } from "@/componentss/shared/framework-badge"
 import SideAdsFrame from "@/componentss/ads/side-banners"
 import { ProductCard, type MarketProduct } from "@/componentss/marketplace/product-card"
 import { formatPrice } from "@/lib/format-price"
 import type { HomeContent } from "@/lib/site-content"
-
-// Fixed section shortcuts (these are pages, not categories). The actual browse
-// categories are dynamic (DB) and fetched + appended at runtime.
-const SHORTCUTS: { name: string; icon: LucideIcon; href: string }[] = [
-  { name: "Assets", icon: Code2, href: "/scripts" },
-  { name: "Props", icon: Package, href: "/props" },
-  { name: "Giveaways", icon: Gift, href: "/giveaways" },
-]
 
 
 // A seller can submit without ever picking an explicit cover image — fall
@@ -304,19 +294,6 @@ export function HomeClient({
       .catch(() => {})
   }, [initialCategories])
 
-  // Fixed page shortcuts + dynamic category chips.
-  const categoryChips = useMemo<{ name: string; icon: LucideIcon; href: string }[]>(
-    () => [
-      ...SHORTCUTS,
-      ...homeCats.map((c) => ({
-        name: c.name,
-        icon: categoryIcon(c.icon),
-        href: `/scripts?category=${c.slug}`,
-      })),
-    ],
-    [homeCats]
-  )
-
   useEffect(() => {
     let cancelled = false
     // Featured overlay (only when SSR didn't seed it).
@@ -392,23 +369,10 @@ export function HomeClient({
       <SideAdsFrame>
       <HeroSpotlight items={rows.heroItems} promo={content.heroPromo} />
 
-      {/* Category chips */}
+      {/* Browse nav chips — shared with the props/browse pages (one canonical
+          row site-wide). "Assets" is the active section on the home page. */}
       <section className="mt-5 px-2.5">
-        <div className="mx-auto w-full overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <div className="flex w-max items-center gap-2.5 pb-1">
-            {categoryChips.map((c, i) => {
-              const Icon = c.icon
-              return (
-                <Link key={c.name} href={c.href}
-                  className={`flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition ${
-                    i === 0 ? "bg-orange-500 font-semibold text-black" : "border border-white/[0.08] bg-white/[0.04] backdrop-blur-md hover:bg-white/10"
-                  }`}>
-                  <Icon className="h-4 w-4" /> {c.name}
-                </Link>
-              )
-            })}
-          </div>
-        </div>
+        <BrowseNav activeName="Assets" />
       </section>
 
       {/* Discovery rows */}
