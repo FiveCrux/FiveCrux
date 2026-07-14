@@ -1,38 +1,32 @@
+"use client"
+
 import Link from "next/link"
 import Image from "next/image"
+import { useNavData } from "@/componentss/shared/nav-data-context"
 
 const DISCORD = "https://discord.gg/EwGrUb7DW6"
 
-const columns: {
-  title: string
-  links: { name: string; href: string; external?: boolean }[]
-}[] = [
-  {
-    title: "Marketplace",
-    links: [
-      { name: "Assets", href: "/scripts" },
-      { name: "Props", href: "/props" },
-      { name: "Giveaways", href: "/giveaways" },
-      { name: "Advertise", href: "/advertise" },
-    ],
-  },
-  {
-    title: "Categories",
-    links: [
-      { name: "Maps", href: "/scripts?category=mlo" },
-      { name: "Vehicles", href: "/scripts?category=vehicles" },
-      { name: "Weapons", href: "/scripts?category=weapons" },
-      { name: "Clothing", href: "/scripts?category=clothing" },
-    ],
-  },
-  {
-    title: "Support",
-    links: [
-      { name: "Contact", href: "mailto:support@fivecrux.com" },
-      { name: "Discord", href: DISCORD, external: true },
-      { name: "Sell an asset", href: "/scripts/submit" },
-    ],
-  },
+type FooterLink = { name: string; href: string; external?: boolean }
+
+const MARKETPLACE: FooterLink[] = [
+  { name: "Assets", href: "/scripts" },
+  { name: "Props", href: "/props" },
+  { name: "Giveaways", href: "/giveaways" },
+  { name: "Advertise", href: "/advertise" },
+]
+
+const SUPPORT: FooterLink[] = [
+  { name: "Contact", href: "mailto:support@fivecrux.com" },
+  { name: "Discord", href: DISCORD, external: true },
+  { name: "Sell an asset", href: "/scripts/submit" },
+]
+
+// Fallback category links if the NavData context isn't populated yet.
+const FALLBACK_CATEGORIES: FooterLink[] = [
+  { name: "Maps", href: "/scripts?category=mlo" },
+  { name: "Vehicles", href: "/scripts?category=vehicles" },
+  { name: "Weapons", href: "/scripts?category=weapons" },
+  { name: "Clothing", href: "/scripts?category=clothing" },
 ]
 
 const DiscordIcon = ({ className = "" }: { className?: string }) => (
@@ -44,6 +38,22 @@ const DiscordIcon = ({ className = "" }: { className?: string }) => (
 const socials = [{ label: "Discord", href: DISCORD, Icon: DiscordIcon }]
 
 export default function Footer() {
+  const { categories } = useNavData()
+  // Show ALL home-flagged categories (same set as the nav/browse chips),
+  // sorted like the home row — not just a hardcoded handful.
+  const categoryLinks: FooterLink[] = Array.isArray(categories)
+    ? [...categories]
+        .filter((c) => c.showOnHome)
+        .sort((a, b) => (a.homeOrder ?? 0) - (b.homeOrder ?? 0))
+        .map((c) => ({ name: c.name as string, href: `/scripts?category=${c.slug}` }))
+    : []
+
+  const columns: { title: string; links: FooterLink[] }[] = [
+    { title: "Marketplace", links: MARKETPLACE },
+    { title: "Categories", links: categoryLinks.length ? categoryLinks : FALLBACK_CATEGORIES },
+    { title: "Support", links: SUPPORT },
+  ]
+
   return (
     <footer className="mt-16 w-full border-t border-white/[0.07] bg-[#0a0a0a]">
       <div className="mx-auto max-w-[1240px] px-6 sm:px-8">
