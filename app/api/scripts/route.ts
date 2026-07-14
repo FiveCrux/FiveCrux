@@ -16,9 +16,10 @@ export async function POST(request: NextRequest) {
     // User must be authenticated
     const user = session.user as any
 
-    // Determine approval status based on user role
+    // Assets are auto-approved on submission (no admin review step) — everyone's
+    // submission goes straight live. isFounderOrAdmin still gates the paid
+    // "featured" flag below.
     const isFounderOrAdmin = hasAnyRole(user.roles, ['founder', 'admin'])
-    const approvalStatus = isFounderOrAdmin ? 'approved' : 'pending'
 
     // Validate required fields (derive seller fields from session)
     const requiredFields = ["title", "description", "price", "category", "framework"]
@@ -88,16 +89,14 @@ export async function POST(request: NextRequest) {
       // Don't fail the submission if Discord notification fails
     }
 
-    const message = isFounderOrAdmin 
-      ? "Script created and approved successfully!" 
-      : "Script submitted successfully! It will be reviewed by an admin before going live."
+    const message = "Asset published! It's live on the marketplace now."
 
     return NextResponse.json(
       {
         success: true,
         message,
         scriptId,
-        status: approvalStatus,
+        status: 'approved',
       },
       { status: 201 },
     )

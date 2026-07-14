@@ -516,8 +516,8 @@ export default function SubmitScriptPage() {
           toast.success("Asset updated successfully!")
           router.push('/profile')
         } else {
-          toast.success("Asset submitted successfully!", {
-            description: "It will be reviewed before being published."
+          toast.success("Asset published!", {
+            description: "It's live on the marketplace now."
           })
           router.push('/profile')
         }
@@ -601,7 +601,7 @@ export default function SubmitScriptPage() {
                   </>
                 ) : (
                   <>
-                    {isEditMode ? "Update listing" : "Submit for review"}
+                    {isEditMode ? "Update listing" : "Publish asset"}
                     <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                   </>
                 )}

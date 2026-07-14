@@ -663,11 +663,19 @@ export async function createScript(scriptData: NewScript & { framework?: string 
     framework: validatedFrameworks,
   };
 
+  // Auto-approve: submitted assets go straight live instead of into the admin
+  // approval queue (pendingScripts). No manual review step — the row is created
+  // directly in approvedScripts, stamped as auto-approved.
   const result = await db
-    .insert(pendingScripts)
-    .values(scriptWithDefaults)
-    .returning({ id: pendingScripts.id });
-  
+    .insert(approvedScripts)
+    .values({
+      ...scriptWithDefaults,
+      approvedAt: new Date(),
+      approvedBy: 'auto-approved',
+      adminNotes: null,
+    })
+    .returning({ id: approvedScripts.id });
+
   return result[0]?.id ?? 0;
 }
 
