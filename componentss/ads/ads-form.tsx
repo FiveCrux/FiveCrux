@@ -45,6 +45,30 @@ export default function AdsForm({ isOpen, onClose, onSuccess, editData, slotUniq
   const [errors, setErrors] = useState<Record<string, string>>({})
   const isEditMode = !!editData
 
+  // Placement options = where the ad shows. "Assets" is the scripts landing,
+  // then every product category (so an ad can target e.g. the Maps page),
+  // then Props and Giveaways. Categories are fetched from the DB (same list as
+  // the navbar) so this stays in sync as categories change.
+  const [placementOptions, setPlacementOptions] = useState<{ value: string; label: string }[]>([
+    { value: "scripts", label: "Assets" },
+    { value: "props", label: "Props" },
+    { value: "giveaways", label: "Giveaways" },
+  ])
+  useEffect(() => {
+    fetch("/api/categories")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!Array.isArray(d?.categories)) return
+        setPlacementOptions([
+          { value: "scripts", label: "Assets" },
+          ...d.categories.map((c: any) => ({ value: c.slug, label: c.name })),
+          { value: "props", label: "Props" },
+          { value: "giveaways", label: "Giveaways" },
+        ])
+      })
+      .catch(() => {})
+  }, [])
+
   // Update form data when editData changes
   useEffect(() => {
     if (editData) {
@@ -366,10 +390,11 @@ export default function AdsForm({ isOpen, onClose, onSuccess, editData, slotUniq
                   <SelectValue placeholder="Select category..." />
                 </SelectTrigger>
                 <SelectContent className="bg-[#0d0d0f] border-white/[0.08]">
-                  <SelectItem value="scripts" className="text-white hover:bg-white/[0.06]">Assets</SelectItem>
-                  <SelectItem value="props" className="text-white hover:bg-white/[0.06]">Props</SelectItem>
-                  <SelectItem value="giveaways" className="text-white hover:bg-white/[0.06]">Giveaways</SelectItem>
-                  {/* <SelectItem value="both" className="text-white hover:bg-white/[0.06]">Both</SelectItem> */}
+                  {placementOptions.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value} className="text-white hover:bg-white/[0.06]">
+                      {opt.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               {errors.category && (

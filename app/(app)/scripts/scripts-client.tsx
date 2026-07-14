@@ -226,12 +226,10 @@ export function ScriptsClient({
           const t = setTimeout(() => c.abort(), 15000);
           return fetch(url, { cache: "no-store", signal: c.signal }).finally(() => clearTimeout(t));
         };
-        const [scriptsR, adsR] = await Promise.allSettled([
+        const [scriptsR] = await Promise.allSettled([
           hasSeed ? Promise.resolve(null) : fetchT(`/api/scripts`),
-          fetchT(`/api/ads/scripts`),
         ]);
         const scriptsRes = scriptsR.status === "fulfilled" ? scriptsR.value : null;
-        const adsRes = adsR.status === "fulfilled" ? adsR.value : null;
 
         if (scriptsRes && scriptsRes.ok) {
           const data = await scriptsRes.json();
@@ -247,11 +245,6 @@ export function ScriptsClient({
             setAllScripts(mappedScripts);
           }
         }
-
-        if (adsRes && adsRes.ok) {
-          const adsData = await adsRes.json();
-          setAds(adsData.ads || []);
-        }
       } catch (error) {
         console.error("Error loading data:", error);
       } finally {
@@ -260,6 +253,25 @@ export function ScriptsClient({
     };
     load();
   }, []);
+
+  // Ads are category-aware: on /scripts?category=maps show ads targeted to
+  // "maps", else the general scripts-page ads. Refetches when the category
+  // changes (BrowseNav navigates via ?category=).
+  useEffect(() => {
+    let alive = true;
+    const url = categoryParam
+      ? `/api/ads/scripts?category=${encodeURIComponent(categoryParam)}`
+      : `/api/ads/scripts`;
+    fetch(url, { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (alive && d?.ads) setAds(d.ads);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [categoryParam]);
 
   // Featured scripts: seeded from the server (SSR). If seeded, shuffle once
   // after mount (client-only, avoids hydration drift); else fetch as fallback.

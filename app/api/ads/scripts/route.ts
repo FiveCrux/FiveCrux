@@ -5,11 +5,13 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const limit = searchParams.get("limit")
+    // When a category is active (/scripts?category=maps), serve ads targeted to
+    // that category; otherwise the general scripts-page ads.
+    const category = searchParams.get("category")
 
     const limitVal = limit ? Number.parseInt(limit) : 10
 
-    // Get ads for scripts page
-    const scriptAds = await getAdsForPage('scripts', limitVal)
+    const scriptAds = await getAdsForPage(category || 'scripts', limitVal)
 
     // Transform camelCase to snake_case for frontend compatibility
     const transformedAds = scriptAds.map((ad: any) => ({

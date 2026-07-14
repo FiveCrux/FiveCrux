@@ -2494,8 +2494,11 @@ export async function getAds(filters?: {
   }
 }
 
-// Helper function to get ads for specific page types
-export async function getAdsForPage(pageType: 'scripts' | 'giveaways' | 'props', limit?: number) {
+// Helper function to get ads for a page / category. `pageType` is matched
+// against the ad's stored category — so it works for the section pages
+// ('scripts' | 'props' | 'giveaways') AND for a specific product-category
+// slug (e.g. 'maps'), enabling per-category ad targeting.
+export async function getAdsForPage(pageType: string, limit?: number) {
   try {
     const allAds = await getAds({ status: "active", limit: 100 });
 
