@@ -738,27 +738,6 @@ export function ScriptsClient({
             </button>
           </div>
 
-          {/* Tab chips */}
-          <div className="mb-4 flex flex-wrap gap-2">
-            {([
-              { id: "all", label: "All Assets" },
-              { id: "featured", label: "Featured" },
-              { id: "onsale", label: "On Sale" },
-            ] as const).map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`rounded-full px-4 py-1.5 text-sm font-semibold transition ${
-                  activeTab === tab.id
-                    ? "bg-gradient-to-r from-orange-500 to-yellow-400 text-black"
-                    : "border border-white/[0.08] bg-white/[0.04] text-white/70 hover:border-orange-500/40 hover:text-white"
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-
           {/* Same browse row as the home page (one shared component site-wide).
               Category chips are nav links → /scripts?category=slug, which this
               page already reads and filters by (categoryParam sync above). */}
