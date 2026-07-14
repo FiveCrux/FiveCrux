@@ -670,8 +670,10 @@ export default function ProfilePage() {
             {/* Sticky to the top while the main content scrolls; if the
                 sidebar's own content (profile card + full nav) is taller than
                 the viewport, it scrolls independently within itself instead of
-                getting cut off or dragging the whole page. */}
-            <aside className="lg:sticky lg:top-[88px] lg:h-fit lg:max-h-[calc(100vh-104px)] lg:overflow-y-auto">
+                getting cut off or dragging the whole page. Scrollbar hidden
+                (site's global orange scrollbar looked out of place on this
+                narrow column) — still scrolls fine via wheel/touch/keyboard. */}
+            <aside className="lg:sticky lg:top-[88px] lg:h-fit lg:max-h-[calc(100vh-104px)] lg:overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
