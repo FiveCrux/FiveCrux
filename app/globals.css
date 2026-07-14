@@ -63,12 +63,16 @@
   * {
     @apply border-border;
   }
+  /* Match the page wrappers' #0a0a0a. Pages use bg-[#0a0a0a]; when a gap peeks
+     through (e.g. the footer's mt-16 margin on pages where the footer sits
+     outside the page wrapper), a lighter body bg showed as a grey band above
+     the footer. Keeping body the same near-black removes that band. */
   html {
-    background-color: #131313;
+    background-color: #0a0a0a;
   }
   body {
     @apply text-foreground;
-    background-color: #131313;
+    background-color: #0a0a0a;
   }
 }
 
