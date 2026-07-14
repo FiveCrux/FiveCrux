@@ -953,11 +953,11 @@ export function ScriptsClient({
 
           {/* Grid / states */}
           {loading ? (
-            <div className="grid justify-center gap-4 [grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),300px))] justify-items-center">
+            <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
               {Array.from({ length: 8 }).map((_, i) => (
                 <div
                   key={i}
-                  className="h-64 w-full sm:max-w-[300px] animate-pulse rounded-2xl border border-white/[0.06] bg-white/[0.03]"
+                  className="h-64 w-full animate-pulse rounded-2xl border border-white/[0.06] bg-white/[0.03]"
                 />
               ))}
             </div>
@@ -978,9 +978,11 @@ export function ScriptsClient({
               initial={{ opacity: 0 }}
               animate={scriptsInView ? { opacity: 1 } : { opacity: 1 }}
               transition={{ duration: 0.4 }}
-              // auto-fill at the card's native 300px width so columns only form when
-              // there is room — keeps the fixed-width ProductCard responsive without overflow.
-              className="grid justify-center gap-4 [grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),300px))] justify-items-center"
+              // Fluid responsive columns that STRETCH to fill the content width
+              // (ProductCard is fluid by design) — no fixed-width tracks, so the
+              // grid no longer centers a few narrow cards and leaves big empty
+              // gaps against the side-ad rails.
+              className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4"
             >
               {(() => {
                 const items: GridItem[] = [...paginatedScripts];
@@ -1031,7 +1033,7 @@ export function ScriptsClient({
                       initial={{ opacity: 0, y: 16 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: Math.min(index * 0.04, 0.4) }}
-                      className="w-full sm:max-w-[300px]"
+                      className="w-full"
                     >
                       <ProductCard product={toMarketProduct(script)} className="w-full" />
                     </motion.div>

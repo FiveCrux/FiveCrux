@@ -713,11 +713,11 @@ export function PropsClient({
             transition={{ duration: 0.4 }}
           >
             {loading ? (
-              <div className="grid justify-center gap-4 [grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),300px))] justify-items-center">
+              <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
                 {Array.from({ length: 8 }).map((_, i) => (
                   <div
                     key={i}
-                    className="h-64 w-full sm:max-w-[300px] animate-pulse rounded-2xl border border-white/[0.06] bg-white/[0.03]"
+                    className="h-64 w-full animate-pulse rounded-2xl border border-white/[0.06] bg-white/[0.03]"
                   />
                 ))}
               </div>
@@ -737,7 +737,7 @@ export function PropsClient({
                 </button>
               </div>
             ) : (
-              <div className="grid justify-center gap-4 [grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),300px))] justify-items-center">
+              <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
                 {(() => {
                   const items: GridItem[] = [...paginatedProps];
                   // Insert ads at memoized positions (only if they fall within current page)
@@ -784,7 +784,7 @@ export function PropsClient({
                       return (
                         <div
                           key={`ad-${item.id}`}
-                          className="w-full sm:max-w-[300px]"
+                          className="w-full"
                         >
                           <AdCard ad={item as any} variant="script" />
                         </div>
