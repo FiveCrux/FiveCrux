@@ -16,6 +16,7 @@ import {
   Plus,
   X,
   ClipboardList,
+  Search,
 } from "lucide-react"
 
 type TebexPackage = {
@@ -187,6 +188,18 @@ function ConnectedView({
   const [packageIdInput, setPackageIdInput] = useState("")
   const [importingOne, setImportingOne] = useState(false)
   const [loadingPreview, setLoadingPreview] = useState(false)
+  // Free-text search over the package list (name + category) — the store can
+  // have 100+ packages, so let the user find one without scrolling.
+  const [packageSearch, setPackageSearch] = useState("")
+  const visiblePackages = useMemo(() => {
+    const q = packageSearch.trim().toLowerCase()
+    if (!q) return state.packages
+    return state.packages.filter(
+      (p) =>
+        p.name.toLowerCase().includes(q) ||
+        (p.category?.name || "").toLowerCase().includes(q)
+    )
+  }, [state.packages, packageSearch])
 
   // Review-before-submit modal: holds the package(s) about to be sent to admin
   // approval, and which underlying import call to fire once the user confirms.
@@ -384,6 +397,17 @@ function ConnectedView({
         </div>
       ) : (
         <>
+          {/* Search the package list */}
+          <div className="relative mb-4">
+            <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
+            <input
+              value={packageSearch}
+              onChange={(e) => setPackageSearch(e.target.value)}
+              placeholder="Search packages by name or category…"
+              className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] py-2.5 pl-10 pr-3.5 text-sm text-white placeholder-white/40 outline-none transition focus:border-orange-500/50"
+            />
+          </div>
+
           {selected.size > 0 && (
             <div className="mb-4 flex items-center justify-between rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-2.5">
               <span className="text-sm text-white/70">{selected.size} selected</span>
@@ -403,8 +427,14 @@ function ConnectedView({
             </div>
           )}
 
+          {visiblePackages.length === 0 && (
+            <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] py-10 text-center text-sm text-white/45">
+              No packages match “{packageSearch}”.
+            </div>
+          )}
+
           <div className="grid gap-3 sm:grid-cols-2">
-            {state.packages.map((p) => {
+            {visiblePackages.map((p) => {
               const isImported = imported.has(String(p.id))
               const isSelected = selected.has(p.id)
               return (

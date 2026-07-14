@@ -64,7 +64,7 @@ function toMarketProduct(s: ApiScript): MarketProduct {
 const CATEGORIES = [
   { value: "all", label: "All" },
   { value: "script", label: "Assets" },
-  { value: "mlo", label: "Maps" },
+  { value: "maps", label: "Maps" },
   { value: "vehicle", label: "Vehicles" },
   { value: "weapon", label: "Weapons" },
   { value: "clothing", label: "Clothing" },

@@ -3572,10 +3572,16 @@ export async function getCategories(opts?: { home?: boolean; appliesTo?: 'script
     .from(categories)
     .where(and(...conds))
     .orderBy(opts?.home ? asc(categories.homeOrder) : asc(categories.sortOrder), asc(categories.name));
-  // "maps" duplicates "mlo" (same content, two category rows) — hide it from every
-  // public-facing list (nav, filters, submit form) until the rows are merged in the
-  // DB. Kept out of getAllCategories() so admin can still see/manage it.
-  return rows.filter((c) => c.slug !== 'maps');
+  // Collapse any categories sharing a display name to one entry (prod has a
+  // legacy "Maps" duplicate — two rows, same name). Keep the first in the
+  // existing sort order. getAllCategories() (admin) is left un-deduped.
+  const seen = new Set<string>();
+  return rows.filter((c) => {
+    const key = (c.name || '').toLowerCase().trim();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 /** ALL categories incl. inactive — for the admin panel. */

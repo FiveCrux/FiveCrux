@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -1033,12 +1034,7 @@ export default function AdminPage() {
             <Menu className="h-5 w-5" />
           </button>
           <div className="flex items-center gap-2.5">
-            <span className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-to-br from-orange-500 to-amber-400 text-sm font-black text-black">
-              F
-            </span>
-            <span className="text-[17px] font-extrabold tracking-tight">
-              FiveCrux
-            </span>
+            <Image src="/fivecrux-logo.png" alt="FiveCrux" width={132} height={32} priority />
             <span className="ml-1 rounded-md bg-orange-500/12 px-2 py-0.5 text-[11px] font-bold text-orange-400 ring-1 ring-orange-500/25">
               Admin Panel
             </span>

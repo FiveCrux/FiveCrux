@@ -141,12 +141,6 @@ const featuredScriptPackages: PricingPackage[] = [
  * yet, so any number here would be made up). Swap to real metrics once
  * impression/click tracking exists.
  * -------------------------------------------------------------------------- */
-const placementBenefits = [
-  { title: "Homepage & search placement", desc: "Your slot shows where buyers are actually browsing — not buried in a sidebar.", accent: true },
-  { title: "Featured for the full term", desc: "Stay highlighted for your whole booking — 1 month to a year, your choice.", accent: false },
-  { title: "Direct link to your store", desc: "Every click sends buyers straight to your own site or product — no middle step.", accent: false },
-]
-
 export default function AdvertisePanel() {
   const heroRef = useRef<HTMLDivElement>(null)
   const pricingRef = useRef<HTMLDivElement>(null)
@@ -539,22 +533,6 @@ export default function AdvertisePanel() {
             </div>
           </motion.div>
 
-          {/* what you get — honest value props (no fabricated metrics) */}
-          <div className="mt-14 grid gap-px overflow-hidden rounded-3xl border border-white/[0.07] bg-white/[0.04] sm:grid-cols-3">
-            {placementBenefits.map((b) => (
-              <div key={b.title} className="bg-[#0a0a0a] px-7 py-9">
-                <div
-                  className={cn(
-                    "text-lg font-extrabold tracking-tight",
-                    b.accent ? "text-[#f97316]" : "text-white"
-                  )}
-                >
-                  {b.title}
-                </div>
-                <p className="mt-2 text-sm leading-relaxed text-white/55">{b.desc}</p>
-              </div>
-            ))}
-          </div>
         </div>
       </section>
 

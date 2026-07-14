@@ -3,11 +3,38 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/auth";
 import { getPackages, getPackage, type TebexPackage } from "@/lib/tebex";
-import { getUserById, createScript, getUserImportedTebexPackageIds } from "@/lib/database-new";
+import { getUserById, createScript, getUserImportedTebexPackageIds, getCategories } from "@/lib/database-new";
 
-// Import selected Tebex packages as FiveCrux script listings. Each becomes a
-// PENDING listing (normal approval queue), pre-filled from the Tebex package and
-// auto-linked to the seller's store token + package id so Buy Now works.
+// Tebex category names don't always equal our category SLUGs (e.g. Tebex
+// "Maps" → our slug "maps", "Scripts" → "script"). The browse/filter chips
+// match on SLUG, so importing with the raw Tebex name meant the listing never
+// showed under its category. Resolve the Tebex category to a local slug.
+const CATEGORY_ALIASES: Record<string, string> = {
+  maps: "maps", mlo: "maps", mlos: "maps",
+  scripts: "script", script: "script",
+  vehicle: "vehicles", vehicles: "vehicles",
+  weapon: "weapons", weapons: "weapons",
+  clothes: "clothing", clothing: "clothing",
+  ped: "peds", peds: "peds",
+  economy: "economy",
+};
+function makeCategoryResolver(cats: { name: string; slug: string }[]) {
+  const bySlug = new Map(cats.map((c) => [c.slug.toLowerCase(), c.slug]));
+  const byName = new Map(cats.map((c) => [c.name.toLowerCase().trim(), c.slug]));
+  return (tebexName?: string | null): string => {
+    const n = (tebexName || "").toLowerCase().trim();
+    if (!n) return "other";
+    if (byName.has(n)) return byName.get(n)!;
+    if (bySlug.has(n)) return bySlug.get(n)!;
+    const alias = CATEGORY_ALIASES[n];
+    if (alias && bySlug.has(alias)) return alias;
+    return bySlug.has("other") ? "other" : n;
+  };
+}
+
+// Import selected Tebex packages as FiveCrux asset listings. Each is created
+// (auto-approved, like manual submissions), pre-filled from the Tebex package
+// and auto-linked to the seller's store token + package id so Buy Now works.
 export const dynamic = "force-dynamic";
 
 const stripHtml = (s: string | null | undefined) =>
@@ -100,6 +127,8 @@ export async function POST(req: NextRequest) {
     const already = new Set(await getUserImportedTebexPackageIds(userId));
     const toImport = packages.filter((p) => wanted.has(p.id) && !already.has(String(p.id)));
 
+    const resolveCategory = makeCategoryResolver(await getCategories());
+
     let created = 0;
     for (const p of toImport) {
       const price = Number(p.total_price ?? p.base_price ?? 0);
@@ -109,7 +138,7 @@ export async function POST(req: NextRequest) {
         description,
         price: String(price),
         currency: p.currency || null,
-        category: p.category?.name || "Other",
+        category: resolveCategory(p.category?.name),
         images: p.image ? [p.image] : [],
         coverImage: p.image || null,
         sellerId: userId,

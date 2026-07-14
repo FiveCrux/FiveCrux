@@ -23,7 +23,7 @@ const SUPPORT: FooterLink[] = [
 
 // Fallback category links if the NavData context isn't populated yet.
 const FALLBACK_CATEGORIES: FooterLink[] = [
-  { name: "Maps", href: "/scripts?category=mlo" },
+  { name: "Maps", href: "/scripts?category=maps" },
   { name: "Vehicles", href: "/scripts?category=vehicles" },
   { name: "Weapons", href: "/scripts?category=weapons" },
   { name: "Clothing", href: "/scripts?category=clothing" },

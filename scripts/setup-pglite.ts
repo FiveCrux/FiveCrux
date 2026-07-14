@@ -95,7 +95,7 @@ async function main() {
     },
     {
       id: 1006, title: "Luxury Garage MLO Manager", description: "Full garage management script paired with a custom MLO — storage, valet and customisation.",
-      price: "32.99", currency: "EUR", currencySymbol: "€", category: "mlo",
+      price: "32.99", currency: "EUR", currencySymbol: "€", category: "maps",
       framework: ["ESX", "QBCore"], sellerId: seller.id, seller_name: seller.name, seller_email: seller.email,
       features: ["Vehicle storage", "Valet service", "Customisation menu"], requirements: ["oxmysql"], images: [imgs[1]],
       coverImage: imgs[1], featured: false, free: false,
@@ -249,14 +249,10 @@ async function main() {
 
   // ---- Browse categories (dynamic, admin-managed) ---------------------------
   await db.insert(schema.categories).values([
-    { id: 8001, name: "Maps", slug: "mlo", icon: "Building2", appliesTo: "scripts", isActive: true, showOnHome: true, homeOrder: 1, sortOrder: 1 },
+    { id: 8001, name: "Maps", slug: "maps", icon: "Building2", appliesTo: "scripts", isActive: true, showOnHome: true, homeOrder: 1, sortOrder: 1 },
     { id: 8002, name: "Vehicles", slug: "vehicles", icon: "Car", appliesTo: "scripts", isActive: true, showOnHome: true, homeOrder: 2, sortOrder: 2 },
     { id: 8003, name: "Weapons", slug: "weapons", icon: "Crosshair", appliesTo: "scripts", isActive: true, showOnHome: true, homeOrder: 3, sortOrder: 3 },
     { id: 8004, name: "Clothing", slug: "clothing", icon: "Shirt", appliesTo: "both", isActive: true, showOnHome: true, homeOrder: 4, sortOrder: 4 },
-    // "Maps" (slug: maps) intentionally dropped — duplicated "MLOs" above; the
-    // client wants them treated as one thing, MLO. Prod still has both rows
-    // (docs/categories-migration.sql) — merging/removing the prod row is a DB
-    // change the user must run themselves (see db-hands-off rule).
     { id: 8006, name: "Economy", slug: "economy", icon: "Coins", appliesTo: "scripts", isActive: true, showOnHome: true, homeOrder: 5, sortOrder: 5 },
     // Added 2026-07-13 per Bandookchi's category spec (Discord): Script + Peds.
     { id: 8007, name: "Script", slug: "script", icon: "FileCode2", appliesTo: "scripts", isActive: true, showOnHome: true, homeOrder: 6, sortOrder: 6 },
