@@ -796,17 +796,6 @@ export function ScriptsClient({
                 </button>
               );
             })}
-            {/* Catch-all for scripts whose category isn't one of the active DB categories. */}
-            <button
-              onClick={() => handleCategoryChange("other", !selectedCategories.includes("other"))}
-              className={`rounded-full px-4 py-1.5 text-sm font-semibold transition ${
-                selectedCategories.includes("other")
-                  ? "bg-gradient-to-r from-orange-500 to-yellow-400 text-black"
-                  : "border border-white/[0.08] bg-white/[0.04] text-white/70 hover:border-orange-500/40 hover:text-white"
-              }`}
-            >
-              Other
-            </button>
           </div>
 
           {/* Collapsible filter panel: frameworks + price + free/on-sale */}
