@@ -10,6 +10,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import Navbar from "@/componentss/shared/navbar";
+import BrowseNav from "@/componentss/shared/browse-nav";
 import Footer from "@/componentss/shared/footer";
 import Link from "next/link";
 import AdCard, { useRandomAds } from "@/componentss/ads/ad-card";
@@ -470,6 +471,10 @@ export function GiveawaysClient({
               </button>
             </div>
           </div>
+
+          {/* Same browse row as every other page (one shared component),
+              with "Giveaways" as the active section. */}
+          <BrowseNav className="mb-8" activeName="Giveaways" />
 
           {/* FEATURED (active tab only) */}
           {!loading && activeTab === "active" && featuredGiveaway && (

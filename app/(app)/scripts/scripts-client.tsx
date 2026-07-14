@@ -25,7 +25,7 @@ import Footer from "@/componentss/shared/footer";
 import AdCard, { useRandomAds } from "@/componentss/ads/ad-card";
 import { ProductCard, type MarketProduct } from "@/componentss/marketplace/product-card";
 import SideAdsFrame from "@/componentss/ads/side-banners";
-import CategoryChips from "@/componentss/shared/category-chips";
+import BrowseNav from "@/componentss/shared/browse-nav";
 
 // Map a raw /api/scripts item onto the UI script shape used throughout this page.
 // Shared by the server-seeded initial scripts and the client-side refetch so the
@@ -453,17 +453,6 @@ export function ScriptsClient({
 
   // Debug logging removed for production
 
-  const handleCategoryChange = useCallback(
-    (category: string, checked: boolean) => {
-      if (checked) {
-        setSelectedCategories((prev) => [...prev, category]);
-      } else {
-        setSelectedCategories((prev) => prev.filter((c) => c !== category));
-      }
-    },
-    []
-  );
-
   const handleFrameworkChange = useCallback(
     (framework: string, checked: boolean) => {
       if (checked) {
@@ -504,7 +493,8 @@ export function ScriptsClient({
     (type: string, value: string | number) => {
       switch (type) {
         case "category":
-          handleCategoryChange(value as string, false);
+          // Category is URL-driven now (BrowseNav nav links) — clear the param.
+          router.push("/scripts");
           break;
         case "framework":
           handleFrameworkChange(value as string, false);
@@ -514,7 +504,7 @@ export function ScriptsClient({
           break;
       }
     },
-    [handleCategoryChange, handleFrameworkChange, handlePriceCategoryChange]
+    [router, handleFrameworkChange, handlePriceCategoryChange]
   );
 
   const activeFiltersCount = useMemo(
@@ -769,14 +759,16 @@ export function ScriptsClient({
             ))}
           </div>
 
-          {/* Category chips */}
-          <CategoryChips
+          {/* Same browse row as the home page (one shared component site-wide).
+              Category chips are nav links → /scripts?category=slug, which this
+              page already reads and filters by (categoryParam sync above). */}
+          <BrowseNav
             className="mb-5"
-            categories={categories}
-            selected={selectedCategories}
-            onToggle={(id) => handleCategoryChange(id, !selectedCategories.includes(id))}
-            showAll
-            onClearAll={() => setSelectedCategories([])}
+            activeName={
+              categoryParam
+                ? categories.find((c) => c.id === categoryParam)?.name
+                : "Assets"
+            }
           />
 
           {/* Collapsible filter panel: frameworks + price + free/on-sale */}
