@@ -16,6 +16,39 @@ import AdCard, { useRandomAds } from "@/componentss/ads/ad-card";
 import { toast } from "sonner";
 import SideAdsFrame from "@/componentss/ads/side-banners";
 
+// Live countdown, isolated into its own component so the 1-second tick only
+// re-renders this tiny <span> — NOT the whole page. (Previously the parent held
+// the ticking `now` state, so every card remounted every second, reloading all
+// card images = the "cards keep re-loading" flicker.)
+function fmtTimeLeftShort(diff: number) {
+  if (diff <= 0) return "Ended";
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  if (days >= 1) return `${days}d ${hours}h left`;
+  const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  if (hours >= 1) return `${hours}h ${mins}m left`;
+  const secs = Math.floor((diff % (1000 * 60)) / 1000);
+  return `${mins}m ${secs}s left`;
+}
+function fmtTimeLeft(diff: number) {
+  if (diff <= 0) return "Ended";
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  if (days >= 1) return `Ends in ${days} day${days === 1 ? "" : "s"}`;
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  if (hours >= 1) return `Ends in ${hours} hour${hours === 1 ? "" : "s"}`;
+  const mins = Math.max(1, Math.floor(diff / (1000 * 60)));
+  return `Ends in ${mins} min${mins === 1 ? "" : "s"}`;
+}
+function Countdown({ endDate, short = false }: { endDate: string; short?: boolean }) {
+  const [now, setNow] = useState<number>(() => Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
+  const diff = new Date(endDate).getTime() - now;
+  return <>{short ? fmtTimeLeftShort(diff) : fmtTimeLeft(diff)}</>;
+}
+
 // Module-level so the SSR seed and the client fallback map identically.
 function mapApiGiveaway(g: any) {
   return {
@@ -60,13 +93,6 @@ export function GiveawaysClient({
   const [filterBy, setFilterBy] = useState("all");
   const [ads, setAds] = useState<any[]>(Array.isArray(initialAds) ? initialAds : []);
   const [activeTab, setActiveTab] = useState<"active" | "ended">("active");
-
-  // Live countdown — re-render every second so the "ends in" timers tick.
-  const [now, setNow] = useState<number>(() => Date.now());
-  useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(t);
-  }, []);
 
   type UIGiveaway = {
     id: number;
@@ -189,36 +215,9 @@ export function GiveawaysClient({
     }
   };
 
-  // Returns a friendly "ends in X" string from an end date.
-  const getTimeLeft = (endDate: string) => {
-    const diff = new Date(endDate).getTime() - now;
-    if (diff <= 0) return "Ended";
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    if (days >= 1) return `Ends in ${days} day${days === 1 ? "" : "s"}`;
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    if (hours >= 1) return `Ends in ${hours} hour${hours === 1 ? "" : "s"}`;
-    const mins = Math.max(1, Math.floor(diff / (1000 * 60)));
-    return `Ends in ${mins} min${mins === 1 ? "" : "s"}`;
-  };
-
-  // Compact live "Xd Yh left" form used on the grid cards; ticks down to
-  // seconds in the final hour so the countdown feels alive (Fivegift-style).
-  const getTimeLeftShort = (endDate: string) => {
-    const diff = new Date(endDate).getTime() - now;
-    if (diff <= 0) return "Ended";
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    if (days >= 1) return `${days}d ${hours}h left`;
-    const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    if (hours >= 1) return `${hours}h ${mins}m left`;
-    const secs = Math.floor((diff % (1000 * 60)) / 1000);
-    return `${mins}m ${secs}s left`;
-  };
-
-  // Everything below is derived from the giveaway data + filters/tab — NOT
-  // from the live `now` tick. Memoized so the 1-second countdown re-render
-  // doesn't re-run the random ad placement below (that was reshuffling the
-  // whole grid's order every second — the "cards keep changing" bug).
+  // Everything below is derived from the giveaway data + filters/tab. Memoized
+  // so re-renders don't re-run the random ad placement below (that was
+  // reshuffling the whole grid's order — the "cards keep changing" bug).
   const { featuredGiveaway, gridActiveGiveaways, endedFilteredGiveaways, liveCount, gridList } = useMemo(() => {
     const filteredGiveaways = activeGiveaways.filter((giveaway) => {
       if (
@@ -370,7 +369,7 @@ export function GiveawaysClient({
                 <Users className="h-4 w-4" /> {fmt(giveaway.entries)}
               </span>
               <span className="flex items-center gap-1.5">
-                <Clock className="h-4 w-4" /> {getTimeLeftShort(giveaway.endDate)}
+                <Clock className="h-4 w-4" /> <Countdown endDate={giveaway.endDate} short />
               </span>
             </div>
           </div>
@@ -519,7 +518,7 @@ export function GiveawaysClient({
                   </span>
                   <span className="flex items-center gap-1.5 text-white/60">
                     <Clock className="h-4 w-4 text-[#f97316]" />{" "}
-                    {getTimeLeft(featuredGiveaway.endDate)}
+                    <Countdown endDate={featuredGiveaway.endDate} />
                   </span>
                 </div>
                 <div className="flex items-center gap-3">
