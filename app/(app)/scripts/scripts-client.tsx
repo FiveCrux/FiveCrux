@@ -25,6 +25,7 @@ import Footer from "@/componentss/shared/footer";
 import AdCard, { useRandomAds } from "@/componentss/ads/ad-card";
 import { ProductCard, type MarketProduct } from "@/componentss/marketplace/product-card";
 import SideAdsFrame from "@/componentss/ads/side-banners";
+import CategoryChips from "@/componentss/shared/category-chips";
 
 // Map a raw /api/scripts item onto the UI script shape used throughout this page.
 // Shared by the server-seeded initial scripts and the client-side refetch so the
@@ -769,34 +770,14 @@ export function ScriptsClient({
           </div>
 
           {/* Category chips */}
-          <div className="mb-5 flex flex-wrap gap-2">
-            <button
-              onClick={() => setSelectedCategories([])}
-              className={`rounded-full px-4 py-1.5 text-sm font-semibold transition ${
-                selectedCategories.length === 0
-                  ? "bg-gradient-to-r from-orange-500 to-yellow-400 text-black"
-                  : "border border-white/[0.08] bg-white/[0.04] text-white/70 hover:border-orange-500/40 hover:text-white"
-              }`}
-            >
-              All
-            </button>
-            {categories.map((cat) => {
-              const active = selectedCategories.includes(cat.id);
-              return (
-                <button
-                  key={cat.id}
-                  onClick={() => handleCategoryChange(cat.id, !active)}
-                  className={`rounded-full px-4 py-1.5 text-sm font-semibold transition ${
-                    active
-                      ? "bg-gradient-to-r from-orange-500 to-yellow-400 text-black"
-                      : "border border-white/[0.08] bg-white/[0.04] text-white/70 hover:border-orange-500/40 hover:text-white"
-                  }`}
-                >
-                  {cat.name}
-                </button>
-              );
-            })}
-          </div>
+          <CategoryChips
+            className="mb-5"
+            categories={categories}
+            selected={selectedCategories}
+            onToggle={(id) => handleCategoryChange(id, !selectedCategories.includes(id))}
+            showAll
+            onClearAll={() => setSelectedCategories([])}
+          />
 
           {/* Collapsible filter panel: frameworks + price + free/on-sale */}
           <AnimatePresence initial={false}>

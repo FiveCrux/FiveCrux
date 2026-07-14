@@ -10,7 +10,7 @@ import {
   X,
 } from "lucide-react";
 import Link from "next/link";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Navbar from "@/componentss/shared/navbar";
 import Footer from "@/componentss/shared/footer";
 import AdCard, { useRandomAds } from "@/componentss/ads/ad-card";
@@ -57,7 +57,6 @@ export function PropsClient({
   initialProps?: any[];
   initialAds?: any[];
 }) {
-  const searchParams = useSearchParams();
   const router = useRouter();
   const filtersRef = useRef(null);
   const propsRef = useRef(null);
@@ -69,15 +68,6 @@ export function PropsClient({
 
   const [priceRange, setPriceRange] = useState<number[]>([0, 1000]);
   const [sortBy, setSortBy] = useState("popular");
-  const categoryParam = searchParams.get("category") ?? "";
-
-  const [selectedCategories, setSelectedCategories] = useState<string[]>(() =>
-    categoryParam ? [categoryParam] : []
-  );
-
-  useEffect(() => {
-    setSelectedCategories(categoryParam ? [categoryParam] : []);
-  }, [categoryParam]);
 
   const [selectedFrameworks, setSelectedFrameworks] = useState<string[]>([]);
   const [selectedPriceCategories, setSelectedPriceCategories] = useState<
@@ -185,14 +175,6 @@ export function PropsClient({
     load();
   }, []);
 
-  const categories = [
-    { id: "props", name: "Props" },
-    { id: "maps", name: "Maps" },
-    { id: "clothing", name: "Clothing" },
-    { id: "economy", name: "Economy" },
-    { id: "vehicles", name: "Vehicles" },
-  ];
-
   const frameworks = useFrameworks();
   const priceCategories = PRICE_TIERS;
 
@@ -227,13 +209,6 @@ export function PropsClient({
         !prop.tags.some((tag) =>
           tag.toLowerCase().includes(searchQuery.toLowerCase())
         )
-      ) {
-        return false;
-      }
-
-      if (
-        selectedCategories.length > 0 &&
-        !selectedCategories.includes(prop.category)
       ) {
         return false;
       }
@@ -274,7 +249,6 @@ export function PropsClient({
   }, [
     allProps,
     searchQuery,
-    selectedCategories,
     selectedFrameworks,
     priceRange,
     priceBounds,
@@ -316,17 +290,6 @@ export function PropsClient({
 
   // Debug logging removed for production
 
-  const handleCategoryChange = useCallback(
-    (category: string, checked: boolean) => {
-      if (checked) {
-        setSelectedCategories((prev) => [...prev, category]);
-      } else {
-        setSelectedCategories((prev) => prev.filter((c) => c !== category));
-      }
-    },
-    []
-  );
-
   const handleFrameworkChange = useCallback(
     (framework: string, checked: boolean) => {
       if (checked) {
@@ -352,7 +315,6 @@ export function PropsClient({
   );
 
   const clearAllFilters = useCallback(() => {
-    setSelectedCategories([]);
     setSelectedFrameworks([]);
     setSelectedPriceCategories([]);
     setPriceRange([priceBounds.min, priceBounds.max]);
@@ -361,14 +323,6 @@ export function PropsClient({
     setSearchQuery("");
     router.push("/props");
   }, [router, priceBounds]);
-
-  const toggleCategory = useCallback(
-    (categoryId: string) => {
-      const isActive = selectedCategories.includes(categoryId);
-      handleCategoryChange(categoryId, !isActive);
-    },
-    [selectedCategories, handleCategoryChange]
-  );
 
   const toggleFramework = useCallback(
     (value: string) => {
@@ -381,9 +335,6 @@ export function PropsClient({
   const removeFilter = useCallback(
     (type: string, value: string | number) => {
       switch (type) {
-        case "category":
-          handleCategoryChange(value as string, false);
-          break;
         case "framework":
           handleFrameworkChange(value as string, false);
           break;
@@ -392,18 +343,16 @@ export function PropsClient({
           break;
       }
     },
-    [handleCategoryChange, handleFrameworkChange, handlePriceCategoryChange]
+    [handleFrameworkChange, handlePriceCategoryChange]
   );
 
   const activeFiltersCount = useMemo(
     () =>
-      selectedCategories.length +
       selectedFrameworks.length +
       (priceRange[0] !== priceBounds.min || priceRange[1] !== priceBounds.max ? 1 : 0) +
       (onSaleOnly ? 1 : 0) +
       (freeOnly ? 1 : 0),
     [
-      selectedCategories.length,
       selectedFrameworks.length,
       priceRange,
       priceBounds,
@@ -575,25 +524,8 @@ export function PropsClient({
             </button>
           </motion.div>
 
-          {/* Category chips */}
-          <div className="mb-5 flex flex-wrap gap-2">
-            {categories.map((cat) => {
-              const active = selectedCategories.includes(cat.id);
-              return (
-                <button
-                  key={`${cat.id}-${cat.name}`}
-                  onClick={() => toggleCategory(cat.id)}
-                  className={`rounded-full px-4 py-1.5 text-sm font-semibold transition ${
-                    active
-                      ? "bg-gradient-to-r from-orange-500 to-yellow-400 text-black"
-                      : "border border-white/[0.08] bg-white/[0.04] text-white/70 hover:border-orange-500/40 hover:text-white"
-                  }`}
-                >
-                  {cat.name}
-                </button>
-              );
-            })}
-          </div>
+          {/* No category chips here — props have no sub-category (every prop
+              is just Tebex's single "PROPS" listing), unlike Assets/Scripts. */}
 
           {/* Collapsible filters: framework + price + toggles */}
           <AnimatePresence>
@@ -705,20 +637,6 @@ export function PropsClient({
               )}
             </span>
 
-            {selectedCategories.map((category) => (
-              <span
-                key={category}
-                className="flex items-center gap-1 rounded-full border border-orange-500/30 bg-orange-500/10 px-2.5 py-0.5 text-xs text-orange-300"
-              >
-                {categories.find((c) => c.id === category)?.name}
-                <button
-                  onClick={() => removeFilter("category", category)}
-                  className="transition-colors hover:text-white"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              </span>
-            ))}
             {selectedFrameworks.map((framework) => {
               const frameworkObj = frameworks.find((f) => f.value === framework);
               return (
