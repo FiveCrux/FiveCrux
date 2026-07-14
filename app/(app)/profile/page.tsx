@@ -656,24 +656,23 @@ export default function ProfilePage() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-[#0a0a0a] text-white [font-variant-numeric:tabular-nums]">
+      <div className="min-h-screen lg:min-h-0 lg:h-[calc(100vh_-_68px)] lg:overflow-hidden bg-[#0a0a0a] text-white [font-variant-numeric:tabular-nums]">
         {/* Full-width like the admin panel — no centered max-width container,
             so the dashboard fills the viewport instead of leaving big empty
             margins on wide screens. */}
-        <div className="px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+        <div className="px-4 sm:px-6 lg:px-8 py-6 lg:py-8 lg:h-full lg:overflow-hidden">
           <Tabs
             value={activeTab}
             onValueChange={setActiveTab}
-            className="lg:grid lg:grid-cols-[260px_1fr] lg:gap-8"
+            className="lg:grid lg:grid-cols-[260px_1fr] lg:gap-8 lg:h-full"
           >
             {/* ============ SIDEBAR ============ */}
-            {/* Sticky to the top while the main content scrolls; if the
-                sidebar's own content (profile card + full nav) is taller than
-                the viewport, it scrolls independently within itself instead of
-                getting cut off or dragging the whole page. Scrollbar hidden
-                (site's global orange scrollbar looked out of place on this
-                narrow column) — still scrolls fine via wheel/touch/keyboard. */}
-            <aside className="lg:sticky lg:top-[88px] lg:h-fit lg:max-h-[calc(100vh-104px)] lg:overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+            {/* Fixed to the viewport height — only the MAIN column scrolls,
+                not the whole page. If the sidebar's own content is taller
+                than that, it scrolls independently within itself. Scrollbar
+                hidden (site's global orange scrollbar looked out of place on
+                this narrow column) — still scrolls via wheel/touch/keyboard. */}
+            <aside className="lg:h-full lg:min-h-0 lg:overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -829,7 +828,8 @@ export default function ProfilePage() {
             </aside>
 
             {/* ============ MAIN ============ */}
-            <main className="mt-6 lg:mt-0 space-y-8">
+            {/* The only column that scrolls on desktop — page/sidebar stay put. */}
+            <main className="mt-6 lg:mt-0 space-y-8 lg:h-full lg:min-h-0 lg:overflow-y-auto lg:pr-2">
               {/* welcome header */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
