@@ -142,7 +142,6 @@ const featuredScriptPackages: PricingPackage[] = [
  * impression/click tracking exists.
  * -------------------------------------------------------------------------- */
 export default function AdvertisePanel() {
-  const heroRef = useRef<HTMLDivElement>(null)
   const pricingRef = useRef<HTMLDivElement>(null)
 
   // State for selected tab (ad slots or featured script slots)
@@ -494,64 +493,27 @@ export default function AdvertisePanel() {
 
   return (
     <div className="text-white antialiased selection:bg-[#f97316]/30">
-      {/* ===== STATS HERO ===== */}
+      {/* ===== PACKAGES (now the top section — the separate hero card was
+             removed; its "Advertise on FiveCrux" title lives here now) ===== */}
       <section
-        className="overflow-hidden rounded-3xl border border-white/[0.07]"
+        ref={pricingRef}
+        className="scroll-mt-24 overflow-hidden rounded-3xl border border-white/[0.07]"
         style={{
           backgroundImage:
             "radial-gradient(70% 60% at 50% 0%, rgba(249,115,22,0.16), transparent 70%)",
         }}
       >
-        <div className="mx-auto max-w-7xl px-5 pt-12 pb-12">
-          <motion.div
-            ref={heroRef}
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-            className="mx-auto max-w-3xl text-center"
-          >
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/[0.07] bg-white/[0.03] px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/55">
-              <TrendingUp className="h-3.5 w-3.5 text-[#f97316]" />
-              Advertising plans
-            </span>
-            <h1 className="mt-7 text-4xl font-extrabold leading-[1.05] tracking-tight md:text-6xl">
-              Advertise on <span className="text-[#f97316]">FiveCrux</span>
-            </h1>
-            <p className="mx-auto mt-5 max-w-xl text-lg text-white/55">
-              Put your assets, server, or brand in front of thousands of active FiveM
-              server owners.
-            </p>
-            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Button
-                type="button"
-                onClick={() => pricingRef.current?.scrollIntoView({ behavior: "smooth" })}
-                className="h-11 w-full rounded-xl border-none bg-[#f97316] px-6 text-sm font-semibold text-black shadow-[0_0_24px_rgba(249,115,22,0.25)] hover:bg-[#ea6c0a] sm:w-auto"
-              >
-                View pricing
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
-          </motion.div>
-
-        </div>
-      </section>
-
-      {/* ===== PACKAGES ===== */}
-      <section
-        ref={pricingRef}
-        className="mt-8 scroll-mt-24 rounded-3xl border border-white/[0.07] bg-white/[0.015]"
-      >
         <div className="mx-auto max-w-7xl px-5 py-16">
           <div className="text-center">
             <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#f97316]">
-              Packages
+              Advertising plans
             </div>
-            <h2 className="mt-3 text-3xl font-extrabold tracking-tight md:text-4xl">
-              Reach that scales with your budget
+            <h2 className="mt-3 text-4xl font-extrabold tracking-tight md:text-5xl">
+              Advertise on <span className="text-[#f97316]">FiveCrux</span>
             </h2>
             <p className="mx-auto mt-3 max-w-xl text-white/50">
-              Banner Ad Slots &amp; Featured Asset Slots, in three packages. Compare at a
-              glance.
+              Put your assets, server, or brand in front of thousands of active FiveM
+              server owners.
             </p>
           </div>
 
