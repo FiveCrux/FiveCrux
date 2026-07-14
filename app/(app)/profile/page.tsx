@@ -829,7 +829,10 @@ export default function ProfilePage() {
 
             {/* ============ MAIN ============ */}
             {/* The only column that scrolls on desktop — page/sidebar stay put. */}
-            <main className="mt-6 lg:mt-0 space-y-8 lg:h-full lg:min-h-0 lg:overflow-y-auto lg:pr-2">
+            {/* px-2 (not just pr-2): the independent-scroll overflow-y-auto also
+                clips overflow-x, so hover-scale on the left-column cards got cut
+                at the scroll edge. A little horizontal padding gives them room. */}
+            <main className="mt-6 lg:mt-0 space-y-8 lg:h-full lg:min-h-0 lg:overflow-y-auto lg:px-2">
               {/* welcome header */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
