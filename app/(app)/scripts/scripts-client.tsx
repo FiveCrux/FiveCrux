@@ -108,7 +108,7 @@ export function ScriptsClient({
 }: {
   initialScripts?: any[];
   initialFeatured?: any[];
-  initialCategories?: { slug: string; name: string }[];
+  initialCategories?: { slug: string; name: string; icon?: string | null }[];
 }) {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -295,10 +295,10 @@ export function ScriptsClient({
 
   // Dynamic categories (DB-managed). `id` is the slug used in filters + URL.
   // Seeded from the server; only fetch client-side if the seed was empty.
-  const [categories, setCategories] = useState<{ id: string; name: string }[]>(
+  const [categories, setCategories] = useState<{ id: string; name: string; icon?: string | null }[]>(
     () =>
       Array.isArray(initialCategories)
-        ? initialCategories.map((c) => ({ id: c.slug, name: c.name }))
+        ? initialCategories.map((c) => ({ id: c.slug, name: c.name, icon: c.icon }))
         : []
   );
   useEffect(() => {
@@ -308,7 +308,7 @@ export function ScriptsClient({
       .then(
         (d) =>
           Array.isArray(d?.categories) &&
-          setCategories(d.categories.map((c: any) => ({ id: c.slug, name: c.name })))
+          setCategories(d.categories.map((c: any) => ({ id: c.slug, name: c.name, icon: c.icon })))
       )
       .catch(() => {});
   }, []);
