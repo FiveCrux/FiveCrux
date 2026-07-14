@@ -189,22 +189,35 @@ export default function ScriptSelectionPopup({ isOpen, onClose, onSelect, slotUn
             </div>
           )}
 
-          {/* Action Buttons */}
-          <div className="flex justify-end gap-3 pt-4 border-t border-white/[0.08]">
+          {/* Action Buttons — same layout/style as the Ads form footer:
+              primary (flex-1, icon + spinner loading) then an outline Cancel. */}
+          <div className="flex gap-3 pt-4 border-t border-white/[0.08]">
             <Button
+              type="button"
+              onClick={handleSelect}
+              disabled={!selectedScriptId || isSubmitting || approvedScripts.length === 0}
+              className="bg-orange-500 hover:bg-orange-400 text-black font-bold flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSubmitting ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-black mr-2" />
+                  Featuring...
+                </>
+              ) : (
+                <>
+                  <Check className="h-4 w-4 mr-2" />
+                  Feature Asset
+                </>
+              )}
+            </Button>
+            <Button
+              type="button"
               variant="outline"
               onClick={handleClose}
               disabled={isSubmitting}
-              className="border-white/[0.1] text-white/70 hover:text-white hover:border-white/20"
+              className="border-white/[0.1] text-white/70 hover:bg-white/[0.06] hover:text-white"
             >
               Cancel
-            </Button>
-            <Button
-              onClick={handleSelect}
-              disabled={!selectedScriptId || isSubmitting || approvedScripts.length === 0}
-              className="bg-orange-500 hover:bg-orange-400 text-black font-bold disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSubmitting ? "Processing..." : "Select Asset"}
             </Button>
           </div>
         </div>
