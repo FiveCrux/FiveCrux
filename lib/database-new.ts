@@ -534,7 +534,8 @@ export async function checkAndDeactivateExpiredFeaturedScriptSlots(): Promise<{ 
       
       for (const featuredScript of featuredScriptsToDeactivate) {
         // Track script IDs to check if they need featured field updated
-        scriptIdsToCheck.add(featuredScript.scriptId);
+        // (banner featured rows have no scriptId — skip them).
+        if (featuredScript.scriptId != null) scriptIdsToCheck.add(featuredScript.scriptId);
         
         // Deactivate the featured script - update both featuredStatus and featuredSlotStatus
         await db
@@ -572,7 +573,7 @@ export async function checkAndDeactivateExpiredFeaturedScriptSlots(): Promise<{ 
   
   // Deactivate expired featured scripts
   for (const featuredScript of expiredFeaturedScripts) {
-    scriptIdsToCheck.add(featuredScript.scriptId);
+    if (featuredScript.scriptId != null) scriptIdsToCheck.add(featuredScript.scriptId);
     
     // Deactivate the featured script - update both featuredStatus and featuredSlotStatus
     await db
@@ -589,6 +590,8 @@ export async function checkAndDeactivateExpiredFeaturedScriptSlots(): Promise<{ 
   // Update the featured field in approvedScripts for scripts that no longer have active featured entries
   let scriptsUpdated = 0;
   for (const scriptId of scriptIdsToCheck) {
+    // Banner featured rows have no scriptId — nothing to unflag in approvedScripts.
+    if (scriptId == null) continue;
     // Check if there are any other active featured entries for this script
     const otherActiveFeaturedEntries = await db
       .select()
@@ -3237,15 +3240,22 @@ export async function createFeaturedScript(featuredScriptData: NewFeaturedScript
     }
   }
 
-  const scriptId = (featuredScriptData as any).scriptId ?? (featuredScriptData as any).script_id;
+  const scriptId = (featuredScriptData as any).scriptId ?? (featuredScriptData as any).script_id ?? null;
+  const d = featuredScriptData as any;
 
   const mapped = {
     id: genId(), // app-generated integer PK (prod has manual PKs)
+    // Either a promoted existing asset (scriptId) OR a custom banner (fields below).
     scriptId: scriptId,
+    title: d.title ?? null,
+    description: d.description ?? null,
+    imageUrl: d.imageUrl ?? d.image_url ?? null,
+    linkUrl: d.linkUrl ?? d.link_url ?? null,
+    category: d.category ?? null,
     featuredSlotUniqueId: slotUniqueId,
-    featuredStartDate: (featuredScriptData as any).startDate ?? (featuredScriptData as any).start_date ?? new Date(),
+    featuredStartDate: d.startDate ?? d.start_date ?? new Date(),
     featuredEndDate: featuredScriptEndDate || null,
-    featuredCreatedBy: (featuredScriptData as any).createdBy ?? (featuredScriptData as any).created_by,
+    featuredCreatedBy: d.createdBy ?? d.created_by,
     featuredStatus: 'active' as any,
   };
 
@@ -3361,6 +3371,12 @@ export async function getFeaturedScriptsWithDetails(filters?: {
         featuredViewCount: featuredScripts.featuredViewCount,
         featuredCreatedAt: featuredScripts.featuredCreatedAt,
         featuredUpdatedAt: featuredScripts.featuredUpdatedAt,
+        // Custom-banner fields (set when this row is a banner, scriptId null)
+        bannerTitle: featuredScripts.title,
+        bannerDescription: featuredScripts.description,
+        bannerImage: featuredScripts.imageUrl,
+        bannerLink: featuredScripts.linkUrl,
+        bannerCategory: featuredScripts.category,
         // Script fields
         scriptTitle: approvedScripts.title,
         scriptDescription: approvedScripts.description,
@@ -3402,13 +3418,24 @@ export async function getFeaturedScriptsWithDetails(filters?: {
       });
     }
 
-    // Map results with seller info
-    const mappedResults = results.map(result => ({
-      ...result,
-      scriptSellerName: formatDisplayName(result.scriptSellerName) || result.scriptSellerName,
-      scriptSellerImage: result.scriptSellerId ? sellerImagesMap.get(result.scriptSellerId) || null : null,
-      scriptSellerRoles: result.scriptSellerId ? sellerRolesMap.get(result.scriptSellerId) || null : null,
-    }));
+    // Map results with seller info. A banner row (scriptId null) has no joined
+    // script, so coalesce its own banner fields into the same aliases every
+    // consumer already reads, and expose isBanner + linkUrl for the href.
+    const mappedResults = results.map(result => {
+      const isBanner = result.scriptId == null;
+      return {
+        ...result,
+        isBanner,
+        linkUrl: result.bannerLink || null,
+        scriptTitle: result.scriptTitle ?? result.bannerTitle ?? null,
+        scriptDescription: result.scriptDescription ?? result.bannerDescription ?? null,
+        scriptCoverImage: result.scriptCoverImage ?? result.bannerImage ?? null,
+        scriptCategory: result.scriptCategory ?? result.bannerCategory ?? null,
+        scriptSellerName: formatDisplayName(result.scriptSellerName) || result.scriptSellerName,
+        scriptSellerImage: result.scriptSellerId ? sellerImagesMap.get(result.scriptSellerId) || null : null,
+        scriptSellerRoles: result.scriptSellerId ? sellerRolesMap.get(result.scriptSellerId) || null : null,
+      };
+    });
 
     return mappedResults;
   } catch (error) {
@@ -3448,6 +3475,11 @@ export async function getUserFeaturedScripts(userId: string, limit?: number) {
         featuredViewCount: featuredScripts.featuredViewCount,
         featuredCreatedAt: featuredScripts.featuredCreatedAt,
         featuredUpdatedAt: featuredScripts.featuredUpdatedAt,
+        // Custom-banner fields (set when scriptId is null)
+        bannerTitle: featuredScripts.title,
+        bannerDescription: featuredScripts.description,
+        bannerImage: featuredScripts.imageUrl,
+        bannerLink: featuredScripts.linkUrl,
         // Script fields
         scriptTitle: approvedScripts.title,
         scriptDescription: approvedScripts.description,
@@ -3465,7 +3497,16 @@ export async function getUserFeaturedScripts(userId: string, limit?: number) {
       .orderBy(desc(featuredScripts.featuredCreatedAt))
       .limit(limitVal);
 
-    return results;
+    // Coalesce banner fields into the script* aliases the UI reads; expose
+    // isBanner + linkUrl so a banner links to its own URL.
+    return results.map((r) => ({
+      ...r,
+      isBanner: r.scriptId == null,
+      linkUrl: r.bannerLink || null,
+      scriptTitle: r.scriptTitle ?? r.bannerTitle ?? null,
+      scriptDescription: r.scriptDescription ?? r.bannerDescription ?? null,
+      scriptCoverImage: r.scriptCoverImage ?? r.bannerImage ?? null,
+    }));
   } catch (error) {
     console.error('Error fetching user featured scripts:', error);
     return [];

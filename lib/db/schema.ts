@@ -518,7 +518,15 @@ export const userAdSlots = pgTable('user_ad_slots', {
 // Featured scripts table (no approval needed - users can only feature approved scripts)
 export const featuredScripts = pgTable('featured_scripts', {
   id: integer('id').primaryKey().notNull(),
-  scriptId: integer('script_id').notNull().references(() => approvedScripts.id, { onDelete: 'cascade' }), // Reference to the script being featured
+  // Nullable now: a featured slot is EITHER a promoted existing asset (scriptId
+  // set) OR a custom banner (scriptId null + the banner fields below).
+  scriptId: integer('script_id').references(() => approvedScripts.id, { onDelete: 'cascade' }),
+  // Custom-banner fields (used when scriptId is null) — mirror the ad creative.
+  title: text('title'),
+  description: text('description'),
+  imageUrl: text('image_url'),
+  linkUrl: text('link_url'),
+  category: text('category'),
   featuredSlotUniqueId: text('featured_slot_unique_id'), // Unique ID to identify which featured script slot this belongs to
   featuredSlotStatus: text('featured_slot_status').default('active').notNull(), // 'active' when endDate > current date, 'inactive' when current date passes endDate
   featuredStartDate: timestamp('featured_start_date').defaultNow(),

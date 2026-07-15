@@ -45,6 +45,22 @@ function resolveCoverImage(...candidates: any[]): string | undefined {
 }
 
 function mapFeatured(item: any): MarketProduct {
+  // A featured BANNER (no scriptId) links to its own URL and has no price/
+  // framework/seller — just the banner image + title.
+  const isBanner = item.isBanner || item.scriptId == null
+  if (isBanner) {
+    return {
+      id: item.id,
+      title: item.scriptTitle || item.title || "Untitled",
+      framework: [],
+      price: 0,
+      hidePrice: true,
+      coverImage: resolveCoverImage(item.scriptCoverImage, item.bannerImage, item.image_url),
+      tag: "FEATURED",
+      href: item.linkUrl || item.bannerLink || "#",
+      external: true,
+    }
+  }
   return {
     id: item.scriptId ?? item.id,
     title: item.scriptTitle || item.title || "Untitled",
@@ -208,12 +224,21 @@ function HeroSpotlight({ items, promo }: {
                 )}
               </div>
               <div className="flex flex-wrap items-center gap-3">
-                <Link href={active.href} className="flex items-center gap-2 rounded-xl bg-orange-500 px-6 py-3 font-bold text-black transition hover:bg-orange-400 shadow-[0_0_0_1px_rgba(249,115,22,0.5),0_8px_32px_rgba(249,115,22,0.35)]">
-                  <Play className="h-4 w-4" /> View Asset
-                </Link>
-                <Link href={active.href} className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.06] px-6 py-3 font-semibold backdrop-blur-md transition hover:bg-white/10">
-                  <ShoppingCart className="h-4 w-4" /> Add to Cart
-                </Link>
+                {active.external ? (
+                  // Featured banner → single external CTA (no cart).
+                  <a href={active.href} target="_blank" rel="noopener noreferrer sponsored" className="flex items-center gap-2 rounded-xl bg-orange-500 px-6 py-3 font-bold text-black transition hover:bg-orange-400 shadow-[0_0_0_1px_rgba(249,115,22,0.5),0_8px_32px_rgba(249,115,22,0.35)]">
+                    <ArrowRight className="h-4 w-4" /> Visit
+                  </a>
+                ) : (
+                  <>
+                    <Link href={active.href} className="flex items-center gap-2 rounded-xl bg-orange-500 px-6 py-3 font-bold text-black transition hover:bg-orange-400 shadow-[0_0_0_1px_rgba(249,115,22,0.5),0_8px_32px_rgba(249,115,22,0.35)]">
+                      <Play className="h-4 w-4" /> View Asset
+                    </Link>
+                    <Link href={active.href} className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.06] px-6 py-3 font-semibold backdrop-blur-md transition hover:bg-white/10">
+                      <ShoppingCart className="h-4 w-4" /> Add to Cart
+                    </Link>
+                  </>
+                )}
               </div>
             </>
           )}

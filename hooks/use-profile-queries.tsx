@@ -71,7 +71,14 @@ export function useCreateFeaturedScript() {
   const { data: session } = useSession()
 
   return useMutation({
-    mutationFn: async (data: { script_id: number; slot_unique_id: string | null }) => {
+    mutationFn: async (data: {
+      slot_unique_id: string | null
+      title: string
+      description: string
+      category: string
+      link_url: string
+      image_url: string
+    }) => {
       const res = await fetch('/api/users/featured-scripts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -80,14 +87,14 @@ export function useCreateFeaturedScript() {
       })
       if (!res.ok) {
         const error = await res.json()
-        throw new Error(error.error || 'Failed to create featured script')
+        throw new Error(error.error || 'Failed to create featured banner')
       }
       return res.json()
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-featured-scripts'] })
       queryClient.invalidateQueries({ queryKey: ['user-featured-script-slots'] })
-      toast.success('Featured script created successfully!')
+      toast.success('Featured banner published!')
     },
     onError: (error: any) => {
       toast.error('Failed to create featured script', {

@@ -327,7 +327,15 @@ async function main() {
     featuredCreatedBy: seller.id, featuredStatus: "active", featuredClickCount: 8, featuredViewCount: 210,
     featuredEndDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
   }).onConflictDoNothing()
-  console.log("✓ 2 purchased featured-script slots for CruxDev (1 used, 1 open, 1 locked)")
+  // A custom-BANNER featured row (no scriptId) — verifies the banner path.
+  await db.insert(schema.featuredScripts).values({
+    id: 13002, scriptId: null, featuredSlotUniqueId: "featslot-demo-2", featuredSlotStatus: "active",
+    title: "Grand Summer Sale — 40% off", description: "Premium FiveM packs, this week only.",
+    imageUrl: imgs[2], linkUrl: "https://example.com/sale", category: "scripts",
+    featuredCreatedBy: seller.id, featuredStatus: "active", featuredClickCount: 3, featuredViewCount: 96,
+    featuredEndDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
+  }).onConflictDoNothing()
+  console.log("✓ 2 purchased featured-script slots for CruxDev (1 asset + 1 banner)")
 
   // ---- Creator code (storewide referral/affiliate code) ---------------------
   await db.insert(schema.creatorCodes).values({

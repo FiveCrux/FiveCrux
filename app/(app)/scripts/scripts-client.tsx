@@ -80,8 +80,11 @@ function mapApiScript(s: any) {
 // Module-level so the SSR featured seed and the client fallback map identically.
 function mapFeatured(item: any) {
   return {
-    id: item.scriptId,
+    id: item.scriptId ?? item.id,
     featuredScriptId: item.id,
+    // A banner featured row (no scriptId) links to its own URL, not a product.
+    isBanner: item.isBanner || item.scriptId == null,
+    linkUrl: item.linkUrl || item.bannerLink || null,
     title: item.scriptTitle || "",
     description: item.scriptDescription || "",
     cover_image: item.scriptCoverImage || "/placeholder.jpg",
@@ -621,6 +624,24 @@ export function ScriptsClient({
   const featuredProducts: MarketProduct[] = useMemo(() => {
     return featuredScripts.map((item: any) => {
       const isFree = !!item.free || Number(item.price) === 0;
+      const coverImage =
+        item.cover_image && item.cover_image !== "/placeholder.jpg"
+          ? item.cover_image
+          : undefined;
+      // Banner featured → external link, no price/seller/framework.
+      if (item.isBanner) {
+        return {
+          id: item.featuredScriptId ?? item.id,
+          title: item.title,
+          framework: [],
+          price: 0,
+          hidePrice: true,
+          coverImage,
+          tag: "FEATURED",
+          href: item.linkUrl || "#",
+          external: true,
+        } as MarketProduct;
+      }
       return {
         id: item.id,
         title: item.title,
@@ -635,10 +656,7 @@ export function ScriptsClient({
         rating: undefined,
         seller: item.seller_name || item.seller,
         sellerImage: item.seller_image ?? undefined,
-        coverImage:
-          item.cover_image && item.cover_image !== "/placeholder.jpg"
-            ? item.cover_image
-            : undefined,
+        coverImage,
         currencySymbol: item.currency_symbol || item.scriptCurrencySymbol,
         tag: "FEATURED",
         href: `/script/${item.id}`,

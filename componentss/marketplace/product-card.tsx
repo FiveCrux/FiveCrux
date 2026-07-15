@@ -23,6 +23,9 @@ export interface MarketProduct {
   /** Seller-selected currency symbol (e.g. "€"); falls back to the app default. */
   currencySymbol?: string
   href: string
+  /** When true, href is an external URL (e.g. a featured banner's link) — open
+   *  it as a plain anchor in a new tab instead of an in-app route. */
+  external?: boolean
   /** Detail-page view count — used to sort the "Most Viewed" home row. */
   viewCount?: number
 }
@@ -62,14 +65,18 @@ export function ProductCard({ product, className = "" }: { product: MarketProduc
   const isFree = product.free || price === 0
   const discounted = originalPrice != null && !Number.isNaN(originalPrice) && originalPrice > price
 
+  // Fluid by default: fills its container/grid column so wide screens show
+  // evenly-sized cards (no fixed-width gaps). Horizontal scroll rows wrap the
+  // card in a fixed-width container instead. External (featured banner) links
+  // open in a new tab via a plain anchor; internal ones use next/link.
+  const cardClass = `group block w-full overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.04] backdrop-blur-md transition-all duration-200 hover:-translate-y-1.5 hover:border-orange-500/40 hover:shadow-[0_16px_48px_rgba(0,0,0,0.5)] ${className}`
+  const Wrapper: any = product.external ? "a" : Link
+  const wrapperProps: any = product.external
+    ? { href: product.href, target: "_blank", rel: "noopener noreferrer sponsored" }
+    : { href: product.href }
+
   return (
-    <Link
-      href={product.href}
-      // Fluid by default: fills its container/grid column so wide screens show
-      // evenly-sized cards (no fixed-width gaps). Horizontal scroll rows wrap the
-      // card in a fixed-width container instead.
-      className={`group block w-full overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.04] backdrop-blur-md transition-all duration-200 hover:-translate-y-1.5 hover:border-orange-500/40 hover:shadow-[0_16px_48px_rgba(0,0,0,0.5)] ${className}`}
-    >
+    <Wrapper {...wrapperProps} className={cardClass}>
       {/* Cover */}
       <div className={`relative flex h-36 items-center justify-center overflow-hidden bg-gradient-to-br ${grad}`}>
         {product.coverImage ? (
@@ -159,6 +166,6 @@ export function ProductCard({ product, className = "" }: { product: MarketProduc
           </span>
         </div>
       </div>
-    </Link>
+    </Wrapper>
   )
 }

@@ -55,7 +55,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/componentss/ui/avatar";
 import Navbar from "@/componentss/shared/navbar";
 import Footer from "@/componentss/shared/footer";
 import AdsForm from "@/componentss/ads/ads-form";
-import ScriptSelectionPopup from "@/componentss/featured-scripts/script-selection-popup";
+import FeaturedBannerForm from "@/componentss/featured-scripts/featured-banner-form";
 import CouponsTab from "@/componentss/profile/coupons-tab";
 import CreatorCodesTab from "@/componentss/profile/creator-codes-tab";
 import PropsTab from "@/componentss/profile/props-tab";
@@ -72,7 +72,6 @@ import {
   useUserAdvertisements,
   useUserFeaturedScriptSlots,
   useUserFeaturedScripts,
-  useCreateFeaturedScript,
   useDeleteFeaturedScript,
 } from "@/hooks/use-profile-queries";
 import { toast } from "sonner";
@@ -237,7 +236,6 @@ export default function ProfilePage() {
     isLoading: featuredScriptsLoading,
     refetch: refetchFeaturedScripts,
   } = useUserFeaturedScripts(100, activeTab === "ad-slots");
-  const createFeaturedScriptMutation = useCreateFeaturedScript();
   const deleteFeaturedScriptMutation = useDeleteFeaturedScript();
 
   // Mutations for delete operations
@@ -494,22 +492,13 @@ export default function ProfilePage() {
     setEditingAd(null);
   };
 
-  // Featured Scripts handlers
-  const handleSelectScriptForFeature = async (scriptId: number) => {
-    if (!selectedFeaturedScriptSlotUniqueId) return;
-
-    try {
-      await createFeaturedScriptMutation.mutateAsync({
-        script_id: scriptId,
-        slot_unique_id: selectedFeaturedScriptSlotUniqueId,
-      });
-      setShowScriptSelectionPopup(false);
-      setSelectedFeaturedScriptSlotUniqueId(null);
-      refetchFeaturedScripts();
-      refetchFeaturedScriptSlots();
-    } catch (error) {
-      console.error("Error creating featured script:", error);
-    }
+  // Featured banner published (the FeaturedBannerForm POSTs itself) — just
+  // close and refetch the featured lists/slots.
+  const handleFeaturedBannerCreated = () => {
+    setShowScriptSelectionPopup(false);
+    setSelectedFeaturedScriptSlotUniqueId(null);
+    refetchFeaturedScripts();
+    refetchFeaturedScriptSlots();
   };
 
   const handleDeleteFeaturedScript = async (featuredScriptId: number) => {
@@ -1937,15 +1926,20 @@ export default function ProfilePage() {
                                     size="sm"
                                     variant="outline"
                                     type="button"
-                                    onClick={() =>
-                                      router.push(
-                                        `/script/${featuredScript.scriptId}`
-                                      )
-                                    }
+                                    onClick={() => {
+                                      // Banner featured → open its external link;
+                                      // asset featured → the product page.
+                                      if (featuredScript.isBanner || featuredScript.scriptId == null) {
+                                        if (featuredScript.linkUrl)
+                                          window.open(featuredScript.linkUrl, "_blank", "noopener,noreferrer");
+                                      } else {
+                                        router.push(`/script/${featuredScript.scriptId}`);
+                                      }
+                                    }}
                                     className="text-blue-400 hover:text-blue-300"
                                   >
                                     <Eye className="h-4 w-4 mr-1" />
-                                    View Asset
+                                    View
                                   </Button>
                                   <Button
                                     size="sm"
@@ -1992,11 +1986,11 @@ export default function ProfilePage() {
                                       <Plus className="h-10 w-10 text-orange-500 group-hover:scale-110 transition-transform duration-300" />
                                     </div>
                                     <h3 className="text-lg font-semibold text-white mb-2">
-                                      Feature an Asset
+                                      Feature a Banner
                                     </h3>
                                     <p className="text-white/55 text-sm text-center mb-4">
-                                      Click to select an asset to feature in this
-                                      slot
+                                      Click to upload a banner to feature in
+                                      this slot
                                     </p>
                                     <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30">
                                       Available Slot
@@ -2112,11 +2106,11 @@ export default function ProfilePage() {
                                       <Plus className="h-10 w-10 text-orange-500 group-hover:scale-110 transition-transform duration-300" />
                                     </div>
                                     <h3 className="text-lg font-semibold text-white mb-2">
-                                      Feature an Asset
+                                      Feature a Banner
                                     </h3>
                                     <p className="text-white/55 text-sm text-center mb-4">
-                                      Click to select an asset to feature in this
-                                      slot
+                                      Click to upload a banner to feature in
+                                      this slot
                                     </p>
                                     <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30">
                                       Available Slot
@@ -2492,14 +2486,14 @@ export default function ProfilePage() {
         />
       )}
 
-      {/* Script Selection Popup */}
-      <ScriptSelectionPopup
+      {/* Featured Banner form (upload a custom banner into a featured slot) */}
+      <FeaturedBannerForm
         isOpen={showScriptSelectionPopup}
         onClose={() => {
           setShowScriptSelectionPopup(false);
           setSelectedFeaturedScriptSlotUniqueId(null);
         }}
-        onSelect={handleSelectScriptForFeature}
+        onSuccess={handleFeaturedBannerCreated}
         slotUniqueId={selectedFeaturedScriptSlotUniqueId}
       />
     </>
