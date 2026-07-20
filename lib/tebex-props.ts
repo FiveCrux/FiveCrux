@@ -18,9 +18,11 @@ function symbolFor(currency: string): string {
 
 /** Map a Tebex package into the prop shape used by /props + /prop/[id]. */
 export function mapPackageToProp(pkg: TebexPackage) {
-  const hasDiscount = typeof pkg.discount === "number" && pkg.discount > 0;
   const base = typeof pkg.base_price === "number" ? pkg.base_price : pkg.total_price;
   const now = typeof pkg.total_price === "number" ? pkg.total_price : base;
+  // Guard base > 0 so a 0-priced package with a discount doesn't divide by zero
+  // and render "NaN%".
+  const hasDiscount = typeof pkg.discount === "number" && pkg.discount > 0 && typeof base === "number" && base > 0 && now < base;
   return {
     // The prop id IS the Tebex package id — the single source of truth.
     id: String(pkg.id),

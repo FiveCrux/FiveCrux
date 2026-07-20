@@ -9,6 +9,12 @@ export async function GET(request: NextRequest) {
   if (!link) {
     return NextResponse.json({ error: "Missing link" }, { status: 400 })
   }
-  const info = await resolveGuildInfo(link)
-  return NextResponse.json(info)
+  // resolveGuildInfo does network I/O — a Discord hiccup / bad invite must not
+  // 500 this public typeahead endpoint; degrade to a soft null shape.
+  try {
+    const info = await resolveGuildInfo(link)
+    return NextResponse.json(info)
+  } catch {
+    return NextResponse.json({ ok: false, guild: null })
+  }
 }

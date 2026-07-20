@@ -55,8 +55,11 @@ export async function POST(
       return NextResponse.json({ error: "You have already entered this giveaway" }, { status: 400 })
     }
 
-    // Check if giveaway has reached max entries
-    if (giveaway.max_entries && giveaway.entriesCount >= giveaway.max_entries) {
+    // Check if giveaway has reached max entries. getGiveawayById returns the raw
+    // Drizzle row → camelCase `maxEntries` (not snake_case), so the old
+    // `max_entries` read was always undefined and the cap never applied.
+    const maxEntries = (giveaway as any).maxEntries ?? (giveaway as any).max_entries
+    if (maxEntries && giveaway.entriesCount >= maxEntries) {
       return NextResponse.json({ error: "Giveaway has reached maximum entries" }, { status: 400 })
     }
 

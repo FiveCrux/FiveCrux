@@ -229,7 +229,7 @@ function ConnectedView({
       const d = await res.json()
       if (!res.ok) throw new Error(d.error || "Import failed")
       toast.success(
-        `${d.created} listing${d.created === 1 ? "" : "s"} imported — pending review.` +
+        `${d.created} listing${d.created === 1 ? "" : "s"} imported — live now.` +
           (d.skipped ? ` (${d.skipped} skipped)` : "")
       )
       setSelected(new Set())
@@ -280,7 +280,7 @@ function ConnectedView({
       const d = await res.json()
       if (!res.ok) throw new Error(d.error || "Import failed")
       if (d.created > 0) {
-        toast.success("Package imported — pending review.")
+        toast.success("Package imported — live now.")
         setPackageIdInput("")
         onChanged()
       } else {
@@ -487,8 +487,8 @@ function ConnectedView({
           </div>
 
           <p className="mt-5 text-xs text-white/40">
-            Imported listings land in your <span className="text-white/60">Assets</span> tab as pending — an admin
-            reviews them before they go live. You can edit category, framework and media there.
+            Imported listings go live in your <span className="text-white/60">Assets</span> tab right away.
+            You can edit category, framework and media there.
           </p>
         </>
       )}
@@ -531,11 +531,11 @@ function ImportReviewModal({
             </span>
             <div>
               <h3 className="text-base font-bold text-white">
-                Submit for admin approval?
+                Publish {packages.length === 1 ? "this listing" : "these listings"}?
               </h3>
               <p className="mt-0.5 text-xs text-white/45">
-                {packages.length} listing{packages.length === 1 ? "" : "s"} will be created as
-                pending — review before it&apos;s sent.
+                {packages.length} listing{packages.length === 1 ? "" : "s"} will go live on the
+                marketplace right away — review before publishing.
               </p>
             </div>
           </div>

@@ -23,8 +23,10 @@ import { getLivePriceByPackageId } from "@/lib/tebex-pricing";
 import { getTebexProp } from "@/lib/tebex-props";
 
 // App-generated integer PK (prod uses manual integer PKs, not DB identity).
+// Full 32-bit-safe random — the old floor(Date.now()/1000)+rand(0..9999)
+// collided for two adds in the same second → duplicate-PK 500 on add-to-cart.
 function generateNumericId() {
-    return Math.floor(Date.now() / 1000) + Math.floor(Math.random() * 10000);
+    return Math.floor(Math.random() * 2_000_000_000);
 }
 
 function normalizeMetadata(metadata: unknown) {
@@ -105,7 +107,7 @@ export async function POST(request: NextRequest) {
 
         const user = session.user as any;
 
-        const body = await request.json();
+        const body = await request.json().catch(() => ({}));
 
         const {
             itemType,

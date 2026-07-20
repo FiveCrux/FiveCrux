@@ -70,14 +70,16 @@ export async function PATCH(
     // Determine which flow to use based on current status
     let updatedScript
     if (currentScript.status === "approved") {
-      // Approved -> move to pending with updates
-      updatedScript = await updateScriptForReapproval(scriptId, {
+      // Assets are auto-approved, so an edit to a LIVE asset must update it
+      // in place (updateScript) — NOT move it back to a pending queue, which
+      // would take the live asset offline with no review step to bring it back.
+      updatedScript = await updateScript(scriptId, {
         title: body.title,
         description: body.description,
         price: body.price,
         original_price: body.original_price,
         currency: body.currency,
-        currencySymbol: body.currency_symbol,
+        currency_symbol: body.currency_symbol,
         category: body.category,
         framework: body.framework,
         seller_name: body.seller_name,
@@ -86,19 +88,14 @@ export async function PATCH(
         requirements: body.requirements,
         link: body.link,
         discordLink: body.discordLink,
-        otherLinks: body.other_links,
+        other_links: body.other_links,
         images: body.images,
         videos: body.videos,
         screenshots: body.screenshots,
         cover_image: body.cover_image,
-        youtubeVideoLink: body.youtube_video_link,
-        last_updated: body.last_updated,
-        status: "pending",
-        // SECURITY: "featured" is paid placement (sold via featured-script
-        // slots) — only an admin/founder may change it here. A regular owner
-        // editing their own script keeps whatever featured value it already
-        // had; body.featured is ignored for them (previously this endpoint
-        // let ANY owner set featured:true on their own script for free).
+        youtube_video_link: body.youtube_video_link,
+        // SECURITY: "featured" is paid placement — only an admin/founder may
+        // change it; a regular owner keeps the existing value.
         featured: isAdmin ? body.featured : currentScript.featured,
         free: body.free || false,
         hidePrice: body.hidePrice || false,
@@ -185,8 +182,10 @@ export async function PATCH(
 
     console.log('PATCH success:', { id: updatedScript.id })
     
-    const movedToPending = currentScript.status === "approved" || currentScript.status === "rejected"
-    
+    // Only a REJECTED asset re-enters the pending queue on edit. An APPROVED
+    // (live) asset is now updated in place (auto-approve model) — it stays live.
+    const movedToPending = currentScript.status === "rejected"
+
     // Send Discord notification for scripts that need re-approval or are updated while pending
     if (movedToPending && updatedScript.sellerId) {
       try {

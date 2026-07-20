@@ -59,11 +59,11 @@ export async function PATCH(
     // User must be authenticated
     const user = session.user as any
 
-    const data = await request.json()
+    const data = await request.json().catch(() => ({}))
     const { giveaway, requirements, prizes } = data
 
     // Validate required fields (total_value is no longer a giveaway field)
-    if (!giveaway.title || !giveaway.description || !giveaway.end_date) {
+    if (!giveaway || typeof giveaway !== "object" || !giveaway.title || !giveaway.description || !giveaway.end_date) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
     }
 

@@ -85,7 +85,7 @@ export async function DELETE(request: NextRequest) {
         }
 
         const user = session.user as any;
-        const body = await request.json();
+        const body = await request.json().catch(() => ({}));
         const { cartItemId, itemId, itemType } = body;
 
         if (!cartItemId && !(itemId && itemType)) {

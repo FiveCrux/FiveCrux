@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     }
 
     const userId = (session.user as any).id as string
-    const body = await request.json()
+    const body = await request.json().catch(() => ({}))
     const code = typeof body.creatorCode === "string" ? body.creatorCode.trim().toUpperCase() : ""
 
     if (!code) {

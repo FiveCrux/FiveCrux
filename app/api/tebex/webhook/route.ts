@@ -7,7 +7,11 @@ import { createAdSlots, createFeaturedScriptSlots, activateSideBanner, extendSlo
 import { sideBannerBookings } from "@/lib/db/schema";
 
 function generateNumericId() {
-  return Math.floor(Date.now() / 1000) + Math.floor(Math.random() * 10000);
+  // Full 32-bit-safe random (id column is a 32-bit int). The old
+  // floor(Date.now()/1000)+rand(0..9999) collided for multiple rows created in
+  // the same second (only the tiny random term differed) → duplicate-PK 500s
+  // on multi-item carts, which forced a webhook retry that double-provisioned.
+  return Math.floor(Math.random() * 2_000_000_000);
 }
 
 /** Provision ONE platform entitlement (ad slots or featured-script slots). */

@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const body = await request.json()
+    const body = await request.json().catch(() => ({}))
     const code = typeof body.couponCode === "string" ? body.couponCode.trim().toUpperCase() : ""
 
     if (!code) {

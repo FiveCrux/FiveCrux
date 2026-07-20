@@ -1497,6 +1497,7 @@ export async function updateScript(id: number, updateData: any) {
     if (updateData.youtube_video_link !== undefined) assignIfDefined('youtubeVideoLink', updateData.youtube_video_link);
     assignIfDefined('version', updateData.version);
     if (updateData.featured !== undefined) assignIfDefined('featured', Boolean(updateData.featured));
+    if (updateData.free !== undefined) assignIfDefined('free', Boolean(updateData.free));
     if (updateData.hidePrice !== undefined) assignIfDefined('hidePrice', Boolean(updateData.hidePrice));
     // Tebex Headless integration fields (nullable, accept null to clear)
     if (updateData.tebexStoreToken !== undefined) assignIfDefined('tebexStoreToken', updateData.tebexStoreToken);
@@ -2196,9 +2197,13 @@ export async function approveGiveaway(giveawayId: number, adminId: string, admin
       throw new Error('Pending giveaway not found');
     }
 
-    // Insert into approved_giveaways table
+    // Insert into approved_giveaways table. Force status 'active' — the submit
+    // route stores the pending row with status='pending' (a lifecycle value the
+    // entry check rejects), so an approved giveaway must be reset to 'active'
+    // or nobody can enter it.
     await db.insert(approvedGiveaways).values({
       ...pendingGiveaway[0],
+      status: 'active',
       approvedBy: adminId,
       adminNotes: adminNotes || null,
     });
