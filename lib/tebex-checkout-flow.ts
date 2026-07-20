@@ -14,11 +14,14 @@ import {
   getBasket,
   getCheckoutUrl,
   applyCoupon,
+  applyCreatorCode,
 } from "@/lib/tebex";
 import { resolveTebexPackageId } from "@/lib/tebex-pricing";
 
+// Full 32-bit-safe random — the old floor(Date.now()/1000)+rand(0..9999)
+// collided for orders created in the same second (duplicate-PK 500).
 export function genCheckoutId() {
-  return Math.floor(Date.now() / 1000) + Math.floor(Math.random() * 10000);
+  return Math.floor(Math.random() * 2_000_000_000);
 }
 
 export type ProvItem = {
@@ -254,17 +257,25 @@ export async function finalizeBasket(args: {
       return { ok: false, error: "That coupon code isn't valid.", status: 400 };
     }
   } else if (appliedCreatorCode?.code) {
-    // Best-effort, as before — the discount/commission accounting for
-    // creator codes lives in FiveCrux's own DB, not Tebex's.
-    try { await applyCoupon(storeToken, basketIdent, appliedCreatorCode.code); } catch { /* non-fatal */ }
+    // Creator codes are real TEBEX creator codes — apply via the creator-code
+    // endpoint (NOT applyCoupon). If Tebex rejects it, the code is invalid;
+    // fail the checkout rather than silently charging full price while the
+    // platform books a discount + commission that never happened.
+    try {
+      await applyCreatorCode(storeToken, basketIdent, appliedCreatorCode.code);
+    } catch (e) {
+      console.error("Tebex rejected creator code:", appliedCreatorCode.code, e);
+      return { ok: false, error: "That creator code isn't valid.", status: 400 };
+    }
   }
 
   const basket = await getBasket(storeToken, basketIdent);
   const checkoutUrl = getCheckoutUrl(basket);
 
-  // A plain coupon's real discount is whatever Tebex actually applied —
-  // never a locally-computed guess.
-  if (appliedCoupon?.code && basket.total_price != null) {
+  // The real discount is whatever Tebex actually applied — never a
+  // locally-computed guess. Applies to both coupons and creator codes so the
+  // recorded order/commission match what the buyer is actually charged.
+  if ((appliedCoupon?.code || appliedCreatorCode?.code) && basket.total_price != null) {
     payableAmount = Number(basket.total_price);
     discountAmount = Math.max(0, total - payableAmount);
   }
