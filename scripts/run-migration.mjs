@@ -2,8 +2,8 @@
 // Pass the .sql path as an argument. Use only for additive/idempotent files
 // (CREATE TABLE IF NOT EXISTS / ON CONFLICT DO NOTHING).
 //
-// HUMAN-ONLY. Gated behind ALLOW_PROD_DB_WRITE=1 (per CLAUDE.md). Claude will
-// NOT set it / will NOT run this.
+// HUMAN-ONLY. Gated behind ALLOW_PROD_DB_WRITE=1 (that flag is for the human by
+// hand). Do NOT set it / run this automatically.
 //
 //   PowerShell:  $env:ALLOW_PROD_DB_WRITE="1"; node scripts/run-migration.mjs docs/frameworks-migration.sql
 //   bash:        ALLOW_PROD_DB_WRITE=1 node scripts/run-migration.mjs docs/frameworks-migration.sql

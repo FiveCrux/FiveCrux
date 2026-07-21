@@ -2,7 +2,7 @@
 
 > Recorded for later. The app works as-is; these are cleanliness / hardening /
 > scale items to tackle in dedicated sprints AFTER go-live. Each is reversible
-> and isolated. DB migrations are run by the human (per CLAUDE.md).
+> and isolated. DB migrations are run by the human (per the repo's DB rules).
 
 ---
 

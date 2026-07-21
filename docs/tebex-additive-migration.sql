@@ -5,7 +5,7 @@
 -- type-changed. Existing rows/data are untouched. Safe to run more than once.
 --
 -- Recommended: take a Neon branch/backup first, run there, verify, then prod.
--- Claude will NOT run this — execute it yourself.
+-- Do NOT run this automatically — execute it yourself.
 -- ===========================================================================
 
 -- (1) Tebex order/basket tracking — NEW table

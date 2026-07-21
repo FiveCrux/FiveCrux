@@ -2,8 +2,8 @@
 // ADDITIVE + idempotent (IF NOT EXISTS) — safe to run more than once; nothing is
 // dropped/renamed/type-changed and no existing row is touched.
 //
-// HUMAN-ONLY. Gated behind ALLOW_PROD_DB_WRITE=1 (per CLAUDE.md, that flag is for
-// the human by hand). Claude will NOT set it / will NOT run this.
+// HUMAN-ONLY. Gated behind ALLOW_PROD_DB_WRITE=1 (that flag is for the human by
+// hand). Do NOT set it / run this automatically.
 //
 //   ALLOW_PROD_DB_WRITE=1 node scripts/run-tebex-migration.mjs
 import postgres from "postgres";
