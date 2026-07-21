@@ -56,15 +56,6 @@ export default function CreateGiveawayPage() {
     creatorEmail: session?.user?.email || "",
   })
 
-  // One or more of the host's own Discord IDs — shown on the detail page so
-  // entrants/winners can reach them (a creator may run for multiple accounts).
-  const [creatorDiscordIds, setCreatorDiscordIds] = useState<string[]>([""])
-  const addCreatorDiscordId = () => setCreatorDiscordIds((prev) => [...prev, ""])
-  const removeCreatorDiscordId = (index: number) =>
-    setCreatorDiscordIds((prev) => prev.filter((_, i) => i !== index))
-  const updateCreatorDiscordId = (index: number, value: string) =>
-    setCreatorDiscordIds((prev) => prev.map((v, i) => (i === index ? value : v)))
-
   // Entry mode: OFF = must join ALL requirements (equal single entry);
   // ON = each requirement joined earns 1 point, more points = higher win chance.
   const [usePoints, setUsePoints] = useState(false)
@@ -358,7 +349,9 @@ export default function CreateGiveawayPage() {
           use_points: usePoints,
           creator_name: formData.creatorName,
           creator_email: formData.creatorEmail,
-          creator_discord_ids: creatorDiscordIds.map((v) => v.trim()).filter(Boolean),
+          // Host contact is now captured per-prize (each prize carries its own
+          // Discord ID list), so there's no giveaway-level creator Discord ID.
+          creator_discord_ids: [],
           images: media.images,
           videos: media.videos,
           cover_image: media.coverImage,
@@ -418,7 +411,6 @@ export default function CreateGiveawayPage() {
           creatorName: session?.user?.name || "",
           creatorEmail: session?.user?.email || "",
         })
-        setCreatorDiscordIds([""])
         setUsePoints(false)
         setMedia({
           images: [],
@@ -732,43 +724,6 @@ export default function CreateGiveawayPage() {
                       {errors.description && (
                         <p className="text-red-400 text-xs mt-1">{errors.description}</p>
                       )}
-                    </div>
-
-                    <div>
-                      <Label className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/50">
-                        Your Discord ID(s)
-                      </Label>
-                      <div className="mt-2 space-y-2">
-                        {creatorDiscordIds.map((id, index) => (
-                          <div key={index} className="flex items-center gap-2">
-                            <Input
-                              value={id}
-                              onChange={(e) => updateCreatorDiscordId(index, e.target.value)}
-                              placeholder="e.g. 699612552073838642"
-                              className={`px-4 py-3 text-sm ${fieldClass}`}
-                            />
-                            {creatorDiscordIds.length > 1 && (
-                              <button
-                                type="button"
-                                onClick={() => removeCreatorDiscordId(index)}
-                                className="shrink-0 rounded-lg p-2 text-white/40 hover:bg-white/[0.06] hover:text-white"
-                              >
-                                <X className="h-4 w-4" />
-                              </button>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                      <button
-                        type="button"
-                        onClick={addCreatorDiscordId}
-                        className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-orange-400 hover:text-orange-300"
-                      >
-                        <Plus className="h-3.5 w-3.5" /> Add another ID
-                      </button>
-                      <p className="mt-1.5 text-xs text-white/40">
-                        Optional — shown on the giveaway page so entrants and winners can reach you directly.
-                      </p>
                     </div>
 
                     {/* ---------- Schedule (moved right after Description) ---------- */}

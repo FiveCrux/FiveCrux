@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { GiveawayDetailClient } from "./giveaway-detail-client";
+import { safeJsonLd } from "@/lib/json-ld";
 
 // ISR: regenerate the server-rendered shell at most once per minute.
 export const revalidate = 60;
@@ -85,7 +86,7 @@ export default async function Page({
       {jsonLd && (
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }}
         />
       )}
       <GiveawayDetailClient initialData={initialData} id={id} />

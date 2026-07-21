@@ -1,8 +1,9 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/auth"
-import { createScript, getScripts, hasRole, hasAnyRole } from "@/lib/database-new"
+import { createScript, getScripts, getCategories, hasRole, hasAnyRole } from "@/lib/database-new"
 import { announceScriptPending } from "@/lib/discord"
+import { validateListingFields } from "@/lib/validate-listing"
 
 export async function POST(request: NextRequest) {
   try {
@@ -27,6 +28,14 @@ export async function POST(request: NextRequest) {
       if (!body[field]) {
         return NextResponse.json({ error: `Missing required field: ${field}` }, { status: 400 })
       }
+    }
+
+    // Validate the actual values (not just presence): reject a non-numeric or
+    // negative price and an unknown category slug before it goes live.
+    const validCategories = (await getCategories()).map((c) => c.slug)
+    const valid = validateListingFields(body, validCategories)
+    if (!valid.ok) {
+      return NextResponse.json({ error: valid.error }, { status: 400 })
     }
 
     // Create the script in the database

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { PropDetailClient } from "./prop-detail-client";
+import { safeJsonLd } from "@/lib/json-ld";
 
 // ISR: regenerate the server-rendered shell at most once per minute.
 export const revalidate = 60;
@@ -84,7 +85,7 @@ export default async function Page({
       {jsonLd && (
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }}
         />
       )}
       <PropDetailClient initialData={initialData} id={id} />

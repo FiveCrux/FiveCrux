@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/auth"
-import { getScriptById, updateScript, updateScriptForReapproval, updatePendingScript, updateRejectedScriptForReapproval, deleteScript } from "@/lib/database-new"
+import { getScriptById, updateScript, updateScriptForReapproval, updatePendingScript, updateRejectedScriptForReapproval, deleteScript, getCategories } from "@/lib/database-new"
 import { announceScriptPending } from "@/lib/discord"
+import { validateListingFields } from "@/lib/validate-listing"
 
 export async function GET(
   request: NextRequest,
@@ -60,7 +61,16 @@ export async function PATCH(
 
     const body = await request.json()
     console.log('PATCH body:', body)
-    
+
+    // Validate supplied values (partial: only fields present in the edit).
+    // Same trust boundary as create — a negative/non-numeric price or unknown
+    // category must not be saved onto a live listing either.
+    const validCategories = (await getCategories()).map((c) => c.slug)
+    const valid = validateListingFields(body, validCategories, { partial: true })
+    if (!valid.ok) {
+      return NextResponse.json({ error: valid.error }, { status: 400 })
+    }
+
     // Check if the script is currently approved (in approved_scripts table)
     const currentScript = await getScriptById(scriptId)
     if (!currentScript) {
