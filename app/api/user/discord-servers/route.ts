@@ -12,7 +12,10 @@ export async function GET(request: NextRequest) {
 
     const accessToken = (session as any).accessToken;
     if (!accessToken) {
-      return NextResponse.json({ error: "No Discord access token" }, { status: 400 });
+      // User hasn't connected Discord (or the token isn't on the session) —
+      // that's a normal state, not an error. Return an empty list so the
+      // giveaway UI degrades cleanly instead of logging a 400.
+      return NextResponse.json({ guilds: [], total: 0 });
     }
 
     // Fetch user's Discord servers
