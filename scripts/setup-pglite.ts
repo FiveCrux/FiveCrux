@@ -55,7 +55,7 @@ async function main() {
   const approvedScripts: (typeof schema.approvedScripts.$inferInsert)[] = [
     {
       id: 1001, title: "Advanced Banking System", description: "Full-featured banking with ATMs, transfers, loans and a sleek NUI. Optimised, escrow-free, regularly updated.",
-      price: "24.99", originalPrice: "39.99", currency: "EUR", currencySymbol: "€", category: "economy",
+      price: "24.99", originalPrice: "39.99", currency: "EUR", currencySymbol: "€", category: "script",
       framework: ["ESX", "QBCore"], sellerId: seller.id, seller_name: seller.name, seller_email: seller.email,
       features: ["ATM system", "Player-to-player transfers", "Loans & interest", "Admin dashboard"],
       requirements: ["oxmysql", "es_extended"], images: imgs, screenshots: imgs, coverImage: imgs[0],
@@ -65,7 +65,7 @@ async function main() {
     },
     {
       id: 1002, title: "Drug Selling System", description: "Dynamic drug economy with zones, NPC dealers, police alerts and configurable pricing.",
-      price: "19.99", currency: "EUR", currencySymbol: "€", category: "economy",
+      price: "19.99", currency: "EUR", currencySymbol: "€", category: "script",
       framework: ["QBCore"], sellerId: seller.id, seller_name: seller.name, seller_email: seller.email,
       features: ["Dynamic pricing", "Police integration", "Configurable zones"], requirements: ["qb-core"],
       images: [imgs[1]], screenshots: [imgs[1], imgs[2]], coverImage: imgs[1], featured: true, free: false,
@@ -110,13 +110,13 @@ async function main() {
   const pendingScripts: (typeof schema.pendingScripts.$inferInsert)[] = [
     {
       id: 2001, title: "Casino Heist [PENDING]", description: "Multi-stage casino heist with hacking minigames and dynamic loot.",
-      price: "34.99", currency: "EUR", currencySymbol: "€", category: "economy", framework: ["QBCore"],
+      price: "34.99", currency: "EUR", currencySymbol: "€", category: "script", framework: ["QBCore"],
       sellerId: seller.id, seller_name: seller.name, seller_email: seller.email, features: ["Minigames", "Dynamic loot"],
       requirements: ["qb-core"], images: [imgs[0]], coverImage: imgs[0], adminNotes: null,
     },
     {
       id: 2002, title: "Fishing & Boating [PENDING]", description: "Relaxing fishing economy with rare catches, rods and a boat shop.",
-      price: "14.99", currency: "EUR", currencySymbol: "€", category: "economy", framework: ["ESX"],
+      price: "14.99", currency: "EUR", currencySymbol: "€", category: "script", framework: ["ESX"],
       sellerId: seller.id, seller_name: seller.name, seller_email: seller.email, features: ["Rare catches", "Boat shop"],
       requirements: ["es_extended"], images: [imgs[1]], coverImage: imgs[1], adminNotes: null,
     },
@@ -253,7 +253,6 @@ async function main() {
     { id: 8002, name: "Vehicles", slug: "vehicles", icon: "Car", appliesTo: "scripts", isActive: true, showOnHome: true, homeOrder: 2, sortOrder: 2 },
     { id: 8003, name: "Weapons", slug: "weapons", icon: "Crosshair", appliesTo: "scripts", isActive: true, showOnHome: true, homeOrder: 3, sortOrder: 3 },
     { id: 8004, name: "Clothing", slug: "clothing", icon: "Shirt", appliesTo: "both", isActive: true, showOnHome: true, homeOrder: 4, sortOrder: 4 },
-    { id: 8006, name: "Economy", slug: "economy", icon: "Coins", appliesTo: "scripts", isActive: true, showOnHome: true, homeOrder: 5, sortOrder: 5 },
     // Added 2026-07-13 per Bandookchi's category spec (Discord): Script + Peds.
     { id: 8007, name: "Script", slug: "script", icon: "FileCode2", appliesTo: "scripts", isActive: true, showOnHome: true, homeOrder: 6, sortOrder: 6 },
     { id: 8008, name: "Peds", slug: "peds", icon: "PersonStanding", appliesTo: "scripts", isActive: true, showOnHome: true, homeOrder: 7, sortOrder: 7 },

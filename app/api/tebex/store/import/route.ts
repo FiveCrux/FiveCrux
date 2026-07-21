@@ -16,7 +16,6 @@ const CATEGORY_ALIASES: Record<string, string> = {
   weapon: "weapons", weapons: "weapons",
   clothes: "clothing", clothing: "clothing",
   ped: "peds", peds: "peds",
-  economy: "economy",
 };
 function makeCategoryResolver(cats: { name: string; slug: string }[]) {
   const bySlug = new Map(cats.map((c) => [c.slug.toLowerCase(), c.slug]));
