@@ -73,9 +73,10 @@ export default function NavbarComponent() {
   }, [serverCategories])
 
   // Categories (a real "Other" category row now exists in the DB and is
-  // included in `cats` — no need for a separate hardcoded catch-all here),
-  // then the fixed product types.
-  const navItems = [...cats, ...STATIC_NAV]
+  // included in `cats`), then the fixed product types. The "Other" catch-all
+  // is pulled to the very far-right end of the nav (after Props/Giveaways too).
+  const isOther = (i: { link: string }) => i.link.includes("category=other")
+  const navItems = [...cats.filter((c) => !isOther(c)), ...STATIC_NAV, ...cats.filter(isOther)]
 
   const userRoles = (session?.user as any)?.roles || []
   const hasAdminAccess = ["admin", "founder", "moderator"].some((r) => userRoles.includes(r))

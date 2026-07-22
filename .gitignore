@@ -72,3 +72,6 @@ image*.png
 
 .pglite-test-sb/
 .pglite-test-*/
+
+# real prod data snapshot (PII) — never commit
+prod-snapshot.sql

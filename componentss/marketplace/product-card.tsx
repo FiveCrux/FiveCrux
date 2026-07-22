@@ -4,7 +4,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { ShoppingCart, Star, ChevronRight } from "lucide-react"
 import { formatPrice } from "@/lib/format-price"
-import { FrameworkBadge } from "@/componentss/shared/framework-badge"
+// import { FrameworkBadge } from "@/componentss/shared/framework-badge" // framework tags hidden per request
 
 export interface MarketProduct {
   id: number | string
@@ -78,7 +78,7 @@ export function ProductCard({ product, className = "" }: { product: MarketProduc
   return (
     <Wrapper {...wrapperProps} className={cardClass}>
       {/* Cover */}
-      <div className={`relative flex h-36 items-center justify-center overflow-hidden bg-gradient-to-br ${grad}`}>
+      <div className={`relative flex h-44 items-center justify-center overflow-hidden bg-gradient-to-br ${grad}`}>
         {product.coverImage ? (
           <Image
             src={product.coverImage}
@@ -114,14 +114,12 @@ export function ProductCard({ product, className = "" }: { product: MarketProduc
 
       {/* Body */}
       <div className="p-3.5">
-        {/* Fixed-height row (present even with no framework tags) so every card
-            in a grid/row lines up the same — a product with no framework was
-            previously rendering a shorter card than its neighbors. */}
+        {/* Framework tags (ESX/QBCore/…) hidden per request. To restore, uncomment:
         <div className="mb-2 flex h-5 items-center gap-1.5">
           {product.framework?.slice(0, 3).map((fw) => (
             <FrameworkBadge key={fw} framework={fw} />
           ))}
-        </div>
+        </div> */}
         <h3 className="mb-2 truncate text-sm font-bold leading-snug text-white">{product.title}</h3>
         <div className="mb-3 flex items-center gap-2">
           {product.sellerImage ? (

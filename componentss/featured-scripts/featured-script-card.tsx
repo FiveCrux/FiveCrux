@@ -110,7 +110,7 @@ export default function FeaturedScriptCard({ item, index, className = "", style 
               alt={item.title}
               width={400}
               height={256}
-              className="object-cover w-full h-52 transition-transform duration-300 group-hover:scale-105"
+              className="object-contain w-full h-56 bg-black/30 transition-transform duration-300 group-hover:scale-105"
             />
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/20" />
             {/* Featured badge */}

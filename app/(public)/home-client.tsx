@@ -403,8 +403,8 @@ export function HomeClient({
       {/* Discovery rows */}
       <main className="mx-auto mt-8 w-full space-y-10 px-2.5">
         <Row title="Featured" icon={<Sparkles className="h-5 w-5 text-yellow-400" />} items={rows.featured} seeAllHref="/scripts?featured=true" />
-        <Row title="Most Viewed" emoji="🔥" items={rows.trending} seeAllHref="/scripts" />
         <Row title="New Releases" icon={<Zap className="h-5 w-5 text-orange-400" />} items={rows.newReleases} seeAllHref="/scripts" />
+        <Row title="Most Viewed" emoji="🔥" items={rows.trending} seeAllHref="/scripts" />
         <Row title="Free Assets" icon={<Gift className="h-5 w-5 text-green-400" />} items={rows.free} seeAllHref="/scripts?free=true" />
         {categoryRows.map(({ cat, items }) => {
           const Icon = categoryIcon(cat.icon)

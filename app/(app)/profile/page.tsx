@@ -1449,11 +1449,11 @@ export default function ProfilePage() {
                                 </Badge>
                               </div>
                               {ad.image_url && (
-                                <div className="w-full h-32 rounded-lg overflow-hidden mb-4">
+                                <div className="w-full h-48 rounded-lg overflow-hidden mb-4 bg-black/30">
                                   <img
                                     src={ad.image_url}
                                     alt={ad.title}
-                                    className="w-full h-full object-cover"
+                                    className="w-full h-full object-contain"
                                     loading="lazy"
                                   />
                                 </div>
@@ -1827,14 +1827,14 @@ export default function ProfilePage() {
                             className="bg-[#0e0e0e] border-white/[0.06] rounded-2xl hover:border-orange-500/40 transition-all duration-300"
                           >
                             {featuredScript.scriptCoverImage && (
-                              <div className="relative w-full h-48 overflow-hidden rounded-t-lg">
+                              <div className="relative w-full h-56 overflow-hidden rounded-t-lg bg-black/30">
                                 <img
                                   src={featuredScript.scriptCoverImage}
                                   alt={
                                     featuredScript.scriptTitle ||
                                     `Asset ${featuredScript.scriptId}`
                                   }
-                                  className="w-full h-full object-cover"
+                                  className="w-full h-full object-contain"
                                 />
                               </div>
                             )}
