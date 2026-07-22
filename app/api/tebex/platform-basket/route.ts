@@ -89,10 +89,14 @@ export async function POST(request: NextRequest) {
       ...(resolved.durationWeeks != null ? { durationWeeks: resolved.durationWeeks } : {}),
     };
 
+    // Tebex Headless REQUIRES complete_url + cancel_url — default to the app
+    // origin when the client omits them (otherwise basket creation fails).
+    const origin = request.nextUrl.origin || "https://www.fivecrux.com";
+
     // 1. Create the basket against FiveCrux's own webstore.
     const created = await createBasket(storeToken, {
-      returnUrl,
-      completeUrl,
+      returnUrl: returnUrl || `${origin}/`,
+      completeUrl: completeUrl || `${origin}/`,
       custom,
     });
 

@@ -43,10 +43,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Missing packageId" }, { status: 400 });
     }
 
+    // Tebex Headless REQUIRES complete_url + cancel_url on basket creation —
+    // omitting them made "Buy Now" fail with a generic checkout error. The
+    // client rarely sends them, so default to the app origin (mirrors the cart
+    // checkout flow, which always passes URLs).
+    const origin = request.nextUrl.origin || "https://www.fivecrux.com";
+    const completeUrlFinal = completeUrl || `${origin}/`;
+    const returnUrlFinal = returnUrl || `${origin}/`;
+
     // 1. Create the basket against the seller's webstore.
     const created = await createBasket(storeToken, {
-      returnUrl,
-      completeUrl,
+      returnUrl: returnUrlFinal,
+      completeUrl: completeUrlFinal,
       custom,
     });
 
