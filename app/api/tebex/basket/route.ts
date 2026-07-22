@@ -5,6 +5,7 @@ import {
   addPackageToBasket,
   getBasket,
   getCheckoutUrl,
+  getBasketAuthUrl,
 } from "@/lib/tebex";
 import { db } from "@/lib/db/client";
 import { tebexOrders } from "@/lib/db/schema";
@@ -58,7 +59,27 @@ export async function POST(request: NextRequest) {
       custom,
     });
 
-    // 2. Add the package, then 3. re-fetch to obtain the checkout link.
+    // 2. FiveM/game stores require the buyer to authenticate WITH THE STORE
+    //    (Steam/FiveM identity — not the FiveCrux login) before packages can be
+    //    added; Tebex returns 422 "User must login" otherwise. Probe for an auth
+    //    URL — if present, hand it back so the client redirects the buyer to
+    //    Tebex login, and /api/tebex/basket-continue adds the package after.
+    const continueUrl =
+      `${origin}/api/tebex/basket-continue?ident=${encodeURIComponent(created.ident)}` +
+      `&token=${encodeURIComponent(storeToken)}&pkg=${encodeURIComponent(String(packageId))}&qty=${quantity}`;
+    let authUrl: string | null = null;
+    try {
+      const authOpts = await getBasketAuthUrl(storeToken, created.ident, continueUrl);
+      if (Array.isArray(authOpts) && authOpts.length > 0 && authOpts[0]?.url) authUrl = authOpts[0].url;
+    } catch (e) {
+      // Auth probe failed — fall through and try the no-auth path below.
+      console.warn("Tebex basket auth probe failed (continuing without auth):", e);
+    }
+    if (authUrl) {
+      return NextResponse.json({ authUrl, basketIdent: created.ident });
+    }
+
+    // 3. No auth required (universal store) → add the package + get the link.
     await addPackageToBasket(storeToken, created.ident, packageId, quantity);
     const basket = await getBasket(storeToken, created.ident);
     const checkoutUrl = getCheckoutUrl(basket);

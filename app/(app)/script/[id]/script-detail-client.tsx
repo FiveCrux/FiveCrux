@@ -261,8 +261,12 @@ export function ScriptDetailClient({
           body: JSON.stringify({ storeToken: script.tebexStoreToken, packageId: script.tebexPackageId }),
         });
         const data = await res.json().catch(() => ({}));
-        if (!res.ok || !data?.checkoutUrl) throw new Error(data?.error || "Failed to start checkout");
-        window.location.href = data.checkoutUrl;
+        if (!res.ok) throw new Error(data?.error || "Failed to start checkout");
+        // Auth-required stores return an authUrl (Tebex login) instead of a
+        // checkout URL; either way we just send the buyer there.
+        const dest = data.authUrl || data.checkoutUrl;
+        if (!dest) throw new Error(data?.error || "Failed to start checkout");
+        window.location.href = dest;
       } catch (err) {
         console.error("Tebex checkout error:", err);
         toast.error("Could not start checkout. Please try again.");
