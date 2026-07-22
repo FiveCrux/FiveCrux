@@ -205,7 +205,9 @@ export function CategoryClient({
       const t = setTimeout(() => c.abort(), 15000)
       try {
         setLoading(true)
-        const response = await fetch(`/api/scripts?status=all`, { signal: c.signal })
+        // limit=1000: fetch the full catalog — filtering is client-side, so a
+        // capped fetch would hide this category's items beyond the default 100.
+        const response = await fetch(`/api/scripts?status=all&limit=1000`, { signal: c.signal })
 
         if (!response.ok) {
           console.error("Failed to fetch scripts")

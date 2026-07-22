@@ -19,7 +19,7 @@ async function getJson(path: string, key: string): Promise<any[]> {
 
 export default async function Page() {
   const [initialScripts, initialFeatured, initialCategories] = await Promise.all([
-    getJson("/api/scripts?limit=24", "scripts"),
+    getJson("/api/scripts?limit=100", "scripts"),
     getJson("/api/featured-scripts?status=active", "featuredScripts"),
     getJson("/api/categories", "categories"),
   ]);

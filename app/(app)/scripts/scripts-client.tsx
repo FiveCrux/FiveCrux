@@ -216,12 +216,15 @@ export function ScriptsClient({
   const itemsPerPage = 12;
 
   useEffect(() => {
-    // When the server already seeded the catalog, skip the scripts refetch but
-    // still load ads (ads aren't part of the SSR shell).
+    // The SSR seed is only the newest ~24 scripts (fast first paint). All
+    // filtering here is CLIENT-side, so a category whose items aren't in that
+    // seed (e.g. Clothing) showed "0 assets" even though the catalog has them.
+    // Always fetch the FULL catalog after mount so every category/filter has
+    // complete data; the seed just avoids a blank first paint.
     const hasSeed = Array.isArray(initialScripts) && initialScripts.length > 0;
     const load = async () => {
       try {
-        setLoading(true);
+        if (!hasSeed) setLoading(true);
         // Per-request 8s timeout + allSettled so one slow/hanging endpoint
         // (e.g. ads when the DB is unreachable) never blocks the whole catalog.
         const fetchT = (url: string) => {
@@ -230,7 +233,7 @@ export function ScriptsClient({
           return fetch(url, { cache: "no-store", signal: c.signal }).finally(() => clearTimeout(t));
         };
         const [scriptsR] = await Promise.allSettled([
-          hasSeed ? Promise.resolve(null) : fetchT(`/api/scripts`),
+          fetchT(`/api/scripts?limit=1000`),
         ]);
         const scriptsRes = scriptsR.status === "fulfilled" ? scriptsR.value : null;
 
