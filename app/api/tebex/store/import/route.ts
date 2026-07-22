@@ -126,7 +126,18 @@ export async function POST(req: NextRequest) {
     const already = new Set(await getUserImportedTebexPackageIds(userId));
     const toImport = packages.filter((p) => wanted.has(p.id) && !already.has(String(p.id)));
 
-    const resolveCategory = makeCategoryResolver(await getCategories());
+    const cats = await getCategories();
+    const resolveCategory = makeCategoryResolver(cats);
+    // Client-chosen category per package id (from the "we don't have this
+    // category" picker). Only honoured when it's a real, active slug — otherwise
+    // fall back to the automatic resolver so a bad value can't create an orphan.
+    const validSlugs = new Set(cats.map((c) => c.slug));
+    const overrides: Record<string, unknown> =
+      body.categoryOverrides && typeof body.categoryOverrides === "object" ? body.categoryOverrides : {};
+    const chosenCategory = (p: TebexPackage) => {
+      const ov = overrides[String(p.id)];
+      return typeof ov === "string" && validSlugs.has(ov) ? ov : resolveCategory(p.category?.name);
+    };
 
     let created = 0;
     for (const p of toImport) {
@@ -137,7 +148,7 @@ export async function POST(req: NextRequest) {
         description,
         price: String(price),
         currency: p.currency || null,
-        category: resolveCategory(p.category?.name),
+        category: chosenCategory(p),
         images: p.image ? [p.image] : [],
         coverImage: p.image || null,
         sellerId: userId,

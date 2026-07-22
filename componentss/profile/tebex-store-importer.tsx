@@ -201,11 +201,31 @@ function ConnectedView({
     )
   }, [state.packages, packageSearch])
 
+  // Our marketplace categories — used to detect Tebex categories we don't have
+  // and let the seller pick where to list those packages (the review modal).
+  const [cats, setCats] = useState<{ slug: string; name: string }[]>([])
+  useEffect(() => {
+    fetch("/api/categories")
+      .then((r) => (r.ok ? r.json() : { categories: [] }))
+      .then((d) =>
+        setCats(
+          Array.isArray(d?.categories)
+            ? d.categories
+                .filter((c: any) => c.isActive !== false)
+                .map((c: any) => ({ slug: c.slug, name: c.name }))
+            : []
+        )
+      )
+      .catch(() => {})
+  }, [])
+
   // Review-before-submit modal: holds the package(s) about to be sent to admin
-  // approval, and which underlying import call to fire once the user confirms.
-  const [review, setReview] = useState<{ packages: TebexPackage[]; onConfirm: () => void } | null>(
-    null
-  )
+  // approval, and which underlying import call to fire once the user confirms
+  // (with any per-package category overrides they picked).
+  const [review, setReview] = useState<{
+    packages: TebexPackage[]
+    onConfirm: (overrides: Record<number, string>) => void
+  } | null>(null)
 
   const toggle = (id: number) =>
     setSelected((prev) => {
@@ -214,7 +234,7 @@ function ConnectedView({
       return next
     })
 
-  const runImport = async (ids: number[]) => {
+  const runImport = async (ids: number[], categoryOverrides: Record<number, string> = {}) => {
     if (ids.length === 0) {
       toast.error("Nothing selected to import.")
       return
@@ -224,7 +244,7 @@ function ConnectedView({
       const res = await fetch("/api/tebex/store/import", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ packageIds: ids }),
+        body: JSON.stringify({ packageIds: ids, categoryOverrides }),
       })
       const d = await res.json()
       if (!res.ok) throw new Error(d.error || "Import failed")
@@ -254,7 +274,7 @@ function ConnectedView({
       const res = await fetch(`/api/tebex/store/import?packageId=${id}`)
       const d = await res.json()
       if (!res.ok) throw new Error(d.error || "Could not find that package.")
-      setReview({ packages: [d.package], onConfirm: runImportOne })
+      setReview({ packages: [d.package], onConfirm: (ov) => runImportOne(ov) })
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not find that package.")
     } finally {
@@ -264,7 +284,7 @@ function ConnectedView({
 
   // Import ONE specific package by id — works even for packages that aren't in
   // the paginated list above (the API falls back to getPackage(token, id)).
-  const runImportOne = async () => {
+  const runImportOne = async (categoryOverrides: Record<number, string> = {}) => {
     const id = Number(packageIdInput.trim())
     if (!packageIdInput.trim() || !Number.isFinite(id)) {
       toast.error("Enter a valid Tebex package id.")
@@ -275,7 +295,7 @@ function ConnectedView({
       const res = await fetch("/api/tebex/store/import", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ packageId: id }),
+        body: JSON.stringify({ packageId: id, categoryOverrides }),
       })
       const d = await res.json()
       if (!res.ok) throw new Error(d.error || "Import failed")
@@ -327,7 +347,7 @@ function ConnectedView({
             onClick={() =>
               setReview({
                 packages: importable,
-                onConfirm: () => runImport(importable.map((p) => p.id)),
+                onConfirm: (ov) => runImport(importable.map((p) => p.id), ov),
               })
             }
             disabled={importing || importable.length === 0}
@@ -416,7 +436,7 @@ function ConnectedView({
                   const ids = Array.from(selected)
                   setReview({
                     packages: state.packages.filter((p) => selected.has(p.id)),
-                    onConfirm: () => runImport(ids),
+                    onConfirm: (ov) => runImport(ids, ov),
                   })
                 }}
                 disabled={importing}
@@ -496,10 +516,11 @@ function ConnectedView({
       {review && (
         <ImportReviewModal
           packages={review.packages}
+          categories={cats}
           money={money}
           onCancel={() => setReview(null)}
-          onConfirm={() => {
-            review.onConfirm()
+          onConfirm={(overrides) => {
+            review.onConfirm(overrides)
             setReview(null)
           }}
         />
@@ -512,15 +533,37 @@ function ConnectedView({
 // import actually fires — title/price/category/description/image per package.
 function ImportReviewModal({
   packages,
+  categories,
   money,
   onCancel,
   onConfirm,
 }: {
   packages: TebexPackage[]
+  categories: { slug: string; name: string }[]
   money: (p: TebexPackage) => string
   onCancel: () => void
-  onConfirm: () => void
+  onConfirm: (overrides: Record<number, string>) => void
 }) {
+  const norm = (s?: string | null) => (s || "").toLowerCase().trim()
+  // A package's Tebex category matches ours if its name equals one of our
+  // category names or slugs (case-insensitive). No match → we don't have it.
+  const matchCat = (p: TebexPackage) => {
+    const n = norm(p.category?.name)
+    if (!n) return null
+    return categories.find((c) => norm(c.name) === n || norm(c.slug) === n) || null
+  }
+  const fallbackSlug = categories.some((c) => c.slug === "other") ? "other" : categories[0]?.slug || ""
+  // Seller-picked target category for packages whose Tebex category we don't have.
+  const [overrides, setOverrides] = useState<Record<number, string>>({})
+
+  const confirm = () => {
+    const finalOverrides: Record<number, string> = {}
+    for (const p of packages) {
+      if (categories.length && !matchCat(p)) finalOverrides[p.id] = overrides[p.id] ?? fallbackSlug
+    }
+    onConfirm(finalOverrides)
+  }
+
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
       <div className="w-full max-w-lg rounded-2xl border border-white/[0.08] bg-[#0d0d0d] shadow-2xl">
@@ -575,6 +618,26 @@ function ImportReviewModal({
                     {p.description.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim()}
                   </p>
                 )}
+                {categories.length > 0 && !matchCat(p) && (
+                  <div className="mt-2 rounded-lg border border-amber-500/25 bg-amber-500/[0.06] p-2">
+                    <p className="text-[11px] leading-snug text-amber-200">
+                      We don&apos;t have the category{" "}
+                      <span className="font-semibold">“{p.category?.name || "Uncategorised"}”</span>.
+                      Choose where to list it:
+                    </p>
+                    <select
+                      value={overrides[p.id] ?? fallbackSlug}
+                      onChange={(e) => setOverrides((o) => ({ ...o, [p.id]: e.target.value }))}
+                      className="mt-1.5 w-full rounded-md border border-white/[0.12] bg-[#0e0e0f] px-2 py-1.5 text-xs text-white outline-none focus:border-orange-500/50"
+                    >
+                      {categories.map((c) => (
+                        <option key={c.slug} value={c.slug}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               </div>
             </div>
           ))}
@@ -588,7 +651,7 @@ function ImportReviewModal({
             Cancel
           </button>
           <button
-            onClick={onConfirm}
+            onClick={confirm}
             className="inline-flex items-center gap-1.5 rounded-lg bg-orange-500 px-4 py-2 text-sm font-bold text-black transition hover:bg-orange-400"
           >
             <PackageCheck className="h-4 w-4" />
