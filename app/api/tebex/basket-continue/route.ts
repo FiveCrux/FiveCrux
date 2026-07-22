@@ -19,8 +19,11 @@ import { tebexOrders } from "@/lib/db/schema";
  */
 export async function GET(request: NextRequest) {
   const origin = request.nextUrl.origin || "https://www.fivecrux.com";
-  const fail = (reason: string) =>
-    NextResponse.redirect(`${origin}/?checkout=error&reason=${encodeURIComponent(reason)}`);
+  const fail = (reason: string, detail?: string) =>
+    NextResponse.redirect(
+      `${origin}/?checkout=error&reason=${encodeURIComponent(reason)}` +
+        (detail ? `&detail=${encodeURIComponent(detail.slice(0, 300))}` : "")
+    );
 
   try {
     const session = await getServerSession(authOptions);
@@ -54,6 +57,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(checkoutUrl);
   } catch (error) {
     console.error("Tebex basket-continue (post-auth) error:", error);
-    return fail("checkout-failed");
+    return fail("checkout-failed", error instanceof Error ? error.message : String(error));
   }
 }
