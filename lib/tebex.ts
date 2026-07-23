@@ -273,6 +273,28 @@ export async function getPackage(
   return tebexRequest<TebexPackage>(`/accounts/${t}/packages/${packageId}`);
 }
 
+/**
+ * Fetch a webstore's public info (name, currency, and its hosted `webstore_url`).
+ * GET /accounts/{token}
+ *
+ * @param token Seller webstore public token (defaults to FiveCrux's store).
+ */
+export async function getWebstoreInfo(
+  token?: string
+): Promise<{ webstore_url: string; name: string } & Record<string, unknown>> {
+  const t = resolveToken(token);
+  return tebexRequest(`/accounts/${t}`);
+}
+
+/**
+ * Build the buyer-facing URL of a package on the seller's HOSTED Tebex store.
+ * Buying there lets Tebex handle login, required options (e.g. Discord ID) and
+ * payment — which the Headless basket can't when a package requires options.
+ */
+export function webstorePackageUrl(webstoreUrl: string, packageId: number | string): string {
+  return `${webstoreUrl.replace(/\/+$/, "")}/package/${packageId}`;
+}
+
 // ---------------------------------------------------------------------------
 // Baskets
 // ---------------------------------------------------------------------------

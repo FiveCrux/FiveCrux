@@ -150,8 +150,14 @@ export default function PropDetailPage() {
     }
   }
 
-  // Tebex Model B: create a basket against the seller's webstore and redirect to checkout.
+  // Model B: send the buyer to the package on the SELLER's hosted Tebex store
+  // (Tebex handles login, required options and payment). Prefer a stored `link`;
+  // otherwise resolve the seller store URL live.
   const handleTebexBuy = async () => {
+    if ((prop as any).link) {
+      window.open((prop as any).link, "_blank", "noopener,noreferrer")
+      return
+    }
     if (!session) {
       toast.error("Please log in to purchase props")
       router.push('/auth/signin')
@@ -170,8 +176,8 @@ export default function PropDetailPage() {
       })
 
       const data = await res.json().catch(() => ({}))
-      if (res.ok && data.checkoutUrl) {
-        window.location.href = data.checkoutUrl
+      if (res.ok && data.redirectUrl) {
+        window.location.href = data.redirectUrl
       } else {
         toast.error(data.error || "Failed to start checkout")
         setBuyingTebex(false)

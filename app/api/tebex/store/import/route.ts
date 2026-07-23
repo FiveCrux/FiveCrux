@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/auth";
-import { getPackages, getPackage, type TebexPackage } from "@/lib/tebex";
+import { getPackages, getPackage, getWebstoreInfo, webstorePackageUrl, type TebexPackage } from "@/lib/tebex";
 import { getUserById, createScript, getUserImportedTebexPackageIds, getCategories } from "@/lib/database-new";
 
 // Tebex category names don't always equal our category SLUGs (e.g. Tebex
@@ -128,6 +128,12 @@ export async function POST(req: NextRequest) {
 
     const cats = await getCategories();
     const resolveCategory = makeCategoryResolver(cats);
+
+    // The seller's hosted Tebex store URL — imported listings link straight to
+    // their package page there, where Tebex handles login, required options
+    // (e.g. a Discord-ID requirement) and payment. Fetched once per import.
+    const webstore = await getWebstoreInfo(token).catch(() => null);
+    const webstoreUrl = (webstore as any)?.webstore_url || null;
     // Client-chosen category per package id (from the "we don't have this
     // category" picker). Only honoured when it's a real, active slug — otherwise
     // fall back to the automatic resolver so a bad value can't create an orphan.
@@ -149,6 +155,9 @@ export async function POST(req: NextRequest) {
         price: String(price),
         currency: p.currency || null,
         category: chosenCategory(p),
+        // Buy Now sends the buyer straight to this package on the seller's
+        // hosted Tebex store (Tebex handles login/options/payment there).
+        link: webstoreUrl ? webstorePackageUrl(webstoreUrl, p.id) : null,
         images: p.image ? [p.image] : [],
         coverImage: p.image || null,
         sellerId: userId,

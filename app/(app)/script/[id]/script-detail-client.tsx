@@ -249,9 +249,16 @@ export function ScriptDetailClient({
     fetchOtherScripts();
   }, [scriptId, script?.sellerId]);
 
-  // Primary buy handler: Tebex Model B when available, else existing link behavior.
+  // Buy handler (Model B): send the buyer to the package on the SELLER's hosted
+  // Tebex store, where Tebex handles login, required options and payment.
+  // Imported listings store that URL as `link`; if a Tebex product somehow has
+  // no link yet (older import), resolve the seller store URL live.
   const handleBuy = async () => {
     if (!script) return;
+    if (script.link) {
+      window.open(script.link, "_blank", "noopener,noreferrer");
+      return;
+    }
     if (script.tebexPackageId && script.tebexStoreToken) {
       try {
         setBuying(true);
@@ -261,21 +268,13 @@ export function ScriptDetailClient({
           body: JSON.stringify({ storeToken: script.tebexStoreToken, packageId: script.tebexPackageId }),
         });
         const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data?.error || "Failed to start checkout");
-        // Auth-required stores return an authUrl (Tebex login) instead of a
-        // checkout URL; either way we just send the buyer there.
-        const dest = data.authUrl || data.checkoutUrl;
-        if (!dest) throw new Error(data?.error || "Failed to start checkout");
-        window.location.href = dest;
+        if (!res.ok || !data?.redirectUrl) throw new Error(data?.error || "Failed to start checkout");
+        window.location.href = data.redirectUrl;
       } catch (err) {
         console.error("Tebex checkout error:", err);
         toast.error("Could not start checkout. Please try again.");
         setBuying(false);
       }
-      return;
-    }
-    if (script.link) {
-      window.open(script.link, "_blank", "noopener,noreferrer");
       return;
     }
     toast.error("No purchase option is available for this product yet.");
