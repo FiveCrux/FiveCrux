@@ -342,7 +342,11 @@ export async function addPackageToBasket(
     method: "POST",
     body: {
       package_id: Number(packageId),
-      quantity,
+      // Packages configured with `disable_quantity` REJECT a quantity field
+      // ("One of the options provided is invalid" → 400), which broke Buy Now
+      // for such packages. Only send quantity for genuine multi-quantity adds;
+      // Tebex defaults to 1 when it's omitted.
+      ...(Number(quantity) > 1 ? { quantity: Number(quantity) } : {}),
     },
   });
 }
