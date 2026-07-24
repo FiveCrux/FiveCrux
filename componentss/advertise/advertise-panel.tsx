@@ -155,6 +155,9 @@ export default function AdvertisePanel() {
   // Live prices from Tebex (single source of truth). null = still loading.
   const [livePrices, setLivePrices] = useState<Record<string, number> | null>(null)
   const [pricingConfigured, setPricingConfigured] = useState(true)
+  // Currency symbol from the LIVE Tebex store (was hardcoded "€", which is wrong
+  // the moment the store isn't EUR). Falls back to € until pricing loads.
+  const [curSym, setCurSym] = useState("€")
 
   useEffect(() => {
     let cancelled = false
@@ -164,6 +167,8 @@ export default function AdvertisePanel() {
         if (cancelled) return
         setLivePrices(d?.prices || {})
         setPricingConfigured(d?.configured !== false)
+        const map: Record<string, string> = { EUR: "€", USD: "$", GBP: "£" }
+        if (d?.currency) setCurSym(map[d.currency] || d.currency)
       })
       .catch(() => {
         if (cancelled) return
@@ -450,7 +455,7 @@ export default function AdvertisePanel() {
                   )}
                 >
                   <div className="text-sm font-bold">{w} {w === 1 ? "week" : "weeks"}</div>
-                  <div className="font-mono text-xs text-white/55">€{pkg.price}</div>
+                  <div className="font-mono text-xs text-white/55">{curSym}{pkg.price}</div>
                   {pkg.recurring && (
                     <div className="mt-0.5 text-[9px] font-semibold uppercase tracking-wide text-orange-400/80">Auto-renews</div>
                   )}
@@ -476,7 +481,7 @@ export default function AdvertisePanel() {
             <Loader2 className="h-5 w-5 animate-spin" />
           ) : (
             <>
-              Buy {sbPositionLabel} slot{sbPriceFor(sbWeeks) != null ? ` · €${sbPriceFor(sbWeeks)}` : ""}
+              Buy {sbPositionLabel} slot{sbPriceFor(sbWeeks) != null ? ` · ${curSym}${sbPriceFor(sbWeeks)}` : ""}
               <ArrowRight className="ml-1.5 h-4 w-4" />
             </>
           )}
@@ -702,12 +707,12 @@ export default function AdvertisePanel() {
                         <>
                           {selectedDuration.originalPrice > livePrice && (
                             <div className="text-[12px] tabular-nums text-white/55 line-through">
-                              €{selectedDuration.originalPrice}
+                              {curSym}{selectedDuration.originalPrice}
                             </div>
                           )}
                           <div className="mt-0.5 flex items-baseline gap-1.5">
                             <span className="text-4xl font-extrabold tracking-tight tabular-nums text-white">
-                              €{livePrice}
+                              {curSym}{livePrice}
                             </span>
                             <span className="text-xs font-medium text-white/55">/ {perLabel}</span>
                           </div>
@@ -715,7 +720,7 @@ export default function AdvertisePanel() {
                             <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-400 ring-1 ring-emerald-500/25">
                               <Check className="h-3.5 w-3.5" />
                               <span className="tabular-nums">
-                                Save €{selectedDuration.originalPrice - livePrice} ({discount}%)
+                                Save {curSym}{selectedDuration.originalPrice - livePrice} ({discount}%)
                               </span>
                             </div>
                           )}

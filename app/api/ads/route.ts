@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/auth"
-import { getAds, hasRole, hasAnyRole, createPendingAd } from "@/lib/database-new"
+import { getAds, hasRole, hasAnyRole, createPendingAd, getCategories } from "@/lib/database-new"
 import { announceAdPending } from "@/lib/discord"
 
 export async function POST(request: NextRequest) {
@@ -28,11 +28,14 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Validate category
-    const validCategories = ["both", "scripts", "giveaways", "props"]
-    if (!validCategories.includes(body.category.toLowerCase())) {
-      return NextResponse.json({ 
-        error: `Invalid category. Must be one of: ${validCategories.join(", ")}` 
+    // Validate category against the LIVE category list (DB) + the special
+    // placement targets, so any real category (maps/vehicles/…) is accepted —
+    // a hardcoded ["both","scripts","giveaways","props"] list rejected them.
+    const dbSlugs = (await getCategories()).map((c) => c.slug.toLowerCase())
+    const validCategories = ["both", "scripts", "giveaways", "props", ...dbSlugs]
+    if (!validCategories.includes(String(body.category).toLowerCase())) {
+      return NextResponse.json({
+        error: "Invalid category.",
       }, { status: 400 })
     }
 

@@ -31,6 +31,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
     }
 
+    // Validate end_date is a real, FUTURE date — a presence-only check let an
+    // invalid string ("not-a-date" → broken countdown/sort) or a past date
+    // (giveaway already ended) through.
+    const endMs = new Date(giveaway.end_date).getTime()
+    if (Number.isNaN(endMs) || endMs <= Date.now()) {
+      return NextResponse.json({ error: "End date must be a valid future date." }, { status: 400 })
+    }
+
+    // max_entries, if set, must be a positive integer. A negative value was
+    // truthy and made `entriesCount >= maxEntries` true for everyone, locking
+    // out all entrants.
+    if (giveaway.max_entries != null && giveaway.max_entries !== "") {
+      const max = Number(giveaway.max_entries)
+      if (!Number.isInteger(max) || max <= 0) {
+        return NextResponse.json({ error: "Max entries must be a positive whole number." }, { status: 400 })
+      }
+    }
+
     // Create giveaway. `featured` is never trusted from the client here — there
     // is no paid/verified path for a user to buy a featured giveaway slot, so
     // it can only ever be set by an admin (see PATCH /api/giveaways/[id]).

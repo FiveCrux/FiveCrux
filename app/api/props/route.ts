@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     // New model: props are delivered by Tebex (zip is uploaded on the Tebex
     // package, not here). A prop MUST carry its FiveCrux-store tebex_package_id;
     // the in-app zip upload is no longer required.
-    if (!name || !description || price === undefined) {
+    if (!name || !String(name).trim() || !description || price === undefined || price === null) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
     if (!tebexPackageId) {
@@ -57,9 +57,15 @@ export async function POST(request: NextRequest) {
 
     const priceNum = parseFloat(price);
     const discountNum = parseFloat(discountPercentage);
-    
-    if (priceNum < 0 || discountNum < 0 || discountNum > 100) {
-      return NextResponse.json({ error: "Invalid price or discount" }, { status: 400 });
+
+    // Value validation — NOT just presence. parseFloat("abc")/parseFloat(null)
+    // is NaN, and NaN < 0 is false, so a non-numeric price previously slipped
+    // past the negative guard and was stored as the literal string "NaN".
+    if (!Number.isFinite(priceNum) || priceNum < 0) {
+      return NextResponse.json({ error: "Price must be a valid non-negative number." }, { status: 400 });
+    }
+    if (!Number.isFinite(discountNum) || discountNum < 0 || discountNum > 100) {
+      return NextResponse.json({ error: "Discount must be between 0 and 100." }, { status: 400 });
     }
 
     let discountedPrice = null;

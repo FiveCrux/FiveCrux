@@ -119,8 +119,10 @@ export async function PATCH(
     if (price !== undefined || discountPercentage !== undefined) {
       const priceNum = price !== undefined ? parseFloat(price) : parseFloat(existingProp.price);
       const discountNum = discountPercentage !== undefined ? parseFloat(discountPercentage) : parseFloat(existingProp.discountPercentage || '0');
-      
-      if (priceNum < 0 || discountNum < 0 || discountNum > 100) {
+
+      // Value validation (not presence): reject NaN too — a non-numeric price
+      // otherwise slipped past `priceNum < 0` and overwrote the price with "NaN".
+      if (!Number.isFinite(priceNum) || priceNum < 0 || !Number.isFinite(discountNum) || discountNum < 0 || discountNum > 100) {
         return NextResponse.json({ error: "Invalid price or discount" }, { status: 400 });
       }
 

@@ -67,6 +67,16 @@ export async function PUT(
     if (!Number.isFinite(commissionValue) || commissionValue <= 0) {
       return NextResponse.json({ error: "Commission value must be greater than 0" }, { status: 400 })
     }
+    // Per-field percentage cap — mirrors the CREATE route. Without this, an edit
+    // could save a >100% (or fractional) percentage discount that drives the
+    // order total to 0 at checkout (the combined check below only fires when
+    // BOTH are percentages).
+    if (discountType === "Percentage" && (!Number.isInteger(discountValue) || discountValue > 100)) {
+      return NextResponse.json({ error: "Percentage discount must be a whole number between 1 and 100" }, { status: 400 })
+    }
+    if (commissionType === "Percentage" && (!Number.isInteger(commissionValue) || commissionValue > 100)) {
+      return NextResponse.json({ error: "Percentage commission must be a whole number between 1 and 100" }, { status: 400 })
+    }
     if (discountType === "Percentage" && commissionType === "Percentage" && discountValue + commissionValue > 100) {
       return NextResponse.json({ error: "Discount % + commission % cannot exceed 100%" }, { status: 400 })
     }

@@ -274,15 +274,23 @@ export async function createAdSlots(
     throw new Error('Invalid package ID. Must be starter, premium, or executive');
   }
 
-  if (![1, 3, 6, 12].includes(durationMonths)) {
-    throw new Error('Invalid duration. Must be 1, 3, 6, or 12 months');
+  // Duration is validated at checkout against the LIVE Tebex catalog
+  // (resolvePackage / the ads package the buyer actually paid for). A hardcoded
+  // [1,3,6,12] guard here would 500-loop a paid order whose duration diverged
+  // from the list — so only sanity-check it's a positive integer.
+  if (!Number.isInteger(durationMonths) || durationMonths <= 0) {
+    throw new Error('Invalid duration');
   }
 
   const now = new Date();
-  
-  // Calculate end date based on purchase date + duration
+
+  // Calculate end date based on purchase date + duration. Guard the month
+  // overflow (Jan 31 + 1 month → Mar 3): if the day-of-month rolled over,
+  // clamp back to the last day of the intended month.
   const endDate = new Date(now);
+  const dom = endDate.getDate();
   endDate.setMonth(endDate.getMonth() + durationMonths);
+  if (endDate.getDate() !== dom) endDate.setDate(0);
 
   // Get the starting slot number for this user
   const startingSlotNumber = await getNextSlotNumber(userId);
@@ -3130,26 +3138,32 @@ export async function createFeaturedScriptSlots(
     throw new Error('Invalid package ID. Must be starter, premium, or executive');
   }
 
-  // If durationWeeks is provided, validate it; otherwise validate months
+  // Duration is validated at checkout against the LIVE Tebex catalog (the
+  // featured package the buyer actually paid for). Hardcoded [1,2,4,8]/[1,3,6,12]
+  // guards here would 500-loop a paid order whose duration diverged — so only
+  // sanity-check a positive number (weeks may be fractional-months elsewhere,
+  // but the weeks value itself is a positive integer).
   if (durationWeeks !== undefined) {
-    if (![1, 2, 4, 8].includes(durationWeeks)) {
-      throw new Error('Invalid duration. Must be 1, 2, 4, or 8 weeks');
+    if (!Number.isInteger(durationWeeks) || durationWeeks <= 0) {
+      throw new Error('Invalid duration');
     }
   } else {
-    if (![1, 3, 6, 12].includes(durationMonths)) {
-      throw new Error('Invalid duration. Must be 1, 3, 6, or 12 months');
+    if (!(durationMonths > 0)) {
+      throw new Error('Invalid duration');
     }
   }
 
   const now = new Date();
   const endDate = new Date(now);
-  
+
   // If weeks are provided, calculate endDate based on weeks (days)
   if (durationWeeks !== undefined) {
     endDate.setDate(endDate.getDate() + (durationWeeks * 7));
   } else {
-    // Otherwise use months
+    // Otherwise use months (clamp month-overflow, e.g. Jan 31 + 1mo → Mar 3)
+    const dom = endDate.getDate();
     endDate.setMonth(endDate.getMonth() + durationMonths);
+    if (endDate.getDate() !== dom) endDate.setDate(0);
   }
 
   const startingSlotNumber = await getNextFeaturedScriptSlotNumber(userId);

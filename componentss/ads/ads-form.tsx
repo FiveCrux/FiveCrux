@@ -147,10 +147,12 @@ export default function AdsForm({ isOpen, onClose, onSuccess, editData, slotUniq
       newErrors.description = "Description must be less than 500 characters"
     }
 
-    // Validate category
+    // Validate category against the OPTIONS this form actually offers (built
+    // live from /api/categories) — a hardcoded ['scripts','giveaways','props']
+    // list rejected every real category (Maps/Vehicles/…) the dropdown renders.
     if (!formData.category) {
       newErrors.category = "Category is required"
-    } else if (!['scripts', 'giveaways', 'props'].includes(formData.category)) {
+    } else if (!placementOptions.some((o) => o.value === formData.category)) {
       newErrors.category = "Please select a valid category"
     }
 

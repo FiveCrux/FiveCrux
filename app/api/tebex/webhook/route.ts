@@ -1,10 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { verifyTebexWebhook, type TebexWebhookPayload } from "@/lib/tebex";
 import { db } from "@/lib/db/client";
-import { tebexOrders, orders, orderItems, carts, cartItems, userAdSlots, userFeaturedScriptSlots, coupons, couponRedemptions } from "@/lib/db/schema";
+import { tebexOrders, orders, orderItems, carts, cartItems, userAdSlots, userFeaturedScriptSlots, coupons, couponRedemptions, creatorCodes, creatorCodeRedemptions } from "@/lib/db/schema";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { createAdSlots, createFeaturedScriptSlots, activateSideBanner, extendSlotsForRecurring, endRecurringSlots } from "@/lib/database-new";
 import { sideBannerBookings } from "@/lib/db/schema";
+import { resolvePackage } from "@/lib/ad-pricing";
 
 function generateNumericId() {
   // Full 32-bit-safe random (id column is a 32-bit int). The old
@@ -290,6 +291,18 @@ async function restoreCouponForFiveCruxOrder(fivecruxOrderId: number): Promise<v
     await db.update(coupons).set({ usedCount: sql`GREATEST(${coupons.usedCount} - 1, 0)`, updatedAt: new Date() }).where(eq(coupons.id, fcOrder.couponId));
     await db.delete(couponRedemptions).where(eq(couponRedemptions.orderId, fivecruxOrderId));
   }
+  // Reverse creator-code usage too. finalizeBasket books a redemption +
+  // increments usedCount at checkout (on the still-pending order); if the
+  // payment is declined/refunded/charged-back, that commission was booked on
+  // money we never kept and a limited-use code stays burned. Undo both. Guarded
+  // ONCE per real failure by the order's `status === "failed"` check above.
+  const redemptions = await db.select().from(creatorCodeRedemptions).where(eq(creatorCodeRedemptions.orderId, fivecruxOrderId));
+  for (const r of redemptions) {
+    await db.update(creatorCodes).set({ usedCount: sql`GREATEST(${creatorCodes.usedCount} - 1, 0)`, updatedAt: new Date() }).where(eq(creatorCodes.id, r.creatorCodeId));
+  }
+  if (redemptions.length > 0) {
+    await db.delete(creatorCodeRedemptions).where(eq(creatorCodeRedemptions.orderId, fivecruxOrderId));
+  }
 }
 
 /**
@@ -337,7 +350,8 @@ async function revokeForOrder(order: { id: string; custom: unknown }): Promise<v
 async function provisionPlatformFee(
   order: { id: string; userId: string | null; custom: unknown },
   payloadCustom: unknown,
-  fallbackOrderId: string
+  fallbackOrderId: string,
+  paidAmount?: string | null
 ): Promise<{ provisioned: boolean; reason?: string }> {
   try {
     // Normalize custom from either source (order row preferred, then payload).
@@ -395,6 +409,25 @@ async function provisionPlatformFee(
       console.warn("Tebex webhook: platform_fee order missing packageId", order.id);
       return { provisioned: false, reason: "missing_package" };
     }
+
+    // Amount reconciliation (DETECTION): compare the amount Tebex actually
+    // charged to the live expected price for this package. A materially lower
+    // payment suggests the basket was manipulated (the ident is client-visible)
+    // to pay-less-get-more. We LOG loudly for admin review/refund but still
+    // provision — a tax/rounding/currency difference must never deny a
+    // legitimately-paying customer their slot. (Hard-block can be layered later.)
+    try {
+      const paid = paidAmount != null ? Number(paidAmount) : NaN;
+      if (Number.isFinite(paid) && (packageType === "ads" || packageType === "featured-scripts")) {
+        const durForPrice = packageType === "featured-scripts" ? (durationWeeks ?? durationMonths) : durationMonths;
+        const resolved = await resolvePackage(packageType, packageId, Number(durForPrice));
+        if (resolved && paid + 0.01 < resolved.price * 0.95) {
+          console.error("Tebex webhook: PAID AMOUNT BELOW EXPECTED — possible basket manipulation (provisioned anyway; review/refund):", {
+            orderId: order.id, packageType, packageId, duration: durForPrice, paid, expected: resolved.price,
+          });
+        }
+      }
+    } catch { /* price lookup failed — skip reconciliation, still provision */ }
 
     // Mirror cart/capture: createAdSlots / createFeaturedScriptSlots expect one
     // order-reference id per slot — here the Tebex order id (basket-backed).
@@ -481,25 +514,35 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ ok: true, idempotent: true, status: existing.status });
         }
 
-        // Provision BEFORE marking completed, so a duplicate that arrives after
-        // is short-circuited by the check above (not re-provisioned).
+        // C2 idempotency (concurrent-safe): atomically CLAIM the order
+        // pending→completed. Only one of N overlapping duplicate deliveries wins
+        // this single conditional UPDATE; the losers get an idempotent 200 and
+        // never provision. (The previous read-then-write let two concurrent
+        // deliveries both read "pending" and both provision → double slots.)
+        const claimed = await transitionOrderStatus(existing.id, "completed", ["pending"], {
+          transactionId: ids.transactionId,
+          amount: ids.amount,
+        });
+        if (!claimed) {
+          return NextResponse.json({ ok: true, idempotent: true });
+        }
+
         if (existing.kind === "platform_fee") {
-          const result = await provisionPlatformFee(existing, payloadCustom, existing.id);
+          const result = await provisionPlatformFee(claimed, payloadCustom, existing.id, ids.amount);
           if (!result.provisioned) {
-            // CRITICAL: do NOT mark the order completed here. The customer was
-            // charged but got no slot — if we stamped "completed" anyway, the
-            // idempotency check above would permanently block every future
-            // retry from ever provisioning it. Returning 500 makes Tebex retry
-            // delivery (the order stays "pending" so a later attempt — after a
-            // transient DB blip clears, or once someone fixes a bad package
-            // mapping — can still succeed).
-            console.error("Tebex webhook: platform_fee completed but NOT provisioned — leaving order pending for retry:", { orderId: existing.id, reason: result.reason });
+            // Charged but no slot granted → revert to pending so a later Tebex
+            // retry can re-provision (a stamped "completed" would lock out every
+            // retry). Conditional on still-"completed" so a concurrent refund
+            // isn't clobbered.
+            await db.update(tebexOrders)
+              .set({ status: "pending", updatedAt: new Date() })
+              .where(and(eq(tebexOrders.id, existing.id), eq(tebexOrders.status, "completed")));
+            console.error("Tebex webhook: platform_fee completed but NOT provisioned — reverted to pending for retry:", { orderId: existing.id, reason: result.reason });
             return NextResponse.json({ error: "provisioning_failed", reason: result.reason }, { status: 500 });
           }
         }
-        // For kind === 'seller_product' the seller's store fulfills; we only track status.
-        // Match by the KNOWN basket ident of the found order (+ record the txn id).
-        await updateOrderStatus("completed", { basketIdent: existing.basketIdent, transactionId: ids.transactionId, amount: ids.amount });
+        // seller_product: the seller's store fulfills; the claim already stamped
+        // status + transaction id.
         return NextResponse.json({ ok: true });
       }
 
@@ -585,19 +628,24 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ ok: true, idempotent: true, status: "refunded" });
         }
 
-        // First charge: provision exactly once. Idempotent via the order status,
-        // so this is safe even if a payment.completed for the same charge also fires.
-        if (payload.type === "recurring-payment.started" && existing.status !== "completed") {
-          if (existing.kind === "platform_fee") {
-            const result = await provisionPlatformFee(existing, recCustom, existing.id);
+        // First charge: provision exactly once. Concurrent-safe via the atomic
+        // claim (same as payment.completed) so this first charge + a racing
+        // payment.completed for it can't both provision.
+        if (payload.type === "recurring-payment.started") {
+          const claimed = await transitionOrderStatus(existing.id, "completed", ["pending"], {
+            transactionId: ids.transactionId,
+            amount: ids.amount,
+          });
+          if (claimed && existing.kind === "platform_fee") {
+            const result = await provisionPlatformFee(claimed, recCustom, existing.id, ids.amount);
             if (!result.provisioned) {
-              // Same reasoning as payment.completed: never stamp "completed" on a
-              // failed provision, or the idempotency check locks out every retry.
-              console.error("Tebex webhook: recurring-payment.started completed but NOT provisioned — leaving order pending for retry:", { orderId: existing.id, reason: result.reason });
+              await db.update(tebexOrders)
+                .set({ status: "pending", updatedAt: new Date() })
+                .where(and(eq(tebexOrders.id, existing.id), eq(tebexOrders.status, "completed")));
+              console.error("Tebex webhook: recurring-payment.started NOT provisioned — reverted to pending for retry:", { orderId: existing.id, reason: result.reason });
               return NextResponse.json({ error: "provisioning_failed", reason: result.reason }, { status: 500 });
             }
           }
-          await updateOrderStatus("completed", { basketIdent: existing.basketIdent, transactionId: ids.transactionId, amount: ids.amount });
         }
 
         // Keep the slot(s) live until Tebex's next scheduled payment.
