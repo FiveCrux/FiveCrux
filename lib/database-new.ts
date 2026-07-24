@@ -3705,7 +3705,8 @@ export async function deleteFramework(id: number) {
 // change: 'left-top' | 'left-bottom' | 'right-top' | 'right-bottom' just work.
 export const SIDE_BANNER_POSITIONS = ['left-top', 'left-bottom', 'right-top', 'right-bottom'] as const;
 export type SideBannerPosition = (typeof SIDE_BANNER_POSITIONS)[number];
-export const SIDE_BANNER_DURATIONS = [1, 2, 3] as const; // weeks (match Tebex packages)
+// (No hardcoded duration list — valid durations come live from the Tebex
+// "SIDE ADVERTISEMENT" packages; see reserveSideBanner + the checkout route.)
 const SIDE_BANNER_HOLD_MINUTES = 15;
 
 /**
@@ -3772,7 +3773,12 @@ export async function reserveSideBanner(input: {
   linkUrl?: string | null;
 }): Promise<{ ok: true; bookingId: number } | { ok: false; reason: string }> {
   if (!SIDE_BANNER_POSITIONS.includes(input.position)) return { ok: false, reason: 'bad_position' };
-  if (!SIDE_BANNER_DURATIONS.includes(input.durationWeeks as any)) return { ok: false, reason: 'bad_duration' };
+  // Valid durations are whatever packages exist in the Tebex "SIDE ADVERTISEMENT"
+  // category (read live) — the checkout route already validated the duration by
+  // resolving it to a real Tebex package before reserving. Here we only sanity
+  // check it's a positive integer, so adding/renaming a Tebex package needs NO
+  // code change (a hardcoded [1,2,3] list previously rejected the real 4-week one).
+  if (!Number.isInteger(input.durationWeeks) || input.durationWeeks <= 0) return { ok: false, reason: 'bad_duration' };
   await sweepExpiredSideBanners();
   const now = new Date();
   const reservedUntil = new Date(now.getTime() + SIDE_BANNER_HOLD_MINUTES * 60 * 1000);

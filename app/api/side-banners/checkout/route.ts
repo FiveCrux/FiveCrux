@@ -9,7 +9,6 @@ import {
   releaseSideBannerReservation,
   ensureUserExists,
   SIDE_BANNER_POSITIONS,
-  SIDE_BANNER_DURATIONS,
   type SideBannerPosition,
 } from "@/lib/database-new";
 import { finalizeSideBannerBasket, buildSideBannerCustom } from "@/lib/side-banner-checkout";
@@ -42,10 +41,12 @@ export async function POST(request: NextRequest) {
 
     if (!SIDE_BANNER_POSITIONS.includes(position))
       return NextResponse.json({ error: "Invalid position" }, { status: 400 });
-    if (!SIDE_BANNER_DURATIONS.includes(durationWeeks as any))
+    if (!Number.isFinite(durationWeeks) || durationWeeks <= 0)
       return NextResponse.json({ error: "Invalid duration" }, { status: 400 });
 
-    // Tebex package must exist for this duration.
+    // Tebex package must exist for this duration — this is the REAL duration
+    // validation (against the live "SIDE ADVERTISEMENT" packages), so any
+    // duration the seller configures in Tebex works with no code change.
     const tebexPackageId = await resolveTebexPackageId("sidebanner", "slot", durationWeeks);
     if (tebexPackageId == null) {
       return NextResponse.json(
