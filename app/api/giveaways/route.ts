@@ -179,13 +179,28 @@ export async function GET(request: NextRequest) {
       is_upcoming: giveaway.isUpcoming || false, // Include upcoming status
     }))
 
+    // PII: this listing is public (+ CDN-cached), so strip the creator's login
+    // email and any embedded winner emails. Admin reads via /api/admin/giveaways
+    // (which keeps them); creators see their own via profile endpoints.
+    const publicGiveaways = transformedGiveaways.map((g: any) => {
+      const { creator_email, creatorEmail, ...rest } = g
+      if (Array.isArray(rest.prizes)) {
+        rest.prizes = rest.prizes.map((p: any) =>
+          Array.isArray(p?.winners)
+            ? { ...p, winners: p.winners.map((w: any) => { const { userEmail, ...wr } = w; return wr }) }
+            : p
+        )
+      }
+      return rest
+    })
+
     // Cache only the default public listing at the CDN; status-filtered/paged
     // variants stay dynamic.
     const headers: Record<string, string> =
       status === "all" && offset === 0
         ? { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300" }
         : {}
-    return NextResponse.json(transformedGiveaways, { headers })
+    return NextResponse.json(publicGiveaways, { headers })
   } catch (error) {
     console.error("Error fetching giveaways:", error)
     return NextResponse.json({ error: "Failed to fetch giveaways" }, { status: 500 })

@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
-import { desc, eq, sql } from "drizzle-orm"
+import { and, desc, eq, sql } from "drizzle-orm"
 
 import { authOptions } from "@/auth"
 import { db } from "@/lib/db/client"
-import { creatorCodes, creatorCodeRedemptions } from "@/lib/db/schema"
+import { creatorCodes, creatorCodeRedemptions, orders } from "@/lib/db/schema"
 import { hasRole } from "@/lib/database-new"
 import { canManageCreatorCodes } from "@/lib/creator-code-access"
 
@@ -53,7 +53,11 @@ export async function GET(request: NextRequest) {
             redemptionCount: sql<number>`count(*)::int`,
           })
           .from(creatorCodeRedemptions)
-          .where(eq(creatorCodeRedemptions.creatorCodeId, code.id))
+          // Only PAID orders count — redemptions are logged at checkout start
+          // (order pending), so an abandoned/failed checkout must not inflate a
+          // creator's reported earnings or redemption count.
+          .innerJoin(orders, eq(orders.id, creatorCodeRedemptions.orderId))
+          .where(and(eq(creatorCodeRedemptions.creatorCodeId, code.id), eq(orders.status, "paid")))
         return {
           ...code,
           totalCommission: Number(agg?.totalCommission ?? 0),

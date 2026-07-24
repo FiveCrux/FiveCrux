@@ -4,7 +4,7 @@
 // "Draw Winners" button (no automatic/scheduled trigger — always explicit).
 import { db } from "@/lib/db/client"
 import { approvedGiveaways, giveawayEntries, giveawayPrizes, giveawayPrizeWinners } from "@/lib/db/schema"
-import { eq, and, asc } from "drizzle-orm"
+import { eq, and, asc, inArray } from "drizzle-orm"
 import { announceGiveawayWinners } from "@/lib/discord"
 
 function shuffleInPlace<T>(array: T[]): void {
@@ -52,6 +52,17 @@ export async function drawWinnersForGiveaway(
 
   const assignedUserIds = new Set<string>()
   const winnersForPrizes: Array<{ prizeId: number; position: number; userId: string; userName: string | null; userEmail: string | null; prizeName: string; prizeValue: string }> = []
+
+  // When NOT overwriting, seed the assigned set with everyone who ALREADY won a
+  // prize in this giveaway — otherwise a re-draw (e.g. after adding a new prize)
+  // could hand a second prize to someone who already won.
+  if (!overwriteExisting) {
+    const prizeIds = prizes.map((p) => p.id)
+    if (prizeIds.length) {
+      const priorWinners = await db.select().from(giveawayPrizeWinners).where(inArray(giveawayPrizeWinners.prizeId, prizeIds))
+      for (const w of priorWinners) if (w.userId) assignedUserIds.add(w.userId)
+    }
+  }
 
   for (const prize of prizes) {
     if (!overwriteExisting && (prize as any).winnerName) continue

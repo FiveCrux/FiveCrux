@@ -125,12 +125,29 @@ export async function POST(
       requirementsCompleted: initialCompletedRequirements
     }
 
-    const entryId = await createGiveawayEntry(entryData)
+    // The check above (getUserGiveawayEntry) is a fast pre-check but races with
+    // a concurrent request (both read "no entry" → both insert → duplicate
+    // entry = doubled win odds). The real guard is a DB UNIQUE index on
+    // (giveaway_id, user_id) — run manually on Neon:
+    //   CREATE UNIQUE INDEX IF NOT EXISTS uq_giveaway_entry_user
+    //     ON giveaway_entries (giveaway_id, user_id);
+    // With it, the second concurrent insert throws 23505; catch it and treat it
+    // as "already entered" instead of a 500.
+    let entryId: number
+    try {
+      entryId = await createGiveawayEntry(entryData)
+    } catch (e: any) {
+      const code = e?.code || e?.cause?.code
+      if (code === "23505") {
+        return NextResponse.json({ error: "You have already entered this giveaway" }, { status: 400 })
+      }
+      throw e
+    }
 
-    return NextResponse.json({ 
-      success: true, 
+    return NextResponse.json({
+      success: true,
       entryId,
-      message: "Successfully entered giveaway" 
+      message: "Successfully entered giveaway"
     }, { status: 201 })
 
   } catch (error) {

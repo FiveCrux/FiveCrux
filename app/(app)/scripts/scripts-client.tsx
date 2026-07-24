@@ -361,10 +361,10 @@ export function ScriptsClient({
     return allScripts.filter((script) => {
       if (
         searchQuery &&
-        !script.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
-        !script.description.toLowerCase().includes(searchQuery.toLowerCase()) &&
-        !script.tags.some((tag) =>
-          tag.toLowerCase().includes(searchQuery.toLowerCase())
+        !(script.title || "").toLowerCase().includes(searchQuery.toLowerCase()) &&
+        !(script.description || "").toLowerCase().includes(searchQuery.toLowerCase()) &&
+        !(script.tags || []).some((tag) =>
+          (tag || "").toLowerCase().includes(searchQuery.toLowerCase())
         )
       ) {
         return false;

@@ -205,10 +205,10 @@ export function PropsClient({
     return allProps.filter((prop) => {
       if (
         searchQuery &&
-        !prop.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
-        !prop.description.toLowerCase().includes(searchQuery.toLowerCase()) &&
-        !prop.tags.some((tag) =>
-          tag.toLowerCase().includes(searchQuery.toLowerCase())
+        !(prop.title || "").toLowerCase().includes(searchQuery.toLowerCase()) &&
+        !(prop.description || "").toLowerCase().includes(searchQuery.toLowerCase()) &&
+        !(prop.tags || []).some((tag) =>
+          (tag || "").toLowerCase().includes(searchQuery.toLowerCase())
         )
       ) {
         return false;

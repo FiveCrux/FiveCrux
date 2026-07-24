@@ -21,15 +21,34 @@ export async function GET(
     }
 
     const giveaway = await getGiveawayById(id)
-    
+
     if (!giveaway) {
       return NextResponse.json({ error: "Giveaway not found" }, { status: 404 })
     }
 
     // Map camelCase to snake_case for frontend compatibility
-    const response = {
+    const response: any = {
       ...giveaway,
       youtube_video_link: (giveaway as any).youtubeVideoLink || (giveaway as any).youtube_video_link,
+    }
+
+    // PII: this endpoint is public. Strip the creator's login email and every
+    // prize winner's email/userId unless the requester is the creator or staff
+    // (the creator sees winners via their profile; admin via /api/admin/*).
+    const session = await getServerSession(authOptions)
+    const roles = (session?.user as any)?.roles || []
+    const isStaff = Array.isArray(roles) && (roles.includes("admin") || roles.includes("founder"))
+    const isOwner = session?.user?.email && (giveaway as any).creatorEmail === session.user.email
+    if (!isStaff && !isOwner) {
+      delete response.creatorEmail
+      delete response.creator_email
+      if (Array.isArray(response.prizes)) {
+        response.prizes = response.prizes.map((p: any) =>
+          Array.isArray(p?.winners)
+            ? { ...p, winners: p.winners.map((w: any) => ({ userName: w.userName, claimed: w.claimed })) }
+            : p
+        )
+      }
     }
 
     return NextResponse.json(response)

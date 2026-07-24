@@ -82,11 +82,12 @@ function scriptToProduct(script: Script): MarketProduct {
 
 function filterByCategory(allScripts: Script[], categorySlug: string, knownSlugs: string[]) {
   const isOther = categorySlug.toLowerCase() === "other"
-  return allScripts.filter((script) =>
-    isOther
-      ? !knownSlugs.includes(script.category.toLowerCase())
-      : script.category.toLowerCase() === categorySlug.toLowerCase()
-  )
+  return allScripts.filter((script) => {
+    // Guard a null/missing category (a Tebex import can lack one) — an
+    // unguarded .toLowerCase() here threw and blanked the whole route (SSR too).
+    const cat = (script.category || "").toLowerCase()
+    return isOther ? !knownSlugs.includes(cat) : cat === categorySlug.toLowerCase()
+  })
 }
 
 export function CategoryClient({

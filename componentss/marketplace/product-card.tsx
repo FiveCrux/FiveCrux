@@ -50,7 +50,7 @@ function gradientFor(id: number | string) {
 }
 
 function slugText(title: string) {
-  return title.toUpperCase().slice(0, 16)
+  return (title || "ASSET").toUpperCase().slice(0, 16)
 }
 
 export function ProductCard({ product, className = "" }: { product: MarketProduct; className?: string }) {

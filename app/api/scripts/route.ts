@@ -140,7 +140,10 @@ export async function GET(request: NextRequest) {
 
     console.log("Scripts API - Filters:", filters)
 
-    const scripts = await getScripts(filters)
+    const scriptsRaw = await getScripts(filters)
+    // PII: strip the seller's login email from the public listing (marketplace
+    // never needs it; admin reads via /api/admin/scripts which keeps it).
+    const scripts = scriptsRaw.map((s: any) => { const { seller_email, ...rest } = s; return rest })
     console.log("Scripts API - Found scripts:", scripts.length)
     // status may not exist on approved_scripts selection; avoid strict access
     console.log("Scripts API - Script ids:", scripts.map(s => ({ id: (s as any).id, title: (s as any).title })))

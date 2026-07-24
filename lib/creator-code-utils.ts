@@ -4,7 +4,7 @@
 // since it's affiliate marketing, not a "discount your own product" tool).
 import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db/client";
-import { creatorCodes, creatorCodeRedemptions } from "@/lib/db/schema";
+import { creatorCodes, creatorCodeRedemptions, orders } from "@/lib/db/schema";
 
 type CreatorCodeRow = typeof creatorCodes.$inferSelect;
 
@@ -27,14 +27,22 @@ export async function validateCreatorCode(rawCode: string, userId: string, cartT
     return { error: "Invalid creator code" };
   }
 
-  // A buyer can't use the same code twice (matches coupon's one-use-per-buyer rule).
-  const existingRedemption = await db.query.creatorCodeRedemptions.findFirst({
-    where: and(
-      eq(creatorCodeRedemptions.creatorCodeId, creatorCode.id),
-      eq(creatorCodeRedemptions.userId, userId)
-    ),
-  });
-  if (existingRedemption) {
+  // A buyer can't use the same code twice — but only a PAID redemption counts.
+  // Redemptions are written at checkout START (order still pending); an
+  // abandoned/failed checkout must NOT permanently burn the buyer's one use.
+  const paidRedemption = await db
+    .select({ id: creatorCodeRedemptions.id })
+    .from(creatorCodeRedemptions)
+    .innerJoin(orders, eq(orders.id, creatorCodeRedemptions.orderId))
+    .where(
+      and(
+        eq(creatorCodeRedemptions.creatorCodeId, creatorCode.id),
+        eq(creatorCodeRedemptions.userId, userId),
+        eq(orders.status, "paid")
+      )
+    )
+    .limit(1);
+  if (paidRedemption.length > 0) {
     return { error: "This creator code cannot be used again" };
   }
 

@@ -13,10 +13,18 @@ export async function GET(
     const { id } = await params
     const scriptId = parseInt(id)
     const script = await getScriptById(scriptId)
-    
+
     if (!script) {
       return NextResponse.json({ error: "Script not found" }, { status: 404 })
     }
+
+    // PII: don't expose the seller's login email publicly. Keep it only for the
+    // owner (their edit page prefills from it) or staff.
+    const session = await getServerSession(authOptions)
+    const roles = (session?.user as any)?.roles || []
+    const isStaff = Array.isArray(roles) && (roles.includes("admin") || roles.includes("founder"))
+    const isOwner = (script as any)?.seller_email && session?.user?.email === (script as any).seller_email
+    if (!isStaff && !isOwner) delete (script as any).seller_email
 
     return NextResponse.json(script)
   } catch (error) {

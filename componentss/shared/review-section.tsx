@@ -305,7 +305,7 @@ export default function ReviewSection({ itemId, itemType, itemTitle, onReviewSub
                 <div className="flex items-start gap-3">
                   <Avatar className="h-10 w-10">
                     <AvatarFallback className="bg-blue-600 text-white">
-                      {review.reviewer_name[0]?.toUpperCase()}
+                      {review.reviewer_name?.[0]?.toUpperCase() ?? "?"}
                     </AvatarFallback>
                   </Avatar>
                   
