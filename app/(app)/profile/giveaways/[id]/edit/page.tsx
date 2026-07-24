@@ -1000,7 +1000,7 @@ export default function EditGiveawayPage() {
                             )}
                           </div>
 
-                          <div className="grid grid-cols-1 md:grid-cols-[140px_1fr_120px] gap-4">
+                          <div className="grid grid-cols-1 md:grid-cols-[140px_1fr] gap-4">
                             <div>
                               <Label className="text-white text-sm">Amount</Label>
                               <Input
@@ -1021,17 +1021,6 @@ export default function EditGiveawayPage() {
                               />
                             </div>
 
-                            <div>
-                              <Label className="text-white text-sm">Winners</Label>
-                              <Input
-                                type="number"
-                                min="1"
-                                value={prize.numberOfWinners || 1}
-                                onChange={(e) => updatePrize(prize.id, "numberOfWinners", parseInt(e.target.value) || 1)}
-                                placeholder="1"
-                                className="mt-1 bg-white/[0.04] border-white/[0.08] text-white placeholder-white/30 focus:border-orange-500 focus-visible:ring-orange-500/40"
-                              />
-                            </div>
                           </div>
 
                           {/* Per-prize Discord ID(s) — a single giveaway can have

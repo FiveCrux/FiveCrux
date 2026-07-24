@@ -853,7 +853,7 @@ export default function CreateGiveawayPage() {
                             )}
                           </div>
 
-                          <div className="grid grid-cols-1 md:grid-cols-[140px_1fr_120px] gap-4">
+                          <div className="grid grid-cols-1 md:grid-cols-[140px_1fr] gap-4">
                             <div>
                               <Label className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/50">Amount</Label>
                               <Input
@@ -874,17 +874,6 @@ export default function CreateGiveawayPage() {
                               />
                             </div>
 
-                            <div>
-                              <Label className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/50">Winners</Label>
-                              <Input
-                                type="number"
-                                min="1"
-                                value={prize.numberOfWinners || 1}
-                                onChange={(e) => updatePrize(prize.id, "numberOfWinners", parseInt(e.target.value) || 1)}
-                                placeholder="1"
-                                className={`mt-2 px-4 py-2.5 text-sm tabular-nums ${fieldClass}`}
-                              />
-                            </div>
                           </div>
 
                           {/* Per-prize Discord ID(s) — a single giveaway can have
