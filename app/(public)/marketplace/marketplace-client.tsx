@@ -106,17 +106,19 @@ export function MarketplaceClient({ initialScripts = [] }: { initialScripts?: an
   )
 
   useEffect(() => {
-    if (seeded) return // server already seeded the catalog
+    // Always refetch live (seed is an ISR snapshot, up to 60s stale). With a
+    // seed, refresh in the background: no spinner, and a failed refresh keeps
+    // the seed instead of blanking the grid.
     let cancelled = false
 
     const fetchProducts = async () => {
       const controller = new AbortController()
       const timeout = setTimeout(() => controller.abort(), 15000)
       try {
-        setLoading(true)
-        const res = await fetch("/api/scripts?status=all", { signal: controller.signal })
+        if (!seeded) setLoading(true)
+        const res = await fetch("/api/scripts?status=all", { cache: "no-store", signal: controller.signal })
         if (!res.ok) {
-          if (!cancelled) {
+          if (!cancelled && !seeded) {
             setProducts([])
             setProductCategories({})
           }
@@ -130,13 +132,13 @@ export function MarketplaceClient({ initialScripts = [] }: { initialScripts?: an
           Object.fromEntries(scripts.map((s) => [String(s.id), (s.category || "script").toLowerCase()])),
         )
       } catch {
-        if (!cancelled) {
+        if (!cancelled && !seeded) {
           setProducts([])
           setProductCategories({})
         }
       } finally {
         clearTimeout(timeout)
-        if (!cancelled) setLoading(false)
+        if (!cancelled && !seeded) setLoading(false)
       }
     }
 

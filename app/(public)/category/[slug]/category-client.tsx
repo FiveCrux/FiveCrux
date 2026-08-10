@@ -195,20 +195,21 @@ export function CategoryClient({
 
   const scriptsSeedConsumedRef = useRef(false)
   useEffect(() => {
-    if (hasServerSeed && !scriptsSeedConsumedRef.current) {
-      scriptsSeedConsumedRef.current = true
-      return
-    }
+    // Always refetch live (seed is an ISR snapshot, up to 60s stale). On the
+    // first seeded render, refresh in the BACKGROUND (no spinner) and keep the
+    // seed if the fetch fails; later slug changes show the spinner normally.
+    const skipSpinner = hasServerSeed && !scriptsSeedConsumedRef.current
+    scriptsSeedConsumedRef.current = true
 
     const fetchScripts = async () => {
       // 8s timeout guard — DB may be absent in dev, so never infinite-spin.
       const c = new AbortController()
       const t = setTimeout(() => c.abort(), 15000)
       try {
-        setLoading(true)
+        if (!skipSpinner) setLoading(true)
         // limit=1000: fetch the full catalog — filtering is client-side, so a
         // capped fetch would hide this category's items beyond the default 100.
-        const response = await fetch(`/api/scripts?status=all&limit=1000`, { signal: c.signal })
+        const response = await fetch(`/api/scripts?status=all&limit=1000`, { cache: "no-store", signal: c.signal })
 
         if (!response.ok) {
           console.error("Failed to fetch scripts")
@@ -221,7 +222,7 @@ export function CategoryClient({
         if ((error as any)?.name !== "AbortError") console.error("Error fetching scripts:", error)
       } finally {
         clearTimeout(t)
-        setLoading(false)
+        if (!skipSpinner) setLoading(false)
       }
     }
 

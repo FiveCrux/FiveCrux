@@ -198,7 +198,7 @@ export async function GET(request: NextRequest) {
     // variants stay dynamic.
     const headers: Record<string, string> =
       status === "all" && offset === 0
-        ? { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300" }
+        ? { "Cache-Control": "no-store" }
         : {}
     return NextResponse.json(publicGiveaways, { headers })
   } catch (error) {

@@ -6,7 +6,7 @@ import { getCategories } from "@/lib/database-new";
 // the submit-form dropdown, and category pages.
 //   ?home=true        → only categories flagged show_on_home (home chips)
 //   ?appliesTo=props  → categories for props (incl. 'both'); default scripts+both
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   try {
@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
     const cats = await getCategories({ home, appliesTo });
     return NextResponse.json(
       { categories: cats },
-      { headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300" } }
+      { headers: { "Cache-Control": "no-store" } }
     );
   } catch (e) {
     console.error("GET /api/categories error:", e);

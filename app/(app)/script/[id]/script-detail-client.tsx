@@ -173,30 +173,32 @@ export function ScriptDetailClient({
   }, [scriptId]);
 
   useEffect(() => {
-    if (initialData) return;
+    // Always refetch live so a seller's edit shows immediately — the SSR seed
+    // is an ISR snapshot (up to 60s stale). When we HAVE a seed, refresh in the
+    // background: no spinner, and a failed refresh keeps the seed (don't blank).
     const fetchScript = async () => {
       try {
-        setLoading(true);
+        if (!initialData) setLoading(true);
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 15000);
-        const response = await fetch(`/api/scripts/${scriptId}`, { signal: controller.signal });
+        const response = await fetch(`/api/scripts/${scriptId}`, { cache: "no-store", signal: controller.signal });
         clearTimeout(timeoutId);
 
         if (!response.ok) {
-          setError(response.status === 404 ? "Asset not found" : "Failed to load asset");
+          if (!initialData) setError(response.status === 404 ? "Asset not found" : "Failed to load asset");
           return;
         }
         const data = await response.json();
         if (!data || data.error) {
-          setError("Asset not found");
+          if (!initialData) setError("Asset not found");
           return;
         }
         setScript(data);
       } catch (err) {
         if ((err as any)?.name !== "AbortError") console.error("Error fetching script:", err);
-        setError("Failed to load asset");
+        if (!initialData) setError("Failed to load asset");
       } finally {
-        setLoading(false);
+        if (!initialData) setLoading(false);
       }
     };
     if (scriptId) fetchScript();

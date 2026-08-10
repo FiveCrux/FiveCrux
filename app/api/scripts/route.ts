@@ -152,7 +152,7 @@ export async function GET(request: NextRequest) {
     // pending/other variants. Mirrors /api/categories' caching.
     const headers: Record<string, string> =
       filters.status === "approved"
-        ? { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300" }
+        ? { "Cache-Control": "no-store" }
         : {}
     return NextResponse.json({ scripts }, { headers })
   } catch (error: any) {

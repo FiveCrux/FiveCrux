@@ -185,14 +185,12 @@ export function GiveawayDetailClient({
   }
 
   useEffect(() => {
-    // Server already seeded the giveaway (ISR) — skip the redundant initial fetch.
-    // The session-specific `/entries` and `/related` fetches below still run.
-    if (initialData) {
-      return
-    }
+    // Always refetch live so edits/approval show immediately (the SSR seed is an
+    // ISR snapshot, up to 60s stale). With a seed, refresh in the background: no
+    // spinner, and a failed refresh keeps the seed instead of blanking the page.
+    const seeded = !!initialData
     const fetchGiveaway = async () => {
       if (fetchRefs.current.giveaway) {
-        console.log('Giveaway fetch already in progress, skipping...')
         return
       }
 
@@ -202,31 +200,26 @@ export function GiveawayDetailClient({
       try {
         fetchRefs.current.giveaway = true
         setFetchingStates(prev => ({ ...prev, giveaway: true }))
-        setLoading(true)
+        if (!seeded) setLoading(true)
         const response = await fetch(`/api/giveaways/${giveawayId}`, { cache: "no-store", signal: c.signal })
 
         if (response.ok) {
           const data = await response.json()
           // Empty/invalid payload -> show the not-found state.
           if (!data || (typeof data === 'object' && !data.id && !data.title)) {
-            setGiveaway(null)
-            setError("Giveaway not found")
+            if (!seeded) { setGiveaway(null); setError("Giveaway not found") }
           } else {
             setGiveaway(data)
             setError(null)
           }
         } else {
-          // API error -> not-found state.
-          setGiveaway(null)
-          setError(response.status === 404 ? "Giveaway not found" : "Failed to load giveaway")
+          if (!seeded) { setGiveaway(null); setError(response.status === 404 ? "Giveaway not found" : "Failed to load giveaway") }
         }
       } catch (error) {
-        // Network error / abort / timeout -> not-found state.
-        setGiveaway(null)
-        setError("Failed to load giveaway")
+        if (!seeded) { setGiveaway(null); setError("Failed to load giveaway") }
       } finally {
         clearTimeout(t)
-        setLoading(false)
+        if (!seeded) setLoading(false)
         setFetchingStates(prev => ({ ...prev, giveaway: false }))
         fetchRefs.current.giveaway = false
       }

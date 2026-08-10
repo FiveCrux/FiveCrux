@@ -312,37 +312,34 @@ export function HomeClient({
     Array.isArray(initialCategories) ? initialCategories : []
   )
   useEffect(() => {
-    if (initialCategories && initialCategories.length) return // already seeded server-side
-    fetch("/api/categories?home=true")
+    // Always refetch (seed is an ISR snapshot, up to 60s stale). On failure the
+    // empty catch keeps the seed, so this only ever refreshes to newer data.
+    fetch("/api/categories?home=true", { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => Array.isArray(d?.categories) && setHomeCats(d.categories))
       .catch(() => {})
-  }, [initialCategories])
+  }, [])
 
   useEffect(() => {
     let cancelled = false
-    // Featured overlay (only when SSR didn't seed it).
-    if (!(initialFeatured && initialFeatured.length)) {
-      fetch("/api/featured-scripts?status=active", { cache: "no-store" })
-        .then((r) => (r.ok ? r.json() : null))
-        .then((d) => {
-          if (!cancelled && d?.featuredScripts?.length) setLiveFeatured(d.featuredScripts.map(mapFeatured))
-        })
-        .catch(() => {})
-    }
-    // Regular catalog for the discovery rows (only when SSR didn't seed it).
-    if (!(initialScripts && initialScripts.length)) {
-      fetch("/api/scripts", { cache: "no-store" })
-        .then((r) => (r.ok ? r.json() : null))
-        .then((d) => {
-          if (!cancelled && Array.isArray(d?.scripts)) setLiveScripts(d.scripts.map(mapScript))
-        })
-        .catch(() => {})
-    }
+    // Refresh featured + catalog live so new/edited/approved assets show
+    // immediately (not the up-to-60s-stale ISR seed). Keeps seed on failure.
+    fetch("/api/featured-scripts?status=active", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!cancelled && d?.featuredScripts?.length) setLiveFeatured(d.featuredScripts.map(mapFeatured))
+      })
+      .catch(() => {})
+    fetch("/api/scripts", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!cancelled && Array.isArray(d?.scripts)) setLiveScripts(d.scripts.map(mapScript))
+      })
+      .catch(() => {})
     return () => {
       cancelled = true
     }
-  }, [initialFeatured])
+  }, [])
 
   const rows = useMemo(() => {
     // BOTH featured surfaces (the big hero "FEATURED SPOTLIGHT" and the

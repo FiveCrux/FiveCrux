@@ -1108,31 +1108,29 @@ export async function getRejectedScripts(limit?: number) {
 export async function approveScript(scriptId: number, adminId: string, adminNotes?: string) {
   try {
     console.log('approveScript called with:', { scriptId, adminId, adminNotes });
-    
-    // Get the pending script
-    const pendingScript = await db.select().from(pendingScripts).where(eq(pendingScripts.id, scriptId)).limit(1);
-    
-    if (pendingScript.length === 0) {
-      throw new Error('Script not found in pending scripts');
-    }
-    
-    const script = pendingScript[0];
-    
-    // Insert into approved_scripts table
-    const approvedScript = await db.insert(approvedScripts).values({
-      ...script,
-      createdAt: new Date(), // stamp with approval time, not the original submission time —
-      // otherwise a script that waited in the queue sorts as "old" and never reaches New Releases
-      approvedAt: new Date(),
-      approvedBy: adminId,
-      adminNotes: adminNotes || null
-    }).returning();
-    
-    // Delete from pending_scripts table
-    await db.delete(pendingScripts).where(eq(pendingScripts.id, scriptId));
-    
-    console.log('Script approved successfully:', approvedScript[0]);
-    return approvedScript[0];
+
+    // Atomic move: DELETE the pending row first (returning it) inside a
+    // transaction, then insert into approved. Delete-first is the concurrency
+    // guard — only one of N racing approve/reject/double-click calls can delete
+    // the row; the losers get nothing and abort, so the script can never end up
+    // in two tables. If the insert throws, the transaction rolls back and the
+    // pending row is restored (retryable).
+    return await db.transaction(async (tx) => {
+      const [script] = await tx.delete(pendingScripts).where(eq(pendingScripts.id, scriptId)).returning();
+      if (!script) {
+        throw new Error('Script not found in pending scripts');
+      }
+      const [approvedScript] = await tx.insert(approvedScripts).values({
+        ...script,
+        createdAt: new Date(), // stamp with approval time, not the original submission time —
+        // otherwise a script that waited in the queue sorts as "old" and never reaches New Releases
+        approvedAt: new Date(),
+        approvedBy: adminId,
+        adminNotes: adminNotes || null
+      }).returning();
+      console.log('Script approved successfully:', approvedScript);
+      return approvedScript;
+    });
   } catch (error) {
     console.error('Error approving script:', error);
     throw error;
@@ -2720,6 +2718,10 @@ export async function rejectAd(adId: number, adminId: string, rejectionReason: s
       createdBy: adData.createdBy,
       createdAt: adData.createdAt,
       updatedAt: new Date(),
+      // Carry the slot linkage (was dropped) so rejected-ad bookkeeping / the
+      // expiry sweep can still match this ad to the purchased slot it belonged to.
+      slotUniqueId: (adData as any).slotUniqueId ?? null,
+      slotStatus: (adData as any).slotStatus ?? 'active',
       rejectedAt: new Date(),
       rejectedBy: adminId,
       rejectionReason,
@@ -2775,8 +2777,16 @@ export async function updateAd(id: number, updateData: any) {
       .set({ ...updateData, updatedAt: new Date() })
       .where(eq(pendingAds.id, id))
       .returning();
-    
-    return pendingResult[0] || null;
+    if (pendingResult.length > 0) return pendingResult[0];
+
+    // Try rejected ads — editing a rejected ad previously matched no table,
+    // returned null, and the route 500'd ("Failed to update ad").
+    const rejectedResult = await db.update(rejectedAds)
+      .set({ ...updateData, updatedAt: new Date() })
+      .where(eq(rejectedAds.id, id))
+      .returning();
+
+    return rejectedResult[0] || null;
   } catch (error) {
     console.error('Error updating ad:', error);
     return null;
