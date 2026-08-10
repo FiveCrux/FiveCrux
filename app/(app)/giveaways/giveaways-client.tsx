@@ -142,9 +142,11 @@ export function GiveawaysClient({
       let gotGiveaways = hasSeed;
       try {
         if (!hasSeed) setLoading(true);
+        // Always refetch live — the SSR seed can be a stale (ISR-cached)
+        // snapshot, so skipping the refetch left edits/new giveaways not showing.
         const [giveawaysRes, adsRes, entriesRes] = await Promise.all([
-          hasSeed ? Promise.resolve(null) : fetch(`/api/giveaways`, { cache: "no-store", signal: c.signal }),
-          hasSeed ? Promise.resolve(null) : fetch(`/api/promotions/giveaways`, { cache: "no-store", signal: c.signal }),
+          fetch(`/api/giveaways`, { cache: "no-store", signal: c.signal }),
+          fetch(`/api/promotions/giveaways`, { cache: "no-store", signal: c.signal }),
           fetch(`/api/users/giveaway-entries`, { cache: "no-store", signal: c.signal }),
         ]);
         clearTimeout(t);

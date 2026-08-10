@@ -131,8 +131,9 @@ export function PropsClient({
   }, []);
 
   useEffect(() => {
-    // Server already seeded the catalog → skip the props refetch, but still load
-    // ads (ads aren't part of the SSR shell).
+    // The SSR seed can be a STALE cached snapshot (older props). Always refetch
+    // the live catalog after mount so edits/new props show immediately —
+    // skipping the refetch when seeded left the page showing old data.
     const hasSeed = Array.isArray(initialProps) && initialProps.length > 0;
     const load = async () => {
       try {
@@ -145,7 +146,7 @@ export function PropsClient({
           return fetch(url, { cache: "no-store", signal: c.signal }).finally(() => clearTimeout(t));
         };
         const [propsR, adsR] = await Promise.allSettled([
-          hasSeed ? Promise.resolve(null) : fetchT(`/api/props`),
+          fetchT(`/api/props`),
           fetchT(`/api/ads/props`),
         ]);
         const propsRes = propsR.status === "fulfilled" ? propsR.value : null;
