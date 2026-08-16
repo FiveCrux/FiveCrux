@@ -142,7 +142,7 @@ async function main() {
     return tagStripped.toLowerCase().includes(needle.toLowerCase())
   }
 
-  for (const path of ["/", "/scripts", "/props", "/giveaways"]) {
+  for (const path of ["/", "/scripts", "/giveaways"]) {
     const html = await (await jfetch(buyer, path)).text()
     const hasAdMarkup =
       /data-ad-card|adcard|side-ads-frame/i.test(html) ||
@@ -156,24 +156,25 @@ async function main() {
   // ============================================================
   console.log("\nB) Regression guard -- marketplace unaffected")
 
-  // Props are Tebex-driven (live catalog, not the local seed DB) — the prop id
-  // must be a real Tebex package id, so fetch one from the live /api/props list
-  // rather than using a seeded fixture id.
-  const propsListRes = await jfetch(buyer, "/api/props")
-  const propsListBody = await propsListRes.json().catch(() => ({}))
-  const realProp = (propsListBody.props || [])[0]
-  check("A real Tebex-backed prop is available to test cart/add with", !!realProp?.id, JSON.stringify(propsListBody).slice(0, 200))
+  // PROPS-DISABLED 2026-08-17: props used to be the cart regression guard here.
+  // They are now switched off too, so the guard moved to scripts — the one
+  // remaining thing the marketplace sells. If this ever fails, the site has no
+  // working purchase path at all.
+  const scriptsListRes = await jfetch(buyer, "/api/scripts?limit=1")
+  const scriptsListBody = await scriptsListRes.json().catch(() => ({}))
+  const anyScript = (scriptsListBody.scripts || scriptsListBody.data || [])[0]
+  check("A live script exists to exercise the buy path with", !!anyScript?.id, JSON.stringify(scriptsListBody).slice(0, 160))
 
+  // Props must now be refused by the cart, like ad slots are.
   const cartAddPropRes = await jfetch(buyer, "/api/cart/add", J({
     itemType: "prop",
-    itemId: realProp?.id ?? "prop-1001",
-    title: realProp?.name ?? "test prop",
+    itemId: "prop-1001",
+    title: "test prop",
   }))
-  const cartAddPropBody = await cartAddPropRes.json().catch(() => ({}))
   check(
-    "POST /api/cart/add still accepts a prop item (MOST IMPORTANT)",
-    cartAddPropRes.status === 200 && cartAddPropBody?.success === true,
-    `status=${cartAddPropRes.status} body=${JSON.stringify(cartAddPropBody)}`
+    "POST /api/cart/add refuses a prop item (410)",
+    cartAddPropRes.status === 410,
+    `status=${cartAddPropRes.status}`
   )
 
   const platformBasketOtherRes = await jfetch(buyer, "/api/tebex/platform-basket", J({ packageType: "sidebanner", packageId: "slot", duration: 1 }))
@@ -205,12 +206,16 @@ async function main() {
 
   const scriptsApiRes = await jfetch(buyer, "/api/scripts")
   check("GET /api/scripts responds 200", scriptsApiRes.status === 200, `status=${scriptsApiRes.status}`)
+  // PROPS-DISABLED 2026-08-17: props are switched off, so this now asserts the
+  // opposite of what it used to — the API must refuse, not serve.
   const propsApiRes = await jfetch(buyer, "/api/props")
-  check("GET /api/props responds", propsApiRes.status !== 404 && propsApiRes.status !== 500, `status=${propsApiRes.status}`)
+  check("GET /api/props -> 410 (props disabled)", propsApiRes.status === 410, `status=${propsApiRes.status}`)
+  const propsPageRes = await jfetch(buyer, "/props")
+  check("GET /props -> 404 (props disabled)", propsPageRes.status === 404, `status=${propsPageRes.status}`)
   const giveawaysApiRes = await jfetch(buyer, "/api/giveaways")
   check("GET /api/giveaways responds", giveawaysApiRes.status !== 404 && giveawaysApiRes.status !== 500, `status=${giveawaysApiRes.status}`)
 
-  for (const path of ["/", "/scripts", "/props", "/giveaways"]) {
+  for (const path of ["/", "/scripts", "/giveaways"]) {
     const res = await jfetch(buyer, path)
     check(`Public page ${path} renders (200)`, res.status === 200, `status=${res.status}`)
   }

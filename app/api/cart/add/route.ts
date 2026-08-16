@@ -135,6 +135,12 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // PROPS-DISABLED 2026-08-17: props feature switched off — prop items can
+        // no longer be added to a cart. Remove this block to restore.
+        if (itemType === "prop") {
+            return NextResponse.json({ error: "Props are not available" }, { status: 410 });
+        }
+
         if (itemType !== "subscription" && itemType !== "prop") {
             return NextResponse.json(
                 { error: "Invalid item type" },

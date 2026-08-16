@@ -9,7 +9,8 @@ const base = process.env.NEXTAUTH_URL || "https://fivecrux.com";
 const STATIC_ROUTES: MetadataRoute.Sitemap = [
   { url: `${base}/`, lastModified: new Date() },
   { url: `${base}/scripts`, lastModified: new Date() },
-  { url: `${base}/props`, lastModified: new Date() },
+  // PROPS-DISABLED 2026-08-17: props feature switched off. Restore by uncommenting.
+  // { url: `${base}/props`, lastModified: new Date() },
   { url: `${base}/giveaways`, lastModified: new Date() },
   // ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
   // ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
@@ -35,10 +36,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: toDate(s.updatedAt ?? s.createdAt),
     }));
 
-    const propUrls: MetadataRoute.Sitemap = (props || []).map((p: any) => ({
-      url: `${base}/prop/${p.id}`,
-      lastModified: toDate(p.updatedAt ?? p.createdAt),
-    }));
+    // PROPS-DISABLED 2026-08-17: prop detail pages are no longer routable, so
+    // they must not be advertised in the sitemap. Restore by returning the map.
+    const propUrls: MetadataRoute.Sitemap = [];
+    void props;
 
     const giveawayUrls: MetadataRoute.Sitemap = (giveaways || []).map((g: any) => ({
       url: `${base}/giveaway/${g.id}`,

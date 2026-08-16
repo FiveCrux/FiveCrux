@@ -42,6 +42,10 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // PROPS-DISABLED 2026-08-17: props feature switched off.
+  // Remove this early return to restore the original handler below.
+  return NextResponse.json({ error: "Props are not available" }, { status: 410 });
+  /* PROPS-DISABLED 2026-08-17: original handler preserved below.
   try {
     const { id } = await params;
     // Props live in Tebex's "PROPS" category (FiveCrux is the only lister).
@@ -75,12 +79,17 @@ export async function GET(
     console.error("Error fetching prop:", error);
     return NextResponse.json({ error: "Failed to fetch prop" }, { status: 500 });
   }
+  */
 }
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // PROPS-DISABLED 2026-08-17: props feature switched off.
+  // Remove this early return to restore the original handler below.
+  return NextResponse.json({ error: "Props are not available" }, { status: 410 });
+  /* PROPS-DISABLED 2026-08-17: original handler preserved below.
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -155,12 +164,17 @@ export async function PATCH(
     console.error("Error updating prop:", error);
     return NextResponse.json({ error: "Failed to update prop" }, { status: 500 });
   }
+  */
 }
 
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // PROPS-DISABLED 2026-08-17: props feature switched off.
+  // Remove this early return to restore the original handler below.
+  return NextResponse.json({ error: "Props are not available" }, { status: 410 });
+  /* PROPS-DISABLED 2026-08-17: original handler preserved below.
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -196,4 +210,5 @@ export async function DELETE(
     console.error("Error deleting prop:", error);
     return NextResponse.json({ error: "Failed to delete prop" }, { status: 500 });
   }
+  */
 }

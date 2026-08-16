@@ -10,7 +10,8 @@ type FooterLink = { name: string; href: string; external?: boolean }
 
 const MARKETPLACE: FooterLink[] = [
   { name: "Assets", href: "/scripts" },
-  { name: "Props", href: "/props" },
+  // PROPS-DISABLED 2026-08-17: props feature switched off. Restore by uncommenting.
+  // { name: "Props", href: "/props" },
   { name: "Giveaways", href: "/giveaways" },
   // ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
   // ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md

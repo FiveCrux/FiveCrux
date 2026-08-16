@@ -685,7 +685,8 @@ export default function AdminPage() {
     { value: "users", label: "Users", icon: Users, gated: true },
     { value: "scripts", label: "Assets", icon: FileCode2 },
     { value: "giveaways", label: "Giveaways", icon: Gift },
-    { value: "props", label: "Props", icon: Box },
+    // PROPS-DISABLED 2026-08-17: props feature switched off. Restore by uncommenting.
+    // { value: "props", label: "Props", icon: Box },
     // ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
     // ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
     // { value: "ads", label: "Ads", icon: Megaphone, gated: true },
