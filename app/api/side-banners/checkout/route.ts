@@ -1,17 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-
-import { authOptions } from "@/auth";
-import { createBasket, getBasketAuthUrl, FIVECRUX_TEBEX_PUBLIC_TOKEN } from "@/lib/tebex";
-import { resolveTebexPackageId, getLivePriceByKey } from "@/lib/tebex-pricing";
-import {
-  reserveSideBanner,
-  releaseSideBannerReservation,
-  ensureUserExists,
-  SIDE_BANNER_POSITIONS,
-  type SideBannerPosition,
-} from "@/lib/database-new";
-import { finalizeSideBannerBasket, buildSideBannerCustom } from "@/lib/side-banner-checkout";
+// ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
+// ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
+// import { getServerSession } from "next-auth";
+//
+// import { authOptions } from "@/auth";
+// import { createBasket, getBasketAuthUrl, FIVECRUX_TEBEX_PUBLIC_TOKEN } from "@/lib/tebex";
+// import { resolveTebexPackageId, getLivePriceByKey } from "@/lib/tebex-pricing";
+// import {
+//   reserveSideBanner,
+//   releaseSideBannerReservation,
+//   ensureUserExists,
+//   SIDE_BANNER_POSITIONS,
+//   type SideBannerPosition,
+// } from "@/lib/database-new";
+// import { finalizeSideBannerBasket, buildSideBannerCustom } from "@/lib/side-banner-checkout";
 
 /**
  * POST /api/side-banners/checkout
@@ -23,6 +25,11 @@ import { finalizeSideBannerBasket, buildSideBannerCustom } from "@/lib/side-bann
  * the webhook activates the reserved booking.
  */
 export async function POST(request: NextRequest) {
+  // ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
+  // ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
+  return NextResponse.json({ error: "Advertising is not available" }, { status: 410 });
+
+  /* ADS-DISABLED 2026-08-16: original implementation kept below for restore.
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -127,4 +134,5 @@ export async function POST(request: NextRequest) {
     console.error("Side-banner checkout error:", error);
     return NextResponse.json({ error: "Checkout failed" }, { status: 500 });
   }
+  */
 }

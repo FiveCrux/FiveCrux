@@ -19,8 +19,7 @@ export async function POST(
     const success = await incrementFeaturedScriptViewCount(featuredScriptId)
     
     if (!success) {
-      console.error(`[POST /api/featured-scripts/${id}/view] Failed to increment view count`)
-      return NextResponse.json({ error: "Failed to track view" }, { status: 500 })
+      return NextResponse.json({ error: "Featured script not found" }, { status: 404 })
     }
 
     console.log(`[POST /api/featured-scripts/${id}/view] Successfully tracked view`)

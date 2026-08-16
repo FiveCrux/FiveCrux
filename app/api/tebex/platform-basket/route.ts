@@ -49,6 +49,14 @@ export async function POST(request: NextRequest) {
     const body = await request.json().catch(() => ({}));
     const { packageType, packageId, duration, returnUrl, completeUrl } = body ?? {};
 
+    // ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
+    // ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
+    // Only the ad/featured-script package types are refused here — every other
+    // use of this route (seller product purchases) must keep working.
+    if (["ads", "featured-scripts"].includes(String(packageType))) {
+      return NextResponse.json({ error: "Advertising is not available" }, { status: 410 });
+    }
+
     if (!packageType || !packageId || duration === undefined || duration === null) {
       return NextResponse.json(
         { error: "Missing packageType, packageId, or duration" },

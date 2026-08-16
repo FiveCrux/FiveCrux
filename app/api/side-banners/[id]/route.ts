@@ -1,14 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-
-import { authOptions } from "@/auth";
-import { updateSideBannerCreative } from "@/lib/database-new";
+// ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
+// ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
+// import { getServerSession } from "next-auth";
+//
+// import { authOptions } from "@/auth";
+// import { updateSideBannerCreative } from "@/lib/database-new";
 
 // PATCH /api/side-banners/:id — owner sets/edits the banner creative (image,
 // link, title) on a slot they bought. Mirrors managing an ad after buying its slot.
 export const dynamic = "force-dynamic";
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  // ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
+  // ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
+  return NextResponse.json({ error: "Advertising is not available" }, { status: 410 });
+
+  /* ADS-DISABLED 2026-08-16: original implementation kept below for restore.
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -32,4 +39,5 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     console.error("PATCH /api/side-banners/[id] error:", e);
     return NextResponse.json({ error: "Update failed" }, { status: 500 });
   }
+  */
 }

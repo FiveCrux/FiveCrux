@@ -12,7 +12,9 @@ const MARKETPLACE: FooterLink[] = [
   { name: "Assets", href: "/scripts" },
   { name: "Props", href: "/props" },
   { name: "Giveaways", href: "/giveaways" },
-  { name: "Advertise", href: "/advertise" },
+  // ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
+  // ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
+  // { name: "Advertise", href: "/advertise" },
 ]
 
 const SUPPORT: FooterLink[] = [

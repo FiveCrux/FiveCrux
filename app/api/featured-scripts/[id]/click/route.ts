@@ -19,8 +19,7 @@ export async function POST(
     const success = await incrementFeaturedScriptClickCount(featuredScriptId)
     
     if (!success) {
-      console.error(`[POST /api/featured-scripts/${id}/click] Failed to increment click count`)
-      return NextResponse.json({ error: "Failed to track click" }, { status: 500 })
+      return NextResponse.json({ error: "Featured script not found" }, { status: 404 })
     }
 
     console.log(`[POST /api/featured-scripts/${id}/click] Successfully tracked click`)

@@ -4,18 +4,33 @@ import { authOptions } from '@/auth'
 import { getApprovedAds, getPendingAds, getRejectedAds, approveAd, rejectAd, getAdById, getUserById } from '@/lib/database-new'
 import { announceAdApproval, announceAdRejection } from '@/lib/discord'
 
+// ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
+// ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
+export async function GET(request: NextRequest) {
+  return NextResponse.json({ error: 'Advertising is not available' }, { status: 410 })
+}
+
+// ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
+// ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
+export async function PATCH(request: NextRequest) {
+  return NextResponse.json({ error: 'Advertising is not available' }, { status: 410 })
+}
+
+/* ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
+   ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
+
 export async function GET(request: NextRequest) {
   try {
     console.log("Admin advertisements API called")
     const session = await getServerSession(authOptions)
     console.log("Session:", session ? "exists" : "none")
-    
+
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     // Check if user has admin role
     const userRoles = (session.user as any).roles || []
     console.log("User roles:", userRoles)
-    
+
     if (!userRoles.includes('admin') && !userRoles.includes('founder')) {
       console.log("User is not admin or founder")
       return NextResponse.json({ error: 'Forbidden: Admin access required' }, { status: 403 })
@@ -62,7 +77,7 @@ export async function GET(request: NextRequest) {
       getRejectedAds(limit ? limit + offset + 1 : undefined)
     ])
     console.log("All ads - Pending:", pendingData.length, "Approved:", approvedData.length, "Rejected:", rejectedData.length)
-    
+
     // Add status field to each ad based on its source
     const allData = [
       ...pendingData.map(ad => ({ ...ad, status: 'pending' })),
@@ -110,7 +125,7 @@ export async function PATCH(request: NextRequest) {
 
     if (action === 'approve') {
       await approveAd(adId, adminId, adminNotes)
-      
+
       // Send Discord notification for ad approval
       try {
         const ad = await getAdById(adId)
@@ -142,16 +157,16 @@ export async function PATCH(request: NextRequest) {
         console.error('Failed to send Discord notification for ad approval:', discordError)
         // Don't fail the approval if Discord notification fails
       }
-      
+
       return NextResponse.json({ success: true })
     }
 
     if (!rejectionReason) {
       return NextResponse.json({ error: 'rejectionReason is required for reject' }, { status: 400 })
     }
-    
+
     await rejectAd(adId, adminId, rejectionReason, adminNotes)
-    
+
     // Send Discord notification for ad rejection
     try {
       const ad = await getAdById(adId)
@@ -183,10 +198,12 @@ export async function PATCH(request: NextRequest) {
       console.error('Failed to send Discord notification for ad rejection:', discordError)
       // Don't fail the rejection if Discord notification fails
     }
-    
+
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Error updating advertisement status:', error)
     return NextResponse.json({ error: 'Failed to update advertisement' }, { status: 500 })
   }
 }
+
+*/

@@ -1,10 +1,18 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/auth"
-import { getAds, hasRole, hasAnyRole, createPendingAd, getCategories } from "@/lib/database-new"
-import { announceAdPending } from "@/lib/discord"
+import { getAds } from "@/lib/database-new"
+// ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
+// ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
+// import { getServerSession } from "next-auth"
+// import { authOptions } from "@/auth"
+// import { hasRole, hasAnyRole, getCategories, createPendingAd } from "@/lib/database-new"
+// import { announceAdPending } from "@/lib/discord"
 
 export async function POST(request: NextRequest) {
+  // ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
+  // ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
+  return NextResponse.json({ error: "Advertising is not available" }, { status: 410 })
+
+  /* ADS-DISABLED 2026-08-16: original implementation kept below for restore.
   try {
     const body = await request.json()
     const session = await getServerSession(authOptions)
@@ -78,8 +86,8 @@ export async function POST(request: NextRequest) {
       // Don't fail the submission if Discord notification fails
     }
 
-    const message = isFounderOrAdmin 
-      ? "Ad created and approved successfully!" 
+    const message = isFounderOrAdmin
+      ? "Ad created and approved successfully!"
       : "Ad submitted successfully! It will be reviewed by an admin before going live."
 
     return NextResponse.json(
@@ -95,6 +103,7 @@ export async function POST(request: NextRequest) {
     console.error("Error creating ad:", error)
     return NextResponse.json({ error: "Failed to create ad" }, { status: 500 })
   }
+  */
 }
 
 export async function GET(request: NextRequest) {

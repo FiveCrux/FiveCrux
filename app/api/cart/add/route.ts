@@ -18,7 +18,9 @@ import {
     sql,
 } from "drizzle-orm";
 
-import { resolvePackage, resolvePackageMeta, parsePackageItemId } from "@/lib/ad-pricing";
+// ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
+// ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
+// import { resolvePackage, resolvePackageMeta, parsePackageItemId } from "@/lib/ad-pricing";
 import { getLivePriceByPackageId } from "@/lib/tebex-pricing";
 import { getTebexProp } from "@/lib/tebex-props";
 
@@ -59,6 +61,14 @@ async function getCustomPackageItem(
         return null;
     }
 
+    // ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
+    // ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
+    // Only ad/featured-script package items are refused here — `itemType` of
+    // "prop" and non-package "subscription" items must keep working (they never
+    // reach this branch, since it already required packageType/couponScope above).
+    return { error: "Advertising is not available", status: 410 } as const;
+
+    /* ADS-DISABLED 2026-08-16: original implementation kept below for restore.
     const parsed = parsePackageItemId(itemId);
     if (!parsed) return { error: "Invalid package" } as const;
     // Validate the package STRUCTURE first (sync), so we can tell "invalid" apart
@@ -90,6 +100,7 @@ async function getCustomPackageItem(
         price: pkg.price,
         metadata: safeMetadata,
     };
+    */
 }
 
 export async function POST(request: NextRequest) {
@@ -161,7 +172,7 @@ export async function POST(request: NextRequest) {
         if (customPackageItem && "error" in customPackageItem) {
             return NextResponse.json(
                 { error: customPackageItem.error },
-                { status: 400 }
+                { status: "status" in customPackageItem ? customPackageItem.status : 400 }
             );
         }
 

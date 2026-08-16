@@ -11,7 +11,9 @@ const STATIC_ROUTES: MetadataRoute.Sitemap = [
   { url: `${base}/scripts`, lastModified: new Date() },
   { url: `${base}/props`, lastModified: new Date() },
   { url: `${base}/giveaways`, lastModified: new Date() },
-  { url: `${base}/advertise`, lastModified: new Date() },
+  // ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
+  // ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
+  // { url: `${base}/advertise`, lastModified: new Date() },
 ];
 
 function toDate(value: unknown): Date {

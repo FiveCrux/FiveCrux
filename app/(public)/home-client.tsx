@@ -137,10 +137,14 @@ function HeroSpotlight({ items, promo }: {
   promo: HomeContent["heroPromo"]
 }) {
   const [idx, setIdx] = useState(0)
-  // Always append a "get featured here" promo slide — turns the hero into an
-  // advertising CTA showing which plan unlocks this premium placement.
-  const PROMO = { __promo: true } as any
-  const slides: any[] = items.length ? [...items, PROMO] : [PROMO]
+  // ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
+  // ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
+  // Previously always appended a "get featured here" promo slide. Now the hero
+  // only shows real featured items and renders nothing (no gap) when there are
+  // none — same pattern the Row component already uses for empty carousels.
+  // const PROMO = { __promo: true } as any
+  // const slides: any[] = items.length ? [...items, PROMO] : [PROMO]
+  const slides: any[] = items
   const active = slides[idx % slides.length]
   const isPromo = !!active?.__promo
 
@@ -156,14 +160,17 @@ function HeroSpotlight({ items, promo }: {
   return (
     <section className="mt-4 px-2.5">
       <div className="relative mx-auto w-full overflow-hidden rounded-2xl border border-white/[0.08]" style={{ minHeight: "70vh" }}>
-        {/* Background — promo slide gets a branded glow; products show their cover */}
+        {/* Background — product covers show behind the spotlight content */}
+        {/* ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
+        ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
         {isPromo ? (
           <>
             <div className="absolute inset-0 bg-gradient-to-br from-[#1b1020] via-[#0a0a0a] to-[#2a1606]" />
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_78%_30%,rgba(249,115,22,0.38),transparent_55%)]" />
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_85%,rgba(168,85,247,0.20),transparent_50%)]" />
           </>
-        ) : active.coverImage ? (
+        ) : active.coverImage ? ( */}
+        {active.coverImage ? (
           <Image src={active.coverImage} alt={active.title} fill priority className="object-cover" sizes="100vw" />
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-fuchsia-700 via-purple-700 to-orange-600" />
@@ -172,6 +179,8 @@ function HeroSpotlight({ items, promo }: {
 
         {/* Content */}
         <div className="relative z-10 flex flex-col justify-end px-5 pb-12 pt-8 sm:px-10" style={{ minHeight: "70vh" }}>
+          {/* ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
+          ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
           {isPromo ? (
             <>
               <span className="mb-4 inline-flex items-center gap-1.5 self-start rounded-full border border-orange-400/40 bg-orange-500/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.15em] text-orange-300 backdrop-blur-sm">
@@ -184,7 +193,7 @@ function HeroSpotlight({ items, promo }: {
               <p className="mb-5 max-w-xl text-sm leading-relaxed text-white/75 sm:text-base">
                 {promo.subtext}
               </p>
-              {/* Tier pills */}
+              {/* Tier pills * /}
               <div className="mb-6 flex flex-wrap items-center gap-2">
                 {promo.tiers.map((t) => (
                   <span key={t} className="rounded-full border border-orange-500/30 bg-orange-500/10 px-3 py-1 text-xs font-semibold text-orange-200">
@@ -203,8 +212,8 @@ function HeroSpotlight({ items, promo }: {
                 </Link>
               </div>
             </>
-          ) : (
-            <>
+          ) : ( */}
+          <>
               <span className="mb-3 inline-flex items-center gap-1.5 self-start rounded-full bg-orange-500 px-2.5 py-1 text-[11px] font-bold text-black">
                 <Star className="h-3 w-3" /> FEATURED SPOTLIGHT
               </span>
@@ -240,8 +249,7 @@ function HeroSpotlight({ items, promo }: {
                   </>
                 )}
               </div>
-            </>
-          )}
+          </>
         </div>
 
         {slides.length > 1 && (

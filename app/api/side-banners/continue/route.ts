@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-
-import { authOptions } from "@/auth";
-import { FIVECRUX_TEBEX_PUBLIC_TOKEN } from "@/lib/tebex";
-import { resolveTebexPackageId, getLivePriceByKey } from "@/lib/tebex-pricing";
-import { getSideBannerBooking, releaseSideBannerReservation } from "@/lib/database-new";
-import { finalizeSideBannerBasket } from "@/lib/side-banner-checkout";
+// ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
+// ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
+// import { getServerSession } from "next-auth";
+//
+// import { authOptions } from "@/auth";
+// import { FIVECRUX_TEBEX_PUBLIC_TOKEN } from "@/lib/tebex";
+// import { resolveTebexPackageId, getLivePriceByKey } from "@/lib/tebex-pricing";
+// import { getSideBannerBooking, releaseSideBannerReservation } from "@/lib/database-new";
+// import { finalizeSideBannerBasket } from "@/lib/side-banner-checkout";
 
 /**
  * GET /api/side-banners/continue?ident=...&booking=...&weeks=...
@@ -15,6 +17,11 @@ import { finalizeSideBannerBasket } from "@/lib/side-banner-checkout";
  * tebex_orders row, and redirect to the hosted checkout (payment).
  */
 export async function GET(request: NextRequest) {
+  // ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
+  // ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
+  return NextResponse.json({ error: "Advertising is not available" }, { status: 410 });
+
+  /* ADS-DISABLED 2026-08-16: original implementation kept below for restore.
   const siteUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
   const fail = (reason: string) =>
     NextResponse.redirect(`${siteUrl}/advertise?sidebanner=error&reason=${encodeURIComponent(reason)}`);
@@ -60,4 +67,5 @@ export async function GET(request: NextRequest) {
     console.error("Side-banner continue (post-auth) error:", error);
     return fail("checkout-failed");
   }
+  */
 }

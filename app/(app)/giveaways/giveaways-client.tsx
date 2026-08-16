@@ -13,7 +13,9 @@ import Navbar from "@/componentss/shared/navbar";
 import BrowseNav from "@/componentss/shared/browse-nav";
 import Footer from "@/componentss/shared/footer";
 import Link from "next/link";
-import AdCard, { useRandomAds } from "@/componentss/ads/ad-card";
+// ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
+// ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
+// import AdCard, { useRandomAds } from "@/componentss/ads/ad-card";
 import { toast } from "sonner";
 import SideAdsFrame from "@/componentss/ads/side-banners";
 
@@ -92,7 +94,9 @@ export function GiveawaysClient({
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("ending-soon");
   const [filterBy, setFilterBy] = useState("all");
-  const [ads, setAds] = useState<any[]>(Array.isArray(initialAds) ? initialAds : []);
+  // ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
+  // ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
+  // const [ads, setAds] = useState<any[]>(Array.isArray(initialAds) ? initialAds : []);
   const [activeTab, setActiveTab] = useState<"active" | "ended">("active");
 
   type UIGiveaway = {
@@ -129,8 +133,11 @@ export function GiveawaysClient({
     !(Array.isArray(initialGiveaways) && initialGiveaways.length > 0)
   );
 
+  // ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
+  // ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
   // Get random ads for giveaways page
-  const randomAds = useRandomAds(ads, 2);
+  // const randomAds = useRandomAds(ads, 2);
+  const randomAds: any[] = [];
 
   useEffect(() => {
     // Server already seeded giveaways + ads → skip those refetches. ALWAYS fetch
@@ -144,9 +151,11 @@ export function GiveawaysClient({
         if (!hasSeed) setLoading(true);
         // Always refetch live — the SSR seed can be a stale (ISR-cached)
         // snapshot, so skipping the refetch left edits/new giveaways not showing.
-        const [giveawaysRes, adsRes, entriesRes] = await Promise.all([
+        // ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
+        // ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
+        const [giveawaysRes, entriesRes] = await Promise.all([
           fetch(`/api/giveaways`, { cache: "no-store", signal: c.signal }),
-          fetch(`/api/promotions/giveaways`, { cache: "no-store", signal: c.signal }),
+          // fetch(`/api/promotions/giveaways`, { cache: "no-store", signal: c.signal }),
           fetch(`/api/users/giveaway-entries`, { cache: "no-store", signal: c.signal }),
         ]);
         clearTimeout(t);
@@ -162,10 +171,12 @@ export function GiveawaysClient({
           console.error("Failed to fetch giveaways:", giveawaysRes.status);
         }
 
-        if (adsRes && adsRes.ok) {
-          const adsData = await adsRes.json();
-          setAds(adsData.ads || []);
-        }
+        // ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
+        // ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
+        // if (adsRes && adsRes.ok) {
+        //   const adsData = await adsRes.json();
+        //   setAds(adsData.ads || []);
+        // }
 
         // Fetch user's entered giveaways (if logged in)
         if (entriesRes.ok) {
@@ -609,19 +620,21 @@ export function GiveawaysClient({
               </div>
             ) : (
               gridList.map((item: GridItem, index) => {
-                if ("isAd" in item && item.isAd) {
-                  return (
-                    <motion.div
-                      key={`ad-${item.id}`}
-                      initial={{ opacity: 0, y: 24 }}
-                      animate={giveawaysInView ? { opacity: 1, y: 0 } : {}}
-                      transition={{ duration: 0.5, delay: index * 0.06 }}
-                      whileHover={{ y: -4 }}
-                    >
-                      <AdCard ad={item as any} variant="giveaway" />
-                    </motion.div>
-                  );
-                }
+                // ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
+                // ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
+                // if ("isAd" in item && item.isAd) {
+                //   return (
+                //     <motion.div
+                //       key={`ad-${item.id}`}
+                //       initial={{ opacity: 0, y: 24 }}
+                //       animate={giveawaysInView ? { opacity: 1, y: 0 } : {}}
+                //       transition={{ duration: 0.5, delay: index * 0.06 }}
+                //       whileHover={{ y: -4 }}
+                //     >
+                //       <AdCard ad={item as any} variant="giveaway" />
+                //     </motion.div>
+                //   );
+                // }
                 return (
                   <GiveawayCard
                     key={item.id}

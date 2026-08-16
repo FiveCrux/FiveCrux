@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/auth';
-import { getUserFeaturedScripts, createFeaturedScript, deleteFeaturedScript, getFeaturedScriptById, getFeaturedScriptSlotByUniqueId, isFeaturedSlotUniqueIdInUse } from '@/lib/database-new';
+import { getUserFeaturedScripts } from '@/lib/database-new';
+// ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
+// ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
+// import { createFeaturedScript, deleteFeaturedScript, getFeaturedScriptById, getFeaturedScriptSlotByUniqueId, isFeaturedSlotUniqueIdInUse } from '@/lib/database-new';
 
 export async function GET(request: NextRequest) {
   try {
@@ -35,6 +38,11 @@ export async function GET(request: NextRequest) {
 // are enforced server-side; the paid window (dates) comes from the slot itself,
 // never the client.
 export async function POST(request: NextRequest) {
+  // ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
+  // ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
+  return NextResponse.json({ error: "Advertising is not available" }, { status: 410 });
+
+  /* ADS-DISABLED 2026-08-16: original implementation kept below for restore.
   try {
     const session = await getServerSession(authOptions);
 
@@ -85,6 +93,7 @@ export async function POST(request: NextRequest) {
     console.error('Error creating user featured script:', error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
+  */
 }
 
 // PATCH removed (SECURITY): let any owner of a featured_scripts row freely set
@@ -94,32 +103,38 @@ export async function POST(request: NextRequest) {
 
 // Allow users to delete their featured scripts
 export async function DELETE(request: NextRequest) {
+  // ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
+  // ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
+  return NextResponse.json({ error: "Advertising is not available" }, { status: 410 });
+
+  /* ADS-DISABLED 2026-08-16: original implementation kept below for restore.
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { searchParams } = new URL(request.url);
     const featuredScriptId = searchParams.get('id');
-    
+
     if (!featuredScriptId) {
       return NextResponse.json({ error: 'featuredScriptId is required' }, { status: 400 });
     }
 
     const featuredScript = await getFeaturedScriptById(Number(featuredScriptId));
-    
+
     if (!featuredScript || featuredScript.featuredCreatedBy !== (session.user as any).id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
-    
+
     const ok = await deleteFeaturedScript(Number(featuredScriptId));
-    
+
     return NextResponse.json({ success: ok });
   } catch (error) {
     console.error('Error deleting user featured script:', error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
+  */
 }
 
