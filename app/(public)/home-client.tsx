@@ -132,9 +132,12 @@ function Row({ title, icon, emoji, items, seeAllHref }: {
 }
 
 // ── Rotating featured spotlight hero ──
-function HeroSpotlight({ items, promo }: {
+function HeroSpotlight({ items, promo, isFeaturedSource = true }: {
   items: MarketProduct[]
   promo: HomeContent["heroPromo"]
+  // False when the hero is falling back to popular listings because no paid
+  // featured slots exist — the badge must not claim "featured" for those.
+  isFeaturedSource?: boolean
 }) {
   const [idx, setIdx] = useState(0)
   // ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
@@ -215,7 +218,7 @@ function HeroSpotlight({ items, promo }: {
           ) : ( */}
           <>
               <span className="mb-3 inline-flex items-center gap-1.5 self-start rounded-full bg-orange-500 px-2.5 py-1 text-[11px] font-bold text-black">
-                <Star className="h-3 w-3" /> FEATURED SPOTLIGHT
+                <Star className="h-3 w-3" /> {isFeaturedSource ? "FEATURED SPOTLIGHT" : "POPULAR NOW"}
               </span>
               <h1 className="mb-3 max-w-3xl text-3xl font-black tracking-tight drop-shadow-lg sm:text-5xl">{active.title}</h1>
               <div className="mb-4 flex flex-wrap items-center gap-2">
@@ -360,8 +363,17 @@ export function HomeClient({
     // count (view_count), not just a copy of the newest-first list. This is an
     // all-time total (no per-week tracking exists yet), hence the label.
     const mostViewed = [...liveScripts].sort((a, b) => (b.viewCount ?? 0) - (a.viewCount ?? 0))
+    // ADS-DISABLED 2026-08-16: the hero used to be fed only by PAID featured
+    // slots, so disabling advertising emptied it and the page opened straight
+    // onto a card grid with no hero at all. The hero is a storefront showcase,
+    // not an ad unit — fall back to the most-viewed real listings so it always
+    // has something to show. Restoring ads re-populates `liveFeatured` and this
+    // fallback stops being reached on its own.
+    const heroIsFeatured = liveFeatured.length > 0
+    const heroSource = heroIsFeatured ? liveFeatured : mostViewed
     return {
-      heroItems: liveFeatured.slice(0, 5),
+      heroIsFeatured,
+      heroItems: heroSource.slice(0, 5),
       featured: liveFeatured.length > 5 ? liveFeatured.slice(5, 15) : [],
       trending: mostViewed.slice(0, 12),
       newReleases: liveScripts.slice(0, 12), // /api/scripts is ordered newest-first
@@ -397,7 +409,7 @@ export function HomeClient({
       <Navbar />
 
       <SideAdsFrame>
-      <HeroSpotlight items={rows.heroItems} promo={content.heroPromo} />
+      <HeroSpotlight items={rows.heroItems} promo={content.heroPromo} isFeaturedSource={rows.heroIsFeatured} />
 
       {/* Browse nav chips — shared with the props/browse pages (one canonical
           row site-wide). "Assets" is the active section on the home page. */}

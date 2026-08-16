@@ -46,10 +46,18 @@ import type { ReactNode } from "react"
 
 // ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
 // ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
-// SideAdsFrame no longer renders side rails or the "Advertise here" CTA — it
-// passes children through so none of the 10 pages that mount it need editing.
+//
+// The rails are gone, but this still has to be a real frame: the two ad columns
+// used to supply the page's entire side margin, so passing `children` straight
+// through left content welded to both screen edges (and cards clipping off the
+// right on wide viewports). Keep the padding and a max width so every page that
+// mounts this stays readable without any of the 10 call sites changing.
 export default function SideAdsFrame({ children }: { children: ReactNode }) {
-  return <>{children}</>
+  return (
+    <div className="mx-auto w-full max-w-[1600px] px-4 sm:px-6 lg:px-8">
+      {children}
+    </div>
+  )
 }
 
 // ADS-DISABLED 2026-08-16: original implementation kept below for restore.
