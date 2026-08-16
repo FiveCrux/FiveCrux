@@ -1,6 +1,6 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
+import { Chakra_Petch } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/providers/theme-provider"
 import SessionProvider from "@/providers/session-provider"
@@ -11,7 +11,14 @@ import { AutoCheckWrapper } from "@/components/auto-check-wrapper"
 import { Analytics } from "@vercel/analytics/next"
 import FirebaseAnalytics from "@/componentss/FirebaseAnalytics"
 import ImpersonationWidget from "@/componentss/dev/impersonation-widget"
-const inter = Inter({ subsets: ["latin"] })
+// Chakra Petch — squared terminals, reads as FiveM/server-panel rather than
+// generic SaaS. It ships no weight above 700, so the weights are listed
+// explicitly: asking for 800/900 anywhere would silently synthesise a fake bold.
+const chakraPetch = Chakra_Petch({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+})
 
 export const metadata: Metadata = {
   title: "FiveCrux - Premium FiveM Assets & Giveaways",
@@ -26,7 +33,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
+      <body className={chakraPetch.className}>
         <SessionProvider>
           <QueryProvider>
             <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>

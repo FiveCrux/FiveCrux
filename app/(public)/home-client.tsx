@@ -101,63 +101,92 @@ function mapScript(item: any): MarketProduct {
 // ── Top banner ──
 // Replaces the paid "Featured Spotlight" hero at the top of the page while
 // advertising is off. Deliberately holds NOTHING sellable: no placement, no
-// promoted listing, no framework rail competing for attention. It orients the
-// visitor and gets out of the way — when a seller buys a featured slot,
-// HeroSpotlight renders ABOVE this and the two coexist.
+// promoted listing. It orients the visitor and gets out of the way — when a
+// seller buys a featured slot, HeroSpotlight renders ABOVE this and the two
+// coexist.
+//
+// Left-aligned inside a panel rather than centered full-bleed: a centered
+// headline over an empty background is the shape the paid hero used, and
+// reusing it here would read as an ad placement sitting empty.
 function TopBanner({ scripts, query, setQuery, onSearch }: {
   scripts: MarketProduct[]
   query: string
   setQuery: (v: string) => void
   onSearch: () => void
 }) {
+  // Real counts only — this is pre-launch, so there are no review or user
+  // numbers to show and inventing them would be a lie on the first screen.
+  const creators = useMemo(
+    () => new Set(scripts.map((s) => s.seller).filter(Boolean)).size,
+    [scripts]
+  )
+  const freeCount = useMemo(() => scripts.filter((s) => s.free).length, [scripts])
+
   return (
-    <section className="border-b border-white/[0.08]">
-      <div className="mx-auto flex max-w-3xl flex-col items-center py-16 text-center sm:py-20">
-        <div className="mb-5 flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.16em] text-white/35">
-          <span className="h-1.5 w-1.5 rounded-full bg-green-500 shadow-[0_0_0_3px_rgba(34,197,94,0.16)]" />
-          {scripts.length} asset{scripts.length === 1 ? "" : "s"} live
-        </div>
+    <section className="pt-6">
+      <div className="relative overflow-hidden rounded-3xl border border-white/[0.08] bg-[#101010] px-8 py-14 sm:px-14 sm:py-20">
+        {/* One warm wash anchored behind the headline — gives the panel a light
+            source instead of reading as a flat grey box. */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -left-40 -top-40 h-[520px] w-[520px] rounded-full bg-orange-500/[0.13] blur-[120px]"
+        />
 
-        <h1 className="mb-4 text-4xl font-extrabold leading-[1.05] tracking-[-0.035em] sm:text-6xl">
-          Scripts that actually run
-          <br className="hidden sm:block" /> on your server.
-        </h1>
-        <p className="mb-9 max-w-[52ch] text-base leading-relaxed text-white/55">
-          Every asset lists the frameworks it supports before you pay. Browse the
-          marketplace, or search for exactly what your server is missing.
-        </p>
+        <div className="relative max-w-3xl">
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/[0.10] bg-white/[0.03] px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.14em] text-white/50">
+            <span className="h-1.5 w-1.5 rounded-full bg-green-500 shadow-[0_0_0_3px_rgba(34,197,94,0.16)]" />
+            {scripts.length} asset{scripts.length === 1 ? "" : "s"} live
+          </div>
 
-        <div className="flex w-full max-w-2xl items-center gap-3 rounded-2xl border border-white/[0.14] bg-[#161616] py-1.5 pl-4 pr-1.5 transition focus-within:border-orange-500/55 focus-within:shadow-[0_0_0_4px_rgba(249,115,22,0.11)]">
-          <Search className="h-[18px] w-[18px] shrink-0 text-white/40" />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && onSearch()}
-            placeholder="Search assets, creators, categories…"
-            aria-label="Search assets"
-            className="min-w-0 flex-1 bg-transparent py-2.5 text-[15px] font-medium text-white outline-none placeholder:text-white/35"
-          />
-          <button
-            onClick={onSearch}
-            className="h-11 shrink-0 rounded-xl bg-orange-500 px-6 text-sm font-bold text-black transition hover:bg-orange-400"
-          >
-            Search
-          </button>
-        </div>
+          <h1 className="mb-5 text-4xl font-extrabold leading-[1.12] tracking-[-0.04em] sm:text-[64px]">
+            Scripts that <span className="text-orange-500">actually run</span>
+            <br className="hidden sm:block" /> on your server.
+          </h1>
 
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-          <Link
-            href="/scripts"
-            className="rounded-xl border border-white/[0.14] px-5 py-2.5 text-sm font-semibold text-white/80 transition hover:border-white/25 hover:text-white"
-          >
-            Browse all assets
-          </Link>
-          <Link
-            href="/scripts?free=true"
-            className="rounded-xl border border-white/[0.14] px-5 py-2.5 text-sm font-semibold text-white/80 transition hover:border-white/25 hover:text-white"
-          >
-            Free assets
-          </Link>
+          <p className="mb-9 max-w-[48ch] text-[17px] leading-relaxed text-white/55">
+            Every asset lists the frameworks it supports before you pay — and
+            nothing goes live until it has been reviewed by hand.
+          </p>
+
+          <div className="flex max-w-xl items-center gap-3 rounded-2xl border border-white/[0.14] bg-[#161616] py-1.5 pl-4 pr-1.5 transition focus-within:border-orange-500/55 focus-within:shadow-[0_0_0_4px_rgba(249,115,22,0.11)]">
+            <Search className="h-[18px] w-[18px] shrink-0 text-white/40" />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && onSearch()}
+              placeholder="Search assets, creators, categories…"
+              aria-label="Search assets"
+              className="min-w-0 flex-1 bg-transparent py-2.5 text-[15px] font-medium text-white outline-none placeholder:text-white/35"
+            />
+            {/* Gradient + glow lifted from the reference CTA: linear
+                #ff7733 → #ff2b00 with a layered orange shadow, full pill.
+                Black label, not white — white on orange measures 2.8:1 and
+                fails WCAG AA; black clears it at 7:1. */}
+            <button
+              onClick={onSearch}
+              className="h-11 shrink-0 rounded-full bg-[linear-gradient(180deg,#ff7733_0%,#ff2b00_100%)] px-7 text-sm font-bold text-black shadow-[0_0.36px_0.65px_-1.25px_rgba(253,101,51,0.72),0_1.37px_2.47px_-2.5px_rgba(253,101,51,0.63),0_6px_10.8px_-3.75px_rgba(253,101,51,0.25)] transition hover:brightness-110"
+            >
+              Search
+            </button>
+          </div>
+
+          <div className="mt-7 flex flex-wrap items-center gap-x-6 gap-y-3 font-mono text-[12px] text-white/40">
+            <span>
+              <span className="text-white/70">{scripts.length}</span> asset{scripts.length === 1 ? "" : "s"}
+            </span>
+            <span className="hidden h-3 w-px bg-white/10 sm:block" />
+            <span>
+              <span className="text-white/70">{creators}</span> creator{creators === 1 ? "" : "s"}
+            </span>
+            {freeCount > 0 && (
+              <>
+                <span className="hidden h-3 w-px bg-white/10 sm:block" />
+                <Link href="/scripts?free=true" className="transition hover:text-white/70">
+                  <span className="text-white/70">{freeCount}</span> free to download
+                </Link>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </section>

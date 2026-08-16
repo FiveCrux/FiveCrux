@@ -74,6 +74,15 @@
     @apply text-foreground;
     background-color: #0a0a0a;
   }
+  /* Chakra Petch ships nothing above 700. The codebase uses font-extrabold
+     (800) and font-black (900) in ~78 places; left alone the browser
+     synthesises those by smearing the 700 outlines, which looks muddy at
+     display sizes. Cap both at the real 700 here rather than editing every
+     call site — one rule, and it stays correct if new ones are added. */
+  .font-extrabold,
+  .font-black {
+    font-weight: 700;
+  }
 }
 
 /* Scale the whole UI up on very large monitors (≥2560px — 1440p/4K/40-inch).
