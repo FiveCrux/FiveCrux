@@ -187,9 +187,11 @@ async function main() {
   check("GET /api/side-banners responds (not 404/500)", sideBannersGetRes.status !== 404 && sideBannersGetRes.status !== 500, `status=${sideBannersGetRes.status}`)
 
   const adViewRes = await jfetch(buyer, "/api/ads/6001/view", { method: "POST" })
-  check("POST /api/ads/[id]/view responds (not 404/500)", adViewRes.status !== 404 && adViewRes.status !== 500, `status=${adViewRes.status}`)
+  // AD-KEEP-2 is "must not 500". The ad seed rows are gone (FR-17a), so a probe
+  // id has no row and 404 is the correct answer — same as featured-scripts below.
+  check("POST /api/ads/[id]/view does not 500", adViewRes.status !== 500, `status=${adViewRes.status}`)
   const adClickRes = await jfetch(buyer, "/api/ads/6001/click", { method: "POST" })
-  check("POST /api/ads/[id]/click responds (not 404/500)", adClickRes.status !== 404 && adClickRes.status !== 500, `status=${adClickRes.status}`)
+  check("POST /api/ads/[id]/click does not 500", adClickRes.status !== 500, `status=${adClickRes.status}`)
   const sideBannerViewRes = await jfetch(buyer, "/api/side-banners/1/view", { method: "POST" })
   check("POST /api/side-banners/[id]/view responds (not 404/500)", sideBannerViewRes.status !== 404 && sideBannerViewRes.status !== 500, `status=${sideBannerViewRes.status}`)
   const sideBannerClickRes = await jfetch(buyer, "/api/side-banners/1/click", { method: "POST" })
