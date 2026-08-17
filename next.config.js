@@ -1,6 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
+    // Vercel's optimizer returns 402 (OPTIMIZED_IMAGE_REQUEST_PAYMENT_REQUIRED)
+    // once the plan's source-image quota is spent, which is why covers stopped
+    // rendering. Route every next/image through our own /api/img instead —
+    // same resize + WebP, our compute, no quota. `unoptimized` was rejected:
+    // the live catalogue averages 1.28 MB a cover (26 files over 3 MB), so a
+    // full grid would ship ~15 MB of originals.
+    loader: 'custom',
+    loaderFile: './lib/image-loader.ts',
     domains: ['localhost',
       'crux-marketplace-s3.s3.ap-south-1.amazonaws.com',
       'images.unsplash.com',
