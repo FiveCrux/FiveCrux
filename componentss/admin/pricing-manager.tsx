@@ -37,6 +37,9 @@ export default function PricingManager() {
   const [currency, setCurrency] = useState("EUR")
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  // One group at a time — stacking all three made a long scroll where a change
+  // at the bottom was far from the save bar.
+  const [active, setActive] = useState<(typeof GROUPS)[number]["type"]>("ads")
 
   const load = useCallback(async () => {
     try {
@@ -111,7 +114,41 @@ export default function PricingManager() {
         </p>
       </div>
 
-      {GROUPS.map(({ type, title, icon: Icon, unit }) => {
+      {/* Group pills */}
+      <div className="flex flex-wrap gap-2">
+        {GROUPS.map(({ type, title, icon: Icon }) => {
+          const count = items.filter((i) => i.packageType === type).length
+          const dirty = changed.filter(([k]) => k.startsWith(`${type}:`)).length
+          const on = active === type
+          return (
+            <button
+              key={type}
+              onClick={() => setActive(type)}
+              className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                on
+                  ? "border-orange-500 bg-orange-500 text-black"
+                  : "border-white/[0.12] bg-[#121212] text-white/70 hover:text-white"
+              }`}
+            >
+              <Icon className="h-4 w-4" />
+              {title}
+              <span className={`font-mono text-[11px] ${on ? "text-black/60" : "text-white/35"}`}>
+                {count}
+              </span>
+              {/* An unsaved change in a group you are not looking at is easy to
+                  lose track of, so it is flagged on the pill. */}
+              {dirty > 0 && (
+                <span
+                  className={`h-1.5 w-1.5 rounded-full ${on ? "bg-black/70" : "bg-orange-400"}`}
+                  title={`${dirty} unsaved`}
+                />
+              )}
+            </button>
+          )
+        })}
+      </div>
+
+      {GROUPS.filter((g) => g.type === active).map(({ type, title, icon: Icon, unit }) => {
         const rows = items
           .filter((i) => i.packageType === type)
           .sort(

@@ -56,9 +56,30 @@ export default function PayPalCheckoutButton({
         intent: "capture",
       }}
     >
-      <div className={disabled || status === "paying" ? "pointer-events-none opacity-60" : ""}>
+      {/* PayPal renders its buttons inside its own iframe, which paints a white
+          background this dark page cannot override. Rather than fight it, give
+          it a light card of its own with padding and matching corners, so it
+          reads as a deliberate payment panel instead of a raw white rectangle
+          dropped onto the page. */}
+      <div
+        className={`rounded-2xl bg-white/[0.97] p-3 shadow-[0_10px_30px_-12px_rgba(0,0,0,0.8)] ${
+          disabled || status === "paying" ? "pointer-events-none opacity-60" : ""
+        }`}
+      >
         <PayPalButtons
-          style={{ layout: "vertical", shape: "pill", label: "pay", height: 48 }}
+          style={{
+            layout: "vertical",
+            shape: "rect",
+            // Matches the site's 12px controls; "pill" looked out of place next
+            // to the square cart rows.
+            borderRadius: 12,
+            label: "pay",
+            height: 48,
+            // Asks PayPal to drop the "Powered by PayPal" strip. It only honours
+            // this on the horizontal layout, so the strip still shows here — kept
+            // because it costs nothing if PayPal ever extends it to vertical.
+            tagline: false,
+          }}
           disabled={disabled || status === "paying"}
           // Re-render the buttons when the discount changes, otherwise PayPal
           // keeps the callbacks it captured on first mount and would create the
