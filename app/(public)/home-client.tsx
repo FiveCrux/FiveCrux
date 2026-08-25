@@ -488,12 +488,17 @@ export function HomeClient({
           ABOVE the banner when a seller buys one. */}
       <HeroSpotlight items={rows.heroItems} promo={content.heroPromo} />
 
+      {/* Brand/search banner — removed on request: HeroSpotlight above is the
+          only hero now. Kept commented rather than deleted, and note the
+          trade-off if it stays off: HeroSpotlight is fed ONLY by paid featured
+          slots, so with none sold the page opens straight onto the chip row
+          with no hero at all.
       <TopBanner
         scripts={liveScripts}
         query={query}
         setQuery={setQuery}
         onSearch={onSearch}
-      />
+      /> */}
 
       {/* Browse nav chips — shared with the props/browse pages (one canonical
           row site-wide). "Assets" is the active section on the home page. */}
