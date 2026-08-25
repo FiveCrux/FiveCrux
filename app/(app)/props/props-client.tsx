@@ -14,9 +14,7 @@ import { useRouter } from "next/navigation";
 import Navbar from "@/componentss/shared/navbar";
 import Footer from "@/componentss/shared/footer";
 import BrowseNav from "@/componentss/shared/browse-nav";
-// ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
-// ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
-// import AdCard, { useRandomAds } from "@/componentss/ads/ad-card";
+import AdCard, { useRandomAds } from "@/componentss/ads/ad-card";
 import {
   ProductCard,
   type MarketProduct,
@@ -115,9 +113,7 @@ export function PropsClient({
   const [allProps, setAllProps] = useState<UIProp[]>(
     () => (Array.isArray(initialProps) ? (initialProps.map(mapApiProp) as UIProp[]) : [])
   );
-  // ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
-  // ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
-  // const [ads, setAds] = useState<any[]>(Array.isArray(initialAds) ? initialAds : []);
+  const [ads, setAds] = useState<any[]>(Array.isArray(initialAds) ? initialAds : []);
   const [loading, setLoading] = useState(
     !(Array.isArray(initialProps) && initialProps.length > 0)
   );
@@ -142,21 +138,19 @@ export function PropsClient({
     const load = async () => {
       try {
         if (!hasSeed) setLoading(true);
-        // Per-request timeout + allSettled so one slow/hanging endpoint never
-        // blocks the whole catalog.
-        // ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
-        // ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
+        // Per-request timeout + allSettled so one slow/hanging endpoint
         // (e.g. ads when the DB is unreachable) never blocks the whole catalog.
         const fetchT = (url: string) => {
           const c = new AbortController();
           const t = setTimeout(() => c.abort(), 15000);
           return fetch(url, { cache: "no-store", signal: c.signal }).finally(() => clearTimeout(t));
         };
-        const [propsR] = await Promise.allSettled([
+        const [propsR, adsR] = await Promise.allSettled([
           fetchT(`/api/props`),
-          // fetchT(`/api/ads/props`),
+          fetchT(`/api/ads/props`),
         ]);
         const propsRes = propsR.status === "fulfilled" ? propsR.value : null;
+        const adsRes = adsR.status === "fulfilled" ? adsR.value : null;
 
         if (propsRes && propsRes.ok) {
           const data = await propsRes.json();
@@ -170,12 +164,10 @@ export function PropsClient({
           }
         }
 
-        // ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
-        // ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
-        // if (adsRes && adsRes.ok) {
-        //   const adsData = await adsRes.json();
-        //   setAds(adsData.ads || []);
-        // }
+        if (adsRes && adsRes.ok) {
+          const adsData = await adsRes.json();
+          setAds(adsData.ads || []);
+        }
       } catch (error) {
         console.error("Error loading data:", error);
       } finally {
@@ -372,10 +364,7 @@ export function PropsClient({
   );
 
   // Get random ads for props page
-  // ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
-  // ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
-  // const randomAds = useRandomAds(ads, 2);
-  const randomAds: any[] = [];
+  const randomAds = useRandomAds(ads, 2);
 
   // Memoize ad positions based on current sorted props and ads
   // This ensures positions are stable when filters change (only recalculates when props or ads actually change)
@@ -791,19 +780,17 @@ export function PropsClient({
                     });
                   }
                   return items.map((item: GridItem) => {
-                    // ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
-                    // ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
                     // If it's an ad, render AdCard
-                    // if ("isAd" in item && item.isAd) {
-                    //   return (
-                    //     <div
-                    //       key={`ad-${item.id}`}
-                    //       className="w-full"
-                    //     >
-                    //       <AdCard ad={item as any} variant="script" />
-                    //     </div>
-                    //   );
-                    // }
+                    if ("isAd" in item && item.isAd) {
+                      return (
+                        <div
+                          key={`ad-${item.id}`}
+                          className="w-full"
+                        >
+                          <AdCard ad={item as any} variant="script" />
+                        </div>
+                      );
+                    }
 
                     // Otherwise render the shared ProductCard
                     const prop = item as UIProp;

@@ -10,10 +10,6 @@ import {
 } from "@/lib/database-new";
 
 export async function GET(request: NextRequest) {
-  // PROPS-DISABLED 2026-08-17: props feature switched off.
-  // Remove this early return to restore the original handler below.
-  return NextResponse.json({ error: "Props are not available" }, { status: 410 });
-  /* PROPS-DISABLED 2026-08-17: original handler preserved below.
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -85,14 +81,9 @@ export async function GET(request: NextRequest) {
     console.error("Error in admin props API:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
-  */
 }
 
 export async function PATCH(request: NextRequest) {
-  // PROPS-DISABLED 2026-08-17: props feature switched off.
-  // Remove this early return to restore the original handler below.
-  return NextResponse.json({ error: "Props are not available" }, { status: 410 });
-  /* PROPS-DISABLED 2026-08-17: original handler preserved below.
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -130,5 +121,4 @@ export async function PATCH(request: NextRequest) {
     console.error("Error in admin props PATCH API:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
-  */
 }

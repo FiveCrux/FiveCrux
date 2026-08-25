@@ -5,10 +5,11 @@ import {
   getPendingAds,
   getApprovedAds,
   getRejectedAds,
+  getSlotByUniqueId,
+  isAdSlotUniqueIdInUse,
+  hasRole,
+  hasAnyRole
 } from '@/lib/database-new';
-// ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
-// ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
-// import { getSlotByUniqueId, isAdSlotUniqueIdInUse, hasRole, hasAnyRole } from '@/lib/database-new';
 
 export async function GET(request: NextRequest) {
   try {
@@ -130,11 +131,6 @@ export async function GET(request: NextRequest) {
 // a client-supplied end_date (or piggyback another user's slot) for free.
 // Mirrors the same fix already applied to featured scripts.
 export async function POST(request: NextRequest) {
-  // ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
-  // ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
-  return NextResponse.json({ error: "Advertising is not available" }, { status: 410 });
-
-  /* ADS-DISABLED 2026-08-16: original implementation kept below for restore.
   try {
     const session = await getServerSession(authOptions);
 
@@ -172,7 +168,7 @@ export async function POST(request: NextRequest) {
       // when slot_unique_id is present — the client's end_date is ignored.
       createdBy: userId,
     } as any);
-
+    
     // Send Discord notification for ALL ad creations
     try {
       const { announceAdPending } = await import('@/lib/discord');
@@ -196,25 +192,19 @@ export async function POST(request: NextRequest) {
       console.error('Failed to send Discord notification for ad creation:', discordError)
       // Don't fail the submission if Discord notification fails
     }
-
+    
     return NextResponse.json({ success: true, adId });
   } catch (error) {
     console.error('Error creating user advertisement:', error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
-  */
 }
 
 // Allow users to update their ads
 export async function PATCH(request: NextRequest) {
-  // ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
-  // ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
-  return NextResponse.json({ error: "Advertising is not available" }, { status: 410 });
-
-  /* ADS-DISABLED 2026-08-16: original implementation kept below for restore.
   try {
     const session = await getServerSession(authOptions);
-
+    
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -223,14 +213,14 @@ export async function PATCH(request: NextRequest) {
     const { adId, ...updateData } = body;
     if (!adId) return NextResponse.json({ error: 'adId is required' }, { status: 400 });
 
-    const {
-      updateAd,
-      updatePendingAd,
-      updateApprovedAdForReapproval,
+    const { 
+      updateAd, 
+      updatePendingAd, 
+      updateApprovedAdForReapproval, 
       updateRejectedAdForReapproval,
-      getAdById
+      getAdById 
     } = await import('@/lib/database-new');
-
+    
     const ad = await getAdById(Number(adId));
     if (!ad || ad.createdBy !== (session.user as any).id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -239,7 +229,7 @@ export async function PATCH(request: NextRequest) {
     // Determine which flow to use based on current status
     let updatedAd;
     const needsReapproval = ad.status === "approved" || ad.status === "rejected";
-
+    
     if (ad.status === "approved") {
       // Approved -> move to pending with updates
       updatedAd = await updateApprovedAdForReapproval(Number(adId), updateData);
@@ -277,7 +267,7 @@ export async function PATCH(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({
+    return NextResponse.json({ 
       success: !!updatedAd,
       needsReapproval,
       message: needsReapproval
@@ -288,22 +278,16 @@ export async function PATCH(request: NextRequest) {
     console.error('Error updating user advertisement:', error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
-  */
 }
 
 // Allow users to delete their ads
 export async function DELETE(request: NextRequest) {
-  // ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
-  // ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
-  return NextResponse.json({ error: "Advertising is not available" }, { status: 410 });
-
-  /* ADS-DISABLED 2026-08-16: original implementation kept below for restore.
   try {
     console.log("DELETE /api/users/advertisements - Request received");
-
+    
     const session = await getServerSession(authOptions);
     console.log("DELETE /api/users/advertisements - Session:", session?.user?.id);
-
+    
     if (!session?.user) {
       console.log("DELETE /api/users/advertisements - No session, returning 401");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -312,7 +296,7 @@ export async function DELETE(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const adId = searchParams.get('id');
     console.log("DELETE /api/users/advertisements - Ad ID:", adId);
-
+    
     if (!adId) {
       console.log("DELETE /api/users/advertisements - No adId provided");
       return NextResponse.json({ error: 'adId is required' }, { status: 400 });
@@ -321,22 +305,21 @@ export async function DELETE(request: NextRequest) {
     const { getAdById, deleteAd } = await import('@/lib/database-new');
     const ad = await getAdById(Number(adId));
     console.log("DELETE /api/users/advertisements - Found ad:", ad?.id, "Created by:", ad?.createdBy);
-
+    
     if (!ad || ad.createdBy !== (session.user as any).id) {
       console.log("DELETE /api/users/advertisements - Ad not found or forbidden");
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
-
+    
     console.log("DELETE /api/users/advertisements - Attempting to delete ad:", adId);
     const ok = await deleteAd(Number(adId));
     console.log("DELETE /api/users/advertisements - Delete result:", ok);
-
+    
     return NextResponse.json({ success: ok });
   } catch (error) {
     console.error('Error deleting user advertisement:', error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
-  */
 }
 
 

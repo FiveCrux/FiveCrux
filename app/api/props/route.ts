@@ -12,10 +12,6 @@ import { listTebexProps } from "@/lib/tebex-props";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  // PROPS-DISABLED 2026-08-17: props feature switched off.
-  // Remove this early return to restore the original handler below.
-  return NextResponse.json({ error: "Props are not available" }, { status: 410 });
-  /* PROPS-DISABLED 2026-08-17: original handler preserved below.
   try {
     const props = await listTebexProps();
     return NextResponse.json(
@@ -30,14 +26,9 @@ export async function GET() {
     console.error("Error fetching props:", error);
     return NextResponse.json({ error: "Failed to fetch props" }, { status: 500 });
   }
-  */
 }
 
 export async function POST(request: NextRequest) {
-  // PROPS-DISABLED 2026-08-17: props feature switched off.
-  // Remove this early return to restore the original handler below.
-  return NextResponse.json({ error: "Props are not available" }, { status: 410 });
-  /* PROPS-DISABLED 2026-08-17: original handler preserved below.
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -107,5 +98,4 @@ export async function POST(request: NextRequest) {
     console.error("Error creating prop:", error);
     return NextResponse.json({ error: "Failed to create prop" }, { status: 500 });
   }
-  */
 }

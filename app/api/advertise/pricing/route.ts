@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
-// ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
-// ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
-// import { getLivePriceMapByKey, isTebexConfigured } from "@/lib/tebex-pricing";
+
+import { getLivePriceMapByKey, isTebexConfigured } from "@/lib/tebex-pricing";
 
 // Live platform pricing for the /advertise UI. Prices are the single source of
 // truth in FiveCrux's Tebex store (lib/tebex-pricing). The store token stays
@@ -15,11 +14,6 @@ import { NextResponse } from "next/server";
 export const revalidate = 60;
 
 export async function GET() {
-  // ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
-  // ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
-  return NextResponse.json({ error: "Advertising is not available" }, { status: 410 });
-
-  /* ADS-DISABLED 2026-08-16: original implementation kept below for restore.
   try {
     const configured = isTebexConfigured();
     const { currency, prices } = await getLivePriceMapByKey();
@@ -32,5 +26,4 @@ export async function GET() {
     // Never hard-fail the page; report empty + unconfigured so the UI degrades.
     return NextResponse.json({ configured: false, currency: null, prices: {} }, { status: 200 });
   }
-  */
 }

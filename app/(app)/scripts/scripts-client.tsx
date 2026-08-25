@@ -22,9 +22,7 @@ import { Slider } from "@/componentss/ui/slider";
 import { useSearchParams, useRouter } from "next/navigation";
 import Navbar from "@/componentss/shared/navbar";
 import Footer from "@/componentss/shared/footer";
-// ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
-// ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
-// import AdCard, { useRandomAds } from "@/componentss/ads/ad-card";
+import AdCard, { useRandomAds } from "@/componentss/ads/ad-card";
 import { ProductCard, type MarketProduct } from "@/componentss/marketplace/product-card";
 import SideAdsFrame from "@/componentss/ads/side-banners";
 import BrowseNav from "@/componentss/shared/browse-nav";
@@ -201,9 +199,7 @@ export function ScriptsClient({
       return [...prev].sort(() => Math.random() - 0.5);
     });
   }, []);
-  // ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
-  // ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
-  // const [ads, setAds] = useState<any[]>([]);
+  const [ads, setAds] = useState<any[]>([]);
   const [loading, setLoading] = useState(
     !(Array.isArray(initialScripts) && initialScripts.length > 0)
   );
@@ -264,26 +260,24 @@ export function ScriptsClient({
     load();
   }, []);
 
-  // ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
-  // ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
   // Ads are category-aware: on /scripts?category=maps show ads targeted to
   // "maps", else the general scripts-page ads. Refetches when the category
   // changes (BrowseNav navigates via ?category=).
-  // useEffect(() => {
-  //   let alive = true;
-  //   const url = categoryParam
-  //     ? `/api/ads/scripts?category=${encodeURIComponent(categoryParam)}`
-  //     : `/api/ads/scripts`;
-  //   fetch(url, { cache: "no-store" })
-  //     .then((r) => (r.ok ? r.json() : null))
-  //     .then((d) => {
-  //       if (alive && d?.ads) setAds(d.ads);
-  //     })
-  //     .catch(() => {});
-  //   return () => {
-  //     alive = false;
-  //   };
-  // }, [categoryParam]);
+  useEffect(() => {
+    let alive = true;
+    const url = categoryParam
+      ? `/api/ads/scripts?category=${encodeURIComponent(categoryParam)}`
+      : `/api/ads/scripts`;
+    fetch(url, { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (alive && d?.ads) setAds(d.ads);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [categoryParam]);
 
   // Featured scripts: seeded from the server (SSR). If seeded, shuffle once
   // after mount (client-only, avoids hydration drift); else fetch as fallback.
@@ -569,10 +563,8 @@ export function ScriptsClient({
     }
   }, [openFilter]);
 
-  // ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
-  // ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
-  // const randomAds = useRandomAds(ads, 2);
-  const randomAds: any[] = [];
+  // Get random ads for scripts page
+  const randomAds = useRandomAds(ads, 2);
 
   // Memoize ad positions based on current sorted scripts and ads
   // This ensures positions are stable when filters change (only recalculates when scripts or ads actually change)
@@ -1026,18 +1018,16 @@ export function ScriptsClient({
                   });
                 }
                 return items.map((item: GridItem, index) => {
-                  // ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
-                  // ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
                   // If it's an ad, render AdCard
-                  // if ("isAd" in item && item.isAd) {
-                  //   return (
-                  //     <AdCard
-                  //       key={`ad-${item.id}`}
-                  //       ad={item as any}
-                  //       variant="script"
-                  //     />
-                  //   );
-                  // }
+                  if ("isAd" in item && item.isAd) {
+                    return (
+                      <AdCard
+                        key={`ad-${item.id}`}
+                        ad={item as any}
+                        variant="script"
+                      />
+                    );
+                  }
 
                   // Otherwise render script via the shared marketplace ProductCard
                   const script = item as UIScript;

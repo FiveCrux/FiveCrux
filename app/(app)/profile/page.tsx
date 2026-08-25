@@ -68,14 +68,12 @@ import {
   useDeleteUserGiveaway,
   useUserCreatorGiveawayEntries,
 } from "@/hooks/use-giveaways-queries";
-// ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
-// ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
-// import {
-//   useUserAdvertisements,
-//   useUserFeaturedScriptSlots,
-//   useUserFeaturedScripts,
-//   useDeleteFeaturedScript,
-// } from "@/hooks/use-profile-queries";
+import {
+  useUserAdvertisements,
+  useUserFeaturedScriptSlots,
+  useUserFeaturedScripts,
+  useDeleteFeaturedScript,
+} from "@/hooks/use-profile-queries";
 import { toast } from "sonner";
 import { getSessionUserProfilePicture } from "@/lib/user-utils";
 import { useSession as useNextAuthSession } from "next-auth/react";
@@ -218,19 +216,11 @@ export default function ProfilePage() {
     refetch: refetchGiveaways,
   } = useUserGiveaways(100, 0, activeTab === "giveaways");
 
-  // ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
-  // ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
-  // These hooks must not fire at all (not just be gated by `enabled`) so no
-  // request reaches an ad-slot endpoint. Static fallbacks keep the (now dead)
-  // "ad-slots" tab JSX below type-checking without calling the API.
-  // const {
-  //   data: adsData,
-  //   isLoading: adsLoading,
-  //   refetch: refetchAds,
-  // } = useUserAdvertisements(100, 0, activeTab === "ad-slots");
-  const adsData: any = undefined;
-  const adsLoading = false;
-  const refetchAds = () => {};
+  const {
+    data: adsData,
+    isLoading: adsLoading,
+    refetch: refetchAds,
+  } = useUserAdvertisements(100, 0, activeTab === "ad-slots");
 
   const {
     data: entriesData,
@@ -238,22 +228,15 @@ export default function ProfilePage() {
     refetch: refetchEntries,
   } = useUserCreatorGiveawayEntries(100, 0, activeTab === "entries");
 
-  // ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
-  // ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
-  // const { data: featuredScriptSlotsData, refetch: refetchFeaturedScriptSlots } =
-  //   useUserFeaturedScriptSlots();
-  // const {
-  //   data: featuredScriptsData,
-  //   isLoading: featuredScriptsLoading,
-  //   refetch: refetchFeaturedScripts,
-  // } = useUserFeaturedScripts(100, activeTab === "ad-slots");
-  // const deleteFeaturedScriptMutation = useDeleteFeaturedScript();
-  const featuredScriptSlotsData: any = undefined;
-  const refetchFeaturedScriptSlots = () => {};
-  const featuredScriptsData: any = undefined;
-  const featuredScriptsLoading = false;
-  const refetchFeaturedScripts = () => {};
-  const deleteFeaturedScriptMutation = { mutate: (_: any, __?: any) => {}, isPending: false } as any;
+  // Featured Scripts
+  const { data: featuredScriptSlotsData, refetch: refetchFeaturedScriptSlots } =
+    useUserFeaturedScriptSlots();
+  const {
+    data: featuredScriptsData,
+    isLoading: featuredScriptsLoading,
+    refetch: refetchFeaturedScripts,
+  } = useUserFeaturedScripts(100, activeTab === "ad-slots");
+  const deleteFeaturedScriptMutation = useDeleteFeaturedScript();
 
   // Mutations for delete operations
   const deleteScriptMutation = useDeleteUserScript();
@@ -615,14 +598,11 @@ export default function ProfilePage() {
     { value: "analytics", label: "Analytics", icon: BarChart3 },
     { value: "scripts", label: "Assets", icon: Package },
     { value: "tebex-store", label: "Tebex Store", icon: Store },
-    // PROPS-DISABLED 2026-08-17: props feature switched off. Restore by uncommenting.
-    // { value: "props", label: "Props", icon: Package },
+    { value: "props", label: "Props", icon: Package },
     { value: "giveaways", label: "Giveaways", icon: Gift },
     { value: "winners", label: "Winners", icon: Trophy },
-    // ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
-    // ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
-    // { value: "ad-slots", label: "My Ad Slots", icon: Tag },
-    // { value: "advertise", label: "Advertise", icon: Megaphone },
+    { value: "ad-slots", label: "My Ad Slots", icon: Tag },
+    { value: "advertise", label: "Advertise", icon: Megaphone },
     { value: "entries", label: "Entries", icon: Sparkles },
     { value: "get-verified", label: "Get Verified", icon: ShieldCheck },
     { value: "settings", label: "Settings", icon: Settings },
@@ -1415,11 +1395,7 @@ export default function ProfilePage() {
               </TabsContent>
 
               {/* Ads Tab */}
-              {/* ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
-              ad business. Restore by uncommenting (remove the `false &&` gate below and the
-              nav item / TabsTrigger). See .hudson/specs/disable-advertiser-flows.md */}
               <TabsContent value="ad-slots" className="space-y-6 mt-0">
-                {false && (<>
                 {/* Switcher — Ads / Side Banners / Featured Scripts share this one section */}
                 <div className="inline-flex items-center gap-1 rounded-xl border border-white/[0.08] bg-white/[0.03] p-1">
                   {AD_SLOT_VIEWS.map((v) => (
@@ -1806,7 +1782,6 @@ export default function ProfilePage() {
 
                 {/* Side Banners — manage the creative for bought side slots */}
                 {adSlotView === "side-banners" && <SideBannersManager />}
-                </>)}
               </TabsContent>
 
               {/* Get Verified Tab — apply for the verified-creator badge */}
@@ -1824,22 +1799,16 @@ export default function ProfilePage() {
                 <TebexStoreImporter />
               </TabsContent>
 
-              {/* ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
-              ad business. Restore by uncommenting (remove the `false &&` gate below and the
-              nav item / TabsTrigger). See .hudson/specs/disable-advertiser-flows.md */}
               {/* Advertise Tab — packages + side-banner booking (moved from navbar) */}
               <TabsContent value="advertise" className="space-y-6 mt-0">
-                {false && <AdvertisePanel />}
+                <AdvertisePanel />
               </TabsContent>
 
-              {/* ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
-              ad business. Restore by uncommenting (remove the `false &&` gate below and the
-              nav item / TabsTrigger). See .hudson/specs/disable-advertiser-flows.md */}
               {/* Featured Scripts — same consolidated "My Ad Slots" section (renders
                   alongside the Ads/Side-Banners TabsContent above since they share
                   the "ad-slots" value; visibility is gated by adSlotView instead). */}
               <TabsContent value="ad-slots" className="space-y-6 mt-0">
-                {false && adSlotView === "featured" && (
+                {adSlotView === "featured" && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}

@@ -193,57 +193,51 @@ async function main() {
   }).onConflictDoNothing()
   console.log("✓ 1 pending giveaway")
 
-  // ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
-  // ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
-  // // ---- Approved ads ---------------------------------------------------------
-  // await db.insert(schema.approvedAds).values([
-  //   { id: 6001, title: "Premium Script Store", description: "Browse 200+ optimised FiveM scripts", imageUrl: imgs[0], linkUrl: "https://fivecrux.local", category: "scripts", createdBy: "dev-admin", status: "active", slotStatus: "active" },
-  //   { id: 6002, title: "MLO Mega Pack", description: "50 interiors in one bundle", imageUrl: imgs[1], linkUrl: "https://fivecrux.local", category: "props", createdBy: "dev-admin", status: "active", slotStatus: "active" },
-  // ]).onConflictDoNothing()
-  // console.log("✓ 2 approved ads")
+  // ---- Approved ads ---------------------------------------------------------
+  await db.insert(schema.approvedAds).values([
+    { id: 6001, title: "Premium Script Store", description: "Browse 200+ optimised FiveM scripts", imageUrl: imgs[0], linkUrl: "https://fivecrux.local", category: "scripts", createdBy: "dev-admin", status: "active", slotStatus: "active" },
+    { id: 6002, title: "MLO Mega Pack", description: "50 interiors in one bundle", imageUrl: imgs[1], linkUrl: "https://fivecrux.local", category: "props", createdBy: "dev-admin", status: "active", slotStatus: "active" },
+  ]).onConflictDoNothing()
+  console.log("✓ 2 approved ads")
 
-  // ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
-  // ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
-  // // ---- Pending ad -----------------------------------------------------------
-  // await db.insert(schema.pendingAds).values({
-  //   id: 6003, title: "Server Hosting Deal [PENDING]", description: "20% off FiveM server hosting", imageUrl: imgs[3], linkUrl: "https://host.local", category: "scripts", createdBy: seller.id, slotStatus: "active",
-  // }).onConflictDoNothing()
-  // console.log("✓ 1 pending ad")
+  // ---- Pending ad -----------------------------------------------------------
+  await db.insert(schema.pendingAds).values({
+    id: 6003, title: "Server Hosting Deal [PENDING]", description: "20% off FiveM server hosting", imageUrl: imgs[3], linkUrl: "https://host.local", category: "scripts", createdBy: seller.id, slotStatus: "active",
+  }).onConflictDoNothing()
+  console.log("✓ 1 pending ad")
 
-  // ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
-  // ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
-  // // ---- Side banners (demo) ---------------------------------------------------
-  // // All 4 sellable slots (left-top/left-bottom/right-top/right-bottom) are
-  // // sold + live so the rails never show an empty "Advertise here" CTA in the
-  // // demo. Log in as CruxDev (creator) to manage/edit these from
-  // // Profile → Side Banners.
-  // await db.insert(schema.sideBannerBookings).values([
-  //   {
-  //     id: 10001, position: "left-top", status: "active", title: "Advanced Banking — 20% off",
-  //     imageUrl: imgs[0], linkUrl: "https://fivecrux.local/script/1001", createdBy: seller.id,
-  //     durationWeeks: 2, startDate: new Date(), endDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
-  //     orderReference: "demo-seed-1",
-  //   },
-  //   {
-  //     id: 10002, position: "left-bottom", status: "active", title: "Luxury Garage MLO Manager",
-  //     imageUrl: imgs[1], linkUrl: "https://fivecrux.local/script/1006", createdBy: seller.id,
-  //     durationWeeks: 4, startDate: new Date(), endDate: new Date(Date.now() + 28 * 24 * 60 * 60 * 1000),
-  //     orderReference: "demo-seed-2",
-  //   },
-  //   {
-  //     id: 10003, position: "right-top", status: "active", title: "Weapon Shop & Crafting — new release",
-  //     imageUrl: imgs[2], linkUrl: "https://fivecrux.local/script/1005", createdBy: seller.id,
-  //     durationWeeks: 1, startDate: new Date(), endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-  //     orderReference: "demo-seed-3",
-  //   },
-  //   {
-  //     id: 10004, position: "right-bottom", status: "active", title: "Mechanic Job Pro — 33% off",
-  //     imageUrl: imgs[3], linkUrl: "https://fivecrux.local/script/1004", createdBy: seller.id,
-  //     durationWeeks: 2, startDate: new Date(), endDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
-  //     orderReference: "demo-seed-4",
-  //   },
-  // ]).onConflictDoNothing()
-  // console.log("✓ 4 active side banners (all 4 slots sold + live)")
+  // ---- Side banners (demo) ---------------------------------------------------
+  // All 4 sellable slots (left-top/left-bottom/right-top/right-bottom) are
+  // sold + live so the rails never show an empty "Advertise here" CTA in the
+  // demo. Log in as CruxDev (creator) to manage/edit these from
+  // Profile → Side Banners.
+  await db.insert(schema.sideBannerBookings).values([
+    {
+      id: 10001, position: "left-top", status: "active", title: "Advanced Banking — 20% off",
+      imageUrl: imgs[0], linkUrl: "https://fivecrux.local/script/1001", createdBy: seller.id,
+      durationWeeks: 2, startDate: new Date(), endDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+      orderReference: "demo-seed-1",
+    },
+    {
+      id: 10002, position: "left-bottom", status: "active", title: "Luxury Garage MLO Manager",
+      imageUrl: imgs[1], linkUrl: "https://fivecrux.local/script/1006", createdBy: seller.id,
+      durationWeeks: 4, startDate: new Date(), endDate: new Date(Date.now() + 28 * 24 * 60 * 60 * 1000),
+      orderReference: "demo-seed-2",
+    },
+    {
+      id: 10003, position: "right-top", status: "active", title: "Weapon Shop & Crafting — new release",
+      imageUrl: imgs[2], linkUrl: "https://fivecrux.local/script/1005", createdBy: seller.id,
+      durationWeeks: 1, startDate: new Date(), endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      orderReference: "demo-seed-3",
+    },
+    {
+      id: 10004, position: "right-bottom", status: "active", title: "Mechanic Job Pro — 33% off",
+      imageUrl: imgs[3], linkUrl: "https://fivecrux.local/script/1004", createdBy: seller.id,
+      durationWeeks: 2, startDate: new Date(), endDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+      orderReference: "demo-seed-4",
+    },
+  ]).onConflictDoNothing()
+  console.log("✓ 4 active side banners (all 4 slots sold + live)")
 
   // ---- Coupon ---------------------------------------------------------------
   await db.insert(schema.coupons).values({
@@ -306,45 +300,41 @@ async function main() {
   }).onConflictDoNothing()
   console.log("✓ 1 rejected script + 1 rejected prop + 1 rejected giveaway + 1 rejected ad")
 
-  // ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
-  // ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
-  // // ---- Purchased ad slots (dev-creator owns 2 of 3 — one used, one open) ----
-  // await db.insert(schema.userAdSlots).values({
-  //   id: 11001, userId: seller.id, slotNumber: [1, 2], slotUniqueIds: ["adslot-demo-1", "adslot-demo-2"],
-  //   endDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000), packageId: "premium", durationMonths: 3,
-  //   paypalOrderId: "demo-ad-slot-order", status: "active",
-  // }).onConflictDoNothing()
-  // await db.insert(schema.approvedAds).values({
-  //   id: 6005, title: "CruxDev's Banking Script Sale", description: "20% off the Advanced Banking System this week only.",
-  //   imageUrl: imgs[0], linkUrl: "https://fivecrux.local/script/1001", category: "scripts", createdBy: seller.id,
-  //   status: "active", slotStatus: "active", slotUniqueId: "adslot-demo-1", clickCount: 15, viewCount: 146,
-  // }).onConflictDoNothing()
-  // console.log("✓ 2 purchased ad slots for CruxDev (1 used, 1 open, 1 locked)")
+  // ---- Purchased ad slots (dev-creator owns 2 of 3 — one used, one open) ----
+  await db.insert(schema.userAdSlots).values({
+    id: 11001, userId: seller.id, slotNumber: [1, 2], slotUniqueIds: ["adslot-demo-1", "adslot-demo-2"],
+    endDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000), packageId: "premium", durationMonths: 3,
+    paypalOrderId: "demo-ad-slot-order", status: "active",
+  }).onConflictDoNothing()
+  await db.insert(schema.approvedAds).values({
+    id: 6005, title: "CruxDev's Banking Script Sale", description: "20% off the Advanced Banking System this week only.",
+    imageUrl: imgs[0], linkUrl: "https://fivecrux.local/script/1001", category: "scripts", createdBy: seller.id,
+    status: "active", slotStatus: "active", slotUniqueId: "adslot-demo-1", clickCount: 15, viewCount: 146,
+  }).onConflictDoNothing()
+  console.log("✓ 2 purchased ad slots for CruxDev (1 used, 1 open, 1 locked)")
 
-  // ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
-  // ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
-  // // ---- Purchased featured-script slots (same 2-of-3 pattern) ----------------
-  // await db.insert(schema.userFeaturedScriptSlots).values({
-  //   id: 12001, featuredUserId: seller.id, featuredSlotNumber: [1, 2],
-  //   featuredSlotUniqueIds: ["featslot-demo-1", "featslot-demo-2"],
-  //   featuredSlotEndDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
-  //   featuredPackageId: "premium", featuredDurationWeeks: 8,
-  //   featuredPaypalOrderId: "demo-featured-slot-order", featuredSlotStatus: "active",
-  // }).onConflictDoNothing()
-  // await db.insert(schema.featuredScripts).values({
-  //   id: 13001, scriptId: 1002, featuredSlotUniqueId: "featslot-demo-1", featuredSlotStatus: "active",
-  //   featuredCreatedBy: seller.id, featuredStatus: "active", featuredClickCount: 8, featuredViewCount: 210,
-  //   featuredEndDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
-  // }).onConflictDoNothing()
-  // // A custom-BANNER featured row (no scriptId) — verifies the banner path.
-  // await db.insert(schema.featuredScripts).values({
-  //   id: 13002, scriptId: null, featuredSlotUniqueId: "featslot-demo-2", featuredSlotStatus: "active",
-  //   title: "Grand Summer Sale — 40% off", description: "Premium FiveM packs, this week only.",
-  //   imageUrl: imgs[2], linkUrl: "https://example.com/sale", category: "scripts",
-  //   featuredCreatedBy: seller.id, featuredStatus: "active", featuredClickCount: 3, featuredViewCount: 96,
-  //   featuredEndDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
-  // }).onConflictDoNothing()
-  // console.log("✓ 2 purchased featured-script slots for CruxDev (1 asset + 1 banner)")
+  // ---- Purchased featured-script slots (same 2-of-3 pattern) ----------------
+  await db.insert(schema.userFeaturedScriptSlots).values({
+    id: 12001, featuredUserId: seller.id, featuredSlotNumber: [1, 2],
+    featuredSlotUniqueIds: ["featslot-demo-1", "featslot-demo-2"],
+    featuredSlotEndDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
+    featuredPackageId: "premium", featuredDurationWeeks: 8,
+    featuredPaypalOrderId: "demo-featured-slot-order", featuredSlotStatus: "active",
+  }).onConflictDoNothing()
+  await db.insert(schema.featuredScripts).values({
+    id: 13001, scriptId: 1002, featuredSlotUniqueId: "featslot-demo-1", featuredSlotStatus: "active",
+    featuredCreatedBy: seller.id, featuredStatus: "active", featuredClickCount: 8, featuredViewCount: 210,
+    featuredEndDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
+  }).onConflictDoNothing()
+  // A custom-BANNER featured row (no scriptId) — verifies the banner path.
+  await db.insert(schema.featuredScripts).values({
+    id: 13002, scriptId: null, featuredSlotUniqueId: "featslot-demo-2", featuredSlotStatus: "active",
+    title: "Grand Summer Sale — 40% off", description: "Premium FiveM packs, this week only.",
+    imageUrl: imgs[2], linkUrl: "https://example.com/sale", category: "scripts",
+    featuredCreatedBy: seller.id, featuredStatus: "active", featuredClickCount: 3, featuredViewCount: 96,
+    featuredEndDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
+  }).onConflictDoNothing()
+  console.log("✓ 2 purchased featured-script slots for CruxDev (1 asset + 1 banner)")
 
   // ---- Creator code (storewide referral/affiliate code) ---------------------
   await db.insert(schema.creatorCodes).values({

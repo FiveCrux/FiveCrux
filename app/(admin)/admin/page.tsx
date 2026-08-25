@@ -107,17 +107,15 @@ import {
   useAdminUsers,
   useAdminScripts,
   useAdminGiveaways,
-  // ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
-  // ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
-  // useAdminAds,
+  useAdminAds,
   useAdminProps,
   useUpdateUserRoles,
   useUpdateScript,
   useUpdateGiveaway,
-  // useUpdateAd,
+  useUpdateAd,
   useUpdateAdminProp,
-  // useCreateAd,
-  // useDeleteAd,
+  useCreateAd,
+  useDeleteAd,
 } from "@/hooks/use-admin-queries";
 
 interface User {
@@ -310,19 +308,13 @@ export default function AdminPage() {
     isFetchingNextPage: loadingMoreGiveaways,
   } = useAdminGiveaways();
 
-  // ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
-  // ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
-  // const {
-  //   data: adsData,
-  //   isLoading: adsLoading,
-  //   fetchNextPage: fetchNextAds,
-  //   hasNextPage: hasMoreAds,
-  //   isFetchingNextPage: loadingMoreAds,
-  // } = useAdminAds();
-  const adsLoading = false;
-  const fetchNextAds = () => {};
-  const hasMoreAds = false;
-  const loadingMoreAds = false;
+  const {
+    data: adsData,
+    isLoading: adsLoading,
+    fetchNextPage: fetchNextAds,
+    hasNextPage: hasMoreAds,
+    isFetchingNextPage: loadingMoreAds,
+  } = useAdminAds();
 
   const {
     data: propsData,
@@ -337,22 +329,20 @@ export default function AdminPage() {
   const scripts: Script[] = scriptsData?.pages.flatMap((page) => page.scripts) || [];
   const giveaways =
     giveawaysData?.pages.flatMap((page) => page.giveaways) || [];
-  // ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
-  // ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
-  // const ads = adsData?.pages.flatMap((page) => page.ads) || [];
-  const ads: Ad[] = [];
+  const ads = adsData?.pages.flatMap((page) => page.ads) || [];
   const props: Prop[] = propsData?.pages.flatMap((page) => page.props) || [];
+
+  // Debug logging for ads
+  console.log("Admin Dashboard - Ads:", ads.length, "Loading:", adsLoading);
 
   // Mutations
   const updateUserRolesMutation = useUpdateUserRoles();
   const updateScriptMutation = useUpdateScript();
   const updateGiveawayMutation = useUpdateGiveaway();
-  // ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
-  // ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
-  // const updateAdMutation = useUpdateAd();
+  const updateAdMutation = useUpdateAd();
   const updatePropMutation = useUpdateAdminProp();
-  // const createAdMutation = useCreateAd();
-  // const deleteAdMutation = useDeleteAd();
+  const createAdMutation = useCreateAd();
+  const deleteAdMutation = useDeleteAd();
 
   // Safety timeout so the gating loader never spins forever when the DB/API is
   // unavailable in dev. After 8s we stop blocking and fall through to empty states.
@@ -483,73 +473,69 @@ export default function AdminPage() {
     );
   };
 
-  // ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
-  // ad business. Restore by uncommenting (and delete the stub below).
-  // See .hudson/specs/disable-advertiser-flows.md
-  const createAd = async () => {};
-  // const createAd = async () => {
-  //   try {
-  //     let imageUrl = "";
+  const createAd = async () => {
+    try {
+      let imageUrl = "";
 
-  //     // Upload image if selected
-  //     if (selectedImage) {
-  //       const formData = new FormData();
-  //       formData.append("file", selectedImage);
-  //       formData.append("type", "image");
-  //       formData.append("purpose", "ad_creative");
+      // Upload image if selected
+      if (selectedImage) {
+        const formData = new FormData();
+        formData.append("file", selectedImage);
+        formData.append("type", "image");
+        formData.append("purpose", "ad_creative");
 
-  //       // Abort the upload after 8s so the dialog never hangs indefinitely.
-  //       const c = new AbortController();
-  //       const t = setTimeout(() => c.abort(), 15000);
-  //       let uploadResponse: Response;
-  //       try {
-  //         uploadResponse = await fetch("/api/upload", {
-  //           method: "POST",
-  //           body: formData,
-  //           signal: c.signal,
-  //         });
-  //       } finally {
-  //         clearTimeout(t);
-  //       }
+        // Abort the upload after 8s so the dialog never hangs indefinitely.
+        const c = new AbortController();
+        const t = setTimeout(() => c.abort(), 15000);
+        let uploadResponse: Response;
+        try {
+          uploadResponse = await fetch("/api/upload", {
+            method: "POST",
+            body: formData,
+            signal: c.signal,
+          });
+        } finally {
+          clearTimeout(t);
+        }
 
-  //       if (uploadResponse.ok) {
-  //         const uploadResult = await uploadResponse.json();
-  //         imageUrl = uploadResult.url;
-  //       } else {
-  //         toast.error("Failed to upload image");
-  //         return;
-  //       }
-  //     }
+        if (uploadResponse.ok) {
+          const uploadResult = await uploadResponse.json();
+          imageUrl = uploadResult.url;
+        } else {
+          toast.error("Failed to upload image");
+          return;
+        }
+      }
 
-  //     const adData = {
-  //       ...newAd,
-  //       imageUrl: imageUrl,
-  //     };
+      const adData = {
+        ...newAd,
+        imageUrl: imageUrl,
+      };
 
-  //     createAdMutation.mutate(adData, {
-  //       onSuccess: () => {
-  //         setNewAd({
-  //           title: "",
-  //           description: "",
-  //           imageUrl: "",
-  //           linkUrl: "",
-  //           category: "",
-  //           status: "active",
-  //         });
-  //         setSelectedImage(null);
-  //         setShowAdDialog(false);
-  //       },
-  //     });
-  //   } catch (error) {
-  //     console.error("Error creating ad:", error);
-  //     toast.error("An error occurred while creating ad");
-  //   }
-  // };
+      createAdMutation.mutate(adData, {
+        onSuccess: () => {
+          setNewAd({
+            title: "",
+            description: "",
+            imageUrl: "",
+            linkUrl: "",
+            category: "",
+            status: "active",
+          });
+          setSelectedImage(null);
+          setShowAdDialog(false);
+        },
+      });
+    } catch (error) {
+      console.error("Error creating ad:", error);
+      toast.error("An error occurred while creating ad");
+    }
+  };
 
-  // const deleteAd = async (adId: number) => {
-  //   if (!confirm("Are you sure you want to delete this ad?")) return;
-  //   deleteAdMutation.mutate(adId);
-  // };
+  const deleteAd = async (adId: number) => {
+    if (!confirm("Are you sure you want to delete this ad?")) return;
+    deleteAdMutation.mutate(adId);
+  };
 
   const stats = {
     totalUsers: users.length,
@@ -637,21 +623,19 @@ export default function AdminPage() {
         onReject: () => setRejectingGiveaway(g.id),
         onView: () => setViewingGiveaway(g),
       })),
-    // ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
-    // ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
-    // ...ads
-    //   .filter((a) => !a.status || a.status === "pending")
-    //   .map<PendingRow>((a) => ({
-    //     key: `ad-${a.id}`,
-    //     title: a.title,
-    //     image: (a as any).imageUrl || a.image || "",
-    //     type: "Ad",
-    //     submitter: a.creator_name,
-    //     when: timeAgo(a.created_at),
-    //     onApprove: () => handleAdAction(a.id, "approved"),
-    //     onReject: () => setRejectingAd(a.id),
-    //     onView: () => setViewingAd(a),
-    //   })),
+    ...ads
+      .filter((a) => !a.status || a.status === "pending")
+      .map<PendingRow>((a) => ({
+        key: `ad-${a.id}`,
+        title: a.title,
+        image: (a as any).imageUrl || a.image || "",
+        type: "Ad",
+        submitter: a.creator_name,
+        when: timeAgo(a.created_at),
+        onApprove: () => handleAdAction(a.id, "approved"),
+        onReject: () => setRejectingAd(a.id),
+        onView: () => setViewingAd(a),
+      })),
   ];
 
   // Real pending submissions only — no demo fallback.
@@ -685,11 +669,8 @@ export default function AdminPage() {
     { value: "users", label: "Users", icon: Users, gated: true },
     { value: "scripts", label: "Assets", icon: FileCode2 },
     { value: "giveaways", label: "Giveaways", icon: Gift },
-    // PROPS-DISABLED 2026-08-17: props feature switched off. Restore by uncommenting.
-    // { value: "props", label: "Props", icon: Box },
-    // ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
-    // ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
-    // { value: "ads", label: "Ads", icon: Megaphone, gated: true },
+    { value: "props", label: "Props", icon: Box },
+    { value: "ads", label: "Ads", icon: Megaphone, gated: true },
     {
       value: "verification",
       label: "Verification",
@@ -746,28 +727,23 @@ export default function AdminPage() {
     );
   });
 
-  // ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
-  // ad business. Restore by uncommenting (and delete the stubs below).
-  // See .hudson/specs/disable-advertiser-flows.md
-  const adCategories: string[] = [];
-  const filteredAds: Ad[] = [];
-  // const adCategories = Array.from(
-  //   new Set(ads.map((a) => a.category).filter(Boolean))
-  // ) as string[];
-  // const filteredAds = ads.filter((ad) => {
-  //   if (activeAdFilter === "pending" && !(!ad.status || ad.status === "pending")) return false;
-  //   if (activeAdFilter === "approved" && !(ad.status === "approved" || ad.status === "active")) return false;
-  //   if (activeAdFilter === "rejected" && ad.status !== "rejected") return false;
-  //   if (adCategoryFilter !== "all" && ad.category !== adCategoryFilter) return false;
-  //   const query = adSearchQuery.trim().toLowerCase();
-  //   if (!query) return true;
-  //   return (
-  //     ad.title?.toLowerCase().includes(query) ||
-  //     ad.description?.toLowerCase().includes(query) ||
-  //     ad.creator_name?.toLowerCase().includes(query) ||
-  //     ad.creator_email?.toLowerCase().includes(query)
-  //   );
-  // });
+  const adCategories = Array.from(
+    new Set(ads.map((a) => a.category).filter(Boolean))
+  ) as string[];
+  const filteredAds = ads.filter((ad) => {
+    if (activeAdFilter === "pending" && !(!ad.status || ad.status === "pending")) return false;
+    if (activeAdFilter === "approved" && !(ad.status === "approved" || ad.status === "active")) return false;
+    if (activeAdFilter === "rejected" && ad.status !== "rejected") return false;
+    if (adCategoryFilter !== "all" && ad.category !== adCategoryFilter) return false;
+    const query = adSearchQuery.trim().toLowerCase();
+    if (!query) return true;
+    return (
+      ad.title?.toLowerCase().includes(query) ||
+      ad.description?.toLowerCase().includes(query) ||
+      ad.creator_name?.toLowerCase().includes(query) ||
+      ad.creator_email?.toLowerCase().includes(query)
+    );
+  });
 
   // Handle script approval/rejection
   const handleScriptAction = async (
@@ -835,42 +811,36 @@ export default function AdminPage() {
     );
   };
 
-  // ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
-  // ad business. Restore by uncommenting (and delete the stub below).
-  // See .hudson/specs/disable-advertiser-flows.md
+  // Handle ad approval/rejection
   const handleAdAction = async (
-    _adId: number,
-    _status: "approved" | "rejected"
-  ) => {};
-  // const handleAdAction = async (
-  //   adId: number,
-  //   status: "approved" | "rejected"
-  // ) => {
-  //   if (status === "rejected") {
-  //     setRejectingAdLoading(true);
-  //   }
+    adId: number,
+    status: "approved" | "rejected"
+  ) => {
+    if (status === "rejected") {
+      setRejectingAdLoading(true);
+    }
 
-  //   updateAdMutation.mutate(
-  //     {
-  //       adId,
-  //       status,
-  //       rejectionReason: status === "rejected" ? adRejectionReason : undefined,
-  //     },
-  //     {
-  //       onSuccess: () => {
-  //         if (status === "rejected") {
-  //           setRejectingAd(null);
-  //           setAdRejectionReason("");
-  //         }
-  //       },
-  //       onSettled: () => {
-  //         if (status === "rejected") {
-  //           setRejectingAdLoading(false);
-  //         }
-  //       },
-  //     }
-  //   );
-  // };
+    updateAdMutation.mutate(
+      {
+        adId,
+        status,
+        rejectionReason: status === "rejected" ? adRejectionReason : undefined,
+      },
+      {
+        onSuccess: () => {
+          if (status === "rejected") {
+            setRejectingAd(null);
+            setAdRejectionReason("");
+          }
+        },
+        onSettled: () => {
+          if (status === "rejected") {
+            setRejectingAdLoading(false);
+          }
+        },
+      }
+    );
+  };
 
   const handlePropAction = async (
     propId: string,
@@ -1219,9 +1189,7 @@ export default function AdminPage() {
                   { label: "Assets", value: displayStats.totalScripts, icon: FileCode2 },
                   { label: "Giveaways", value: displayStats.totalGiveaways, icon: Gift },
                   { label: "Props", value: displayStats.totalProps, icon: Box },
-                  // ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
-                  // ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
-                  // { label: "Ads", value: displayStats.totalAds, icon: Megaphone },
+                  { label: "Ads", value: displayStats.totalAds, icon: Megaphone },
                 ].map((tile) => (
                   <div
                     key={tile.label}
@@ -2224,12 +2192,10 @@ export default function AdminPage() {
               </Card>
             </TabsContent>
 
-            {/* ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
-                ad business. Restore by uncommenting (change `false &&` back to the
-                original condition). See .hudson/specs/disable-advertiser-flows.md */}
-            {false && (isModerator || isFounder) && (
+            {(isModerator || isFounder) && (
               <TabsContent value="ads" className="mt-6">
                 <div className="space-y-6">
+                  {/* Filter Tabs */}
                   <div className="overflow-x-auto -mx-4 sm:-mx-6 px-4 sm:px-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                     <div className="flex gap-2 mb-4 w-max min-w-full">
                       <Button
@@ -2609,6 +2575,7 @@ export default function AdminPage() {
                     </CardContent>
                   </Card>
 
+                  {/* Rejection Dialog */}
                   <Dialog
                     open={rejectingAd !== null}
                     onOpenChange={() => setRejectingAd(null)}
@@ -4031,10 +3998,7 @@ export default function AdminPage() {
           </DialogContent>
         </Dialog>
 
-        {/* ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
-            ad business. Restore by uncommenting (change `false &&` back to true).
-            See .hudson/specs/disable-advertiser-flows.md */}
-        {false && (
+        {/* Ad Details Dialog */}
         <Dialog open={!!viewingAd} onOpenChange={() => setViewingAd(null)}>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-[#0d0d0f] border-white/[0.08] rounded-2xl">
             <DialogHeader>
@@ -4044,6 +4008,7 @@ export default function AdminPage() {
             </DialogHeader>
             {viewingAd && (
               <div className="space-y-6">
+                {/* Cover Image */}
                 {viewingAd.imageUrl && (
                   <div className="relative">
                     <img
@@ -4054,6 +4019,7 @@ export default function AdminPage() {
                   </div>
                 )}
 
+                {/* Media Gallery */}
                 {viewingAd.images?.length > 0 && (
                   <div className="bg-gray-800/50 p-4 rounded-lg">
                     <h3 className="text-white font-semibold mb-3">
@@ -4085,6 +4051,7 @@ export default function AdminPage() {
                   </div>
                 )}
 
+                {/* Status Badge */}
                 <div className="flex items-center gap-3">
                   <Badge
                     className={`capitalize ${
@@ -4103,6 +4070,7 @@ export default function AdminPage() {
                   </span>
                 </div>
 
+                {/* Basic Info */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-4">
                     <div className="bg-gray-800/50 p-4 rounded-lg">
@@ -4247,6 +4215,7 @@ export default function AdminPage() {
                   </div>
                 </div>
 
+                {/* Submission Timeline */}
                 {viewingAd.submittedAt && (
                   <div className="bg-gray-800/50 p-4 rounded-lg">
                     <h3 className="text-white font-semibold mb-3">
@@ -4287,6 +4256,7 @@ export default function AdminPage() {
                   </div>
                 )}
 
+                {/* Admin Notes */}
                 {viewingAd.adminNotes && (
                   <div className="bg-gray-800/50 p-4 rounded-lg">
                     <h3 className="text-white font-semibold mb-3">
@@ -4300,6 +4270,7 @@ export default function AdminPage() {
                   </div>
                 )}
 
+                {/* Rejection Reason */}
                 {viewingAd.status === "rejected" &&
                   viewingAd.rejectionReason && (
                     <div className="bg-red-900/20 border border-red-500/30 p-4 rounded-lg">
@@ -4314,6 +4285,7 @@ export default function AdminPage() {
                     </div>
                   )}
 
+                {/* Action Buttons */}
                 <div className="flex gap-3 pt-4 border-t border-gray-700">
                   {(!viewingAd.status || viewingAd.status === "pending") && (
                     <Button
@@ -4353,7 +4325,6 @@ export default function AdminPage() {
             )}
           </DialogContent>
         </Dialog>
-        )}
 
         {/* <Footer /> */}
       </div>

@@ -10,21 +10,6 @@ function isStaff(session: any): boolean {
   return roles.includes('admin') || roles.includes('founder') || roles.includes('moderator')
 }
 
-// ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
-// ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
-export async function GET(request: NextRequest) {
-  return NextResponse.json({ error: 'Advertising is not available' }, { status: 410 })
-}
-
-// ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
-// ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
-export async function PATCH(request: NextRequest) {
-  return NextResponse.json({ error: 'Advertising is not available' }, { status: 410 })
-}
-
-/* ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
-   ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
-
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
@@ -97,4 +82,4 @@ export async function PATCH(request: NextRequest) {
   }
 }
 
-*/
+

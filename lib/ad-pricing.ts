@@ -9,9 +9,7 @@
 //
 // itemId convention used by the cart: `${packageType}:${packageId}:${duration}`
 // where duration = months for ads, weeks for featured-scripts.
-// ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
-// ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
-// import { getLivePriceByKey } from "@/lib/tebex-pricing";
+import { getLivePriceByKey } from "@/lib/tebex-pricing";
 
 export type PackageType = "ads" | "featured-scripts";
 
@@ -57,11 +55,6 @@ export function resolvePackageMeta(
   packageId: string,
   duration: number
 ): PackageMeta | null {
-  // ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
-  // ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
-  return null;
-
-  /* ADS-DISABLED 2026-08-16: original implementation kept below for restore.
   const pt: PackageType | null =
     packageType === "ads" ? "ads" : packageType === "featured-scripts" ? "featured-scripts" : null;
   if (!pt) return null;
@@ -81,7 +74,6 @@ export function resolvePackageMeta(
     durationMonths: duration / 4,
     durationWeeks: duration,
   };
-  */
 }
 
 /**
@@ -96,17 +88,11 @@ export async function resolvePackage(
   packageId: string,
   duration: number
 ): Promise<ResolvedPackage | null> {
-  // ADS-DISABLED 2026-08-16: advertising disabled — payment gateway rejected the
-  // ad business. Restore by uncommenting. See .hudson/specs/disable-advertiser-flows.md
-  return null;
-
-  /* ADS-DISABLED 2026-08-16: original implementation kept below for restore.
   const meta = resolvePackageMeta(packageType, packageId, duration);
   if (!meta) return null;
   const live = await getLivePriceByKey(packageType, packageId, duration);
   if (!live) return null; // not configured/priced yet → not purchasable
   return { ...meta, price: live.amount, currency: live.currency };
-  */
 }
 
 /** Parse the cart itemId `${packageType}:${packageId}:${duration}`. */
