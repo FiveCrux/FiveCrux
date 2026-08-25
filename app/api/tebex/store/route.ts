@@ -23,6 +23,10 @@ async function requireUserId() {
 }
 
 export async function GET() {
+  // TEBEX-REMOVED 2026-08-17: Tebex is no longer used for payments.
+  // Remove this early return to restore the original handler below.
+  return NextResponse.json({ error: "Tebex is no longer used" }, { status: 410 });
+  /* TEBEX-REMOVED 2026-08-17: original handler preserved below.
   try {
     const userId = await requireUserId();
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -47,9 +51,14 @@ export async function GET() {
     console.error("GET /api/tebex/store error:", e);
     return NextResponse.json({ error: "Failed to load Tebex store" }, { status: 500 });
   }
+  */
 }
 
 export async function POST(req: NextRequest) {
+  // TEBEX-REMOVED 2026-08-17: Tebex is no longer used for payments.
+  // Remove this early return to restore the original handler below.
+  return NextResponse.json({ error: "Tebex is no longer used" }, { status: 410 });
+  /* TEBEX-REMOVED 2026-08-17: original handler preserved below.
   try {
     const userId = await requireUserId();
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -76,9 +85,14 @@ export async function POST(req: NextRequest) {
     console.error("POST /api/tebex/store error:", e);
     return NextResponse.json({ error: "Failed to connect Tebex store" }, { status: 500 });
   }
+  */
 }
 
 export async function DELETE() {
+  // TEBEX-REMOVED 2026-08-17: Tebex is no longer used for payments.
+  // Remove this early return to restore the original handler below.
+  return NextResponse.json({ error: "Tebex is no longer used" }, { status: 410 });
+  /* TEBEX-REMOVED 2026-08-17: original handler preserved below.
   try {
     const userId = await requireUserId();
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -88,4 +102,5 @@ export async function DELETE() {
     console.error("DELETE /api/tebex/store error:", e);
     return NextResponse.json({ error: "Failed to disconnect" }, { status: 500 });
   }
+  */
 }

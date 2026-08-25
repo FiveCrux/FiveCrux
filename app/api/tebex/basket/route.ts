@@ -17,6 +17,10 @@ import { requireUser } from "@/lib/api-auth";
  * Body: { storeToken, packageId }
  */
 export async function POST(request: NextRequest) {
+  // TEBEX-REMOVED 2026-08-17: Tebex is no longer used for payments.
+  // Remove this early return to restore the original handler below.
+  return NextResponse.json({ error: "Tebex is no longer used" }, { status: 410 });
+  /* TEBEX-REMOVED 2026-08-17: original handler preserved below.
   try {
     const auth = await requireUser();
     if (!auth.ok) return auth.response;
@@ -48,4 +52,5 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
+  */
 }

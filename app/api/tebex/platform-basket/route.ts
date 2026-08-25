@@ -40,6 +40,10 @@ import { requireUser } from "@/lib/api-auth";
  * are actually billed via `resolved.price`.
  */
 export async function POST(request: NextRequest) {
+  // TEBEX-REMOVED 2026-08-17: Tebex is no longer used for payments.
+  // Remove this early return to restore the original handler below.
+  return NextResponse.json({ error: "Tebex is no longer used" }, { status: 410 });
+  /* TEBEX-REMOVED 2026-08-17: original handler preserved below.
   try {
     // SECURITY: require a logged-in user; provision for the SESSION user, never a
     // client-supplied custom.userId.
@@ -130,4 +134,5 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
+  */
 }

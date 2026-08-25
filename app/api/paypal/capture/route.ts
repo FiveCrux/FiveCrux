@@ -5,7 +5,8 @@ import { requireActiveUser } from "@/lib/api-auth"
 import { db } from "@/lib/db/client"
 import { paypalOrders } from "@/lib/db/schema"
 import { getOrdersController, isPayPalConfigured } from "@/lib/paypal"
-import { provisionCart, parseCustom } from "@/lib/provisioning"
+import { provisionCart, provisionEntitlement, parseCustom } from "@/lib/provisioning"
+import { activateSideBanner } from "@/lib/database-new"
 
 /**
  * POST /api/paypal/capture
@@ -91,12 +92,24 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const provision = await provisionCart(meta, record.userId ?? auth.userId, orderId)
-    if (!provision.provisioned) {
+    // Route by what was bought — a cart, a scarce banner position, or a single
+    // slot. Mirrors the webhook, and all three are idempotent.
+    let provisioned: boolean
+    if (meta.kind === "side_banner" && meta.bookingId != null) {
+      provisioned = (await activateSideBanner(Number(meta.bookingId), orderId)).activated
+    } else if (meta.kind === "platform_cart") {
+      provisioned = (await provisionCart(meta, record.userId ?? auth.userId, orderId)).provisioned
+    } else if (meta.packageType) {
+      provisioned = await provisionEntitlement(record.userId ?? auth.userId, meta, orderId)
+    } else {
+      provisioned = false
+    }
+
+    if (!provisioned) {
       // Deliberately still 200: the payment DID succeed, and telling the buyer
       // it failed would invite a second attempt. The webhook retries the
       // provisioning side.
-      console.error("[paypal capture] provisioning failed:", orderId, provision.reason)
+      console.error("[paypal capture] provisioning failed:", orderId, meta.kind)
       return NextResponse.json({
         ok: true,
         provisioned: false,

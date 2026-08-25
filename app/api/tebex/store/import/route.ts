@@ -43,6 +43,10 @@ const stripHtml = (s: string | null | undefined) =>
 // submit" confirmation modal for the "import by package ID" flow, where the
 // client has no package data yet (just a typed-in id).
 export async function GET(req: NextRequest) {
+  // TEBEX-REMOVED 2026-08-17: Tebex is no longer used for payments.
+  // Remove this early return to restore the original handler below.
+  return NextResponse.json({ error: "Tebex is no longer used" }, { status: 410 });
+  /* TEBEX-REMOVED 2026-08-17: original handler preserved below.
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -67,9 +71,14 @@ export async function GET(req: NextRequest) {
     console.error("GET /api/tebex/store/import error:", e);
     return NextResponse.json({ error: "Could not fetch package." }, { status: 500 });
   }
+  */
 }
 
 export async function POST(req: NextRequest) {
+  // TEBEX-REMOVED 2026-08-17: Tebex is no longer used for payments.
+  // Remove this early return to restore the original handler below.
+  return NextResponse.json({ error: "Tebex is no longer used" }, { status: 410 });
+  /* TEBEX-REMOVED 2026-08-17: original handler preserved below.
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -175,4 +184,5 @@ export async function POST(req: NextRequest) {
     console.error("POST /api/tebex/store/import error:", e);
     return NextResponse.json({ error: "Import failed" }, { status: 500 });
   }
+  */
 }

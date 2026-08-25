@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react"
 import { Receipt, BadgeCheck, Lock, CreditCard, ShieldCheck, Ticket, Check } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/componentss/ui/select"
+import PayPalCheckoutButton from "@/componentss/cart/paypal-checkout-button"
 
 type AppliedCode = {
   // Coupons are Tebex-native now (no local id, and no known discount until
@@ -207,9 +208,8 @@ export default function CartCheckoutPanel({ total }: CartCheckoutPanelProps) {
           )}
           <div className="flex items-center justify-between">
             <dt className="text-white/50">Sales Tax</dt>
-            {/* Tebex computes real location-based sales tax, but only once a
-                real basket exists — this store requires the buyer to log in
-                with Tebex before that's possible, so it's not known here. */}
+            {/* Tax is settled by PayPal at payment time, based on the buyer's
+                location — it is not known while the cart is being reviewed. */}
             <dd className="text-xs font-medium text-white/45">Calculated at checkout</dd>
           </div>
         </dl>
@@ -229,22 +229,20 @@ export default function CartCheckoutPanel({ total }: CartCheckoutPanelProps) {
         </div>
         {appliedMode === "coupon" && (
           <p className="mt-1 text-right text-[12px] text-white/45">
-            Your coupon is applied at Tebex checkout — the discounted total shows there.
+            Your coupon is applied when the order is created — PayPal shows the discounted total.
           </p>
         )}
 
-        <button
-          type="button"
-          onClick={() => checkout()}
-          disabled={isCheckingOut}
-          className="group mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-orange-500 py-4 text-[15px] font-bold text-black transition hover:bg-orange-400 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          <Lock className="h-4 w-4" />
-          {isCheckingOut ? "Redirecting…" : "Continue to Checkout"}
-        </button>
+        <div className="mt-6">
+          <PayPalCheckoutButton
+            couponCode={appliedMode === "coupon" ? appliedCode?.code : undefined}
+            creatorCode={appliedMode === "creator" ? appliedCode?.code : undefined}
+            onError={(m: string) => setError(m)}
+          />
+        </div>
         <p className="mt-2.5 flex items-center justify-center gap-1.5 text-[12px] text-white/55">
           <CreditCard className="h-3.5 w-3.5" />
-          Secure payment via Tebex
+          Secure payment via PayPal
         </p>
 
         <p className="mt-4 flex items-center justify-center gap-1.5 text-[12px] text-white/55">

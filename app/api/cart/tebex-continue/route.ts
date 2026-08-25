@@ -15,6 +15,10 @@ import { prepareCartCheckout, finalizeBasket, buildCustom } from "@/lib/tebex-ch
  * same id stamped into the basket's `custom` in phase 1 so the webhook matches.
  */
 export async function GET(request: NextRequest) {
+  // TEBEX-REMOVED 2026-08-17: Tebex is no longer used for payments.
+  // Remove this early return to restore the original handler below.
+  return NextResponse.json({ error: "Tebex is no longer used" }, { status: 410 });
+  /* TEBEX-REMOVED 2026-08-17: original handler preserved below.
   const siteUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
   const fail = (reason: string) =>
     NextResponse.redirect(`${siteUrl}/cart?payment=error&reason=${encodeURIComponent(reason)}`);
@@ -62,4 +66,5 @@ export async function GET(request: NextRequest) {
     console.error("Tebex continue (post-auth) error:", error);
     return fail("checkout-failed");
   }
+  */
 }

@@ -12,6 +12,10 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ ident: string }> }
 ) {
+  // TEBEX-REMOVED 2026-08-17: Tebex is no longer used for payments.
+  // Remove this early return to restore the original handler below.
+  return NextResponse.json({ error: "Tebex is no longer used" }, { status: 410 });
+  /* TEBEX-REMOVED 2026-08-17: original handler preserved below.
   try {
     const { ident } = await params;
     const { searchParams } = new URL(request.url);
@@ -33,4 +37,5 @@ export async function GET(
       { status: 500 }
     );
   }
+  */
 }

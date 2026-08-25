@@ -31,6 +31,10 @@ import {
 
 // Ensure this route always runs on the Node.js runtime (crypto) and is never
 // statically optimized — every request must hit the handler.
+// TEBEX-REMOVED 2026-08-17: Tebex no longer takes NEW payments — every other
+// /api/tebex/* route returns 410. This webhook is deliberately kept ALIVE:
+// refunds and chargebacks for orders paid before the switch still arrive here,
+// and they must keep revoking entitlements and blocking chargeback fraud.
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 

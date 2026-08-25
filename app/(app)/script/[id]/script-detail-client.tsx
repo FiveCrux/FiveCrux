@@ -261,25 +261,13 @@ export function ScriptDetailClient({
       window.open(script.link, "_blank", "noopener,noreferrer");
       return;
     }
-    if (script.tebexPackageId && script.tebexStoreToken) {
-      try {
-        setBuying(true);
-        const res = await fetch("/api/tebex/basket", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ storeToken: script.tebexStoreToken, packageId: script.tebexPackageId }),
-        });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok || !data?.redirectUrl) throw new Error(data?.error || "Failed to start checkout");
-        window.location.href = data.redirectUrl;
-      } catch (err) {
-        console.error("Tebex checkout error:", err);
-        toast.error("Could not start checkout. Please try again.");
-        setBuying(false);
-      }
-      return;
-    }
-    toast.error("No purchase option is available for this product yet.");
+    // TEBEX-REMOVED 2026-08-17: this used to build a basket on the seller's own
+    // Tebex store. Sellers now publish their own purchase link instead
+    // (`script.link`, handled above), so FiveCrux never sits in the middle of a
+    // seller's sale — and never becomes merchant of record for it.
+    //
+    // if (script.tebexPackageId && script.tebexStoreToken) { ...basket + redirect... }
+    toast.error("This seller hasn't added a purchase link yet.");
   };
 
   const media = useMemo(
@@ -325,7 +313,7 @@ export function ScriptDetailClient({
     : 0;
   const verified = isVerifiedCreator(script.seller_roles);
   const currency = script.currency_symbol || "$";
-  const canBuy = !!((script.tebexPackageId && script.tebexStoreToken) || script.link);
+  const canBuy = !!script.link;
   const sellerInitial = script.seller_name ? script.seller_name.charAt(0).toUpperCase() : "?";
   const categoryLabel = script.category || "Asset";
   const hasFeatures = script.features && script.features.length > 0;

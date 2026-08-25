@@ -6,10 +6,12 @@ import { paypalOrders } from "@/lib/db/schema"
 import { verifyPayPalWebhook } from "@/lib/paypal"
 import {
   provisionCart,
+  provisionEntitlement,
   revokeForOrder,
   parseCustom,
   blockUserForChargeback,
 } from "@/lib/provisioning"
+import { activateSideBanner } from "@/lib/database-new"
 
 /**
  * POST /api/paypal/webhook
@@ -33,6 +35,37 @@ export const dynamic = "force-dynamic"
 // cannot act on stops an endless retry loop; genuine failures return 5xx so a
 // retry actually happens.
 const OK = () => NextResponse.json({ received: true })
+
+
+/**
+ * Route a paid order to the right provisioning, by what the `custom` payload
+ * says it was. All three are idempotent, so a webhook retry — or the capture
+ * route having already run — is a no-op.
+ *
+ *   platform_cart → a cart of ad/featured slots
+ *   side_banner   → one of the four scarce banner positions
+ *   ads / featured-scripts → a single slot bought directly
+ */
+async function provisionForOrder(
+  meta: Record<string, any>,
+  userId: string,
+  orderRef: string
+): Promise<boolean> {
+  if (meta.kind === "side_banner") {
+    if (meta.bookingId == null) return false
+    const res = await activateSideBanner(Number(meta.bookingId), orderRef)
+    return res.activated
+  }
+  if (meta.kind === "platform_cart") {
+    const res = await provisionCart(meta, userId, orderRef)
+    return res.provisioned
+  }
+  if (meta.packageType) {
+    return provisionEntitlement(userId, meta, orderRef)
+  }
+  console.error("[paypal webhook] unknown provisioning kind:", meta.kind)
+  return false
+}
 
 export async function POST(request: NextRequest) {
   const rawBody = await request.text()
@@ -106,12 +139,14 @@ export async function POST(request: NextRequest) {
           return OK()
         }
 
-        // provisionCart is idempotent (it checks cart + order status first), so
-        // the capture route having already run makes this a no-op.
-        const result = await provisionCart(meta, record.userId ?? meta.userId, orderIdFromCapture)
-        if (!result.provisioned) {
+        const provisioned = await provisionForOrder(
+          meta,
+          record.userId ?? meta.userId,
+          orderIdFromCapture
+        )
+        if (!provisioned) {
           // 5xx so PayPal retries — the buyer has paid and must get their items.
-          console.error("[paypal webhook] provisioning failed:", orderIdFromCapture, result.reason)
+          console.error("[paypal webhook] provisioning failed:", orderIdFromCapture)
           return NextResponse.json({ error: "Provisioning failed" }, { status: 500 })
         }
         return OK()

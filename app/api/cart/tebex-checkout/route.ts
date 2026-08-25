@@ -23,6 +23,10 @@ import {
  * and return the hosted checkout URL directly.
  */
 export async function POST(request: NextRequest) {
+  // TEBEX-REMOVED 2026-08-17: Tebex is no longer used for payments.
+  // Remove this early return to restore the original handler below.
+  return NextResponse.json({ error: "Tebex is no longer used" }, { status: 410 });
+  /* TEBEX-REMOVED 2026-08-17: original handler preserved below.
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -122,4 +126,5 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
+  */
 }
