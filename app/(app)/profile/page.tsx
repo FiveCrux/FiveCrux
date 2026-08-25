@@ -80,6 +80,7 @@ import { useSession as useNextAuthSession } from "next-auth/react";
 import { Camera, X, Megaphone, ShieldCheck, Store, BarChart3 } from "lucide-react";
 import CreatorAnalytics from "@/componentss/profile/creator-analytics";
 import SideBannersManager from "@/componentss/profile/side-banners-manager";
+import ExpiringNotice from "@/componentss/profile/expiring-notice";
 import AdDetailedAnalyticsModal from "@/componentss/profile/ad-detailed-analytics-modal";
 import GetVerified from "@/componentss/profile/get-verified";
 import GiveawayWinners from "@/componentss/profile/giveaway-winners";
@@ -597,7 +598,10 @@ export default function ProfilePage() {
     { value: "overview", label: "Overview", icon: LayoutDashboard },
     { value: "analytics", label: "Analytics", icon: BarChart3 },
     { value: "scripts", label: "Assets", icon: Package },
-    { value: "tebex-store", label: "Tebex Store", icon: Store },
+    // TEBEX-REMOVED 2026-08-17: connecting a Tebex store no longer does
+    // anything — /api/tebex/store returns 410. Hidden rather than deleted so
+    // the importer is still here if Tebex ever comes back.
+    // { value: "tebex-store", label: "Tebex Store", icon: Store },
     // PROPS-DISABLED 2026-08-17: props switched off (Tebex removed). Restore by uncommenting.
     // { value: "props", label: "Props", icon: Package },
     { value: "giveaways", label: "Giveaways", icon: Gift },
@@ -651,6 +655,9 @@ export default function ProfilePage() {
             so the dashboard fills the viewport instead of leaving big empty
             margins on wide screens. */}
         <div className="px-4 sm:px-6 lg:px-8 py-6 lg:py-8 lg:h-full lg:overflow-hidden">
+          {/* Paid placements running out. Nothing renews itself, so without this
+              the first sign is the ad quietly disappearing. */}
+          <ExpiringNotice />
           <Tabs
             value={activeTab}
             onValueChange={setActiveTab}
