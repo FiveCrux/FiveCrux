@@ -377,6 +377,10 @@ export default function AdminPage() {
   const userRoles = (session?.user as any)?.roles || [];
   const isModerator = userRoles.includes("moderator");
   const isFounder = userRoles.includes("founder");
+  // Matches requireRole(["admin","founder"]) on the money/roles endpoints. A
+  // plain admin is not a founder, but the API accepts them — gating the tab on
+  // isFounder alone would hide a screen they are allowed to use.
+  const isAdminOrFounder = isFounder || userRoles.includes("admin");
 
   // Seed the pending verification badge count (independent of opening the tab).
   useEffect(() => {
@@ -662,6 +666,13 @@ export default function AdminPage() {
     icon: any;
     badge?: number;
     gated?: boolean;
+    /**
+     * Founder/admin only. `gated` cannot express this: its filter is
+     * `!gated || isModerator || isFounder`, so a gated item still shows to
+     * moderators. Tabs whose API refuses moderators need this instead,
+     * otherwise the sidebar offers a tab that answers 403 when opened.
+     */
+    adminOnly?: boolean;
   }[] = [
     { value: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     {
@@ -690,7 +701,7 @@ export default function AdminPage() {
       gated: true,
       badge: blockedCount,
     },
-    { value: "pricing", label: "Pricing", icon: Tag, gated: true },
+    { value: "pricing", label: "Pricing", icon: Tag, gated: true, adminOnly: true },
     { value: "home-content", label: "Home Content", icon: FileText, gated: true },
   ];
 
@@ -1088,7 +1099,7 @@ export default function AdminPage() {
               </div>
               <nav className="mt-2 space-y-0.5">
                 {navItems
-                  .filter((item) => !item.gated || isModerator || isFounder)
+                  .filter((item) => (!item.gated || isModerator || isFounder) && (!item.adminOnly || isAdminOrFounder))
                   .map((item) => {
                     const active = activeTab === item.value;
                     const Icon = item.icon;
@@ -2663,7 +2674,7 @@ export default function AdminPage() {
             )}
 
             {/* What FiveCrux charges for its own placements (founder/admin) */}
-            {isFounder && (
+            {isAdminOrFounder && (
               <TabsContent value="pricing" className="mt-6">
                 <PricingManager />
               </TabsContent>
