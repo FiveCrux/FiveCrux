@@ -48,6 +48,7 @@ import {
   LogOut,
   CalendarDays,
   ShieldCheck,
+  ShieldAlert,
   Search,
 } from "lucide-react";
 import Link from "next/link";
@@ -100,6 +101,7 @@ import Navbar from "@/componentss/shared/navbar";
 import Footer from "@/componentss/shared/footer";
 import FileUpload from "@/componentss/shared/file-upload";
 import VerificationRequests from "@/componentss/admin/verification-requests";
+import BlockedUsers from "@/componentss/admin/blocked-users";
 import HomeContentManager from "@/componentss/admin/home-content-manager";
 import { useRoleValidation } from "@/hooks/use-role-validation";
 import { getUserProfilePicture } from "@/lib/user-utils";
@@ -368,6 +370,7 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [verificationCount, setVerificationCount] = useState(0);
+  const [blockedCount, setBlockedCount] = useState(0);
 
   // Check if user has moderator role
   const userRoles = (session?.user as any)?.roles || [];
@@ -678,6 +681,13 @@ export default function AdminPage() {
       icon: ShieldCheck,
       gated: true,
       badge: verificationCount,
+    },
+    {
+      value: "blacklist",
+      label: "Blacklist",
+      icon: ShieldAlert,
+      gated: true,
+      badge: blockedCount,
     },
     { value: "home-content", label: "Home Content", icon: FileText, gated: true },
   ];
@@ -2640,6 +2650,13 @@ export default function AdminPage() {
             {(isModerator || isFounder) && (
               <TabsContent value="verification" className="mt-6">
                 <VerificationRequests onCountChange={setVerificationCount} />
+              </TabsContent>
+            )}
+
+            {/* Chargeback blacklist (gated) */}
+            {(isModerator || isFounder) && (
+              <TabsContent value="blacklist" className="mt-6">
+                <BlockedUsers onCountChange={setBlockedCount} />
               </TabsContent>
             )}
 
