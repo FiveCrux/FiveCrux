@@ -161,7 +161,7 @@ export default function AdvertisePanel() {
 
   useEffect(() => {
     let cancelled = false
-    fetch("/api/advertise/pricing")
+    fetch("/api/advertise/pricing", { cache: "no-store" })
       .then((r) => r.json())
       .then((d) => {
         if (cancelled) return
@@ -313,7 +313,7 @@ export default function AdvertisePanel() {
   // Durations + prices come live from the Tebex "SIDE ADVERTISEMENT" category.
   useEffect(() => {
     let alive = true
-    fetch("/api/side-banners/packages")
+    fetch("/api/side-banners/packages", { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (!alive) return

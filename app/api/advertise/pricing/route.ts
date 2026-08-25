@@ -2,16 +2,18 @@ import { NextResponse } from "next/server";
 
 import { getPlatformPriceMap } from "@/lib/platform-pricing";
 
-// Live platform pricing for the /advertise UI. Prices are the single source of
-// truth in FiveCrux's Tebex store (lib/tebex-pricing). The store token stays
-// server-side; the client only receives the resolved key -> price map.
+// Live platform pricing for the /advertise UI.
 //
 // Response: { configured, currency, prices: { "ads:starter:1": 40, ... } }
-// Keys with no live price are omitted (UI shows them as unavailable).
 //
-// Cached at the edge of our own service (the price map is memoized for 5 min in
-// lib/tebex-pricing), plus a short s-maxage so the route response is reusable.
-export const revalidate = 60;
+// NOT cached. This used to carry `revalidate = 60`, which made sense when the
+// prices came from a slow external Tebex call. They now come from our own DB
+// and are edited from the admin panel, so a cache means an admin changes a
+// price and the site keeps quoting the old one for up to a minute — longer
+// across edge regions. Being able to change a price and see it immediately is
+// the entire point of the pricing screen, and the query is cheap.
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export async function GET() {
   try {
@@ -20,7 +22,8 @@ export async function GET() {
     const { currency, prices } = await getPlatformPriceMap();
     return NextResponse.json(
       { configured, currency, prices },
-      { headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300" } }
+      { headers: { "Cache-Control": "no-store" } }  // admin-editable price: a CDN
+      // copy would keep quoting the old one after a change
     );
   } catch (e) {
     console.error("advertise/pricing error:", e);
