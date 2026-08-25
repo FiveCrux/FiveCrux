@@ -18,8 +18,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
     const userRoles = (session.user as any).roles || []
-    if (!userRoles.includes('admin') && !userRoles.includes('founder')) {
-      return NextResponse.json({ error: 'Forbidden: Admin access required' }, { status: 403 })
+    // Moderators are staff: middleware.ts lets them into /admin and
+    // lib/api-auth's requireStaff treats them as staff. Reviewing content is
+    // the role's whole purpose, so it must include the review queues — this
+    // check used to hand-roll admin||founder and locked them out entirely.
+    if (!userRoles.includes('admin') && !userRoles.includes('founder') && !userRoles.includes('moderator')) {
+      return NextResponse.json({ error: 'Forbidden: Staff access required' }, { status: 403 })
     }
 
     const { searchParams } = new URL(request.url)
@@ -176,8 +180,12 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
     const userRoles = (session.user as any).roles || []
-    if (!userRoles.includes('admin') && !userRoles.includes('founder')) {
-      return NextResponse.json({ error: 'Forbidden: Admin access required' }, { status: 403 })
+    // Moderators are staff: middleware.ts lets them into /admin and
+    // lib/api-auth's requireStaff treats them as staff. Reviewing content is
+    // the role's whole purpose, so it must include the review queues — this
+    // check used to hand-roll admin||founder and locked them out entirely.
+    if (!userRoles.includes('admin') && !userRoles.includes('founder') && !userRoles.includes('moderator')) {
+      return NextResponse.json({ error: 'Forbidden: Staff access required' }, { status: 403 })
     }
 
     const body = await request.json()

@@ -116,7 +116,10 @@ interface Prop {
 export function useAdminUsers() {
   const { data: session } = useSession()
   const userRoles = (session?.user as any)?.roles || []
-  const hasAccess = userRoles.includes('admin') || userRoles.includes('founder') || userRoles.includes('moderator')
+  // Must match /api/admin/users, which is admin/founder only. Including
+  // moderator here enabled a query the API refuses, so react-query retried a
+  // 403 in a loop and the dashboard never finished loading for them.
+  const hasAccess = userRoles.includes('admin') || userRoles.includes('founder')
 
   return useInfiniteQuery<{ users: User[], hasMore: boolean }>({
     queryKey: ['admin-users'],
@@ -143,7 +146,10 @@ export function useAdminUsers() {
 export function useAdminScripts() {
   const { data: session } = useSession()
   const userRoles = (session?.user as any)?.roles || []
-  const hasAccess = userRoles.includes('admin') || userRoles.includes('founder')
+  const hasAccess =
+    userRoles.includes('admin') ||
+    userRoles.includes('founder') ||
+    userRoles.includes('moderator')
 
   return useInfiniteQuery<{ scripts: Script[], hasMore: boolean }>({
     queryKey: ['admin-scripts'],
@@ -170,7 +176,10 @@ export function useAdminScripts() {
 export function useAdminGiveaways() {
   const { data: session } = useSession()
   const userRoles = (session?.user as any)?.roles || []
-  const hasAccess = userRoles.includes('admin') || userRoles.includes('founder')
+  const hasAccess =
+    userRoles.includes('admin') ||
+    userRoles.includes('founder') ||
+    userRoles.includes('moderator')
 
   return useInfiniteQuery<{ giveaways: Giveaway[], hasMore: boolean }>({
     queryKey: ['admin-giveaways'],
@@ -197,7 +206,10 @@ export function useAdminGiveaways() {
 export function useAdminAds() {
   const { data: session } = useSession()
   const userRoles = (session?.user as any)?.roles || []
-  const hasAccess = userRoles.includes('admin') || userRoles.includes('founder') || userRoles.includes('moderator')
+  // Must match /api/admin/advertisements, which is admin/founder only. With
+  // moderator here the query 403'd on a retry loop and held the dashboard's
+  // loading gate open for them.
+  const hasAccess = userRoles.includes('admin') || userRoles.includes('founder')
 
   return useInfiniteQuery<{ ads: Ad[], hasMore: boolean }>({
     queryKey: ['admin-ads'],
@@ -224,9 +236,6 @@ export function useAdminAds() {
 
 // Fetch Props with pagination
 export function useAdminProps() {
-  const { data: session } = useSession()
-  const userRoles = (session?.user as any)?.roles || []
-  const hasAccess = userRoles.includes('admin') || userRoles.includes('founder')
 
   return useInfiniteQuery<{ props: Prop[], hasMore: boolean }>({
     queryKey: ['admin-props'],
@@ -242,7 +251,10 @@ export function useAdminProps() {
       }
       return undefined
     },
-    enabled: !!session?.user && hasAccess,
+    // ADS-DISABLED 2026-08-16 — /api/admin/props returns 410 while the props
+    // feature is off. Querying it only retried a dead endpoint and held the
+    // dashboard's loading gate open. Flip back to `hasAccess` on restore.
+    enabled: false,
     staleTime: 30000,
     refetchOnWindowFocus: true,
     initialPageParam: 0,

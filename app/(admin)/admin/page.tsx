@@ -335,9 +335,6 @@ export default function AdminPage() {
   const ads = adsData?.pages.flatMap((page) => page.ads) || [];
   const props: Prop[] = propsData?.pages.flatMap((page) => page.props) || [];
 
-  // Debug logging for ads
-  console.log("Admin Dashboard - Ads:", ads.length, "Loading:", adsLoading);
-
   // Mutations
   const updateUserRolesMutation = useUpdateUserRoles();
   const updateScriptMutation = useUpdateScript();
@@ -358,15 +355,14 @@ export default function AdminPage() {
   // in dev) we render the dashboard with empty states instead of an infinite spinner.
   const loading = isFetching && !loadingTimedOut;
 
+  // Absolute, started once on mount. This used to depend on [isFetching] and
+  // clear the timer in its cleanup, so any query that flapped between fetching
+  // and idle — a retrying 403, for instance — reset the timer before it could
+  // fire, and the "never block for more than 8s" guarantee never held.
   useEffect(() => {
-    if (!isFetching) return;
-    const c = new AbortController();
-    const t = setTimeout(() => {
-      c.abort();
-      setLoadingTimedOut(true);
-    }, 8000);
+    const t = setTimeout(() => setLoadingTimedOut(true), 8000);
     return () => clearTimeout(t);
-  }, [isFetching]);
+  }, []);
 
   const [activeTab, setActiveTab] = useState("dashboard");
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -681,12 +677,12 @@ export default function AdminPage() {
       icon: Inbox,
       badge: pendingCount,
     },
-    { value: "users", label: "Users", icon: Users, gated: true },
+    { value: "users", label: "Users", icon: Users, gated: true, adminOnly: true },
     { value: "scripts", label: "Assets", icon: FileCode2 },
     { value: "giveaways", label: "Giveaways", icon: Gift },
     // PROPS-DISABLED 2026-08-17: props switched off (Tebex removed). Restore by uncommenting.
     // { value: "props", label: "Props", icon: Box },
-    { value: "ads", label: "Ads", icon: Megaphone, gated: true },
+    { value: "ads", label: "Ads", icon: Megaphone, gated: true, adminOnly: true },
     {
       value: "verification",
       label: "Verification",
@@ -702,7 +698,7 @@ export default function AdminPage() {
       badge: blockedCount,
     },
     { value: "pricing", label: "Pricing", icon: Tag, gated: true, adminOnly: true },
-    { value: "home-content", label: "Home Content", icon: FileText, gated: true },
+    { value: "home-content", label: "Home Content", icon: FileText, gated: true, adminOnly: true },
   ];
 
   // Filter scripts based on active filter
