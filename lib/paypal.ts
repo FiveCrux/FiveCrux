@@ -27,8 +27,18 @@ const CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET
 /**
  * Live only when explicitly asked for. Defaulting to sandbox means a missing or
  * mistyped value fails safe: test money, not real money.
+ *
+ * Both names are read because PAYPAL_ENVIRONMENT already exists in this
+ * project's env from the pre-Tebex PayPal integration. Honouring only a new
+ * name would silently ignore the value that is actually set.
  */
-export const PAYPAL_IS_LIVE = process.env.PAYPAL_ENV === "live"
+const PAYPAL_ENV_RAW = (
+  process.env.PAYPAL_ENV ||
+  process.env.PAYPAL_ENVIRONMENT ||
+  ""
+).trim().toLowerCase()
+
+export const PAYPAL_IS_LIVE = PAYPAL_ENV_RAW === "live" || PAYPAL_ENV_RAW === "production"
 
 /**
  * Currency for every order we create. Prices are displayed in EUR across the
@@ -44,14 +54,22 @@ export const PAYPAL_API_BASE = PAYPAL_IS_LIVE
   ? "https://api-m.paypal.com"
   : "https://api-m.sandbox.paypal.com"
 
-// SECURITY: refuse to boot a production deploy pointed at sandbox. Sandbox
-// credentials in production means every "successful" payment is fake money —
-// the platform would hand out ad slots and props for nothing and nobody would
-// notice until reconciliation. Mirrors the dev-flag boot guard in auth.ts.
-if (process.env.NODE_ENV === "production" && CLIENT_ID && !PAYPAL_IS_LIVE) {
-  throw new Error(
-    "PayPal is configured for SANDBOX in a production build. Set PAYPAL_ENV=live."
-  )
+// SECURITY: refuse to take payments in production while pointed at sandbox.
+// Sandbox credentials in production means every "successful" payment is fake
+// money — the platform would hand out ad slots and props for nothing and nobody
+// would notice until reconciliation.
+//
+// Checked when the client is actually built, NOT at module scope: `next build`
+// runs with NODE_ENV=production and imports every route to collect page data,
+// so a module-level throw fails the build on any machine holding sandbox
+// credentials. This still fires on the first real payment attempt, which is the
+// moment that matters.
+function assertNotSandboxInProduction(): void {
+  if (process.env.NODE_ENV === "production" && !PAYPAL_IS_LIVE) {
+    throw new Error(
+      "PayPal is configured for SANDBOX in production. Set PAYPAL_ENVIRONMENT=live (or PAYPAL_ENV=live)."
+    )
+  }
 }
 
 export function isPayPalConfigured(): boolean {
@@ -71,6 +89,7 @@ export function getPayPalClient(): Client {
       "PayPal is not configured (PAYPAL_CLIENT_ID / PAYPAL_CLIENT_SECRET)."
     )
   }
+  assertNotSandboxInProduction()
   if (cachedClient) return cachedClient
 
   cachedClient = new Client({
@@ -105,6 +124,7 @@ export async function getPayPalAccessToken(): Promise<string> {
   if (!CLIENT_ID || !CLIENT_SECRET) {
     throw new Error("PayPal is not configured.")
   }
+  assertNotSandboxInProduction()
   const auth = Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString("base64")
   const res = await fetch(`${PAYPAL_API_BASE}/v1/oauth2/token`, {
     method: "POST",

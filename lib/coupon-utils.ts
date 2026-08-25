@@ -72,3 +72,76 @@ export function validateCouponSchedule(
 
   return null;
 }
+
+// ---------------------------------------------------------------------------
+// Full server-side coupon validation.
+//
+// The Tebex checkout path delegates coupon rules to Tebex, which owns them
+// there. PayPal has no such authority, so FiveCrux has to enforce them itself
+// again — otherwise a maxUses=1 coupon is usable an unlimited number of times,
+// which is a direct, unbounded money loss.
+//
+// Pure over its inputs so the rules can be tested without a database; the
+// caller does the reads. Locked by scripts/check-paypal.mjs.
+// ---------------------------------------------------------------------------
+
+export type CouponRules = {
+  isActive: boolean | null
+  startDate: Date | null
+  expiryDate: Date | null
+  minCartValue: string | number | null
+  maxUses: number | null
+  usedCount: number | null
+  perUserLimit: number | null
+  discountType: string
+  discountValue: string | number
+}
+
+export function validateCouponRules(
+  coupon: CouponRules,
+  ctx: { cartTotal: number; userRedemptions: number; now?: Date }
+): { error: string } | null {
+  const now = ctx.now ?? new Date()
+
+  if (coupon.isActive === false) return { error: "Coupon is not active" }
+
+  const schedule = validateCouponSchedule(coupon.startDate, coupon.expiryDate, now)
+  if (schedule) return schedule
+
+  const min = Number(coupon.minCartValue ?? 0)
+  if (min > 0 && ctx.cartTotal < min) {
+    return { error: `Cart total must be at least ${min.toFixed(2)} to use this coupon` }
+  }
+
+  // maxUses null/0 means unlimited — only enforce a positive cap.
+  const maxUses = Number(coupon.maxUses ?? 0)
+  if (maxUses > 0 && Number(coupon.usedCount ?? 0) >= maxUses) {
+    return { error: "Coupon has reached its usage limit" }
+  }
+
+  const perUser = Number(coupon.perUserLimit ?? 0)
+  if (perUser > 0 && ctx.userRedemptions >= perUser) {
+    return { error: "You have already used this coupon" }
+  }
+
+  return null
+}
+
+/**
+ * Discount for a validated coupon, clamped to the cart total so a large flat
+ * coupon can never produce a negative charge.
+ */
+export function calculateCouponDiscount(
+  coupon: Pick<CouponRules, "discountType" | "discountValue">,
+  cartTotal: number
+): number {
+  const value = Number(coupon.discountValue ?? 0)
+  if (!Number.isFinite(value) || value <= 0) return 0
+
+  // The enum carries both casings for historical reasons ('percentage' and
+  // 'Percentage'); treat them the same rather than silently charging full price.
+  const type = String(coupon.discountType || "").toLowerCase()
+  const raw = type === "percentage" ? (cartTotal * value) / 100 : value
+
+  return Math.min(Math.max(raw, 0), cartTotal)
+}

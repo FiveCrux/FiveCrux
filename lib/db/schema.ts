@@ -668,6 +668,42 @@ export const tebexOrders = pgTable('tebex_orders', {
   updatedAt: timestamp('updated_at').defaultNow(),
 });
 
+// PayPal orders — FiveCrux's OWN sales (the cart: props, ad slots,
+// featured-script slots, subscriptions). Deliberately a SEPARATE table from
+// tebex_orders rather than a shared `payment_orders`: seller scripts still
+// check out through Tebex, and generalising the table would mean touching that
+// live path for no benefit to this migration.
+export const paypalOrders = pgTable('paypal_orders', {
+  // PayPal's own order id — the natural key. Using it as the PK is what makes
+  // capture and webhook handling idempotent: a replay simply conflicts.
+  id: text('id').primaryKey().notNull(),
+  userId: text('user_id').references(() => users.id, { onDelete: 'set null' }),
+  // 'platform_cart' for a cart checkout, 'platform_fee' for a direct slot buy.
+  kind: text('kind').notNull(),
+  // 'created' | 'approved' | 'captured' | 'refunded' | 'failed'
+  status: text('status').default('created').notNull(),
+  // Set once the capture succeeds; also what refund webhooks arrive against.
+  captureId: text('capture_id'),
+  amount: numeric('amount', { precision: 10, scale: 2 }),
+  currency: text('currency').default('EUR').notNull(),
+  // Provisioning payload — the same shape the Tebex `custom` field carried, so
+  // lib/provisioning.ts reads it identically no matter which rail paid.
+  custom: json('custom'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+}, (t) => ({
+  captureIdx: index('paypal_orders_capture_idx').on(t.captureId),
+}));
+export type PaypalOrder = typeof paypalOrders.$inferSelect;
+export type NewPaypalOrder = typeof paypalOrders.$inferInsert;
+
+export const paypalOrdersRelations = relations(paypalOrders, ({ one }) => ({
+  user: one(users, {
+    fields: [paypalOrders.userId],
+    references: [users.id],
+  }),
+}));
+
 export const tebexOrdersRelations = relations(tebexOrders, ({ one }) => ({
   user: one(users, {
     fields: [tebexOrders.userId],
