@@ -1,15 +1,13 @@
 // Server-side CATALOG for platform paid slots (ad slots + featured-script slots).
 //
-// PRICES ARE NOT STORED HERE — they are the single source of truth in FiveCrux's
-// Tebex store and are fetched live (see lib/tebex-pricing.ts). This file only
-// defines the STRUCTURE Tebex can't model: which tiers exist, the valid
-// durations, and how many slots each tier grants. The SERVER still resolves the
-// authoritative price (from Tebex, never the client) so a tampered client price
-// is ignored.
+// This file defines the STRUCTURE: which tiers exist, the valid durations, and
+// how many slots each tier grants. Prices live in lib/platform-pricing.ts. The
+// SERVER always resolves the price, never the client, so a tampered client
+// price is ignored.
 //
 // itemId convention used by the cart: `${packageType}:${packageId}:${duration}`
 // where duration = months for ads, weeks for featured-scripts.
-import { getLivePriceByKey } from "@/lib/tebex-pricing";
+import { getPlatformPrice } from "@/lib/platform-pricing";
 
 export type PackageType = "ads" | "featured-scripts";
 
@@ -90,8 +88,10 @@ export async function resolvePackage(
 ): Promise<ResolvedPackage | null> {
   const meta = resolvePackageMeta(packageType, packageId, duration);
   if (!meta) return null;
-  const live = await getLivePriceByKey(packageType, packageId, duration);
-  if (!live) return null; // not configured/priced yet → not purchasable
+  // Prices come from the local table now that Tebex is gone. Still null-checked:
+  // an unpriced package must be unbuyable rather than silently free.
+  const live = getPlatformPrice(packageType, packageId, duration);
+  if (!live) return null;
   return { ...meta, price: live.amount, currency: live.currency };
 }
 

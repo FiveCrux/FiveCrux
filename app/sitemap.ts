@@ -9,7 +9,8 @@ const base = process.env.NEXTAUTH_URL || "https://fivecrux.com";
 const STATIC_ROUTES: MetadataRoute.Sitemap = [
   { url: `${base}/`, lastModified: new Date() },
   { url: `${base}/scripts`, lastModified: new Date() },
-  { url: `${base}/props`, lastModified: new Date() },
+  // PROPS-DISABLED 2026-08-17: props switched off (Tebex removed). Restore by uncommenting.
+  // { url: `${base}/props`, lastModified: new Date() },
   { url: `${base}/giveaways`, lastModified: new Date() },
   { url: `${base}/advertise`, lastModified: new Date() },
 ];
@@ -33,10 +34,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: toDate(s.updatedAt ?? s.createdAt),
     }));
 
-    const propUrls: MetadataRoute.Sitemap = (props || []).map((p: any) => ({
-      url: `${base}/prop/${p.id}`,
-      lastModified: toDate(p.updatedAt ?? p.createdAt),
-    }));
+    // PROPS-DISABLED 2026-08-17: prop pages are not routable, so they must not be listed.
+    const propUrls: MetadataRoute.Sitemap = [];
+    void props;
 
     const giveawayUrls: MetadataRoute.Sitemap = (giveaways || []).map((g: any) => ({
       url: `${base}/giveaway/${g.id}`,

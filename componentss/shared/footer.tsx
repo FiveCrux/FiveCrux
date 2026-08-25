@@ -10,7 +10,8 @@ type FooterLink = { name: string; href: string; external?: boolean }
 
 const MARKETPLACE: FooterLink[] = [
   { name: "Assets", href: "/scripts" },
-  { name: "Props", href: "/props" },
+  // PROPS-DISABLED 2026-08-17: props switched off (Tebex removed). Restore by uncommenting.
+  // { name: "Props", href: "/props" },
   { name: "Giveaways", href: "/giveaways" },
   { name: "Advertise", href: "/advertise" },
 ]

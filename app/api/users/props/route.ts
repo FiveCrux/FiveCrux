@@ -6,6 +6,10 @@ import { approvedProps, pendingProps, rejectedProps } from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
 
 export async function GET(request: NextRequest) {
+  // PROPS-DISABLED 2026-08-17: props switched off (Tebex removed).
+  // Remove this early return to restore the original handler below.
+  return NextResponse.json({ error: "Props are not available" }, { status: 410 });
+  /* PROPS-DISABLED 2026-08-17: original handler preserved below.
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -46,9 +50,14 @@ export async function GET(request: NextRequest) {
     console.error("Error fetching user props:", error);
     return NextResponse.json({ error: "Failed to fetch user props" }, { status: 500 });
   }
+  */
 }
 
 export async function DELETE(request: NextRequest) {
+  // PROPS-DISABLED 2026-08-17: props switched off (Tebex removed).
+  // Remove this early return to restore the original handler below.
+  return NextResponse.json({ error: "Props are not available" }, { status: 410 });
+  /* PROPS-DISABLED 2026-08-17: original handler preserved below.
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -95,4 +104,5 @@ export async function DELETE(request: NextRequest) {
     console.error("Error deleting user prop:", error);
     return NextResponse.json({ error: "Failed to delete user prop" }, { status: 500 });
   }
+  */
 }

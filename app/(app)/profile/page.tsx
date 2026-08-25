@@ -598,7 +598,8 @@ export default function ProfilePage() {
     { value: "analytics", label: "Analytics", icon: BarChart3 },
     { value: "scripts", label: "Assets", icon: Package },
     { value: "tebex-store", label: "Tebex Store", icon: Store },
-    { value: "props", label: "Props", icon: Package },
+    // PROPS-DISABLED 2026-08-17: props switched off (Tebex removed). Restore by uncommenting.
+    // { value: "props", label: "Props", icon: Package },
     { value: "giveaways", label: "Giveaways", icon: Gift },
     { value: "winners", label: "Winners", icon: Trophy },
     { value: "ad-slots", label: "My Ad Slots", icon: Tag },

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { getLivePriceMapByKey, isTebexConfigured } from "@/lib/tebex-pricing";
+import { getPlatformPriceMap } from "@/lib/platform-pricing";
 
 // Live platform pricing for the /advertise UI. Prices are the single source of
 // truth in FiveCrux's Tebex store (lib/tebex-pricing). The store token stays
@@ -15,8 +15,9 @@ export const revalidate = 60;
 
 export async function GET() {
   try {
-    const configured = isTebexConfigured();
-    const { currency, prices } = await getLivePriceMapByKey();
+    // Prices are local now that Tebex is gone, so this is always configured.
+    const configured = true;
+    const { currency, prices } = getPlatformPriceMap();
     return NextResponse.json(
       { configured, currency, prices },
       { headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300" } }

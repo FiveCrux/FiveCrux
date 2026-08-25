@@ -669,7 +669,8 @@ export default function AdminPage() {
     { value: "users", label: "Users", icon: Users, gated: true },
     { value: "scripts", label: "Assets", icon: FileCode2 },
     { value: "giveaways", label: "Giveaways", icon: Gift },
-    { value: "props", label: "Props", icon: Box },
+    // PROPS-DISABLED 2026-08-17: props switched off (Tebex removed). Restore by uncommenting.
+    // { value: "props", label: "Props", icon: Box },
     { value: "ads", label: "Ads", icon: Megaphone, gated: true },
     {
       value: "verification",

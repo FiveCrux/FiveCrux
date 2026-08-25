@@ -11,7 +11,8 @@ import { Code2, Package, Gift, type LucideIcon } from "lucide-react";
 // page (props, etc.) so the chip row looks and behaves identically everywhere.
 const SHORTCUTS: { name: string; icon: LucideIcon; href: string }[] = [
   { name: "Assets", icon: Code2, href: "/scripts" },
-  { name: "Props", icon: Package, href: "/props" },
+  // PROPS-DISABLED 2026-08-17: props switched off (Tebex removed). Restore by uncommenting.
+  // { name: "Props", icon: Package, href: "/props" },
   { name: "Giveaways", icon: Gift, href: "/giveaways" },
 ];
 

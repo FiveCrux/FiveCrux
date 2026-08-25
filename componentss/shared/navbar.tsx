@@ -13,7 +13,8 @@ import { useNavData } from "@/componentss/shared/nav-data-context"
 
 // Product types that sit in the nav AFTER the (dynamic) script categories.
 const STATIC_NAV: { name: string; link: string }[] = [
-  { name: "Props", link: "/props" },
+  // PROPS-DISABLED 2026-08-17: props switched off (Tebex removed). Restore by uncommenting.
+  // { name: "Props", link: "/props" },
   { name: "Giveaways", link: "/giveaways" },
 ]
 
