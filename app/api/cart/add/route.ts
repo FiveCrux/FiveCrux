@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/auth";
+import { assertNotBlocked } from "@/lib/api-auth";
 
 import { db } from "@/lib/db/client";
 
@@ -104,6 +105,12 @@ export async function POST(request: NextRequest) {
                 { status: 401 }
             );
         }
+
+        // Fraud block: a chargeback-blocked account keeps read access but
+        // must not be able to buy. Checked against the DB, not the session
+        // copy, so a block applies on the next request.
+        const blocked = await assertNotBlocked((session.user as any).id);
+        if (blocked) return blocked.response;
 
         const user = session.user as any;
 

@@ -4,7 +4,12 @@ import { eq } from "drizzle-orm"
 import { db } from "@/lib/db/client"
 import { paypalOrders } from "@/lib/db/schema"
 import { verifyPayPalWebhook } from "@/lib/paypal"
-import { provisionCart, revokeForOrder, parseCustom } from "@/lib/provisioning"
+import {
+  provisionCart,
+  revokeForOrder,
+  parseCustom,
+  blockUserForChargeback,
+} from "@/lib/provisioning"
 
 /**
  * POST /api/paypal/webhook
@@ -143,6 +148,15 @@ export async function POST(request: NextRequest) {
           .where(eq(paypalOrders.id, record.id))
 
         await revokeForOrder({ id: record.id, custom: record.custom })
+
+        // A reversal is not an accident — block the account so the same
+        // buy-then-reverse cycle cannot simply be repeated. REVERSED and DENIED
+        // are the chargeback-shaped events; a plain REFUNDED can be a support
+        // decision we made ourselves, so it does not carry a block.
+        if (type !== "PAYMENT.CAPTURE.REFUNDED") {
+          const meta = parseCustom(record.custom)
+          await blockUserForChargeback(record.userId ?? meta?.userId, record.id)
+        }
         return OK()
       }
 

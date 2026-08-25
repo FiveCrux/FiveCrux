@@ -15,6 +15,7 @@ import {
   provisionCart,
   restoreCouponForFiveCruxOrder,
   revokeForOrder,
+  blockUserForChargeback,
 } from "@/lib/provisioning";
 
 /**
@@ -448,6 +449,10 @@ export async function POST(request: NextRequest) {
           });
           if (transitioned) {
             await revokeForOrder(existing);
+            // A chargeback is not an accident — block the account so the same
+            // buy-then-reverse cycle cannot simply be repeated.
+            const meta = parseCustom(existing.custom);
+            await blockUserForChargeback(existing.userId ?? meta?.userId, existing.id);
           }
         }
         return NextResponse.json({ ok: true });

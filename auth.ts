@@ -98,6 +98,11 @@ export const authOptions: NextAuthOptions = {
 			// fall back to the DB row (Discord). The session callback still refreshes
 			// roles from the DB on every request, so this only needs to be seeded.
 			if (user) {
+				// Seed the block flag too, so edge middleware can reject writes without
+				// a DB hit. This copy can lag by up to the token's refresh window, which
+				// is why the money paths ALSO check the database directly — see
+				// assertNotBlocked in lib/api-auth.ts.
+				;(token as any).isBlocked = Boolean((user as any).isBlocked)
 				const fromUser = (user as any).roles as string[] | undefined
 				if (fromUser) {
 					;(token as any).roles = fromUser
@@ -120,6 +125,12 @@ export const authOptions: NextAuthOptions = {
 					if (dbUser) {
 						console.log("Auth callback - User roles from DB:", dbUser.roles)
 						;(session.user as any).roles = dbUser.roles
+						// Fraud block. Read here rather than cached on the JWT so a block
+						// takes effect on the user's very next request — a chargeback
+						// fraudster must not keep acting until their token happens to
+						// refresh. This callback already hits the DB, so it costs nothing.
+						;(session.user as any).isBlocked = Boolean((dbUser as any).isBlocked)
+						;(session.user as any).blockedReason = (dbUser as any).blockedReason ?? null
 						;(session.user as any).username = dbUser.username
 						;(session.user as any).createdAt = dbUser.createdAt
 						// Use name from database if available, otherwise use Discord name.

@@ -14,6 +14,17 @@ export const users = pgTable('users', {
   // The seller's OWN Tebex webstore public token, saved once so they can list &
   // import their whole Tebex catalogue from their profile (Model B, per-seller).
   tebexStoreToken: text('tebex_store_token'),
+  // Fraud block. Set automatically when a chargeback lands, or by hand from the
+  // admin panel. A blocked user can still SIGN IN and browse — they simply
+  // cannot act: no buying, submitting, entering giveaways, or any other write.
+  // Read-only rather than a hard ban so they can still see their own history
+  // (and so support has something to talk to them about).
+  isBlocked: boolean('is_blocked').default(false).notNull(),
+  blockedReason: text('blocked_reason'),
+  // 'chargeback' when a reversal triggered it, 'manual' when an admin did.
+  blockedSource: text('blocked_source'),
+  blockedAt: timestamp('blocked_at'),
+  blockedBy: text('blocked_by'),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 });

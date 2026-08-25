@@ -2,6 +2,7 @@ import { eq, sql } from "drizzle-orm"
 
 import { db } from "@/lib/db/client"
 import {
+  users,
   orders,
   orderItems,
   carts,
@@ -205,5 +206,50 @@ export async function revokeForOrder(order: { id: string; custom: unknown }): Pr
     }
   } catch (e) {
     console.error("[provisioning] revoke failed for order", order.id, e);
+  }
+}
+
+/**
+ * Block an account after a payment reversal.
+ *
+ * The fraud this stops: buy, pay, file a chargeback — money back, goods kept —
+ * then come back and do it again. Revoking the entitlement alone does not stop
+ * the next attempt.
+ *
+ * The block is read-only, not a ban: the account can still sign in and browse,
+ * it just cannot buy, submit, or enter anything.
+ *
+ * Never overwrites an existing block, so a second chargeback does not erase the
+ * reason recorded for the first, and an admin's manual note is not clobbered.
+ */
+export async function blockUserForChargeback(
+  userId: string | null | undefined,
+  orderRef: string
+): Promise<void> {
+  if (!userId) return
+  try {
+    const existing = await db.query.users.findFirst({
+      where: eq(users.id, userId),
+      columns: { isBlocked: true },
+    })
+    if (existing?.isBlocked) return
+
+    await db
+      .update(users)
+      .set({
+        isBlocked: true,
+        blockedReason: `Payment reversed on order ${orderRef}. Contact support to resolve.`,
+        blockedSource: "chargeback",
+        blockedAt: new Date(),
+        blockedBy: "system",
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId))
+
+    console.warn(`[provisioning] blocked ${userId} after reversal on ${orderRef}`)
+  } catch (error) {
+    // Never let this break reversal handling — the revoke matters more, and a
+    // webhook that throws here would be retried forever.
+    console.error("[provisioning] blockUserForChargeback failed:", userId, error)
   }
 }

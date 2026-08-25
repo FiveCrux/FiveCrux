@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/auth";
+import { assertNotBlocked } from "@/lib/api-auth";
 import { createBasket, getBasketAuthUrl, FIVECRUX_TEBEX_PUBLIC_TOKEN } from "@/lib/tebex";
 import {
   prepareCartCheckout,
@@ -26,6 +27,11 @@ export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions);
     if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const user = session.user as any;
+
+    // Fraud block: a chargeback-blocked account must not reach checkout.
+    // Checked against the DB, not the session copy, so it applies immediately.
+    const blocked = await assertNotBlocked(user.id);
+    if (blocked) return blocked.response;
 
     const storeToken = FIVECRUX_TEBEX_PUBLIC_TOKEN;
     if (!storeToken) {
