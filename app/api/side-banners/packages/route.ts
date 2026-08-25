@@ -10,7 +10,7 @@ export const revalidate = 60;
 
 export async function GET() {
   try {
-    const packages = getSideBannerPackages();
+    const packages = await getSideBannerPackages();
     return NextResponse.json(
       { packages },
       { headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300" } }

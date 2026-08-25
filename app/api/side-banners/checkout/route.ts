@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
 
     // The price table is also the duration whitelist: an unpriced duration is
     // not purchasable, rather than silently free.
-    const price = getPlatformPrice("sidebanner", "slot", durationWeeks);
+    const price = await getPlatformPrice("sidebanner", "slot", durationWeeks);
     if (!price) {
       return NextResponse.json(
         { error: "That duration is not available", unmapped: [`sidebanner:slot:${durationWeeks}`] },

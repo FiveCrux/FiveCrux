@@ -708,6 +708,26 @@ export const paypalOrders = pgTable('paypal_orders', {
 export type PaypalOrder = typeof paypalOrders.$inferSelect;
 export type NewPaypalOrder = typeof paypalOrders.$inferInsert;
 
+// Admin-editable prices for everything FiveCrux sells itself — ad slots,
+// featured-script slots, side banners.
+//
+// These used to be read live from Tebex, then were hardcoded when Tebex was
+// removed, which meant a price change needed a deploy. This puts them back
+// under admin control without depending on anyone else's platform.
+//
+// A missing row falls back to the built-in default in lib/platform-pricing.ts,
+// so pricing never breaks just because a row was not created.
+export const platformPrices = pgTable('platform_prices', {
+  // `${packageType}:${packageId}:${duration}` — e.g. 'ads:starter:3'.
+  key: text('key').primaryKey().notNull(),
+  amount: numeric('amount', { precision: 10, scale: 2 }).notNull(),
+  currency: text('currency').default('EUR').notNull(),
+  updatedBy: text('updated_by'),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+export type PlatformPrice = typeof platformPrices.$inferSelect;
+export type NewPlatformPrice = typeof platformPrices.$inferInsert;
+
 export const paypalOrdersRelations = relations(paypalOrders, ({ one }) => ({
   user: one(users, {
     fields: [paypalOrders.userId],

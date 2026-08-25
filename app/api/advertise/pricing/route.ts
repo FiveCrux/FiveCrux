@@ -17,7 +17,7 @@ export async function GET() {
   try {
     // Prices are local now that Tebex is gone, so this is always configured.
     const configured = true;
-    const { currency, prices } = getPlatformPriceMap();
+    const { currency, prices } = await getPlatformPriceMap();
     return NextResponse.json(
       { configured, currency, prices },
       { headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300" } }

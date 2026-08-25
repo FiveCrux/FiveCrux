@@ -90,7 +90,7 @@ export async function resolvePackage(
   if (!meta) return null;
   // Prices come from the local table now that Tebex is gone. Still null-checked:
   // an unpriced package must be unbuyable rather than silently free.
-  const live = getPlatformPrice(packageType, packageId, duration);
+  const live = await getPlatformPrice(packageType, packageId, duration);
   if (!live) return null;
   return { ...meta, price: live.amount, currency: live.currency };
 }

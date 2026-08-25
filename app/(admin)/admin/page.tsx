@@ -102,6 +102,7 @@ import Footer from "@/componentss/shared/footer";
 import FileUpload from "@/componentss/shared/file-upload";
 import VerificationRequests from "@/componentss/admin/verification-requests";
 import BlockedUsers from "@/componentss/admin/blocked-users";
+import PricingManager from "@/componentss/admin/pricing-manager";
 import HomeContentManager from "@/componentss/admin/home-content-manager";
 import { useRoleValidation } from "@/hooks/use-role-validation";
 import { getUserProfilePicture } from "@/lib/user-utils";
@@ -689,6 +690,7 @@ export default function AdminPage() {
       gated: true,
       badge: blockedCount,
     },
+    { value: "pricing", label: "Pricing", icon: Tag, gated: true },
     { value: "home-content", label: "Home Content", icon: FileText, gated: true },
   ];
 
@@ -2657,6 +2659,13 @@ export default function AdminPage() {
             {(isModerator || isFounder) && (
               <TabsContent value="blacklist" className="mt-6">
                 <BlockedUsers onCountChange={setBlockedCount} />
+              </TabsContent>
+            )}
+
+            {/* What FiveCrux charges for its own placements (founder/admin) */}
+            {isFounder && (
+              <TabsContent value="pricing" className="mt-6">
+                <PricingManager />
               </TabsContent>
             )}
 
