@@ -155,10 +155,17 @@ export async function POST(request: NextRequest) {
       case "PAYMENT.CAPTURE.REFUNDED":
       case "PAYMENT.CAPTURE.REVERSED":
       case "PAYMENT.CAPTURE.DENIED": {
-        // Refunds arrive keyed on the CAPTURE, not the order.
+        // Refund events are keyed on the REFUND, not the capture: `resource.id`
+        // is the refund id and will never match a stored captureId. The link
+        // with rel "up" is what points back at the capture, so that is the only
+        // reliable source. Falling back to resource.id here would silently fail
+        // to find the order — and silently skip the chargeback block with it.
         const refundedCaptureId: string | undefined =
           resource?.links?.find((l: any) => l?.rel === "up")?.href?.split("/").pop() ||
-          captureId
+          resource?.supplementary_data?.related_ids?.capture_id ||
+          // DENIED/REVERSED are capture-shaped events, where resource.id IS the
+          // capture. Refunds are not, which is why this is last.
+          (type === "PAYMENT.CAPTURE.REFUNDED" ? undefined : captureId)
 
         let record = orderIdFromCapture
           ? await db.query.paypalOrders.findFirst({ where: eq(paypalOrders.id, orderIdFromCapture) })
