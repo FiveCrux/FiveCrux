@@ -20,7 +20,8 @@ const STATIC_ROUTES: {
 }[] = [
   { path: "/", changeFrequency: "daily", priority: 1.0 },
   { path: "/scripts", changeFrequency: "daily", priority: 0.9 },
-  { path: "/marketplace", changeFrequency: "daily", priority: 0.8 },
+  // /marketplace is deliberately absent: it canonicals to /scripts, and a
+  // sitemap must not ask a crawler to index a page the site itself points away from.
   { path: "/giveaways", changeFrequency: "daily", priority: 0.7 },
   { path: "/advertise", changeFrequency: "monthly", priority: 0.4 },
   // PROPS-DISABLED 2026-08-17: props switched off. Restore by uncommenting.

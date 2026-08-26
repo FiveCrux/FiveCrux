@@ -1,6 +1,18 @@
 import Navbar from "@/componentss/shared/navbar"
 import Footer from "@/componentss/shared/footer"
 import AdvertisePanel from "@/componentss/advertise/advertise-panel"
+import type { Metadata } from "next";
+import { pageTitle, pageOpenGraph } from "@/lib/seo";
+
+const TITLE = pageTitle("Advertise to FiveM Server Owners");
+const DESCRIPTION =
+  "Put your FiveM product in front of server owners — ad slots, featured-asset slots and side banners on FiveCrux.";
+
+export const metadata: Metadata = {
+  title: TITLE,
+  description: DESCRIPTION,
+  ...pageOpenGraph(TITLE, DESCRIPTION, "/advertise"),
+};
 
 export default function AdvertisePage() {
   return (

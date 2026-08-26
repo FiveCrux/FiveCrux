@@ -59,9 +59,76 @@ export function absoluteUrl(url: string): string {
   return /^https?:\/\//i.test(url) ? url : canonicalUrl(url)
 }
 
-/** A sub-page <title>. One helper so brand casing cannot drift page to page. */
+/** A sub-page <title>. One helper so brand casing cannot drift page to page.
+ *  The separator matches what listing pages already ship, so the site reads as
+ *  one thing rather than two conventions. */
 export function pageTitle(label: string): string {
-  return `${label} — ${SITE_NAME}`
+  return `${label} | ${SITE_NAME}`
+}
+
+/** Search-facing name and blurb for a category page.
+ *
+ *  Not the same as the label in the nav. These are chosen from Bing's own
+ *  keyword data for this market (US, 90 days), because the word a seller uses
+ *  and the word a buyer types are often different:
+ *
+ *    fivem cars  2296  vs  fivem vehicles  408   (5.6x)
+ *    fivem mlo(s) 1329 vs  fivem maps       81   (16x)
+ *    fivem eup    212  vs  fivem clothing  165
+ *
+ *  So the plain word stays — nobody should have to guess what a page is — and
+ *  the term people actually search goes next to it. "Assets" as a heading is
+ *  worth nothing on its own: "fivem assets" draws 250 against 2082 for
+ *  "fivem scripts".
+ *
+ *  Re-check with: scripts/seo-report.mjs's Bing client (GetKeyword).
+ */
+const CATEGORY_SEO: Record<string, { title: string; description: string }> = {
+  maps: {
+    title: "FiveM MLOs & Maps",
+    description:
+      "Custom FiveM MLOs and map packs — interiors, shells and full builds for QBCore, ESX and QBox roleplay servers.",
+  },
+  vehicles: {
+    title: "FiveM Cars & Vehicles",
+    description:
+      "FiveM car and vehicle packs — add-on cars, emergency fleets and handling-tuned models for roleplay servers.",
+  },
+  clothing: {
+    title: "FiveM Clothing & EUP",
+    description:
+      "FiveM clothing and EUP packs — civilian outfits, uniforms and accessories for QBCore, ESX and QBox servers.",
+  },
+  peds: {
+    title: "FiveM Peds",
+    description: "FiveM ped models and character packs for roleplay servers.",
+  },
+  weapons: {
+    title: "FiveM Weapons",
+    description: "FiveM weapon packs, models and attachments for roleplay servers.",
+  },
+  script: {
+    title: "FiveM Scripts",
+    description:
+      "FiveM scripts — jobs, economy, garages and gameplay systems built for QBCore, ESX and QBox.",
+  },
+  other: {
+    title: "FiveM Add-ons",
+    description: "FiveM add-ons and resources that do not fit the other categories.",
+  },
+}
+
+/** Title and description for a category, falling back to the slug so a new
+ *  category added in the admin panel still gets a page-specific title rather
+ *  than silently inheriting the homepage's. */
+export function categorySeo(slug: string, label?: string) {
+  const known = CATEGORY_SEO[slug]
+  if (known) return known
+  const name = label?.trim() || slug.replace(/-/g, " ")
+  return {
+    title: `FiveM ${name.charAt(0).toUpperCase()}${name.slice(1)}`,
+    description: `FiveM ${name} for QBCore, ESX and QBox roleplay servers, from independent creators on ${SITE_NAME}.`,
+  }
 }
 
 /** Route prefixes with no public indexing value: staff tooling and pages that

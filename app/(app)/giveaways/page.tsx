@@ -1,4 +1,18 @@
 import { GiveawaysClient } from "./giveaways-client";
+import type { Metadata } from "next";
+import { pageTitle, pageOpenGraph } from "@/lib/seo";
+
+/* Deliberately not chasing "fivem giveaway" — Bing records 0 impressions for it
+   in this market. The title is for people who already know the page exists. */
+const TITLE = pageTitle("FiveM Asset Giveaways");
+const DESCRIPTION =
+  "Live giveaways from FiveM creators — scripts, MLOs, vehicles and more. See the prizes, the entry requirements and when each one ends.";
+
+export const metadata: Metadata = {
+  title: TITLE,
+  description: DESCRIPTION,
+  ...pageOpenGraph(TITLE, DESCRIPTION, "/giveaways"),
+};
 
 // ISR: bake the public giveaways + ads into the HTML so the grid paints on
 // first load (no client-side load-in). User-specific entries still load

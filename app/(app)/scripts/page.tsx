@@ -1,4 +1,16 @@
 import { ScriptsClient } from "./scripts-client";
+import type { Metadata } from "next";
+import { pageTitle, pageOpenGraph } from "@/lib/seo";
+
+const TITLE = pageTitle("FiveM Scripts, MLOs & Assets");
+const DESCRIPTION =
+  "Browse premium FiveM scripts, MLOs, cars, EUP and peds from independent creators — built for QBCore, ESX and QBox. Instant download.";
+
+export const metadata: Metadata = {
+  title: TITLE,
+  description: DESCRIPTION,
+  ...pageOpenGraph(TITLE, DESCRIPTION, "/scripts"),
+};
 
 // ISR: regenerate the server-rendered shell at most once per minute.
 export const revalidate = 60;
