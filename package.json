@@ -14,7 +14,8 @@
     "db:setup-local": "tsx scripts/setup-pglite.ts",
     "dev:local": "cross-env USE_PGLITE=true ALLOW_DEV_LOGIN=true next dev",
     "db:view": "rimraf .pglite-studio 2>/dev/null & xcopy .pglite .pglite-studio /E /I /Q /Y >/dev/null & drizzle-kit studio --config=drizzle.studio.config.ts",
-    "db:push": "node scripts/db-guard.mjs && drizzle-kit push"
+    "db:push": "node scripts/db-guard.mjs && drizzle-kit push",
+    "seo:report": "node --env-file=.env.local scripts/seo-report.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.914.0",
