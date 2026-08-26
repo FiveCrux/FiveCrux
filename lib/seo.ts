@@ -37,10 +37,12 @@ export const SITE_DESCRIPTION =
  *  verified against the dead apex instead of www. The env var still wins if it
  *  is ever rotated.
  *
- *  Read from Bing's own API: GetUserSites -> AuthenticationCode.
+ *  This is an ACCOUNT-level code, not a per-site one: every property on this
+ *  Bing account shares it (thecruxstudio.com carries the same value). Read from
+ *  Bing's own API: GetUserSites -> AuthenticationCode.
  */
 export const BING_SITE_VERIFICATION =
-  process.env.BING_SITE_VERIFICATION?.trim() || "E27E6CF5596D99961718CD2BFD6AD49F"
+  process.env.BING_SITE_VERIFICATION?.trim() || "0948AF6600C9757441E3FC7EBBFF9DE8"
 
 /** Absolute URL for a site-relative path. Collapses repeated slashes, so a
  *  caller passing "/scripts" and one passing "scripts" both come out right and
