@@ -16,6 +16,7 @@ import {
   sideBannerBookings,
 } from "@/lib/db/schema"
 import { createAdSlots, createFeaturedScriptSlots } from "@/lib/database-new"
+import { slotsForCartLine } from "@/lib/slot-count"
 
 /**
  * Entitlement provisioning, shared by every payment rail.
@@ -60,12 +61,12 @@ export function generateNumericId() {
 /** Provision ONE platform entitlement (ad slots or featured-script slots). */
 export async function provisionEntitlement(
   userId: string,
-  meta: { packageType?: string; packageId?: string; slotsToAdd?: unknown; slotsPerMonth?: unknown; durationMonths?: unknown; durationWeeks?: unknown },
+  meta: { packageType?: string; packageId?: string; slotsToAdd?: unknown; slotsPerMonth?: unknown; durationMonths?: unknown; durationWeeks?: unknown; quantity?: unknown },
   orderRef: string
 ): Promise<boolean> {
   const packageId = meta.packageId;
   if (!packageId) return false;
-  const slotsToAdd = Number(meta.slotsToAdd ?? meta.slotsPerMonth ?? 1) || 1;
+  const slotsToAdd = slotsForCartLine(meta);
   const durationMonths = Number(meta.durationMonths ?? 1) || 1;
   const durationWeeks = meta.durationWeeks != null ? Number(meta.durationWeeks) : undefined;
   const orderRefIds = Array(slotsToAdd).fill(orderRef);

@@ -2,8 +2,10 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Trash2, Package } from "lucide-react"
+import { Trash2, Package, Plus, Minus } from "lucide-react"
 import { toast } from "sonner"
+
+import { MAX_CART_QUANTITY, slotsForCartLine } from "@/lib/slot-count"
 
 interface CartItemRowProps {
   item: {
@@ -37,6 +39,11 @@ const getPackageLabel = (item: CartItemRowProps["item"]) => {
 
 export default function CartItemRow({ item }: CartItemRowProps) {
   const [isRemoving, setIsRemoving] = useState(false)
+  const [isUpdating, setIsUpdating] = useState(false)
+  // Held locally so the line total and slot count move the moment the button is
+  // pressed. router.refresh() then replaces it with the server's answer.
+  const [quantity, setQuantityState] = useState(item.quantity)
+  const busy = isRemoving || isUpdating
   const router = useRouter()
   const metadata = parseMetadata(item.metadata) as any
   const packageLabel = getPackageLabel(item)
@@ -45,12 +52,52 @@ export default function CartItemRow({ item }: CartItemRowProps) {
   if (metadata?.durationLabel) {
     metadataLines.push(metadata.durationLabel)
   }
-  if (metadata?.slotsPerMonth) {
-    metadataLines.push(`${metadata.slotsPerMonth} slot${metadata.slotsPerMonth > 1 ? "s" : ""}`)
+  // Shown times the quantity, because that is what the purchase actually
+  // grants — two Premium packs are six slots, not three.
+  const totalSlots = metadata?.slotsPerMonth
+    ? slotsForCartLine({ ...metadata, quantity })
+    : 0
+  if (totalSlots > 0) {
+    metadataLines.push(`${totalSlots} slot${totalSlots > 1 ? "s" : ""}`)
   }
 
   // Compact sub-label shown under the title (type/framework label).
   const subLabel = metadataLines.length > 0 ? metadataLines.join(" · ") : packageLabel
+
+  const setQuantity = async (next: number) => {
+    if (next < 1 || next > MAX_CART_QUANTITY || next === quantity) return
+    const previous = quantity
+    setQuantityState(next)
+    setIsUpdating(true)
+
+    try {
+      const response = await fetch("/api/cart", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cartItemId: item.id, quantity: next }),
+      })
+
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok) {
+        throw new Error(data.error || "Unable to update quantity")
+      }
+
+      // Take the server's number, not ours — this state is seeded from a prop
+      // and React will not re-seed it when the refresh brings a new value, so
+      // anything the server decided differently would stick around unnoticed.
+      if (Number.isInteger(data?.quantity)) setQuantityState(data.quantity)
+
+      window.dispatchEvent(new CustomEvent("cartUpdated"))
+      router.refresh()
+    } catch (error) {
+      // Put the number back rather than leaving the row showing a quantity the
+      // cart does not actually hold — the total beside it would be a lie.
+      setQuantityState(previous)
+      toast.error(error instanceof Error ? error.message : "Failed to update quantity")
+    } finally {
+      setIsUpdating(false)
+    }
+  }
 
   const removeItem = async () => {
     setIsRemoving(true)
@@ -92,21 +139,39 @@ export default function CartItemRow({ item }: CartItemRowProps) {
         <p className="mt-0.5 text-[11px] uppercase tracking-[0.16em] text-orange-300/70">{subLabel}</p>
       </div>
 
-      {/* Quantity — read-only stepper styling (qty is not mutable in current logic) */}
       <div className="flex items-center rounded-lg border border-white/10 bg-white/[0.03]">
-        <span className="w-9 text-center text-xs font-semibold tabular-nums text-white/80">
-          {item.quantity}
+        <button
+          type="button"
+          onClick={() => setQuantity(quantity - 1)}
+          disabled={busy || quantity <= 1}
+          aria-label="Decrease quantity"
+          className="grid h-7 w-7 place-items-center rounded-l-lg text-white/60 transition hover:bg-white/[0.06] hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
+        >
+          <Minus className="h-3.5 w-3.5" />
+        </button>
+        <span className="w-8 text-center text-xs font-semibold tabular-nums text-white/80">
+          {quantity}
         </span>
+        <button
+          type="button"
+          onClick={() => setQuantity(quantity + 1)}
+          disabled={busy || quantity >= MAX_CART_QUANTITY}
+          aria-label="Increase quantity"
+          title={quantity >= MAX_CART_QUANTITY ? `Maximum ${MAX_CART_QUANTITY}` : undefined}
+          className="grid h-7 w-7 place-items-center rounded-r-lg text-white/60 transition hover:bg-white/[0.06] hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
+        >
+          <Plus className="h-3.5 w-3.5" />
+        </button>
       </div>
 
       <div className="w-16 text-right text-sm font-bold tabular-nums text-white">
-        €{(Number(item.price) * item.quantity).toFixed(2)}
+        €{(Number(item.price) * quantity).toFixed(2)}
       </div>
 
       <button
         type="button"
         onClick={removeItem}
-        disabled={isRemoving}
+        disabled={busy}
         aria-label="Remove item"
         title={isRemoving ? "Removing…" : "Remove item"}
         className="grid h-7 w-7 flex-none place-items-center rounded-lg text-white/55 transition hover:bg-red-500/10 hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-60"
