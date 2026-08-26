@@ -17,6 +17,7 @@ import {
 } from "@/lib/db/schema"
 import { createAdSlots, createFeaturedScriptSlots } from "@/lib/database-new"
 import { slotsForCartLine } from "@/lib/slot-count"
+import { recordCouponRedemption, recordCreatorCodeRedemption } from "@/lib/cart-checkout-utils"
 
 /**
  * Entitlement provisioning, shared by every payment rail.
@@ -157,6 +158,40 @@ export async function provisionCart(
   }
   if (fivecruxOrderId != null) {
     await db.update(orders).set({ status: "paid", updatedAt: new Date() }).where(eq(orders.id, Number(fivecruxOrderId)));
+
+    // 3. Book the coupon use. Nothing else writes these counters, so without
+    // this maxUses and perUserLimit can never trip and a single-use coupon is
+    // unlimited. Deliberately after the order is marked paid — a use is only
+    // burned by money actually taken. Idempotent against webhook retries, and
+    // reversed by restoreCouponForFiveCruxOrder on refund.
+    const paidOrder = await db.query.orders.findFirst({ where: eq(orders.id, Number(fivecruxOrderId)) });
+    if (paidOrder?.couponId != null) {
+      try {
+        await recordCouponRedemption(paidOrder.couponId, userId, Number(fivecruxOrderId), generateNumericId);
+      } catch (error) {
+        // The buyer has paid and has their goods. Failing the whole webhook
+        // here would make the provider retry and re-run provisioning, which is
+        // a worse outcome than an uncounted coupon use.
+        console.error("[provisioning] recording coupon redemption failed", { fivecruxOrderId, error });
+      }
+    }
+
+    // Same for a creator code — and this one also records what the creator
+    // earned, so skipping it means they are not paid for the sale at all.
+    const creator = meta.creator;
+    if (paidOrder?.creatorCodeId != null && creator?.creatorCodeId != null) {
+      try {
+        await recordCreatorCodeRedemption(
+          Number(creator.creatorCodeId),
+          userId,
+          Number(fivecruxOrderId),
+          Number(creator.discountAmount ?? 0),
+          Number(creator.commissionAmount ?? 0)
+        );
+      } catch (error) {
+        console.error("[provisioning] recording creator-code redemption failed", { fivecruxOrderId, error });
+      }
+    }
   }
   return { provisioned: true };
 }

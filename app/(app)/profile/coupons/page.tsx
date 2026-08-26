@@ -69,6 +69,9 @@ const emptyForm: CouponFormState = {
   redeemLimit: "",
   minimumBasketValue: "0",
   redeemLimitPerCustomer: "0",
+  // A Tebex setting FiveCrux's own discount code never read, so every option
+  // did the same thing; the control is gone. Still sent because the column is
+  // NOT NULL — do not drop this without a migration.
   couponApplicationRule: "individual",
   startDate: "",
   expiryDate: "",
@@ -692,28 +695,6 @@ export default function ProfileCouponsPage() {
                   }
                   className={inputClass}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-white/70">Application Rule</Label>
-                <Select
-                  value={form.couponApplicationRule}
-                  onValueChange={(value: CouponApplicationRule) =>
-                    setForm({ ...form, couponApplicationRule: value })
-                  }
-                >
-                  <SelectTrigger className={inputClass}>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="border-white/[0.08] bg-[#0d0d0f] text-white">
-                    <SelectItem value="individual">Individual item</SelectItem>
-                    <SelectItem value="basket_before_sales">
-                      Basket before sales
-                    </SelectItem>
-                    <SelectItem value="basket_after_sales">
-                      Basket after sales
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
               <div className="space-y-2">
                 <Label

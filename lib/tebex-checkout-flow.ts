@@ -140,55 +140,26 @@ export async function prepareCartCheckout(userId: string, couponCode: string, cr
   return { ok: true, cart, provItems, appliedCoupon, appliedCreatorCode, creatorCommissionAmount, discountAmount, payableAmount, total };
 }
 
-export type PreviewCouponResult =
-  | { ok: false; error: string; status: number }
-  | { ok: true; code: string };
-
-/**
- * Preview whether a coupon code is valid, by applying it to a throwaway EMPTY
- * Tebex basket (never shown to the buyer, never completed — it just expires
- * unused on Tebex's side). Coupons are Tebex-native now (see finalizeBasket),
- * so this is the only honest way to check a code before the buyer commits to
- * checkout: there's no FiveCrux-side coupon table left to consult.
- *
- * IMPORTANT: this store requires the buyer to be logged in (via Tebex/FiveM
- * auth) before packages can be added to a basket (confirmed against the real
- * Tebex API — adding a package to an unauthenticated basket returns 422
- * "User must login before adding packages to basket"). So this preview
- * CANNOT show the real discounted total — only Tebex applying the coupon to
- * the buyer's actual, authenticated, package-filled basket during real
- * checkout (finalizeBasket) can. This only confirms the code itself is
- * currently valid; the real amount is revealed at checkout.
- */
-export async function previewCoupon(storeToken: string, couponCode: string): Promise<PreviewCouponResult> {
-  let basketIdent: string;
-  try {
-    const created = await createBasket(storeToken, {
-      completeUrl: "https://fivecrux.com/cart",
-      returnUrl: "https://fivecrux.com/cart",
-    });
-    basketIdent = created.ident;
-  } catch (e) {
-    console.error("previewCoupon: throwaway basket creation failed:", e);
-    return { ok: false, error: "Couldn't check that coupon right now.", status: 502 };
-  }
-
-  try {
-    await applyCoupon(storeToken, basketIdent, couponCode);
-  } catch (e) {
-    return { ok: false, error: "That coupon code isn't valid.", status: 404 };
-  }
-
-  return { ok: true, code: couponCode };
-}
-
 /** The webhook-facing custom payload set on the Tebex basket. */
-export function buildCustom(userId: string, orderId: number, cartId: number, provItems: ProvItem[]) {
+export function buildCustom(
+  userId: string,
+  orderId: number,
+  cartId: number,
+  provItems: ProvItem[],
+  /**
+   * What the creator earns on this order. Carried here rather than on the
+   * `orders` row because there is no column for it, and it must be the figure
+   * agreed when the order was PRICED — recomputing it at capture time would
+   * quietly pay a different rate if the code changed in between.
+   */
+  creator?: { creatorCodeId: number; discountAmount: number; commissionAmount: number } | null
+) {
   return {
     kind: "platform_cart",
     userId,
     fivecruxOrderId: orderId,
     cartId,
+    ...(creator ? { creator } : {}),
     items: provItems.map((i) => ({
       kind: i.kind,
       packageType: i.packageType,
@@ -203,122 +174,3 @@ export function buildCustom(userId: string, orderId: number, cartId: number, pro
 export type FinalizeResult =
   | { ok: false; error: string; status: number }
   | { ok: true; checkoutUrl: string; order: any };
-
-/**
- * Add packages to an (authenticated) basket, apply the coupon/creator-code,
- * then persist the order + bookkeeping + tebex_orders ATOMICALLY (I5: nothing
- * is committed unless the Tebex calls succeed). Returns the hosted checkout
- * URL.
- *
- * Coupon codes (2026-07-12): Tebex is now the sole source of truth. A coupon
- * MUST successfully apply to the real basket — if Tebex rejects it (expired,
- * unknown, already used, whatever rule the seller set on their own Tebex
- * dashboard), checkout fails with a clear error instead of silently charging
- * full price (the old behavior swallowed a failed apply as "non-fatal").
- * FiveCrux no longer tracks coupon redemptions/usedCount at all — Tebex owns
- * that now. payableAmount for a coupon order comes from Tebex's own
- * post-discount basket total, not a locally-computed figure.
- *
- * Creator codes are unchanged — still FiveCrux-validated/tracked, since they
- * carry commission bookkeeping Tebex has no concept of.
- */
-export async function finalizeBasket(args: {
-  userId: string;
-  cartId: number;
-  storeToken: string;
-  basketIdent: string;
-  provItems: ProvItem[];
-  appliedCoupon: any;
-  appliedCreatorCode?: any;
-  creatorCommissionAmount?: number;
-  discountAmount: number;
-  payableAmount: number;
-  total: number;
-  orderId: number;
-  custom: any;
-}): Promise<FinalizeResult> {
-  const {
-    userId, cartId, storeToken, basketIdent, provItems,
-    appliedCoupon, appliedCreatorCode, creatorCommissionAmount = 0,
-    total, orderId, custom,
-  } = args;
-  let payableAmount = args.payableAmount;
-  let discountAmount = args.discountAmount;
-
-  for (const i of provItems) {
-    await addPackageToBasket(storeToken, basketIdent, i.tebexPackageId as number, i.quantity);
-  }
-
-  if (appliedCoupon?.code) {
-    try {
-      await applyCoupon(storeToken, basketIdent, appliedCoupon.code);
-    } catch (e) {
-      console.error("Tebex rejected coupon code:", appliedCoupon.code, e);
-      return { ok: false, error: "That coupon code isn't valid.", status: 400 };
-    }
-  } else if (appliedCreatorCode?.code) {
-    // Creator codes are real TEBEX creator codes — apply via the creator-code
-    // endpoint (NOT applyCoupon). If Tebex rejects it, the code is invalid;
-    // fail the checkout rather than silently charging full price while the
-    // platform books a discount + commission that never happened.
-    try {
-      await applyCreatorCode(storeToken, basketIdent, appliedCreatorCode.code);
-    } catch (e) {
-      console.error("Tebex rejected creator code:", appliedCreatorCode.code, e);
-      return { ok: false, error: "That creator code isn't valid.", status: 400 };
-    }
-  }
-
-  const basket = await getBasket(storeToken, basketIdent);
-  const checkoutUrl = getCheckoutUrl(basket);
-
-  // The real discount is whatever Tebex actually applied — never a
-  // locally-computed guess. Applies to both coupons and creator codes so the
-  // recorded order/commission match what the buyer is actually charged.
-  if ((appliedCoupon?.code || appliedCreatorCode?.code) && basket.total_price != null) {
-    payableAmount = Number(basket.total_price);
-    discountAmount = Math.max(0, total - payableAmount);
-  }
-
-  const order = await db.transaction(async (tx) => {
-    const [o] = await tx.insert(orders).values({
-      id: orderId,
-      userId,
-      cartId,
-      couponId: null, // FiveCrux no longer models coupons as a local entity
-      creatorCodeId: appliedCreatorCode?.id ?? null,
-      totalAmount: total.toString(),
-      discountAmount: discountAmount.toFixed(2),
-      payableAmount: payableAmount.toFixed(2),
-      status: "pending",
-    }).returning();
-
-    if (appliedCreatorCode) {
-      await tx.insert(creatorCodeRedemptions).values({
-        creatorCodeId: appliedCreatorCode.id,
-        userId,
-        orderId,
-        discountAmount: discountAmount.toFixed(2),
-        commissionAmount: creatorCommissionAmount.toFixed(2),
-      });
-      await tx.update(creatorCodes)
-        .set({ usedCount: sql`${creatorCodes.usedCount} + 1`, updatedAt: new Date() })
-        .where(eq(creatorCodes.id, appliedCreatorCode.id));
-    }
-
-    await tx.insert(tebexOrders).values({
-      id: randomUUID(),
-      basketIdent,
-      userId,
-      kind: "platform_fee",
-      storeToken,
-      packageIds: provItems.map((i) => i.tebexPackageId).filter((x) => x != null) as number[],
-      status: "pending",
-      amount: payableAmount.toFixed(2),
-      custom,
-    });
-    return o;
-  });
-
-  return { ok: true, checkoutUrl, order };
-}

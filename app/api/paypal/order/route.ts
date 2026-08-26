@@ -1,22 +1,16 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { and, eq, sql } from "drizzle-orm"
 import { CheckoutPaymentIntent } from "@paypal/paypal-server-sdk"
 
 import { requireActiveUser } from "@/lib/api-auth"
 import { db } from "@/lib/db/client"
-import {
-  coupons,
-  couponRedemptions,
-  orders,
-  paypalOrders,
-} from "@/lib/db/schema"
+import { orders, paypalOrders } from "@/lib/db/schema"
 import {
   getOrdersController,
   isPayPalConfigured,
   PAYPAL_CURRENCY,
   toPayPalAmount,
 } from "@/lib/paypal"
-import { validateCouponRules, calculateCouponDiscount } from "@/lib/coupon-utils"
+import { validateCouponForCart } from "@/lib/cart-checkout-utils"
 import { buildCustom, genCheckoutId, prepareCartCheckout } from "@/lib/tebex-checkout-flow"
 
 /**
@@ -72,33 +66,17 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const coupon = await db.query.coupons.findFirst({
-      where: eq(coupons.code, couponCode),
-    })
-    if (!coupon) {
-      return NextResponse.json({ error: "Invalid coupon code" }, { status: 400 })
+    // Re-validated here, not trusted from the Apply step: the cart, the
+    // coupon's remaining uses and its schedule can all have moved since the
+    // buyer pressed Apply, and this is the moment money is taken. Same
+    // function the Apply button uses, so the quote and the charge agree.
+    const result = await validateCouponForCart(couponCode, auth.userId, prep.cart.items)
+    if (!result.ok) {
+      return NextResponse.json({ error: result.error }, { status: result.status })
     }
 
-    const priorUses = await db
-      .select({ n: sql<number>`count(*)::int` })
-      .from(couponRedemptions)
-      .where(
-        and(
-          eq(couponRedemptions.couponId, coupon.id),
-          eq(couponRedemptions.userId, auth.userId)
-        )
-      )
-
-    const invalid = validateCouponRules(coupon, {
-      cartTotal: prep.total,
-      userRedemptions: Number(priorUses[0]?.n ?? 0),
-    })
-    if (invalid) {
-      return NextResponse.json({ error: invalid.error }, { status: 400 })
-    }
-
-    discountAmount = calculateCouponDiscount(coupon, prep.total)
-    appliedCouponId = coupon.id
+    discountAmount = result.discountAmount
+    appliedCouponId = result.coupon.id
   }
 
   const payable = Math.max(0, prep.total - discountAmount)
@@ -117,7 +95,19 @@ export async function POST(request: NextRequest) {
   }
 
   const fivecruxOrderId = genCheckoutId()
-  const custom = buildCustom(auth.userId, fivecruxOrderId, prep.cart.id, prep.provItems)
+  const custom = buildCustom(
+    auth.userId,
+    fivecruxOrderId,
+    prep.cart.id,
+    prep.provItems,
+    prep.appliedCreatorCode
+      ? {
+          creatorCodeId: prep.appliedCreatorCode.id,
+          discountAmount: prep.discountAmount,
+          commissionAmount: prep.creatorCommissionAmount,
+        }
+      : null
+  )
 
   try {
     const { result } = await getOrdersController().createOrder({

@@ -1,17 +1,15 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { Receipt, BadgeCheck, Lock, CreditCard, ShieldCheck, Ticket, Check } from "lucide-react"
+import { Receipt, BadgeCheck, CreditCard, ShieldCheck, Ticket, Check } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/componentss/ui/select"
 import PayPalCheckoutButton from "@/componentss/cart/paypal-checkout-button"
 
 type AppliedCode = {
-  // Coupons are Tebex-native now (no local id, and no known discount until
-  // checkout — this store requires buyer login before Tebex can compute a
-  // real discounted total). Creator codes still have both (FiveCrux-tracked).
   id?: number
   code: string
-  discountAmount?: number
+  /** Always known: both coupons and creator codes are priced by our own server. */
+  discountAmount: number
 }
 
 type CodeMode = "coupon" | "creator"
@@ -28,7 +26,6 @@ export default function CartCheckoutPanel({ total }: CartCheckoutPanelProps) {
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isApplying, setIsApplying] = useState(false)
-  const [isCheckingOut, setIsCheckingOut] = useState(false)
 
   const payableAmount = useMemo(() => {
     return Math.max(0, total - (appliedCode?.discountAmount ?? 0))
@@ -78,49 +75,6 @@ export default function CartCheckoutPanel({ total }: CartCheckoutPanelProps) {
       setError(err instanceof Error ? err.message : "Failed to apply code")
     } finally {
       setIsApplying(false)
-    }
-  }
-
-  const checkout = async () => {
-    setIsCheckingOut(true)
-    setError(null)
-    setMessage(null)
-
-    try {
-      const body =
-        appliedMode === "creator"
-          ? { creatorCode: appliedCode?.code ?? "" }
-          : { couponCode: appliedCode?.code ?? "" }
-
-      const response = await fetch("/api/cart/tebex-checkout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(body),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || "Checkout failed")
-      }
-
-      // FiveM store: buyer must log in first. Redirect to Tebex auth; after login
-      // Tebex sends them to /api/cart/tebex-continue → payment.
-      if (data.authUrl) {
-        window.location.href = data.authUrl
-        return
-      }
-
-      if (!data.checkoutUrl) {
-        throw new Error("Payment gateway did not return a checkout URL")
-      }
-
-      window.location.href = data.checkoutUrl
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Checkout failed")
-      setIsCheckingOut(false)
     }
   }
 
@@ -177,13 +131,9 @@ export default function CartCheckoutPanel({ total }: CartCheckoutPanelProps) {
           <div className="mt-2.5 inline-flex items-center gap-2 rounded-full bg-emerald-500/12 px-3 py-1 text-xs font-bold text-emerald-400 ring-1 ring-emerald-500/25">
             <BadgeCheck className="h-3.5 w-3.5" />
             {appliedCode.code} applied
-            {appliedCode.discountAmount != null ? (
-              <span className="tabular-nums text-emerald-300">
-                −€{appliedCode.discountAmount.toFixed(2)}
-              </span>
-            ) : (
-              <span className="text-emerald-300/80">— discount shown at checkout</span>
-            )}
+            <span className="tabular-nums text-emerald-300">
+              −€{appliedCode.discountAmount.toFixed(2)}
+            </span>
           </div>
         )}
 
@@ -198,7 +148,7 @@ export default function CartCheckoutPanel({ total }: CartCheckoutPanelProps) {
             <dt className="text-white/50">Subtotal</dt>
             <dd className="font-semibold tabular-nums text-white">€{total.toFixed(2)}</dd>
           </div>
-          {appliedCode && appliedCode.discountAmount != null && (
+          {appliedCode && appliedCode.discountAmount > 0 && (
             <div className="flex items-center justify-between">
               <dt className="text-white/50">Discount</dt>
               <dd className="font-semibold tabular-nums text-emerald-400">
@@ -219,7 +169,7 @@ export default function CartCheckoutPanel({ total }: CartCheckoutPanelProps) {
         <div className="flex items-end justify-between">
           <div>
             <div className="text-[11px] uppercase tracking-[0.16em] text-white/55">
-              {appliedMode === "coupon" ? "Before discount" : "Total due"}
+              Total due
             </div>
             <div className="text-xs text-white/55">EUR · one-time · excl. tax</div>
           </div>
@@ -227,11 +177,6 @@ export default function CartCheckoutPanel({ total }: CartCheckoutPanelProps) {
             €{payableAmount.toFixed(2)}
           </div>
         </div>
-        {appliedMode === "coupon" && (
-          <p className="mt-1 text-right text-[12px] text-white/45">
-            Your coupon is applied when the order is created — PayPal shows the discounted total.
-          </p>
-        )}
 
         <div className="mt-6">
           <PayPalCheckoutButton
