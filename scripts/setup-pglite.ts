@@ -21,6 +21,11 @@ import { DEV_USERS } from "../lib/dev-users"
 
 const DATA_DIR = process.env.PGLITE_DIR || "./.pglite"
 
+// A real ad inherits its slot's end date (createPendingAd derives it from
+// slot_unique_id), so seeding NULL would make the harness disagree with
+// production — the expiry pill on every ad card would read "no end date".
+const inDays = (n: number) => new Date(Date.now() + n * 86_400_000)
+
 async function main() {
   const client = new PGlite(DATA_DIR)
   const db = drizzle(client, { schema })
@@ -195,14 +200,14 @@ async function main() {
 
   // ---- Approved ads ---------------------------------------------------------
   await db.insert(schema.approvedAds).values([
-    { id: 6001, title: "Premium Script Store", description: "Browse 200+ optimised FiveM scripts", imageUrl: imgs[0], linkUrl: "https://fivecrux.local", category: "scripts", createdBy: "dev-admin", status: "active", slotStatus: "active" },
-    { id: 6002, title: "MLO Mega Pack", description: "50 interiors in one bundle", imageUrl: imgs[1], linkUrl: "https://fivecrux.local", category: "props", createdBy: "dev-admin", status: "active", slotStatus: "active" },
+    { id: 6001, title: "Premium Script Store", description: "Browse 200+ optimised FiveM scripts", imageUrl: imgs[0], linkUrl: "https://fivecrux.local", category: "scripts", createdBy: "dev-admin", status: "active", slotStatus: "active", endDate: inDays(45) },
+    { id: 6002, title: "MLO Mega Pack", description: "50 interiors in one bundle", imageUrl: imgs[1], linkUrl: "https://fivecrux.local", category: "props", createdBy: "dev-admin", status: "active", slotStatus: "active", endDate: inDays(3) },
   ]).onConflictDoNothing()
   console.log("✓ 2 approved ads")
 
   // ---- Pending ad -----------------------------------------------------------
   await db.insert(schema.pendingAds).values({
-    id: 6003, title: "Server Hosting Deal [PENDING]", description: "20% off FiveM server hosting", imageUrl: imgs[3], linkUrl: "https://host.local", category: "scripts", createdBy: seller.id, slotStatus: "active",
+    id: 6003, title: "Server Hosting Deal [PENDING]", description: "20% off FiveM server hosting", imageUrl: imgs[3], linkUrl: "https://host.local", category: "scripts", createdBy: seller.id, slotStatus: "active", endDate: inDays(21),
   }).onConflictDoNothing()
   console.log("✓ 1 pending ad")
 
@@ -295,7 +300,7 @@ async function main() {
   }).onConflictDoNothing()
   await db.insert(schema.rejectedAds).values({
     id: 6004, title: "Competitor Store [REJECTED]", description: "Ad promoting a rival marketplace.",
-    imageUrl: imgs[3], linkUrl: "https://rival.local", category: "scripts", createdBy: seller.id, slotStatus: "active",
+    imageUrl: imgs[3], linkUrl: "https://rival.local", category: "scripts", createdBy: seller.id, slotStatus: "active", endDate: inDays(14),
     rejectionReason: "Ads may not promote a competing marketplace.",
   }).onConflictDoNothing()
   console.log("✓ 1 rejected script + 1 rejected prop + 1 rejected giveaway + 1 rejected ad")
@@ -309,7 +314,7 @@ async function main() {
   await db.insert(schema.approvedAds).values({
     id: 6005, title: "CruxDev's Banking Script Sale", description: "20% off the Advanced Banking System this week only.",
     imageUrl: imgs[0], linkUrl: "https://fivecrux.local/script/1001", category: "scripts", createdBy: seller.id,
-    status: "active", slotStatus: "active", slotUniqueId: "adslot-demo-1", clickCount: 15, viewCount: 146,
+    status: "active", slotStatus: "active", slotUniqueId: "adslot-demo-1", clickCount: 15, viewCount: 146, endDate: inDays(60),
   }).onConflictDoNothing()
   console.log("✓ 2 purchased ad slots for CruxDev (1 used, 1 open, 1 locked)")
 

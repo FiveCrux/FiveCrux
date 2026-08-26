@@ -87,6 +87,7 @@ import GiveawayWinners from "@/componentss/profile/giveaway-winners";
 import TebexStoreImporter from "@/componentss/profile/tebex-store-importer";
 import AdvertisePanel from "@/componentss/advertise/advertise-panel";
 import Link from "next/link";
+import ExpiryPill from "@/componentss/profile/expiry-pill";
 
 interface Script {
   id: number;
@@ -167,6 +168,8 @@ interface Ad {
   priority: number;
   click_count?: number;
   view_count?: number;
+  // When the slot this ad sits in runs out. Comes straight off the row.
+  endDate?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -1493,11 +1496,12 @@ export default function ProfilePage() {
                                 )}
 
                               <div className="space-y-2">
-                                <div className="flex items-center gap-4 text-xs text-white/55">
+                                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-white/55">
                                   <div>
                                     Created:{" "}
                                     {new Date(ad.created_at).toLocaleDateString()}
                                   </div>
+                                  <ExpiryPill endDate={ad.endDate} />
                                   {ad.status === "approved" && (
                                     <div className="flex items-center gap-4">
                                       <div className="flex items-center gap-1 text-orange-400">
@@ -1880,7 +1884,7 @@ export default function ProfilePage() {
                                     {featuredScript.scriptDescription}
                                   </p>
                                 )}
-                                <div className="flex items-center gap-4 text-xs text-white/55">
+                                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-white/55">
                                   <div>
                                     Created:{" "}
                                     {new Date(
@@ -1888,6 +1892,9 @@ export default function ProfilePage() {
                                         featuredScript.created_at
                                     ).toLocaleDateString()}
                                   </div>
+                                  <ExpiryPill
+                                    endDate={featuredScript.featuredEndDate}
+                                  />
                                   {featuredScript.featuredStatus === "active" && (
                                     <div className="flex items-center gap-4">
                                       <div className="flex items-center gap-1 text-purple-400">
