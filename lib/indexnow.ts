@@ -23,7 +23,7 @@ export const INDEXNOW_KEY = "0dcb8ed3c6433c9cb2dfcbead081743f"
  */
 export async function submitSitemapToIndexNow(
   siteUrl: string
-): Promise<{ submittedUrls: number }> {
+): Promise<{ submittedUrls: number; status: number; keyValidated: boolean }> {
   const host = new URL(siteUrl).host
 
   const sitemapRes = await fetch(`${siteUrl}/sitemap.xml`, { cache: "no-store" })
@@ -43,11 +43,21 @@ export async function submitSitemapToIndexNow(
     }),
   })
 
-  // IndexNow answers 200 or 202 on success; 422 means the key or host did not
-  // check out, which is worth failing loudly rather than logging as "sent".
+  // 200 and 202 both mean "accepted", but they are NOT the same and the
+  // difference is easy to lose:
+  //
+  //   200 — the key was fetched and checked, right now. Genuinely done.
+  //   202 — queued; the key has NOT been checked yet. A wrong key also returns
+  //         202 (verified against the live API), so treating 202 as proof of
+  //         success would hide a broken key indefinitely — there is no second
+  //         callback to tell you it failed.
+  //   422 — rejected outright: wrong host, or a URL not on this host.
+  //
+  // 202 is still a real submission, so it is not an error; it is reported so a
+  // run that never reaches 200 is visible instead of silently reassuring.
   if (!res.ok && res.status !== 202) {
     throw new Error(`IndexNow submit failed: ${res.status} ${(await res.text()).slice(0, 200)}`)
   }
 
-  return { submittedUrls: urlList.length }
+  return { submittedUrls: urlList.length, status: res.status, keyValidated: res.status === 200 }
 }

@@ -38,9 +38,12 @@ async function run(request: NextRequest) {
   }
 
   try {
-    const { submittedUrls } = await submitSitemapToIndexNow(SITE_URL)
-    console.log(`[indexnow] submitted ${submittedUrls} urls for ${SITE_URL}`)
-    return NextResponse.json({ success: true, submittedUrls })
+    const { submittedUrls, status, keyValidated } = await submitSitemapToIndexNow(SITE_URL)
+    console.log(
+      `[indexnow] ${submittedUrls} urls, HTTP ${status}` +
+        (keyValidated ? " (key validated)" : " (queued — key not checked yet)")
+    )
+    return NextResponse.json({ success: true, submittedUrls, status, keyValidated })
   } catch (error) {
     console.error("[indexnow] submit failed:", error)
     return NextResponse.json(

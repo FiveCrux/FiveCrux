@@ -12,6 +12,7 @@ const SITE = (process.argv[2] || process.env.NEXT_PUBLIC_SITE_URL || "https://ww
 
 const BASE = "https://ssl.bing.com/webmaster/api.svc/json";
 const KEY = (process.env.BING_API_KEY || "").trim();
+const INDEXNOW_KEY = "0dcb8ed3c6433c9cb2dfcbead081743f";
 
 const ok = (s) => `\x1b[32m${s}\x1b[0m`;
 const bad = (s) => `\x1b[31m${s}\x1b[0m`;
@@ -117,6 +118,42 @@ console.log("\non-page");
     console.log(`  ${label.padEnd(24)} ${found ? ok("present") : bad("missing")}`);
     if (!found) flag(`${label} missing from the homepage`);
   }
+}
+
+// ---------------------------------------------------------------------------
+// IndexNow gives no dashboard and no callback, so "did it actually go through"
+// is not otherwise answerable. Submitting ONE url that is already in the
+// sitemap is a real handshake, costs nothing, and separates the outcomes:
+//   200 key fetched and checked  |  202 queued, key NOT checked yet
+//   422 rejected                 |  403 key file unreachable
+// A wrong key also returns 202, so 202 on its own proves nothing.
+// ---------------------------------------------------------------------------
+console.log("\nindexnow");
+{
+  const keyFile = `${SITE}/${INDEXNOW_KEY}.txt`;
+  const kf = await fetch(keyFile).then((r) => r.text()).catch(() => "");
+  const keyOk = kf.trim() === INDEXNOW_KEY;
+  console.log(`  key file                 ${keyOk ? ok("serves the right key") : bad("wrong or missing")}`);
+  if (!keyOk) flag(`${keyFile} does not serve the key — IndexNow can never validate`);
+
+  const res = await fetch("https://api.indexnow.org/indexnow", {
+    method: "POST",
+    headers: { "Content-Type": "application/json; charset=utf-8" },
+    body: JSON.stringify({
+      host: new URL(SITE).host,
+      key: INDEXNOW_KEY,
+      keyLocation: keyFile,
+      urlList: [sitemapUrls[0] ?? SITE],
+    }),
+  }).catch(() => null);
+
+  const code = res?.status ?? 0;
+  const verdict =
+    code === 200 ? ok("200 — key validated")
+    : code === 202 ? `${bad("202")} — queued, key not yet checked`
+    : bad(`${code} — rejected`);
+  console.log(`  handshake                ${verdict}`);
+  if (code !== 200) flag(`IndexNow returned ${code}, not 200 — submissions are not confirmed valid`);
 }
 
 // ---------------------------------------------------------------------------
