@@ -236,6 +236,7 @@ export function ScriptDetailClient({
               coverImage: image,
               framework: Array.isArray(s.framework) ? s.framework : s.framework ? [s.framework] : [],
               currencySymbol: s.currency_symbol,
+              currency: s.currency,
               tag: s.featured ? "FEATURED" : isFree ? "FREE" : null,
               href: `/script/${s.id}`,
             };

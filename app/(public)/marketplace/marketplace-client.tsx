@@ -29,6 +29,8 @@ interface ApiScript {
   featured?: boolean
   free?: boolean
   currency_symbol?: string
+  /** ISO code (e.g. "EUR"). Most listings carry this and no symbol. */
+  currency?: string
 }
 
 // A seller can submit without picking an explicit cover image — fall back to
@@ -56,6 +58,7 @@ function toMarketProduct(s: ApiScript): MarketProduct {
     sellerImage: s.seller_image,
     coverImage: resolveCoverImage(s.coverImage, s.cover_image, s.images, s.screenshots),
     currencySymbol: s.currency_symbol || (s as any).currencySymbol,
+    currency: s.currency || (s as any).currency,
     tag: s.featured ? "FEATURED" : isFree ? "FREE" : null,
     href: `/script/${s.id}`,
   }

@@ -72,6 +72,7 @@ function mapFeatured(item: any): MarketProduct {
     sellerImage: item.scriptSellerImage || item.seller_image,
     coverImage: resolveCoverImage(item.scriptCoverImage, item.cover_image, item.scriptImages, item.images, item.scriptScreenshots, item.screenshots),
     currencySymbol: item.scriptCurrencySymbol || item.currency_symbol || item.currencySymbol,
+    currency: item.scriptCurrency || item.currency,
     tag: "FEATURED",
     href: `/script/${item.scriptId ?? item.id}`,
   }
@@ -92,6 +93,7 @@ function mapScript(item: any): MarketProduct {
     sellerImage: item.seller_image || item.sellerImage,
     coverImage: resolveCoverImage(item.cover_image, item.coverImage, item.images, item.screenshots),
     currencySymbol: item.currency_symbol || item.currencySymbol,
+    currency: item.currency,
     category: item.category,
     href: `/script/${item.id}`,
     viewCount: Number(item.view_count ?? item.viewCount ?? 0),
@@ -311,7 +313,7 @@ function HeroSpotlight({ items, promo }: {
                 )}
                 {active.seller && <span className="text-sm text-white/70">by {active.seller}</span>}
                 {!active.hidePrice && (
-                  <span className="ml-2 text-2xl font-black">{active.free || active.price === 0 ? "Free" : formatPrice(active.price, active.currencySymbol)}</span>
+                  <span className="ml-2 text-2xl font-black">{active.free || active.price === 0 ? "Free" : formatPrice(active.price, active.currencySymbol, active.currency)}</span>
                 )}
               </div>
               <div className="flex flex-wrap items-center gap-3">

@@ -75,6 +75,7 @@ function scriptToProduct(script: Script): MarketProduct {
     sellerImage: script.seller_image,
     coverImage: resolveCoverImage(script.coverImage, script.images, script.screenshots),
     currencySymbol: script.currency_symbol,
+    currency: script.currency,
     tag: script.featured ? "FEATURED" : Number(script.price) === 0 ? "FREE" : null,
     href: `/script/${script.id}`,
   }

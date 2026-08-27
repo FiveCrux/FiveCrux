@@ -618,6 +618,7 @@ export function ScriptsClient({
       sellerImage: s.seller_image ?? undefined,
       coverImage: s.image && s.image !== "/placeholder.jpg" ? s.image : undefined,
       currencySymbol: s.currency_symbol,
+      currency: s.currency,
       tag: s.featured ? "FEATURED" : isFree ? "FREE" : null,
       href: `/script/${s.id}`,
     };
@@ -661,6 +662,7 @@ export function ScriptsClient({
         sellerImage: item.seller_image ?? undefined,
         coverImage,
         currencySymbol: item.currency_symbol || item.scriptCurrencySymbol,
+        currency: item.currency || item.scriptCurrency,
         tag: "FEATURED",
         href: `/script/${item.id}`,
       } as MarketProduct;

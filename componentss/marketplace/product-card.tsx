@@ -20,8 +20,12 @@ export interface MarketProduct {
   coverImage?: string
   tag?: "FEATURED" | "FREE" | null
   category?: string
-  /** Seller-selected currency symbol (e.g. "€"); falls back to the app default. */
+  /** Seller-selected currency symbol (e.g. "€"). Usually absent — most listings
+   *  store only the code below, which is what the symbol is derived from. */
   currencySymbol?: string
+  /** ISO currency code (e.g. "EUR"). Carried so a listing with no stored symbol
+   *  still renders in its own currency instead of the app default. */
+  currency?: string
   href: string
   /** When true, href is an external URL (e.g. a featured banner's link) — open
    *  it as a plain anchor in a new tab instead of an in-app route. */
@@ -152,10 +156,10 @@ export function ProductCard({ product, className = "" }: { product: MarketProduc
               <span className="text-base font-extrabold text-white">
                 {discounted && (
                   <span className="mr-1 text-xs font-medium text-white/55 line-through">
-                    {formatPrice(originalPrice, product.currencySymbol)}
+                    {formatPrice(originalPrice, product.currencySymbol, product.currency)}
                   </span>
                 )}
-                {formatPrice(price, product.currencySymbol)}
+                {formatPrice(price, product.currencySymbol, product.currency)}
               </span>
             )}
           </div>
