@@ -34,7 +34,11 @@ export default function robots(): MetadataRoute.Robots {
       ...AI_AGENTS.map((userAgent) => ({ userAgent, allow: "/", disallow: DISALLOW })),
     ],
     sitemap: `${SITE_URL}/sitemap.xml`,
-    // Names the canonical hostname, so the apex and www are not read as two sites.
-    host: new URL(SITE_URL).host,
+    /* No `host`. Setting it makes Next emit a `Host:` line, which is a Yandex
+       directive — Bing's own robots.txt tester reports it as an error, and Bing
+       documents support for User-agent, Allow, Disallow, Crawl-delay and
+       Sitemap only. I added it here claiming it stopped the apex and www being
+       read as two sites; that was wrong. The canonical tag on every page is
+       what crawlers act on, and the property Bing has verified is the www one. */
   };
 }
