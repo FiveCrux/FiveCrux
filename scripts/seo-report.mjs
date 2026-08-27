@@ -158,6 +158,7 @@ console.log("\nindexnow");
 
 // ---------------------------------------------------------------------------
 console.log("\nbing");
+try {
 if (!KEY) {
   console.log(`  ${dim("BING_API_KEY not set — skipping")}`);
 } else {
@@ -198,6 +199,13 @@ if (!KEY) {
     }
   }
 }
+} catch (e) {
+  /* Not counted as a problem: an outage on Bing's side says nothing about this
+     site, and failing the run over it would make the exit code useless as a
+     deploy gate. */
+  console.log(`  ${dim(`Bing API unavailable — ${e.message}`)}`);
+}
+
 
 console.log(
   problems === 0
