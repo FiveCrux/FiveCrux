@@ -29,12 +29,24 @@ const bingDate = (v) => {
   return ms ? new Date(Number(ms)).toISOString().slice(0, 16).replace("T", " ") : "—";
 };
 
-async function bing(endpoint, params = {}) {
+/* Bing's API returns a transient 5xx often enough to matter — a GetFeeds 503
+   is what first killed this report mid-run. Retried rather than surfaced,
+   because a blip on their side says nothing about this site. */
+async function bing(endpoint, params = {}, attempt = 1) {
   if (!KEY) throw new Error("BING_API_KEY is not set");
   const url = new URL(`${BASE}/${endpoint}`);
   url.searchParams.set("apikey", KEY);
   for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
-  const res = await fetch(url);
+
+  const res = await fetch(url).catch(() => null);
+  if (!res || res.status >= 500) {
+    if (attempt < 3) {
+      await new Promise((r) => setTimeout(r, attempt * 1500));
+      return bing(endpoint, params, attempt + 1);
+    }
+    throw new Error(`${endpoint}: HTTP ${res?.status ?? "no response"} after ${attempt} tries`);
+  }
+
   const text = await res.text();
   if (!res.ok) throw new Error(`${endpoint}: HTTP ${res.status}`);
   const body = JSON.parse(text);
