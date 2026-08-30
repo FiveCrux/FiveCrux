@@ -98,22 +98,37 @@ export const authOptions: NextAuthOptions = {
 			// fall back to the DB row (Discord). The session callback still refreshes
 			// roles from the DB on every request, so this only needs to be seeded.
 			if (user) {
-				// Seed the block flag too, so edge middleware can reject writes without
-				// a DB hit. This copy can lag by up to the token's refresh window, which
-				// is why the money paths ALSO check the database directly — see
-				// assertNotBlocked in lib/api-auth.ts.
-				;(token as any).isBlocked = Boolean((user as any).isBlocked)
 				const fromUser = (user as any).roles as string[] | undefined
-				if (fromUser) {
+				// The block flag is read from the DATABASE, not from `user`.
+				//
+				// It used to be `Boolean((user as any).isBlocked)`, and neither the
+				// dev-credentials authorize() result nor the Discord profile carries
+				// that field — so the flag was always false, and the edge middleware
+				// that refuses every write for a blocked account never fired once.
+				// A blocked user could still submit listings and enter giveaways;
+				// only the three routes with their own assertNotBlocked stopped them.
+				//
+				// Seeded once at sign-in, so it can still lag a session that was open
+				// before the block. That is what assertNotBlocked is for, and it is now
+				// on the content-write routes too, not just the money ones.
+				let blocked = Boolean((user as any).isBlocked)
+				if (fromUser && token.sub) {
 					;(token as any).roles = fromUser
+					try {
+						blocked = Boolean(((await getUserById(token.sub)) as any)?.isBlocked)
+					} catch {
+						// Leave whatever the provider gave us rather than failing sign-in.
+					}
 				} else if (token.sub) {
 					try {
 						const dbUser = await getUserById(token.sub)
 						;(token as any).roles = dbUser?.roles ?? []
+						blocked = Boolean((dbUser as any)?.isBlocked)
 					} catch {
 						;(token as any).roles = (token as any).roles ?? []
 					}
 				}
+				;(token as any).isBlocked = blocked
 			}
 			return token
 		},

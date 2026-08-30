@@ -4,6 +4,7 @@ import { authOptions } from "@/auth"
 import { getScriptById, updateScript, updateScriptForReapproval, updatePendingScript, updateRejectedScriptForReapproval, deleteScript, getCategories } from "@/lib/database-new"
 import { announceScriptPending } from "@/lib/discord"
 import { validateListingFields } from "@/lib/validate-listing"
+import { assertNotBlocked } from "@/lib/api-auth"
 
 export async function GET(
   request: NextRequest,
@@ -42,6 +43,12 @@ export async function PATCH(
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
+
+    // A chargeback-blocked account keeps read access but must not create
+    // content. Checked against the DATABASE, not the session copy, so a block
+    // applies on the very next request.
+    const blocked = await assertNotBlocked((session.user as any).id)
+    if (blocked) return blocked.response
 
     const { id } = await params
     const scriptId = parseInt(id)
@@ -254,6 +261,12 @@ export async function DELETE(
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
+
+    // A chargeback-blocked account keeps read access but must not create
+    // content. Checked against the DATABASE, not the session copy, so a block
+    // applies on the very next request.
+    const blocked = await assertNotBlocked((session.user as any).id)
+    if (blocked) return blocked.response
 
     const { id } = await params
     const scriptId = parseInt(id)

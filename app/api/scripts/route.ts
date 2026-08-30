@@ -4,6 +4,7 @@ import { authOptions } from "@/auth"
 import { createScript, getScripts, getCategories, hasRole, hasAnyRole } from "@/lib/database-new"
 import { announceScriptPending } from "@/lib/discord"
 import { validateListingFields } from "@/lib/validate-listing"
+import { assertNotBlocked } from "@/lib/api-auth"
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,6 +14,12 @@ export async function POST(request: NextRequest) {
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
+
+    // A chargeback-blocked account keeps read access but must not create
+    // content. Checked against the DATABASE, not the session copy, so a block
+    // applies on the very next request.
+    const blocked = await assertNotBlocked((session.user as any).id)
+    if (blocked) return blocked.response
 
     // User must be authenticated
     const user = session.user as any

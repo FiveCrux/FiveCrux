@@ -12,6 +12,7 @@ import { db } from "@/lib/db/client"
 import { giveawayRequirements } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
 import { isDiscordRequirement, resolveGuildId, isMemberOfGuild } from "@/lib/discord-verify"
+import { assertNotBlocked } from "@/lib/api-auth"
 
 export async function POST(
   request: NextRequest,
@@ -29,6 +30,12 @@ export async function POST(
     if (!session?.user) {
       return NextResponse.json({ error: "Authentication required" }, { status: 401 })
     }
+
+    // A chargeback-blocked account keeps read access but must not enter
+    // giveaways. Checked against the DATABASE, not the session copy, so a block
+    // applies on the very next request.
+    const blocked = await assertNotBlocked((session.user as any).id)
+    if (blocked) return blocked.response
 
     // Check if giveaway exists and is active
     const giveaway = await getGiveawayById(giveawayId, session)
