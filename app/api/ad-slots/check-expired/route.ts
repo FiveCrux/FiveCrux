@@ -1,17 +1,47 @@
-import { NextResponse } from 'next/server'
+import { NextResponse, type NextRequest } from 'next/server'
+import { getServerSession } from 'next-auth'
+
+import { authOptions } from '@/auth'
 import { checkAndDeactivateExpiredSlots, checkAndDeactivateExpiredFeaturedScriptSlots } from '@/lib/database-new'
 
-export async function GET() {
+/**
+ * Housekeeping: deactivate ad slots, featured slots and ads whose time is up.
+ *
+ * This WRITES. It had no authentication at all, and the hook in the root layout
+ * called it from every visitor's browser — so any anonymous visitor, crawler or
+ * script could drive a site-wide deactivation sweep, as often as they liked,
+ * just by requesting a URL.
+ *
+ * Now it needs either the cron secret or a signed-in account. It stays safe to
+ * call repeatedly — it only ever deactivates things that have genuinely
+ * expired, and expired items are already filtered at read time, so this is
+ * tidying the status column rather than something the site depends on.
+ */
+
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+
+async function isAuthorized(request: NextRequest): Promise<boolean> {
+  const secret = process.env.CRON_SECRET
+  if (secret && request.headers.get('authorization') === `Bearer ${secret}`) return true
+  const session = await getServerSession(authOptions)
+  return Boolean(session?.user)
+}
+
+export async function GET(request: NextRequest) {
+  if (!(await isAuthorized(request))) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   try {
-    // Check both ad slots and featured script slots
     const [adSlotsResult, featuredSlotsResult] = await Promise.all([
       checkAndDeactivateExpiredSlots(),
       checkAndDeactivateExpiredFeaturedScriptSlots()
     ])
-    
+
     const totalChecked = adSlotsResult.checked + featuredSlotsResult.checked
     const totalSlotsDeactivated = adSlotsResult.deactivated + featuredSlotsResult.deactivated
-    
+
     return NextResponse.json({
       success: true,
       checked: totalChecked,
@@ -20,14 +50,10 @@ export async function GET() {
       featuredScriptsDeactivated: featuredSlotsResult.featuredScriptsDeactivated,
       scriptsUpdated: featuredSlotsResult.scriptsUpdated,
       message: `Checked ${totalChecked} slot(s), deactivated ${totalSlotsDeactivated} slot(s), ${adSlotsResult.adsDeactivated} ad(s), ${featuredSlotsResult.featuredScriptsDeactivated} featured script(s), and updated ${featuredSlotsResult.scriptsUpdated} script(s) featured status`,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     })
   } catch (error) {
-    console.error('Error checking expired slots:', error)
-    return NextResponse.json({ 
-      error: error instanceof Error ? error.message : 'Failed to check expired slots',
-      success: false
-    }, { status: 500 })
+    console.error('[check-expired] failed:', error)
+    return NextResponse.json({ success: false, error: 'Check failed' }, { status: 500 })
   }
 }
-

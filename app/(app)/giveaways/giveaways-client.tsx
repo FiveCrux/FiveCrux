@@ -16,6 +16,7 @@ import Link from "next/link";
 import AdCard, { useRandomAds } from "@/componentss/ads/ad-card";
 import { toast } from "sonner";
 import SideAdsFrame from "@/componentss/ads/side-banners";
+import { useSession } from "next-auth/react";
 
 // Live countdown, isolated into its own component so the 1-second tick only
 // re-renders this tiny <span> — NOT the whole page. (Previously the parent held
@@ -132,9 +133,13 @@ export function GiveawaysClient({
   // Get random ads for giveaways page
   const randomAds = useRandomAds(ads, 2);
 
+  const { status: authStatus } = useSession();
+  const isSignedIn = authStatus === "authenticated";
+
   useEffect(() => {
-    // Server already seeded giveaways + ads → skip those refetches. ALWAYS fetch
-    // the user's entries (session-specific, can't be part of the SSR shell).
+    // Server already seeded giveaways + ads → skip those refetches. The user's
+    // entries are session-specific so they cannot be part of the SSR shell, and
+    // are only worth asking for once we know there is a session.
     const hasSeed = Array.isArray(initialGiveaways) && initialGiveaways.length > 0;
     const load = async () => {
       const c = new AbortController();
@@ -144,10 +149,16 @@ export function GiveawaysClient({
         if (!hasSeed) setLoading(true);
         // Always refetch live — the SSR seed can be a stale (ISR-cached)
         // snapshot, so skipping the refetch left edits/new giveaways not showing.
+        // "Which giveaways have I entered" only means something for a signed-in
+        // visitor. Asking for it while logged out returned 401 and put an error
+        // in the console of every anonymous visit — and this is a public page,
+        // so that is most of them.
         const [giveawaysRes, adsRes, entriesRes] = await Promise.all([
           fetch(`/api/giveaways`, { cache: "no-store", signal: c.signal }),
           fetch(`/api/promotions/giveaways`, { cache: "no-store", signal: c.signal }),
-          fetch(`/api/users/giveaway-entries`, { cache: "no-store", signal: c.signal }),
+          isSignedIn
+            ? fetch(`/api/users/giveaway-entries`, { cache: "no-store", signal: c.signal })
+            : Promise.resolve(null),
         ]);
         clearTimeout(t);
 
@@ -167,14 +178,13 @@ export function GiveawaysClient({
           setAds(adsData.ads || []);
         }
 
-        // Fetch user's entered giveaways (if logged in)
-        if (entriesRes.ok) {
+        if (entriesRes?.ok) {
           const entriesData = await entriesRes.json();
           if (entriesData.entries) {
             setEnteredGiveaways(entriesData.entries.map((entry: any) => entry.giveawayId));
           }
-        } else if (entriesRes.status === 401) {
-          // User not logged in, that's okay
+        } else {
+          // Not signed in, or the call failed — nothing is marked as entered.
           setEnteredGiveaways([]);
         }
       } catch (error) {
@@ -190,7 +200,9 @@ export function GiveawaysClient({
       }
     };
     load();
-  }, []);
+    // Re-runs once the session resolves, so a signed-in visitor's entered
+    // giveaways appear rather than waiting for a reload.
+  }, [isSignedIn]);
 
   const enterGiveaway = async (giveawayId: number) => {
     try {
