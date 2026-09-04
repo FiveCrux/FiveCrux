@@ -26,6 +26,7 @@ import AdCard, { useRandomAds } from "@/componentss/ads/ad-card";
 import { ProductCard, type MarketProduct } from "@/componentss/marketplace/product-card";
 import SideAdsFrame from "@/componentss/ads/side-banners";
 import BrowseNav from "@/componentss/shared/browse-nav";
+import { currencySymbolOf } from "@/lib/format-price";
 
 // Map a raw /api/scripts item onto the UI script shape used throughout this page.
 // Shared by the server-seeded initial scripts and the client-side refetch so the
@@ -355,6 +356,20 @@ export function ScriptsClient({
       priceRangeInitialized.current = true;
     }
   }, [allScripts.length, priceBounds.min, priceBounds.max]);
+
+  /* The filter compares raw numbers from listings that all carry their own
+     currency code. A hardcoded "$" was wrong for a catalogue that is almost
+     entirely EUR — same bug the price on the cards had. Derived from the
+     listings actually loaded, so it follows the data instead of a guess. */
+  const filterCurrencySymbol = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const s of allScripts as any[]) {
+      const c = s?.currencySymbol || s?.currency
+      if (c) counts.set(String(c), (counts.get(String(c)) ?? 0) + 1)
+    }
+    const top = [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0]
+    return currencySymbolOf(top?.length === 1 ? top : undefined, top)
+  }, [allScripts])
 
   // Real-time filtering logic
   const filteredScripts = useMemo(() => {
@@ -831,8 +846,8 @@ export function ScriptsClient({
                       className="w-full"
                     />
                     <div className="mt-2 flex justify-between text-xs text-white/50">
-                      <span>${priceRange[0]}</span>
-                      <span>${priceRange[1]}</span>
+                      <span>{filterCurrencySymbol}{priceRange[0]}</span>
+                      <span>{filterCurrencySymbol}{priceRange[1]}</span>
                     </div>
                   </div>
 
@@ -915,7 +930,7 @@ export function ScriptsClient({
                   onClick={() => setPriceRange([priceBounds.min, priceBounds.max])}
                   className="flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-0.5 text-[11px] text-white/60 hover:text-white"
                 >
-                  ${priceRange[0]}-${priceRange[1]}
+                  {filterCurrencySymbol}{priceRange[0]}-{filterCurrencySymbol}{priceRange[1]}
                   <X className="h-3 w-3" />
                 </motion.button>
               )}

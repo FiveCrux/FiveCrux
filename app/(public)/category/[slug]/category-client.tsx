@@ -15,6 +15,7 @@ import Navbar from "@/componentss/shared/navbar"
 import Footer from "@/componentss/shared/footer"
 import SideAdsFrame from "@/componentss/ads/side-banners"
 import { ProductCard, type MarketProduct } from "@/componentss/marketplace/product-card"
+import { currencySymbolOf } from "@/lib/format-price";
 
 interface Script {
   id: number
@@ -331,6 +332,21 @@ export function CategoryClient({
     )
   }
 
+
+  /* The filter compares raw numbers from listings that all carry their own
+     currency code. A hardcoded "$" was wrong for a catalogue that is almost
+     entirely EUR — same bug the price on the cards had. Derived from the
+     listings actually loaded, so it follows the data instead of a guess. */
+  const filterCurrencySymbol = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const s of scripts as any[]) {
+      const c = s?.currencySymbol || s?.currency
+      if (c) counts.set(String(c), (counts.get(String(c)) ?? 0) + 1)
+    }
+    const top = [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0]
+    return currencySymbolOf(top?.length === 1 ? top : undefined, top)
+  }, [scripts])
+
   return (
     <div className="min-h-screen overflow-x-clip bg-[#0a0a0a] text-white">
       <Navbar />
@@ -476,8 +492,8 @@ export function CategoryClient({
                       className="w-full"
                     />
                     <div className="flex justify-between text-sm text-white/50">
-                      <span>${priceRange[0]}</span>
-                      <span>${priceRange[1]}</span>
+                      <span>{filterCurrencySymbol}{priceRange[0]}</span>
+                      <span>{filterCurrencySymbol}{priceRange[1]}</span>
                     </div>
                   </div>
                 </div>
