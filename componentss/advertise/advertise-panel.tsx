@@ -20,6 +20,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
+import SideBannerPayPal from "@/componentss/advertise/side-banner-paypal"
 
 interface PricingDuration {
   label: string
@@ -185,7 +186,11 @@ export default function AdvertisePanel() {
     durationAmount: number
   ): number | null => {
     const v = livePrices?.[`${packageType}:${packageId}:${durationAmount}`]
-    return typeof v === "number" ? v : null
+    // Zero means "no price set", the same as missing — matching getPlatformPrice
+    // on the server. Treating it as a real price rendered "€0.00" with a live
+    // Add to Cart button that the server then refused, which is how
+    // ads:executive:1 sitting at 0 looked to a buyer.
+    return typeof v === "number" && v > 0 ? v : null
   }
 
   const handleAddToCart = async (pkg: PricingPackage, durationIndex: number) => {
@@ -289,6 +294,9 @@ export default function AdvertisePanel() {
   const [sbPosition, setSbPosition] = useState<SbSlot>("left-top")
   const [sbWeeks, setSbWeeks] = useState<number | null>(null)
   const [sbBusy, setSbBusy] = useState(false)
+  // The order the server created, waiting to be paid. Holding it here is what
+  // keeps the 15-minute reservation and the PayPal order as one thing.
+  const [sbOrder, setSbOrder] = useState<{ orderId: string; amount: string; label: string } | null>(null)
 
   // Open the "Side banners" tab when arriving via /advertise#side-banners.
   useEffect(() => {
@@ -361,12 +369,18 @@ export default function AdvertisePanel() {
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(data.error || "Checkout failed")
-      if (data.authUrl) {
-        window.location.href = data.authUrl
-        return
-      }
-      if (data.checkoutUrl) {
-        window.location.href = data.checkoutUrl
+
+      // The server creates the PayPal order and reserves the position in one
+      // step, then returns the order id. It used to be a Tebex redirect, and
+      // this still looked for `authUrl`/`checkoutUrl` afterwards — neither is
+      // ever sent now, so every purchase fell through to "Could not start
+      // checkout" even though the order and the reservation had been made.
+      if (data.orderId) {
+        setSbOrder({
+          orderId: data.orderId,
+          amount: String(data.amount ?? ""),
+          label: `${sbPositionLabel} · ${sbWeeks} ${sbWeeks === 1 ? "week" : "weeks"}`,
+        })
         return
       }
       toast.error("Could not start checkout")
@@ -472,22 +486,36 @@ export default function AdvertisePanel() {
           . After checkout, upload your banner image &amp; link from
           <span className="text-white/80"> Profile → Side Banners</span> (change it anytime during your window).
         </div>
-        <Button
-          onClick={handleSideBannerBuy}
-          disabled={sbBusy || sbWeeks == null || !sbAvail[sbPosition]?.available}
-          className="w-full bg-orange-500 py-3 text-base font-bold text-black hover:bg-orange-400 disabled:opacity-60"
-        >
-          {sbBusy ? (
-            <Loader2 className="h-5 w-5 animate-spin" />
-          ) : (
-            <>
-              Buy {sbPositionLabel} slot{sbPriceFor(sbWeeks) != null ? ` · ${curSym}${sbPriceFor(sbWeeks)}` : ""}
-              <ArrowRight className="ml-1.5 h-4 w-4" />
-            </>
-          )}
-        </Button>
+        {sbOrder ? (
+          <SideBannerPayPal
+            orderId={sbOrder.orderId}
+            amount={sbOrder.amount}
+            currencySymbol={curSym}
+            label={sbOrder.label}
+            onCancel={() => setSbOrder(null)}
+            onError={(m) => {
+              toast.error(m)
+              setSbOrder(null)
+            }}
+          />
+        ) : (
+          <Button
+            onClick={handleSideBannerBuy}
+            disabled={sbBusy || sbWeeks == null || !sbAvail[sbPosition]?.available}
+            className="w-full bg-orange-500 py-3 text-base font-bold text-black hover:bg-orange-400 disabled:opacity-60"
+          >
+            {sbBusy ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : (
+              <>
+                Buy {sbPositionLabel} slot{sbPriceFor(sbWeeks) != null ? ` · ${curSym}${sbPriceFor(sbWeeks)}` : ""}
+                <ArrowRight className="ml-1.5 h-4 w-4" />
+              </>
+            )}
+          </Button>
+        )}
         <p className="mt-3 text-center text-[11px] text-white/40">
-          Secured via Tebex. The slot is held for you for 15 minutes while you pay.
+          Secured by PayPal. The slot is held for you for 15 minutes while you pay.
         </p>
       </div>
     </div>

@@ -212,9 +212,11 @@ async function main() {
   console.log("✓ 1 pending ad")
 
   // ---- Side banners (demo) ---------------------------------------------------
-  // All 4 sellable slots (left-top/left-bottom/right-top/right-bottom) are
-  // sold + live so the rails never show an empty "Advertise here" CTA in the
-  // demo. Log in as CruxDev (creator) to manage/edit these from
+  // Three of the four sellable slots are sold + live, so the rails look
+  // populated. right-bottom is deliberately left FREE: with all four sold the
+  // purchase flow could not be exercised locally at all — every attempt got
+  // "that slot was just taken", which is not the state you want a harness in
+  // when the thing you are testing is buying one. Log in as CruxDev (creator) to manage/edit these from
   // Profile → Side Banners.
   await db.insert(schema.sideBannerBookings).values([
     {
@@ -234,12 +236,6 @@ async function main() {
       imageUrl: imgs[2], linkUrl: "https://fivecrux.local/script/1005", createdBy: seller.id,
       durationWeeks: 1, startDate: new Date(), endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       orderReference: "demo-seed-3",
-    },
-    {
-      id: 10004, position: "right-bottom", status: "active", title: "Mechanic Job Pro — 33% off",
-      imageUrl: imgs[3], linkUrl: "https://fivecrux.local/script/1004", createdBy: seller.id,
-      durationWeeks: 2, startDate: new Date(), endDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
-      orderReference: "demo-seed-4",
     },
   ]).onConflictDoNothing()
   console.log("✓ 4 active side banners (all 4 slots sold + live)")
