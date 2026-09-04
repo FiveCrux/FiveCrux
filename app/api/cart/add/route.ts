@@ -68,10 +68,12 @@ async function getCustomPackageItem(
     if (!meta || meta.packageType !== String(packageType)) {
         return { error: "Unknown or invalid package" } as const;
     }
-    // Price is the live Tebex price (server-authoritative, never the client's).
+    // Price comes from the platform price table (server-authoritative, never
+    // the client's). A package with no price, or a price of zero, is not for
+    // sale — see getPlatformPrice.
     const pkg = await resolvePackage(parsed.packageType, parsed.packageId, parsed.duration);
     if (!pkg) {
-        return { error: "Pricing not available for this package yet (Tebex not configured)" } as const;
+        return { error: "This package is not on sale right now — no price is set for it." } as const;
     }
 
     // Server-authoritative metadata: overwrite anything the client tried to set

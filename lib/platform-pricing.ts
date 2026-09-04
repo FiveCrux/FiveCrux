@@ -84,8 +84,14 @@ async function loadPrices(): Promise<Record<string, number>> {
 }
 
 /**
- * Look up a price. Returns null for anything not in the table rather than
- * defaulting to 0 — an unpriced package must be unbuyable, not free.
+ * Look up a price. Returns null for anything not in the table — and for a
+ * stored zero, which means the same thing.
+ *
+ * A paid placement priced at 0 is a mistake, not an offer: `ads:executive:1`
+ * reached production as 0 against a default of 150, which made a EUR 150 pack
+ * addable to a cart for nothing. The rule the rest of this file already stated
+ * — an unpriced package must be unbuyable, not free — now covers an explicit
+ * zero as well. To stop selling something, deactivate it; do not price it at 0.
  */
 export async function getPlatformPrice(
   packageType: string,
@@ -94,7 +100,7 @@ export async function getPlatformPrice(
 ): Promise<{ amount: number; currency: string } | null> {
   const prices = await loadPrices()
   const amount = prices[priceKey(packageType, packageId, duration)]
-  if (typeof amount !== "number") return null
+  if (typeof amount !== "number" || !(amount > 0)) return null
   return { amount, currency: PLATFORM_CURRENCY }
 }
 

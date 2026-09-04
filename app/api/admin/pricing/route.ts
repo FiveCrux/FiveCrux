@@ -87,9 +87,14 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: `Unknown package: ${key}` }, { status: 400 })
     }
     const amount = Number(raw)
-    if (!Number.isFinite(amount) || amount < 0) {
+    // Zero is refused, not just negatives. A paid placement at 0 is sellable
+    // for nothing — that is how ads:executive:1 shipped at 0 against a default
+    // of 150. Deactivating a package is the way to stop selling it.
+    if (!Number.isFinite(amount) || amount <= 0) {
       return NextResponse.json(
-        { error: `Invalid price for ${key} — must be zero or more` },
+        {
+          error: `Invalid price for ${key} — must be more than zero. To stop selling it, deactivate the package rather than pricing it at 0.`,
+        },
         { status: 400 }
       )
     }

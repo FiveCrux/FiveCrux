@@ -77,7 +77,8 @@ export function resolvePackageMeta(
 /**
  * Resolve a canonical package INCLUDING its live price from Tebex. Async.
  * Returns null when the combo isn't a real package OR when no live price is
- * available yet (Tebex not configured / package id not mapped). Callers must
+ * available yet — no price set, a price of zero, or an unmapped package.
+ * Callers must
  * reject anything that doesn't resolve. Price/slots come from HERE (Tebex +
  * catalog), never from the client.
  */
