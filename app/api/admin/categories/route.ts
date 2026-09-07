@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/auth";
 import { getAllCategories, createCategory } from "@/lib/database-new";
+import { validateCategoryOrder } from "@/lib/category-order";
 
 const STAFF = ["admin", "founder", "moderator"];
 
@@ -25,6 +26,10 @@ export async function POST(req: NextRequest) {
   if ("error" in auth) return NextResponse.json({ error: auth.error }, { status: auth.status });
   try {
     const b = await req.json();
+
+    const orderError = await validateCategoryOrder({ sortOrder: b.sortOrder, homeOrder: b.homeOrder });
+    if (orderError) return NextResponse.json({ error: orderError }, { status: 400 });
+
     const row = await createCategory({
       name: b.name,
       slug: b.slug,

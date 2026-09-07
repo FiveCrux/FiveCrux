@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/auth";
 import { updateCategory, deleteCategory } from "@/lib/database-new";
+import { validateCategoryOrder } from "@/lib/category-order";
 
 const STAFF = ["admin", "founder", "moderator"];
 
@@ -24,8 +25,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     for (const k of ["name", "slug", "icon", "appliesTo", "isActive", "showOnHome", "homeOrder", "sortOrder"]) {
       if (b[k] !== undefined) patch[k] = b[k];
     }
-    if (patch.homeOrder !== undefined) patch.homeOrder = Number(patch.homeOrder) || 0;
-    if (patch.sortOrder !== undefined) patch.sortOrder = Number(patch.sortOrder) || 0;
+    const orderError = await validateCategoryOrder(
+      { sortOrder: patch.sortOrder, homeOrder: patch.homeOrder },
+      Number(id)
+    );
+    if (orderError) return NextResponse.json({ error: orderError }, { status: 400 });
+
+    if (patch.homeOrder !== undefined) patch.homeOrder = Number(patch.homeOrder);
+    if (patch.sortOrder !== undefined) patch.sortOrder = Number(patch.sortOrder);
     const row = await updateCategory(Number(id), patch);
     if (!row) return NextResponse.json({ error: "Not found" }, { status: 404 });
     return NextResponse.json({ category: row });
