@@ -98,8 +98,14 @@ export default function CartCheckoutPanel({ total }: CartCheckoutPanelProps) {
 
       <div className="px-6 py-5">
         {/* Coupon / Creator toggle + code input — one fused segmented control:
-            [ Coupon ▾ | enter code… | ✓ Apply ] */}
-        <div className="flex items-stretch overflow-hidden rounded-xl border border-white/10 bg-white/[0.03] focus-within:border-orange-500/50">
+            [ Coupon ▾ | enter code… | ✓ Apply ]
+
+            It wraps on a narrow panel. The select and the button are fixed
+            width, so on one line the input took whatever was left — about
+            120px on a phone, which cut the placeholder to "Enter co" and left
+            no room to read the code being typed. Below 26rem the input gets
+            its own full-width row underneath. */}
+        <div className="flex flex-wrap items-stretch overflow-hidden rounded-xl border border-white/10 bg-white/[0.03] focus-within:border-orange-500/50">
           <Select value={mode} onValueChange={(v) => switchMode(v as CodeMode)}>
             <SelectTrigger className="h-auto w-[104px] flex-none rounded-none border-0 border-r border-white/10 bg-transparent px-3 text-sm font-semibold text-white focus:ring-0 focus:ring-offset-0">
               <SelectValue />
@@ -114,13 +120,13 @@ export default function CartCheckoutPanel({ total }: CartCheckoutPanelProps) {
             value={codeInput}
             onChange={(event) => resetInput(event.target.value)}
             placeholder={mode === "coupon" ? "Enter coupon code" : "Enter creator code"}
-            className="w-full min-w-0 flex-1 border-0 bg-transparent px-3.5 py-2.5 text-sm font-semibold tracking-wide tabular-nums text-white outline-none"
+            className="order-last w-full min-w-0 grow basis-full border-0 border-t border-white/10 bg-transparent px-3.5 py-2.5 text-sm font-semibold tracking-wide tabular-nums text-white outline-none sm:order-none sm:basis-0 sm:border-t-0"
           />
           <button
             type="button"
             onClick={applyCode}
             disabled={isApplying || !codeInput.trim()}
-            className="inline-flex flex-none items-center gap-1.5 rounded-none bg-orange-500 px-4 py-2.5 text-sm font-bold text-black transition hover:bg-orange-400 disabled:cursor-not-allowed disabled:opacity-50"
+            className="ml-auto inline-flex flex-none items-center gap-1.5 rounded-none bg-orange-500 px-4 py-2.5 text-sm font-bold text-black transition hover:bg-orange-400 disabled:cursor-not-allowed disabled:opacity-50 sm:ml-0"
           >
             <Check className="h-4 w-4" />
             {isApplying ? "Applying..." : "Apply"}

@@ -130,6 +130,22 @@ export function ScriptsClient({
   const [sortBy, setSortBy] = useState("popular");
   const categoryParam = searchParams.get("category") ?? "";
 
+  /* Show the top of the results when the category changes.
+     Next does not reset scroll for a navigation that carries a query string —
+     a plain /scripts link lands at the top, /scripts?category=maps keeps the
+     old position and clamps it. Every footer category link is the second kind,
+     so arriving from the footer of any page dropped you at the bottom of the
+     new list. Reported from the cart and from the home page; same landing
+     page, so this is the one place to fix it.
+
+     Deliberately a "changed OR first paint of a filtered view" rule rather
+     than every render, so it does not fight in-page filter interactions. */
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (window.scrollY === 0) return;
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }, [categoryParam]);
+
   const [selectedCategories, setSelectedCategories] = useState<string[]>(() =>
     categoryParam ? [categoryParam] : []
   );
