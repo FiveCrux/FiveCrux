@@ -136,13 +136,23 @@ export default function NavbarComponent() {
         <div className="flex h-[68px] w-full items-center gap-7 px-2.5">
           <Logo />
 
-          {/* desktop nav */}
-          <nav className="hidden items-center gap-5 lg:flex">
+          {/* Desktop nav. Categories are admin-managed, so this row grows with
+              however many exist — and it had no overflow behaviour at all: no
+              wrap, no shrink, no scroll. Enough of them (or long enough names)
+              and it pushes the cart and account controls clean off the right
+              edge of the viewport.
+
+              min-w-0 + shrink let the row give way instead of pushing, and it
+              scrolls horizontally rather than hiding categories an admin
+              deliberately put on the nav. The scrollbar is hidden because a
+              visible one across the header reads as broken chrome.
+              Locked by scripts/check-navbar-overflow.mjs. */}
+          <nav className="hidden min-w-0 shrink items-center gap-5 overflow-x-auto lg:flex [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {navItems.map((item) => (
               <Link
                 key={item.name}
                 href={item.link}
-                className={`relative flex h-[68px] items-center text-sm font-medium transition-colors ${
+                className={`relative flex h-[68px] shrink-0 items-center whitespace-nowrap text-sm font-medium transition-colors ${
                   isActive(item.link) ? "text-white" : "text-white/70 hover:text-white"
                 }`}
               >
