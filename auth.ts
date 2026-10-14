@@ -54,6 +54,13 @@ export const authOptions: NextAuthOptions = {
 		Discord({
 			clientId: process.env.DISCORD_CLIENT_ID as string,
 			clientSecret: process.env.DISCORD_CLIENT_SECRET as string,
+			// Discord rolled out RFC 9207 issuer identification (an `iss` param on
+			// the callback redirect). next-auth v4's bundled Discord provider never
+			// set `issuer`, so openid-client's new strict check throws
+			// "issuer must be configured on the issuer" on every callback —
+			// https://github.com/nextauthjs/next-auth/pull/12694 adds this upstream
+			// for Auth.js v5; v4 needs it set here until that lands in a v4 patch.
+			issuer: "https://discord.com",
 			authorization: {
 				params: {
 					scope: "identify email guilds connections",
