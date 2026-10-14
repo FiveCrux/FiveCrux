@@ -321,18 +321,6 @@ export function CategoryClient({
     return filtered
   }, [sourceProducts, searchQuery, selectedFrameworks, selectedPriceCategories, priceRange, sortBy])
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#0a0a0a] text-white">
-        <Navbar />
-        <div className="flex min-h-[60vh] items-center justify-center">
-          <div className="h-16 w-16 animate-spin rounded-full border-b-2 border-orange-500" />
-        </div>
-      </div>
-    )
-  }
-
-
   /* The filter compares raw numbers from listings that all carry their own
      currency code. A hardcoded "$" was wrong for a catalogue that is almost
      entirely EUR — same bug the price on the cards had. Derived from the
@@ -346,6 +334,17 @@ export function CategoryClient({
     const top = [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0]
     return currencySymbolOf(top?.length === 1 ? top : undefined, top)
   }, [scripts])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] text-white">
+        <Navbar />
+        <div className="flex min-h-[60vh] items-center justify-center">
+          <div className="h-16 w-16 animate-spin rounded-full border-b-2 border-orange-500" />
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen overflow-x-clip bg-[#0a0a0a] text-white">
