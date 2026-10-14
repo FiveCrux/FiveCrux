@@ -4,7 +4,7 @@
 // 500, a negative price went live, and an unknown category slug produced an
 // orphan listing that no browse chip ever matched. Validate the actual values.
 
-export type ListingValidationResult = { ok: true } | { ok: false; error: string };
+export type ListingValidationResult = { ok: true } | { ok: false; error: string; field: string };
 
 // `partial` = PATCH mode: only validate fields that were actually supplied
 // (an undefined field means "keep existing"). On create, callers still enforce
@@ -18,24 +18,24 @@ export function validateListingFields(
 
   if (!partial || body.title !== undefined) {
     if (typeof body.title !== "string" || !body.title.trim()) {
-      return { ok: false, error: "Title can't be empty." };
+      return { ok: false, error: "Title can't be empty.", field: "title" };
     }
   }
 
   if (!partial || body.price !== undefined) {
     const price = Number(body.price);
     if (!Number.isFinite(price)) {
-      return { ok: false, error: "Price must be a valid number." };
+      return { ok: false, error: "Price must be a valid number.", field: "price" };
     }
     if (price < 0) {
-      return { ok: false, error: "Price can't be negative." };
+      return { ok: false, error: "Price can't be negative.", field: "price" };
     }
   }
 
   if (!partial || body.category !== undefined) {
     const cat = typeof body.category === "string" ? body.category : "";
     if (!validCategorySlugs.includes(cat)) {
-      return { ok: false, error: "Unknown category." };
+      return { ok: false, error: "Unknown category.", field: "category" };
     }
   }
 

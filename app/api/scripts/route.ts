@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     const requiredFields = ["title", "description", "price", "category", "framework"]
     for (const field of requiredFields) {
       if (!body[field]) {
-        return NextResponse.json({ error: `Missing required field: ${field}` }, { status: 400 })
+        return NextResponse.json({ error: `Missing required field: ${field}`, field }, { status: 400 })
       }
     }
 
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     const validCategories = (await getCategories()).map((c) => c.slug)
     const valid = validateListingFields(body, validCategories)
     if (!valid.ok) {
-      return NextResponse.json({ error: valid.error }, { status: 400 })
+      return NextResponse.json({ error: valid.error, field: valid.field }, { status: 400 })
     }
 
     // Create the script in the database

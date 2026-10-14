@@ -21,6 +21,7 @@ import {
   sideBannerBookings,
   verificationRequests,
   orders, orderItems,
+  activityLog,
   type Script, type Giveaway, type NewCategory, type NewFramework
 } from './db/schema';
 import type { 
@@ -38,6 +39,49 @@ export type ValidRole = typeof VALID_ROLES[number];
 // Helper function to validate roles
 export function validateRoles(roles: string[]): ValidRole[] {
   return roles.filter(role => VALID_ROLES.includes(role as ValidRole)) as ValidRole[];
+}
+
+export async function logActivity(entry: {
+  action: string;
+  entityType: string;
+  entityId: number;
+  entityTitle?: string | null;
+  actorId?: string | null;
+  actorName?: string | null;
+  reason?: string | null;
+}) {
+  try {
+    await db.insert(activityLog).values({
+      action: entry.action,
+      entityType: entry.entityType,
+      entityId: entry.entityId,
+      entityTitle: entry.entityTitle || null,
+      actorId: entry.actorId || null,
+      actorName: entry.actorName || null,
+      reason: entry.reason || null,
+    });
+  } catch (error) {
+    console.error('Error logging activity:', error);
+  }
+}
+
+export async function getRecentActivity(limit: number = 10) {
+  return db
+    .select({
+      id: activityLog.id,
+      action: activityLog.action,
+      entityType: activityLog.entityType,
+      entityId: activityLog.entityId,
+      entityTitle: activityLog.entityTitle,
+      actorId: activityLog.actorId,
+      actorName: sql<string | null>`coalesce(${users.name}, ${activityLog.actorName})`,
+      reason: activityLog.reason,
+      createdAt: activityLog.createdAt,
+    })
+    .from(activityLog)
+    .leftJoin(users, eq(activityLog.actorId, users.id))
+    .orderBy(desc(activityLog.createdAt))
+    .limit(limit);
 }
 
 // Helper function to check if user has a specific role
@@ -1130,6 +1174,15 @@ export async function approveScript(scriptId: number, adminId: string, adminNote
       }).returning();
       console.log('Script approved successfully:', approvedScript);
       return approvedScript;
+    }).then(async (approvedScript) => {
+      await logActivity({
+        action: 'approved',
+        entityType: 'script',
+        entityId: scriptId,
+        entityTitle: approvedScript?.title,
+        actorId: adminId,
+      });
+      return approvedScript;
     });
   } catch (error) {
     console.error('Error approving script:', error);
@@ -1204,6 +1257,14 @@ export async function rejectScript(scriptId: number, adminId: string, rejectionR
     }
     
     console.log('Script rejected successfully:', rejectedScript[0]);
+    await logActivity({
+      action: 'rejected',
+      entityType: 'script',
+      entityId: scriptId,
+      entityTitle: scriptData.title,
+      actorId: adminId,
+      reason: rejectionReason,
+    });
     return rejectedScript[0];
   } catch (error) {
     console.error('Error rejecting script:', error);
@@ -2217,6 +2278,14 @@ export async function approveGiveaway(giveawayId: number, adminId: string, admin
     // Delete from pending_giveaways table
     await db.delete(pendingGiveaways).where(eq(pendingGiveaways.id, giveawayId));
 
+    await logActivity({
+      action: 'approved',
+      entityType: 'giveaway',
+      entityId: giveawayId,
+      entityTitle: pendingGiveaway[0].title,
+      actorId: adminId,
+    });
+
     return true;
   } catch (error) {
     console.error('Error approving giveaway:', error);
@@ -2263,6 +2332,15 @@ export async function rejectGiveaway(giveawayId: number, adminId: string, reject
     } else {
       await db.delete(approvedGiveaways).where(eq(approvedGiveaways.id, giveawayId));
     }
+
+    await logActivity({
+      action: 'rejected',
+      entityType: 'giveaway',
+      entityId: giveawayId,
+      entityTitle: giveaway[0].title,
+      actorId: adminId,
+      reason: rejectionReason,
+    });
 
     return true;
   } catch (error) {
@@ -4182,11 +4260,19 @@ export async function setGiveawayWinnerDelivered(
   if (!owned) return { ok: false, reason: 'not_found' };
   if (owned.creatorId !== creatorId) return { ok: false, reason: 'forbidden' };
 
+  // Idempotent: a repeat "mark delivered" call (double-click, retry, or a
+  // bypassed frontend) must not reset the original delivery timestamp.
+  const [current] = await db
+    .select({ deliveredAt: giveawayPrizeWinners.deliveredAt })
+    .from(giveawayPrizeWinners)
+    .where(eq(giveawayPrizeWinners.id, winnerId))
+    .limit(1);
+
   await db
     .update(giveawayPrizeWinners)
     .set({
       claimed: delivered,
-      deliveredAt: delivered ? new Date() : null,
+      deliveredAt: delivered ? current?.deliveredAt ?? new Date() : null,
       notes: notes ?? null,
     })
     .where(eq(giveawayPrizeWinners.id, winnerId));

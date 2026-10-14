@@ -986,7 +986,7 @@ export function GiveawayDetailClient({
           <div className="mx-auto grid max-w-[1240px] grid-cols-2 divide-x divide-white/[0.06] px-4 sm:grid-cols-4 sm:px-6 lg:px-8">
             <div className="py-5 pr-4">
               <div className="text-[11px] uppercase tracking-[0.16em] text-white/55">
-                {hasValue ? "Prize value" : "Winners"}
+                {hasValue ? "Prize value" : isGiveawayEnded ? "Winners" : "Winner slots"}
               </div>
               <div className="mt-1 tabular-nums text-lg font-bold">
                 {hasValue ? prizeValueDisplay : totalWinners}

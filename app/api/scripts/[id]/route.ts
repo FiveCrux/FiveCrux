@@ -83,7 +83,7 @@ export async function PATCH(
     const validCategories = (await getCategories()).map((c) => c.slug)
     const valid = validateListingFields(body, validCategories, { partial: true })
     if (!valid.ok) {
-      return NextResponse.json({ error: valid.error }, { status: 400 })
+      return NextResponse.json({ error: valid.error, field: valid.field }, { status: 400 })
     }
 
     // Check if the script is currently approved (in approved_scripts table)

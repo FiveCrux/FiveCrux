@@ -1350,6 +1350,19 @@ export default function ProfilePage() {
                                 const isEnded = endDate ? new Date() > endDate : false;
                                 if (!isEnded || giveaway.status !== "approved") return null;
                                 const isDrawing = drawingWinnersId === giveaway.id;
+                                if (giveaway.winners_drawn) {
+                                  return (
+                                    <Button
+                                      size="sm"
+                                      type="button"
+                                      disabled
+                                      className="w-full bg-white/[0.06] text-white/40 font-semibold cursor-not-allowed"
+                                    >
+                                      <Trophy className="h-4 w-4 mr-1.5" />
+                                      Winners Drawn
+                                    </Button>
+                                  );
+                                }
                                 return (
                                   <Button
                                     size="sm"

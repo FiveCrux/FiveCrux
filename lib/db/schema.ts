@@ -728,6 +728,24 @@ export const platformPrices = pgTable('platform_prices', {
 export type PlatformPrice = typeof platformPrices.$inferSelect;
 export type NewPlatformPrice = typeof platformPrices.$inferInsert;
 
+// Admin action audit trail — approvals/rejections across assets, giveaways, etc.
+// so "what happened and who did it" survives past the mutation itself.
+export const activityLog = pgTable('activity_log', {
+  id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
+  action: text('action').notNull(),
+  entityType: text('entity_type').notNull(),
+  entityId: integer('entity_id').notNull(),
+  entityTitle: text('entity_title'),
+  actorId: text('actor_id'),
+  actorName: text('actor_name'),
+  reason: text('reason'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (t) => ({
+  createdAtIdx: index('activity_log_created_at_idx').on(t.createdAt),
+}));
+export type ActivityLog = typeof activityLog.$inferSelect;
+export type NewActivityLog = typeof activityLog.$inferInsert;
+
 export const paypalOrdersRelations = relations(paypalOrders, ({ one }) => ({
   user: one(users, {
     fields: [paypalOrders.userId],

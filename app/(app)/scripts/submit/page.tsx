@@ -57,7 +57,7 @@ export default function SubmitScriptPage() {
   const previewRef = useRef(null)
 
   // State declarations
-  const [errors, setErrors] = useState({})
+  const [errors, setErrors] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isEditMode, setIsEditMode] = useState(false)
   const [isLoadingScript, setIsLoadingScript] = useState(false)
@@ -512,6 +512,7 @@ export default function SubmitScriptPage() {
       }
 
       if (response.ok) {
+        setErrors({})
         if (isEditMode) {
           toast.success("Asset updated successfully!")
           router.push('/profile')
@@ -522,7 +523,13 @@ export default function SubmitScriptPage() {
           router.push('/profile')
         }
       } else {
-        throw new Error(isEditMode ? "Failed to update script" : "Failed to submit script")
+        const body = await response.json().catch(() => null)
+        const message = body?.error || (isEditMode ? "Failed to update asset." : "Failed to submit asset.")
+        if (body?.field) {
+          setErrors({ [body.field]: message })
+          document.getElementById(body.field)?.scrollIntoView({ behavior: "smooth", block: "center" })
+        }
+        toast.error(message)
       }
     } catch (error) {
       console.error("Error submitting script:", error)
@@ -624,11 +631,15 @@ export default function SubmitScriptPage() {
                       <Input
                         id="title"
                         value={formData.title}
-                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                        onChange={(e) => {
+                          setFormData({ ...formData, title: e.target.value })
+                          if (errors.title) setErrors((prev) => { const { title, ...rest } = prev; return rest })
+                        }}
                         placeholder="Enter your asset title"
-                        className={cn("mt-2 w-full px-4 py-3 text-[15px] font-medium h-auto", fieldClass)}
+                        className={cn("mt-2 w-full px-4 py-3 text-[15px] font-medium h-auto", fieldClass, errors.title && "border-red-500 focus:border-red-500")}
                         required
                       />
+                      {errors.title && <p className="mt-1.5 text-xs text-red-400">{errors.title}</p>}
                     </div>
 
                     <div>
@@ -638,12 +649,16 @@ export default function SubmitScriptPage() {
                       <Textarea
                         id="description"
                         value={formData.description}
-                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        onChange={(e) => {
+                          setFormData({ ...formData, description: e.target.value })
+                          if (errors.description) setErrors((prev) => { const { description, ...rest } = prev; return rest })
+                        }}
                         placeholder="Describe your asset in detail..."
                         rows={3}
-                        className={cn("mt-2 w-full px-4 py-3 text-sm leading-relaxed text-white/85", fieldClass)}
+                        className={cn("mt-2 w-full px-4 py-3 text-sm leading-relaxed text-white/85", fieldClass, errors.description && "border-red-500 focus:border-red-500")}
                         required
                       />
+                      {errors.description && <p className="mt-1.5 text-xs text-red-400">{errors.description}</p>}
                     </div>
 
                     <div className="grid gap-5 sm:grid-cols-2">
@@ -653,9 +668,12 @@ export default function SubmitScriptPage() {
                         </Label>
                         <Select
                           value={formData.category}
-                          onValueChange={(value) => setFormData({ ...formData, category: value })}
+                          onValueChange={(value) => {
+                            setFormData({ ...formData, category: value })
+                            if (errors.category) setErrors((prev) => { const { category, ...rest } = prev; return rest })
+                          }}
                         >
-                          <SelectTrigger className={cn("mt-2 px-4 py-3 text-sm h-auto", fieldClass)}>
+                          <SelectTrigger id="category" className={cn("mt-2 px-4 py-3 text-sm h-auto", fieldClass, errors.category && "border-red-500 focus:border-red-500")}>
                             <SelectValue placeholder="Select category" />
                           </SelectTrigger>
                           <SelectContent className="bg-[#0d0d0f] border-white/[0.08] text-white">
@@ -666,6 +684,7 @@ export default function SubmitScriptPage() {
                             ))}
                           </SelectContent>
                         </Select>
+                        {errors.category && <p className="mt-1.5 text-xs text-red-400">{errors.category}</p>}
                       </div>
 
                       <div>
@@ -1032,7 +1051,7 @@ export default function SubmitScriptPage() {
                         <Label htmlFor="price" className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/50">
                           Price *
                         </Label>
-                        <div className={cn("mt-2 flex items-center px-4", fieldClass)}>
+                        <div className={cn("mt-2 flex items-center px-4", fieldClass, errors.price && "border-red-500")}>
                           <span className="text-sm text-white/55">{previewCurrencySymbol}</span>
                           <Input
                             id="price"
@@ -1040,13 +1059,17 @@ export default function SubmitScriptPage() {
                             step="0.01"
                             min="0"
                             value={formData.price}
-                            onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                            onChange={(e) => {
+                              setFormData({ ...formData, price: e.target.value })
+                              if (errors.price) setErrors((prev) => { const { price, ...rest } = prev; return rest })
+                            }}
                             placeholder="25.99"
                             className="w-full border-0 bg-transparent py-3 pl-2 text-[15px] font-semibold tabular-nums shadow-none focus-visible:ring-0 h-auto px-0"
                             required={!isFree}
                             disabled={isFree || !selectedCurrency}
                           />
                         </div>
+                        {errors.price && <p className="mt-1.5 text-xs text-red-400">{errors.price}</p>}
                       </div>
 
                       <div>

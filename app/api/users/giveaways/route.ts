@@ -7,6 +7,7 @@ import {
   getRejectedGiveaways,
   deleteGiveaway,
   getGiveawayById,
+  getGiveawayPrizes,
   hasRole,
   hasAnyRole
 } from '@/lib/database-new';
@@ -70,24 +71,30 @@ export async function GET(request: NextRequest) {
         currency: g.currency,
         currency_symbol: g.currencySymbol,
       })),
-      ...userApproved.map(g => ({ 
-        ...g, 
-        status: 'approved',
-        creator_id: userId,
-        creator_name: g.creatorName,
-        creator_email: g.creatorEmail,
-        total_value: g.totalValue,
-        end_date: g.endDate,
-        max_entries: g.maxEntries,
-        entries_count: g.entriesCount || 0,
-        cover_image: g.coverImage,
-        youtube_video_link: g.youtubeVideoLink,
-        auto_announce: g.autoAnnounce,
-        created_at: g.createdAt || g.approvedAt,
-        updated_at: g.updatedAt,
-        currency: g.currency,
-        currency_symbol: g.currencySymbol,
-      })),
+      ...(await Promise.all(userApproved.map(async (g) => {
+        const prizes = await getGiveawayPrizes(g.id);
+        return {
+          ...g,
+          status: 'approved',
+          creator_id: userId,
+          creator_name: g.creatorName,
+          creator_email: g.creatorEmail,
+          total_value: g.totalValue,
+          end_date: g.endDate,
+          max_entries: g.maxEntries,
+          entries_count: g.entriesCount || 0,
+          cover_image: g.coverImage,
+          youtube_video_link: g.youtubeVideoLink,
+          auto_announce: g.autoAnnounce,
+          created_at: g.createdAt || g.approvedAt,
+          updated_at: g.updatedAt,
+          currency: g.currency,
+          currency_symbol: g.currencySymbol,
+          // Draw Winners is a one-way action — once every prize has a winner,
+          // the button must stay disabled (including after a page refresh).
+          winners_drawn: prizes.length > 0 && prizes.every((p: any) => !!p.winnerName),
+        };
+      }))),
       ...userRejected.map(g => ({ 
         ...g, 
         status: 'rejected',

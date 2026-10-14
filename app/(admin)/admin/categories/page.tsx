@@ -193,12 +193,12 @@ export default function AdminCategoriesPage() {
                 className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm outline-none focus:border-orange-500/50"
               />
             </div>
-            <div>
+            <div className="min-w-0">
               <label className="mb-1 block text-[11px] text-white/40">Icon</label>
               <select
                 value={draft.icon}
                 onChange={(e) => setDraft((d) => ({ ...d, icon: e.target.value }))}
-                className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm outline-none focus:border-orange-500/50"
+                className="w-full min-w-0 max-w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm outline-none focus:border-orange-500/50"
               >
                 {CATEGORY_ICON_NAMES.map((n) => (
                   <option key={n} value={n}>
@@ -207,12 +207,12 @@ export default function AdminCategoriesPage() {
                 ))}
               </select>
             </div>
-            <div>
+            <div className="min-w-0">
               <label className="mb-1 block text-[11px] text-white/40">Applies to</label>
               <select
                 value={draft.appliesTo}
                 onChange={(e) => setDraft((d) => ({ ...d, appliesTo: e.target.value }))}
-                className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm outline-none focus:border-orange-500/50"
+                className="w-full min-w-0 max-w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm outline-none focus:border-orange-500/50"
               >
                 <option value="scripts">Assets</option>
                 <option value="props">Props</option>

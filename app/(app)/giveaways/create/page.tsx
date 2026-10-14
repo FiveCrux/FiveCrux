@@ -118,10 +118,56 @@ export default function CreateGiveawayPage() {
 
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [submiting, setSubmitting] = useState(false)
+
   const [uploadingCoverImage, setUploadingCoverImage] = useState(false)
   const [uploadingImages, setUploadingImages] = useState(false)
   const [uploadingVideos, setUploadingVideos] = useState(false)
   const [isScheduled, setIsScheduled] = useState(false)
+
+  const DRAFT_STORAGE_KEY = "fivecrux-giveaway-draft"
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const raw = window.localStorage.getItem(DRAFT_STORAGE_KEY)
+    if (!raw) return
+    try {
+      const draft = JSON.parse(raw)
+      setFormData({
+        ...draft.formData,
+        endDate: draft.formData?.endDate ? new Date(draft.formData.endDate) : undefined,
+        startDate: draft.formData?.startDate ? new Date(draft.formData.startDate) : undefined,
+      })
+      if (draft.usePoints !== undefined) setUsePoints(draft.usePoints)
+      if (draft.requirements) setRequirements(draft.requirements)
+      if (draft.prizes) setPrizes(draft.prizes)
+      if (draft.media) setMedia(draft.media)
+      if (draft.youtubeVideoLink !== undefined) setYoutubeVideoLink(draft.youtubeVideoLink)
+      if (draft.isScheduled !== undefined) setIsScheduled(draft.isScheduled)
+      toast.success("Draft restored")
+    } catch {
+      window.localStorage.removeItem(DRAFT_STORAGE_KEY)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const handleSaveDraft = () => {
+    if (typeof window === "undefined") return
+    const draft = {
+      formData: {
+        ...formData,
+        endDate: formData.endDate ? formData.endDate.toISOString() : undefined,
+        startDate: formData.startDate ? formData.startDate.toISOString() : undefined,
+      },
+      usePoints,
+      requirements,
+      prizes,
+      media,
+      youtubeVideoLink,
+      isScheduled,
+    }
+    window.localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft))
+    toast.success("Draft saved")
+  }
 
   // Update form data when session loads
   useEffect(() => {
@@ -400,6 +446,7 @@ export default function CreateGiveawayPage() {
       if (res.ok) {
         const result = await res.json();
         toast.success('Giveaway created successfully!');
+        window.localStorage.removeItem(DRAFT_STORAGE_KEY)
         // Reset form
         setFormData({
           title: "",
@@ -858,8 +905,17 @@ export default function CreateGiveawayPage() {
                               <Label className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/50">Amount</Label>
                               <Input
                                 value={prize.value}
-                                onChange={(e) => updatePrize(prize.id, "value", e.target.value)}
-                                placeholder="$50"
+                                onChange={(e) => {
+                                  const numeric = e.target.value.replace(/[^0-9.]/g, "")
+                                  const firstDot = numeric.indexOf(".")
+                                  const sanitized =
+                                    firstDot === -1
+                                      ? numeric
+                                      : numeric.slice(0, firstDot + 1) + numeric.slice(firstDot + 1).replace(/\./g, "")
+                                  updatePrize(prize.id, "value", sanitized)
+                                }}
+                                inputMode="decimal"
+                                placeholder="50"
                                 className={`mt-2 px-4 py-2.5 text-sm tabular-nums ${fieldClass}`}
                               />
                             </div>
@@ -1376,6 +1432,7 @@ export default function CreateGiveawayPage() {
                     <Button
                       type="button"
                       variant="outline"
+                      onClick={handleSaveDraft}
                       className="px-8 py-3 sm:py-0 border-white/12 bg-transparent text-white/75 hover:text-white hover:bg-white/5 rounded-xl"
                     >
                       Save Draft

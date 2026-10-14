@@ -89,17 +89,27 @@ export default function Footer() {
                 <h4 className="mb-4 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/40">
                   {col.title}
                 </h4>
-                {col.links.map((link) => (
-                  <Link
-                    key={link.name}
-                    href={link.href}
-                    target={link.external ? "_blank" : undefined}
-                    rel={link.external ? "noopener noreferrer" : undefined}
-                    className="block py-1.5 text-sm text-white/[0.58] transition-colors hover:text-white"
-                  >
-                    {link.name}
-                  </Link>
-                ))}
+                {col.links.map((link) =>
+                  link.external || link.href.startsWith("mailto:") ? (
+                    <a
+                      key={link.name}
+                      href={link.href}
+                      target={link.external ? "_blank" : undefined}
+                      rel={link.external ? "noopener noreferrer" : undefined}
+                      className="block py-1.5 text-sm text-white/[0.58] transition-colors hover:text-white"
+                    >
+                      {link.name}
+                    </a>
+                  ) : (
+                    <Link
+                      key={link.name}
+                      href={link.href}
+                      className="block py-1.5 text-sm text-white/[0.58] transition-colors hover:text-white"
+                    >
+                      {link.name}
+                    </Link>
+                  )
+                )}
               </div>
             ))}
           </div>

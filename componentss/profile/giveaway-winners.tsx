@@ -178,11 +178,11 @@ function WinnerRow({
 
         <button
           type="button"
-          onClick={() => save(!winner.delivered, notes)}
-          disabled={saving}
+          onClick={() => save(true, notes)}
+          disabled={saving || winner.delivered}
           className={`inline-flex shrink-0 items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-bold transition disabled:opacity-60 ${
             winner.delivered
-              ? "bg-green-500/15 text-green-300 ring-1 ring-green-500/30 hover:bg-green-500/20"
+              ? "bg-green-500/15 text-green-300 ring-1 ring-green-500/30 cursor-not-allowed"
               : "bg-white/[0.05] text-white/70 ring-1 ring-white/10 hover:bg-white/[0.08]"
           }`}
         >

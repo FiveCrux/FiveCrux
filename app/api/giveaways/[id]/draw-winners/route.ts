@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/auth'
 import { db } from '@/lib/db/client'
-import { approvedGiveaways } from '@/lib/db/schema'
+import { approvedGiveaways, giveawayPrizes } from '@/lib/db/schema'
 import { eq } from 'drizzle-orm'
 import { drawWinnersForGiveaway } from '@/lib/giveaway-winners'
 
@@ -45,6 +45,14 @@ export async function POST(
 
     if (!giveaway.endDate || new Date(giveaway.endDate) > new Date()) {
       return NextResponse.json({ error: 'This giveaway has not ended yet' }, { status: 400 })
+    }
+
+    // Draw Winners is one-way — reject a re-draw outright (not just a confusing
+    // "no eligible winners" from the assignment loop) so a bypassed/stale
+    // frontend button can't quietly no-op or look like a retry-worthy failure.
+    const existingPrizes = await db.select().from(giveawayPrizes).where(eq(giveawayPrizes.giveawayId, giveawayId))
+    if (existingPrizes.length > 0 && existingPrizes.every((p) => !!p.winnerName)) {
+      return NextResponse.json({ error: 'Winners have already been drawn for this giveaway' }, { status: 409 })
     }
 
     const result = await drawWinnersForGiveaway(giveawayId, { announce: true, overwriteExisting: false })

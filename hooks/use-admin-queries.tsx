@@ -143,7 +143,7 @@ export function useAdminUsers() {
 }
 
 // Fetch Scripts with pagination
-export function useAdminScripts() {
+export function useAdminScripts(status: string = 'all') {
   const { data: session } = useSession()
   const userRoles = (session?.user as any)?.roles || []
   const hasAccess =
@@ -152,9 +152,9 @@ export function useAdminScripts() {
     userRoles.includes('moderator')
 
   return useInfiniteQuery<{ scripts: Script[], hasMore: boolean }>({
-    queryKey: ['admin-scripts'],
+    queryKey: ['admin-scripts', status],
     queryFn: async ({ pageParam = 0 }) => {
-      const res = await fetch(`/api/admin/scripts?limit=10&offset=${pageParam}`, { credentials: 'include' })
+      const res = await fetch(`/api/admin/scripts?status=${status}&limit=10&offset=${pageParam}`, { credentials: 'include' })
       if (!res.ok) throw new Error('Failed to fetch scripts')
       const data = await res.json()
       return { scripts: data.scripts || [], hasMore: data.hasMore || false }
@@ -172,8 +172,31 @@ export function useAdminScripts() {
   })
 }
 
+// Fetch recent admin activity (audit log) for the dashboard timeline
+export function useAdminActivity(limit: number = 5) {
+  const { data: session } = useSession()
+  const userRoles = (session?.user as any)?.roles || []
+  const hasAccess =
+    userRoles.includes('admin') ||
+    userRoles.includes('founder') ||
+    userRoles.includes('moderator')
+
+  return useQuery<{ id: number, action: string, entityType: string, entityId: number, entityTitle: string | null, actorName: string | null, reason: string | null, createdAt: string }[]>({
+    queryKey: ['admin-activity', limit],
+    queryFn: async () => {
+      const res = await fetch(`/api/admin/activity?limit=${limit}`, { credentials: 'include' })
+      if (!res.ok) throw new Error('Failed to fetch activity')
+      const data = await res.json()
+      return data.activity || []
+    },
+    enabled: !!session?.user && hasAccess,
+    staleTime: 30000,
+    refetchOnWindowFocus: true,
+  })
+}
+
 // Fetch Giveaways with pagination
-export function useAdminGiveaways() {
+export function useAdminGiveaways(status: string = 'all') {
   const { data: session } = useSession()
   const userRoles = (session?.user as any)?.roles || []
   const hasAccess =
@@ -182,9 +205,9 @@ export function useAdminGiveaways() {
     userRoles.includes('moderator')
 
   return useInfiniteQuery<{ giveaways: Giveaway[], hasMore: boolean }>({
-    queryKey: ['admin-giveaways'],
+    queryKey: ['admin-giveaways', status],
     queryFn: async ({ pageParam = 0 }) => {
-      const res = await fetch(`/api/admin/giveaways?limit=10&offset=${pageParam}`, { credentials: 'include' })
+      const res = await fetch(`/api/admin/giveaways?status=${status}&limit=10&offset=${pageParam}`, { credentials: 'include' })
       if (!res.ok) throw new Error('Failed to fetch giveaways')
       const data = await res.json()
       return { giveaways: data.giveaways || [], hasMore: data.hasMore || false }
@@ -307,22 +330,22 @@ export function useUpdateScript() {
       return res.json()
     },
     onMutate: async ({ scriptId, status, reason }) => {
-      // Cancel any outgoing refetches
+      // Cancel any outgoing refetches for every status-filtered scripts query
       await queryClient.cancelQueries({ queryKey: ['admin-scripts'] })
 
-      // Snapshot the previous value
-      const previousData = queryClient.getQueryData(['admin-scripts'])
+      // Snapshot the previous values across all status-filtered caches
+      const previousData = queryClient.getQueriesData({ queryKey: ['admin-scripts'] })
 
-      // Optimistically update the cache for infinite query
-      queryClient.setQueryData(['admin-scripts'], (old: any) => {
+      // Optimistically update every cached scripts query (one per status filter)
+      queryClient.setQueriesData({ queryKey: ['admin-scripts'] }, (old: any) => {
         if (!old?.pages) return old
-        
+
         return {
           ...old,
           pages: old.pages.map((page: any) => ({
             ...page,
-            scripts: page.scripts.map((script: Script) => 
-              script.id === scriptId 
+            scripts: page.scripts.map((script: Script) =>
+              script.id === scriptId
                 ? { ...script, status, ...(reason && { rejection_reason: reason }) }
                 : script
             )
@@ -345,11 +368,11 @@ export function useUpdateScript() {
       }
     },
     onError: (error: any, variables, context) => {
-      // Rollback to the previous value on error
-      if (context?.previousData) {
-        queryClient.setQueryData(['admin-scripts'], context.previousData)
-      }
-      
+      // Rollback every snapshotted cache entry on error
+      context?.previousData?.forEach(([queryKey, data]: [readonly unknown[], unknown]) => {
+        queryClient.setQueryData(queryKey, data)
+      })
+
       toast.error(
         variables.status === 'approved' ? 'Failed to approve script' : 'Failed to reject script',
         { description: 'Please try again.' }
@@ -358,6 +381,7 @@ export function useUpdateScript() {
     onSettled: () => {
       // Refetch in the background to ensure consistency
       queryClient.invalidateQueries({ queryKey: ['admin-scripts'] })
+      queryClient.invalidateQueries({ queryKey: ['admin-activity'] })
     }
   })
 }
@@ -381,22 +405,22 @@ export function useUpdateGiveaway() {
       return res.json()
     },
     onMutate: async ({ giveawayId, status, reason }) => {
-      // Cancel any outgoing refetches
+      // Cancel any outgoing refetches for every status-filtered giveaways query
       await queryClient.cancelQueries({ queryKey: ['admin-giveaways'] })
 
-      // Snapshot the previous value
-      const previousData = queryClient.getQueryData(['admin-giveaways'])
+      // Snapshot the previous values across all status-filtered caches
+      const previousData = queryClient.getQueriesData({ queryKey: ['admin-giveaways'] })
 
-      // Optimistically update the cache for infinite query
-      queryClient.setQueryData(['admin-giveaways'], (old: any) => {
+      // Optimistically update every cached giveaways query (one per status filter)
+      queryClient.setQueriesData({ queryKey: ['admin-giveaways'] }, (old: any) => {
         if (!old?.pages) return old
-        
+
         return {
           ...old,
           pages: old.pages.map((page: any) => ({
             ...page,
-            giveaways: page.giveaways.map((giveaway: Giveaway) => 
-              giveaway.id === giveawayId 
+            giveaways: page.giveaways.map((giveaway: Giveaway) =>
+              giveaway.id === giveawayId
                 ? { ...giveaway, status, ...(reason && { rejection_reason: reason }) }
                 : giveaway
             )
@@ -419,11 +443,11 @@ export function useUpdateGiveaway() {
       }
     },
     onError: (error: any, variables, context) => {
-      // Rollback to the previous value on error
-      if (context?.previousData) {
-        queryClient.setQueryData(['admin-giveaways'], context.previousData)
-      }
-      
+      // Rollback every snapshotted cache entry on error
+      context?.previousData?.forEach(([queryKey, data]: [readonly unknown[], unknown]) => {
+        queryClient.setQueryData(queryKey, data)
+      })
+
       toast.error(
         variables.status === 'approved' ? 'Failed to approve giveaway' : 'Failed to reject giveaway',
         { description: 'Please try again.' }
@@ -432,6 +456,7 @@ export function useUpdateGiveaway() {
     onSettled: () => {
       // Refetch in the background to ensure consistency
       queryClient.invalidateQueries({ queryKey: ['admin-giveaways'] })
+      queryClient.invalidateQueries({ queryKey: ['admin-activity'] })
     }
   })
 }

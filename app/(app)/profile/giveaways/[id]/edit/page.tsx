@@ -1005,8 +1005,17 @@ export default function EditGiveawayPage() {
                               <Label className="text-white text-sm">Amount</Label>
                               <Input
                                 value={prize.value}
-                                onChange={(e) => updatePrize(prize.id, "value", e.target.value)}
-                                placeholder="$50"
+                                onChange={(e) => {
+                                  const numeric = e.target.value.replace(/[^0-9.]/g, "")
+                                  const firstDot = numeric.indexOf(".")
+                                  const sanitized =
+                                    firstDot === -1
+                                      ? numeric
+                                      : numeric.slice(0, firstDot + 1) + numeric.slice(firstDot + 1).replace(/\./g, "")
+                                  updatePrize(prize.id, "value", sanitized)
+                                }}
+                                inputMode="decimal"
+                                placeholder="50"
                                 className="mt-1 bg-white/[0.04] border-white/[0.08] text-white placeholder-white/30 focus:border-orange-500 focus-visible:ring-orange-500/40"
                               />
                             </div>

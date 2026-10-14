@@ -110,6 +110,7 @@ import {
   useAdminUsers,
   useAdminScripts,
   useAdminGiveaways,
+  useAdminActivity,
   useAdminAds,
   useAdminProps,
   useUpdateUserRoles,
@@ -295,13 +296,19 @@ export default function AdminPage() {
     isFetchingNextPage: loadingMoreUsers,
   } = useAdminUsers();
 
+  const [activeScriptFilter, setActiveScriptFilter] = useState("all");
+
   const {
     data: scriptsData,
     isLoading: scriptsLoading,
     fetchNextPage: fetchNextScripts,
     hasNextPage: hasMoreScripts,
     isFetchingNextPage: loadingMoreScripts,
-  } = useAdminScripts();
+  } = useAdminScripts(activeScriptFilter);
+
+  const [activeGiveawayFilter, setActiveGiveawayFilter] = useState("all");
+
+  const { data: recentActivity = [] } = useAdminActivity(5);
 
   const {
     data: giveawaysData,
@@ -309,7 +316,7 @@ export default function AdminPage() {
     fetchNextPage: fetchNextGiveaways,
     hasNextPage: hasMoreGiveaways,
     isFetchingNextPage: loadingMoreGiveaways,
-  } = useAdminGiveaways();
+  } = useAdminGiveaways(activeGiveawayFilter);
 
   const {
     data: adsData,
@@ -405,7 +412,6 @@ export default function AdminPage() {
     status: "active",
   });
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
-  const [activeScriptFilter, setActiveScriptFilter] = useState("all");
   const [scriptSearchQuery, setScriptSearchQuery] = useState("");
   const [scriptCategoryFilter, setScriptCategoryFilter] = useState("all");
   const [rejectingScript, setRejectingScript] = useState<number | null>(null);
@@ -415,7 +421,6 @@ export default function AdminPage() {
   const [viewingGiveaway, setViewingGiveaway] = useState<Giveaway | null>(null);
   const [viewingAd, setViewingAd] = useState<any>(null);
   const [rejectionReason, setRejectionReason] = useState("");
-  const [activeGiveawayFilter, setActiveGiveawayFilter] = useState("all");
   const [giveawaySearchQuery, setGiveawaySearchQuery] = useState("");
   const [giveawayCategoryFilter, setGiveawayCategoryFilter] = useState("all");
   const [rejectingGiveaway, setRejectingGiveaway] = useState<number | null>(
@@ -1338,24 +1343,30 @@ export default function AdminPage() {
                       </span>
                     </div>
                     <div className="px-5 py-4">
-                      {scripts.length > 0 ? (
+                      {recentActivity.length > 0 ? (
                         <div className="space-y-4">
-                          {scripts.slice(0, 5).map((script) => (
+                          {recentActivity.map((entry) => (
                             <div
-                              key={script.id}
+                              key={entry.id}
                               className="flex items-start gap-3"
                             >
-                              <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full bg-emerald-500/15 text-emerald-400">
+                              <span
+                                className={`mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full ${
+                                  entry.action === "rejected"
+                                    ? "bg-red-500/15 text-red-400"
+                                    : "bg-emerald-500/15 text-emerald-400"
+                                }`}
+                              >
                                 <Package className="h-3.5 w-3.5" />
                               </span>
                               <div className="min-w-0">
                                 <p className="truncate text-[13px] leading-snug">
                                   <span className="font-semibold">
-                                    {script.title}
+                                    {entry.entityTitle || `${entry.entityType} #${entry.entityId}`}
                                   </span>
                                 </p>
                                 <p className="mt-0.5 text-[11px] text-white/55">
-                                  by {script.seller_name} · <span className="capitalize">{script.status}</span>
+                                  {entry.action} by {entry.actorName || "unknown"} · <span className="capitalize">{entry.entityType}</span>
                                 </p>
                               </div>
                             </div>
